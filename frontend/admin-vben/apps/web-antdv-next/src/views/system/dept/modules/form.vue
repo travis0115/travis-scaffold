@@ -54,7 +54,7 @@ const [Modal, modalApi] = useVbenModal({
       const data = modalApi.getData<SystemDeptApi.SysDept>();
       if (data) {
         if (data.parentId === 0) {
-          data.parentId = undefined;
+          (data as any).parentId = undefined;
         }
         formData.value = data;
         formApi.setValues(formData.value);

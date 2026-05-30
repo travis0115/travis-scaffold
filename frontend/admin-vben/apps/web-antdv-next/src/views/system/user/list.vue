@@ -7,8 +7,6 @@ import type {
 } from '#/adapter/vxe-table';
 import type { SystemUserApi } from '#/api';
 
-import { ref } from 'vue';
-
 import { Page, useVbenDrawer } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
 
@@ -16,7 +14,6 @@ import { Button, message, Modal } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteUser, getUserPage, updateUser } from '#/api';
-import { isDeptEnabled } from '#/features';
 import { $t } from '#/locales';
 
 import { useColumns, useGridFormSchema } from './data';
@@ -101,7 +98,7 @@ async function onStatusChange(
       `你要将${row.username}的状态切换为 【${status[newStatus.toString()]}】 吗？`,
       `切换状态`,
     );
-    await updateUser(row.id, { status: newStatus });
+    await updateUser(row.id, { status: newStatus as 0 | 1 });
     return true;
   } catch {
     return false;

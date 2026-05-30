@@ -19,7 +19,7 @@ public class SysMenu extends BaseEntity {
     /**
      * 菜单名称
      */
-    private String name;
+    private String menuName;
     /**
      * 路由路径
      */
@@ -33,7 +33,7 @@ public class SysMenu extends BaseEntity {
      */
     private String perms;
     /**
-     * 菜单类型（0-目录/菜单 1-按钮）
+     * 菜单类型（0-目录 1-菜单 2-按钮）
      */
     private Integer menuType;
     /**
@@ -48,4 +48,8 @@ public class SysMenu extends BaseEntity {
      * 状态（0-禁用 1-启用）
      */
     private Integer status;
+    /**
+     * 路由元信息JSON（Vben Admin RouteMeta 的扩展字段，如 keepAlive、hideInMenu 等）
+     */
+    private String meta;
 }

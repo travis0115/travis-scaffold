@@ -6,20 +6,23 @@ export namespace SystemMenuApi {
     { color: 'processing', label: '目录', value: 0 },
     { color: 'default', label: '菜单', value: 1 },
     { color: 'error', label: '按钮', value: 2 },
+    { color: 'success', label: '内嵌', value: 3 },
+    { color: 'warning', label: '外链', value: 4 },
   ] as const;
 
   export interface SysMenu {
     [key: string]: any;
     id: number;
     parentId: number;
-    name: string;
+    menuName: string;
     path?: string;
     component?: string;
     perms?: string;
-    menuType: 0 | 1 | 2;
+    menuType: 0 | 1 | 2 | 3 | 4;
     icon?: string;
     sort?: number;
     status: 0 | 1;
+    meta?: string;
     createTime?: string;
     children?: SysMenu[];
   }

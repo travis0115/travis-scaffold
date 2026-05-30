@@ -5,7 +5,7 @@
 
     <name>travis-monolith</name>
     <description>多模块单体架构脚手架</description>
-    <url>https://github.com/travis0115/travis-monolith</url>
+    <url>https://github.com/travis0115/travis-scaffold</url>
     <developers>
         <developer>
             <name>travis</name>

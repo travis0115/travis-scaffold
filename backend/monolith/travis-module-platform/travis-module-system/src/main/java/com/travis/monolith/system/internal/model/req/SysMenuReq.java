@@ -18,7 +18,7 @@ public class SysMenuReq {
     private Long parentId;
     /** 菜单名称 */
     @NotBlank(message = "菜单名称不能为空")
-    private String name;
+    private String menuName;
     /** 路由路径 */
     private String path;
     /** 前端组件路径 */
@@ -34,6 +34,8 @@ public class SysMenuReq {
     private Integer sort;
     /** 状态（0-禁用 1-启用） */
     private Integer status;
+    /** 路由元信息JSON（Vben Admin RouteMeta 扩展字段） */
+    private String meta;
 
     /**
      * 字典数据项新增/编辑请求参数

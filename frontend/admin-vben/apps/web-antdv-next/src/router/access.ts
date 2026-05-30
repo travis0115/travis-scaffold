@@ -1,6 +1,7 @@
 import type {
   ComponentRecordType,
   GenerateMenuAndRoutesOptions,
+  RouteRecordStringComponent,
 } from '@vben/types';
 
 import { generateAccessible } from '@vben/access';
@@ -13,6 +14,22 @@ import { BasicLayout, IFrameView } from '#/layouts';
 import { $t } from '#/locales';
 
 const forbiddenComponent = () => import('#/views/_core/fallback/forbidden.vue');
+
+/**
+ * 不在后端菜单中的隐藏路由，固定注入到前端路由表中
+ */
+const hiddenRoutes: RouteRecordStringComponent[] = [
+  {
+    name: 'Profile',
+    path: '/profile',
+    component: '_core/profile/index',
+    meta: {
+      hideInMenu: true,
+      title: $t('page.auth.profile'),
+    },
+  },
+];
+
 
 async function generateAccess(options: GenerateMenuAndRoutesOptions) {
   const pageMap: ComponentRecordType = import.meta.glob('../views/**/*.vue');
@@ -30,7 +47,8 @@ async function generateAccess(options: GenerateMenuAndRoutesOptions) {
         duration: 0,
       });
       try {
-        return await getAllMenusApi();
+        const menus = await getAllMenusApi();
+        return [...menus, ...hiddenRoutes];
       } finally {
         closeLoading();
       }

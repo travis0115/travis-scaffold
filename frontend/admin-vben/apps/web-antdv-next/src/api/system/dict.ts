@@ -29,8 +29,8 @@ export namespace SystemDictApi {
 async function getDictPage(params: {
   dictName?: string;
   dictType?: string;
-  pageSize: number;
   pageNum: number;
+  pageSize: number;
   status?: number;
 }) {
   return requestClient.get<SystemDictApi.SysDict>('/api/system/dict/page', {

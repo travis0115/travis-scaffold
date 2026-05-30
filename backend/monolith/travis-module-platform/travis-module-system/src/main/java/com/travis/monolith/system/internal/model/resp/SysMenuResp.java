@@ -25,7 +25,7 @@ public class SysMenuResp {
     /** 父菜单ID */
     private Long parentId;
     /** 菜单名称 */
-    private String name;
+    private String menuName;
     /** 路由路径 */
     private String path;
     /** 前端组件路径 */
@@ -42,6 +42,8 @@ public class SysMenuResp {
     private Integer status;
     /** 创建时间 */
     private LocalDateTime createTime;
+    /** 路由元信息JSON */
+    private String meta;
     /** 子菜单列表 */
     private List<SysMenuResp> children;
 }

@@ -20,7 +20,7 @@ export namespace SystemRoleApi {
  * 分页查询角色列表
  */
 async function getRolePage(params: Recordable<any>) {
-  return requestClient.get<{ items: SystemRoleApi.SysRole[]; total: number }>(
+  return requestClient.get<{ records: SystemRoleApi.SysRole[]; total: number }>(
     '/api/system/role/page',
     { params },
   );

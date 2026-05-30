@@ -6,7 +6,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Vben Admin 前端菜单路由格式，用于前端动态路由渲染
@@ -28,26 +30,7 @@ public class VbenMenuResp {
     /** 重定向路径 */
     private String redirect;
     /** 路由元信息 */
-    private Meta meta;
+    private Map<String, Object> meta;
     /** 子路由列表 */
     private List<VbenMenuResp> children;
-
-    /**
-     * 路由元信息，包含标题、排序和图标
-     */
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class Meta {
-        /** 菜单标题 */
-        private String title;
-        /** 排序号 */
-        private Integer order;
-        /** 图标名称 */
-        private String icon;
-        /** 是否固定在标签栏 */
-        private Boolean affixTab;
-    }
 }

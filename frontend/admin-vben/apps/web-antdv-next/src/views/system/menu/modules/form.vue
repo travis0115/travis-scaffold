@@ -2,9 +2,13 @@
 import type { VbenFormSchema } from '#/adapter/form';
 import type { SystemMenuApi } from '#/api';
 
-import { computed, ref } from 'vue';
+import { computed, h, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
+import { $te } from '@vben/locales';
+import { getPopupContainer } from '@vben/utils';
+
+import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
 
 import { useVbenForm } from '#/adapter/form';
 import { createMenu, getMenuTree, updateMenu } from '#/api';
@@ -17,6 +21,17 @@ const emit = defineEmits<{
 }>();
 
 const formData = ref<SystemMenuApi.SysMenu>();
+const titleSuffix = ref<string>();
+
+/** 解析 meta JSON 为对象 */
+function parseMeta(metaStr?: string) {
+  if (!metaStr) return {};
+  try {
+    return JSON.parse(metaStr);
+  } catch {
+    return {};
+  }
+}
 
 const schema: VbenFormSchema[] = [
   {
@@ -33,7 +48,7 @@ const schema: VbenFormSchema[] = [
   },
   {
     component: 'Input',
-    fieldName: 'name',
+    fieldName: 'menuName',
     label: $t('system.menu.menuName'),
     rules: 'required',
   },
@@ -42,19 +57,53 @@ const schema: VbenFormSchema[] = [
     componentProps: {
       api: getMenuTree,
       class: 'w-full',
-      labelField: 'name',
+      filterTreeNode(input: string, node: any) {
+        if (!input || input.length === 0) {
+          return true;
+        }
+        const name: string = node.menuName ?? '';
+        return name.includes(input);
+      },
+      getPopupContainer,
+      labelField: 'menuName',
+      showSearch: true,
+      treeDefaultExpandAll: true,
       valueField: 'id',
       childrenField: 'children',
-      treeDefaultExpandAll: true,
     },
     fieldName: 'parentId',
     label: $t('system.menu.parent'),
+    renderComponentContent() {
+      return {
+        title({ label, menuName }: { label: string; menuName: string }) {
+          const coms = [];
+          if (!label && !menuName) return '';
+          coms.push(h('span', { class: '' }, menuName || label));
+          return h('div', { class: 'flex items-center gap-1' }, coms);
+        },
+      };
+    },
+  },
+  {
+    component: 'Input',
+    fieldName: 'menuTitle',
+    label: $t('system.menu.menuTitle'),
+    componentProps() {
+      return {
+        ...(titleSuffix.value && { addonAfter: titleSuffix.value }),
+        onChange({ target: { value } }: { target: { value: string } }) {
+          titleSuffix.value =
+            value && $te(value) ? $t(value) : undefined;
+        },
+      };
+    },
+    help: $t('system.menu.menuTitle'),
   },
   {
     component: 'Input',
     dependencies: {
       show: (values) => {
-        return [0, 1].includes(values.menuType);
+        return [0, 1, 3, 4].includes(values.menuType);
       },
       triggerFields: ['menuType'],
     },
@@ -62,8 +111,25 @@ const schema: VbenFormSchema[] = [
     label: $t('system.menu.path'),
   },
   {
+    component: 'IconPicker',
+    componentProps: {
+      prefix: 'carbon',
+    },
+    dependencies: {
+      show: (values) => {
+        return [0, 1, 3, 4].includes(values.menuType);
+      },
+      triggerFields: ['menuType'],
+    },
+    fieldName: 'icon',
+    label: $t('system.menu.icon'),
+  },
+  {
     component: 'Input',
     dependencies: {
+      rules: (values) => {
+        return values.menuType === 1 ? 'required' : null;
+      },
       show: (values) => {
         return values.menuType === 1;
       },
@@ -76,29 +142,26 @@ const schema: VbenFormSchema[] = [
     component: 'Input',
     dependencies: {
       show: (values) => {
+        return [3, 4].includes(values.menuType);
+      },
+      triggerFields: ['menuType'],
+    },
+    fieldName: 'linkSrc',
+    label: $t('system.menu.linkSrc'),
+  },
+  {
+    component: 'Input',
+    dependencies: {
+      rules: (values) => {
+        return values.menuType === 2 ? 'required' : null;
+      },
+      show: (values) => {
         return [0, 1, 2].includes(values.menuType);
       },
       triggerFields: ['menuType'],
     },
     fieldName: 'perms',
     label: $t('system.menu.perms'),
-  },
-  {
-    component: 'Input',
-    fieldName: 'icon',
-    label: $t('system.menu.icon'),
-    dependencies: {
-      show: (values) => {
-        return [0, 1].includes(values.menuType);
-      },
-      triggerFields: ['menuType'],
-    },
-  },
-  {
-    component: 'InputNumber',
-    fieldName: 'sort',
-    label: $t('system.menu.sort'),
-    defaultValue: 0,
   },
   {
     component: 'RadioGroup',
@@ -114,7 +177,134 @@ const schema: VbenFormSchema[] = [
     fieldName: 'status',
     label: $t('system.menu.status'),
   },
+  {
+    component: 'Divider',
+    dependencies: {
+      show: (values) => {
+        return ![2].includes(values.menuType);
+      },
+      triggerFields: ['menuType'],
+    },
+    fieldName: 'divider1',
+    formItemClass: 'col-span-2 md:col-span-2 pb-0',
+    hideLabel: true,
+    renderComponentContent() {
+      return {
+        default: () => $t('system.menu.advancedSettings'),
+      };
+    },
+  },
+  {
+    component: 'Checkbox',
+    dependencies: {
+      show: (values) => {
+        return values.menuType === 1;
+      },
+      triggerFields: ['menuType'],
+    },
+    fieldName: '_keepAlive',
+    renderComponentContent() {
+      return {
+        default: () => $t('system.menu.keepAlive'),
+      };
+    },
+  },
+  {
+    component: 'Checkbox',
+    dependencies: {
+      show: (values) => {
+        return [1, 3].includes(values.menuType);
+      },
+      triggerFields: ['menuType'],
+    },
+    fieldName: '_affixTab',
+    renderComponentContent() {
+      return {
+        default: () => $t('system.menu.affixTab'),
+      };
+    },
+  },
+  {
+    component: 'Checkbox',
+    dependencies: {
+      show: (values) => {
+        return ![2].includes(values.menuType);
+      },
+      triggerFields: ['menuType'],
+    },
+    fieldName: '_hideInMenu',
+    renderComponentContent() {
+      return {
+        default: () => $t('system.menu.hideInMenu'),
+      };
+    },
+  },
+  {
+    component: 'Checkbox',
+    dependencies: {
+      show: (values) => {
+        return [0, 1].includes(values.menuType);
+      },
+      triggerFields: ['menuType'],
+    },
+    fieldName: '_hideChildrenInMenu',
+    renderComponentContent() {
+      return {
+        default: () => $t('system.menu.hideChildrenInMenu'),
+      };
+    },
+  },
+  {
+    component: 'Checkbox',
+    dependencies: {
+      show: (values) => {
+        return ![2, 4].includes(values.menuType);
+      },
+      triggerFields: ['menuType'],
+    },
+    fieldName: '_hideInBreadcrumb',
+    renderComponentContent() {
+      return {
+        default: () => $t('system.menu.hideInBreadcrumb'),
+      };
+    },
+  },
+  {
+    component: 'Checkbox',
+    dependencies: {
+      show: (values) => {
+        return ![2, 4].includes(values.menuType);
+      },
+      triggerFields: ['menuType'],
+    },
+    fieldName: '_hideInTab',
+    renderComponentContent() {
+      return {
+        default: () => $t('system.menu.hideInTab'),
+      };
+    },
+  },
+  {
+    component: 'Textarea',
+    componentProps: {
+      placeholder: '{ "keepAlive": true, "iframeSrc": "https://..." }',
+      rows: 3,
+    },
+    dependencies: {
+      show: (values) => {
+        return [0, 1].includes(values.menuType);
+      },
+      triggerFields: ['menuType'],
+    },
+    fieldName: 'meta',
+    formItemClass: 'col-span-2 md:col-span-2',
+    help: $t('system.menu.metaJsonHelp'),
+    label: $t('system.menu.metaJson'),
+  },
 ];
+
+const breakpoints = useBreakpoints(breakpointsTailwind);
+const isHorizontal = computed(() => breakpoints.greaterOrEqual('md').value);
 
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -133,10 +323,38 @@ const [Drawer, drawerApi] = useVbenDrawer({
       const data = drawerApi.getData<SystemMenuApi.SysMenu>();
       if (data) {
         formData.value = data;
-        formApi.setValues(formData.value);
+        // 解析 meta JSON
+        const metaObj = parseMeta(data.meta);
+
+        // 内嵌/外链类型回填 linkSrc
+        const formValues: Record<string, any> = {
+          ...data,
+          _keepAlive: metaObj.keepAlive ?? false,
+          _affixTab: metaObj.affixTab ?? false,
+          _hideInMenu: metaObj.hideInMenu ?? false,
+          _hideChildrenInMenu: metaObj.hideChildrenInMenu ?? false,
+          _hideInBreadcrumb: metaObj.hideInBreadcrumb ?? false,
+          _hideInTab: metaObj.hideInTab ?? false,
+        };
+
+        // 从 meta 推断前端菜单类型
+        if (metaObj.iframeSrc && data.menuType === 1) {
+          formValues.menuType = 3; // 内嵌
+          formValues.linkSrc = metaObj.iframeSrc;
+        } else if (metaObj.link && data.menuType === 1) {
+          formValues.menuType = 4; // 外链
+          formValues.linkSrc = metaObj.link;
+        }
+
+        // 回填 menuTitle
+        formValues.menuTitle = data.menuName;
+        titleSuffix.value = data.menuName;
+
+        formApi.setValues(formValues);
       } else {
         formData.value = undefined;
         formApi.resetForm();
+        titleSuffix.value = '';
       }
     }
   },
@@ -146,10 +364,70 @@ async function onSubmit() {
   const { valid } = await formApi.validate();
   if (valid) {
     drawerApi.lock();
-    const data =
+    const values =
       await formApi.getValues<
-        Omit<SystemMenuApi.SysMenu, 'children' | 'createTime'>
+        Omit<SystemMenuApi.SysMenu, 'children' | 'createTime'> & {
+          _affixTab?: boolean;
+          _hideChildrenInMenu?: boolean;
+          _hideInBreadcrumb?: boolean;
+          _hideInMenu?: boolean;
+          _hideInTab?: boolean;
+          _keepAlive?: boolean;
+          linkSrc?: string;
+          menuTitle?: string;
+        }
       >();
+
+    // 构建 meta JSON
+    const metaObj: Record<string, any> = parseMeta(values.meta);
+    if (values._keepAlive) metaObj.keepAlive = true;
+    if (values._affixTab) metaObj.affixTab = true;
+    if (values._hideInMenu) metaObj.hideInMenu = true;
+    if (values._hideChildrenInMenu) metaObj.hideChildrenInMenu = true;
+    if (values._hideInBreadcrumb) metaObj.hideInBreadcrumb = true;
+    if (values._hideInTab) metaObj.hideInTab = true;
+
+    // 清理开关未勾选的字段
+    if (!values._keepAlive) delete metaObj.keepAlive;
+    if (!values._affixTab) delete metaObj.affixTab;
+    if (!values._hideInMenu) delete metaObj.hideInMenu;
+    if (!values._hideChildrenInMenu) delete metaObj.hideChildrenInMenu;
+    if (!values._hideInBreadcrumb) delete metaObj.hideInBreadcrumb;
+    if (!values._hideInTab) delete metaObj.hideInTab;
+
+    // 处理内嵌/外链类型
+    let actualMenuType = values.menuType;
+    if (values.menuType === 3) {
+      // 内嵌类型 → 存储为 menuType=1 + meta.iframeSrc
+      actualMenuType = 1 as any;
+      if (values.linkSrc) metaObj.iframeSrc = values.linkSrc;
+      delete metaObj.link;
+    } else if (values.menuType === 4) {
+      // 外链类型 → 存储为 menuType=1 + meta.link
+      actualMenuType = 1 as any;
+      if (values.linkSrc) metaObj.link = values.linkSrc;
+      delete metaObj.iframeSrc;
+    } else {
+      delete metaObj.iframeSrc;
+      delete metaObj.link;
+    }
+
+    const data: Partial<SystemMenuApi.SysMenu> = {
+      ...values,
+      menuType: actualMenuType as any,
+      menuName: values.menuTitle || values.menuName,
+      meta: Object.keys(metaObj).length > 0 ? JSON.stringify(metaObj) : undefined,
+    };
+    // 移除内部辅助字段
+    delete (data as any)._keepAlive;
+    delete (data as any)._affixTab;
+    delete (data as any)._hideInMenu;
+    delete (data as any)._hideChildrenInMenu;
+    delete (data as any)._hideInBreadcrumb;
+    delete (data as any)._hideInTab;
+    delete (data as any).linkSrc;
+    delete (data as any).menuTitle;
+
     try {
       await (formData.value?.id
         ? updateMenu(formData.value.id, data)
@@ -170,6 +448,7 @@ const getDrawerTitle = computed(() =>
 </script>
 <template>
   <Drawer class="w-full max-w-200" :title="getDrawerTitle">
-    <Form class="mx-4" layout="horizontal" />
+    <Form class="mx-4" :layout="isHorizontal ? 'horizontal' : 'vertical'" />
   </Drawer>
 </template>
+

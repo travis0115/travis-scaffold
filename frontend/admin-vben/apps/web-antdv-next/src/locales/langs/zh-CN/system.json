@@ -43,6 +43,8 @@
     "typeCatalog": "目录",
     "typeMenu": "菜单",
     "typeButton": "按钮",
+    "typeEmbedded": "内嵌",
+    "typeLink": "外链",
     "parent": "上级菜单",
     "path": "路由地址",
     "component": "组件路径",
@@ -52,7 +54,21 @@
     "status": "状态",
     "createTime": "创建时间",
     "operation": "操作",
-    "appendChildren": "新增下级"
+    "appendChildren": "新增下级",
+    "metaJson": "扩展元信息",
+    "metaJsonHelp": "JSON格式，支持 keepAlive、hideInMenu、hideInTab、hideInBreadcrumb、hideChildrenInMenu、affixTab、iframeSrc、link、openInNewWindow 等Vben RouteMeta字段",
+    "keepAlive": "缓存页面",
+    "hideInMenu": "隐藏菜单",
+    "hideInTab": "隐藏标签",
+    "hideInBreadcrumb": "隐藏面包屑",
+    "hideChildrenInMenu": "隐藏子菜单",
+    "affixTab": "固定标签",
+    "iframeSrc": "内嵌页面地址",
+    "link": "外链地址",
+    "linkSrc": "链接地址",
+    "activeIcon": "激活图标",
+    "openInNewWindow": "新窗口打开",
+    "advancedSettings": "高级设置"
   },
   "dept": {
     "title": "部门管理",
@@ -66,5 +82,25 @@
     "status": "状态",
     "createTime": "创建时间",
     "operation": "操作"
+  },
+  "dict": {
+    "title": "字典管理",
+    "list": "字典列表",
+    "name": "字典",
+    "dictName": "字典名称",
+    "dictType": "字典编码",
+    "status": "状态",
+    "remark": "备注",
+    "createTime": "创建时间",
+    "operation": "操作",
+    "items": "字典数据",
+    "item": {
+      "label": "标签",
+      "value": "值",
+      "sort": "排序",
+      "status": "状态",
+      "remark": "备注",
+      "operation": "操作"
+    }
   }
 }

@@ -1,6 +1,8 @@
 package com.travis.monolith.system.internal.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.travis.infrastructure.framework.jackson.core.util.JsonUtils;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.web.core.exception.IErrorCode;
@@ -12,9 +14,9 @@ import com.travis.monolith.system.internal.model.req.SysMenuReq;
 import com.travis.monolith.system.internal.model.resp.SysMenuResp;
 import com.travis.monolith.system.internal.model.resp.VbenMenuResp;
 import com.travis.monolith.system.internal.service.SysMenuService;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import tools.jackson.core.type.TypeReference;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -28,7 +30,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> implements SysMenuService {
 
-    /** 角色-菜单关联 Mapper */
+    /**
+     * 角色-菜单关联 Mapper
+     */
     private final SysRoleMenuMapper roleMenuMapper;
 
     /**
@@ -61,7 +65,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
     public void addMenu(SysMenuReq req) {
         SysMenu menu = new SysMenu();
         menu.setParentId(req.getParentId());
-        menu.setName(req.getName());
+        menu.setMenuName(req.getMenuName());
         menu.setPath(req.getPath());
         menu.setComponent(req.getComponent());
         menu.setPerms(req.getPerms());
@@ -69,6 +73,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         menu.setIcon(req.getIcon());
         menu.setSort(req.getSort());
         menu.setStatus(req.getStatus());
+        menu.setMeta(req.getMeta());
         save(menu);
     }
 
@@ -82,7 +87,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
         menu.setParentId(req.getParentId());
-        menu.setName(req.getName());
+        menu.setMenuName(req.getMenuName());
         menu.setPath(req.getPath());
         menu.setComponent(req.getComponent());
         menu.setPerms(req.getPerms());
@@ -90,6 +95,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         menu.setIcon(req.getIcon());
         menu.setSort(req.getSort());
         menu.setStatus(req.getStatus());
+        menu.setMeta(req.getMeta());
         updateById(menu);
     }
 
@@ -102,8 +108,15 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
                 .eq(SysMenu::getParentId, id));
         if (childCount > 0) {
             throw new BizException(new IErrorCode() {
-                @Override public String getCode() { return CommonErrorCode.BAD_REQUEST.getCode(); }
-                @Override public String getMsg() { return "存在子菜单，无法删除"; }
+                @Override
+                public String getCode() {
+                    return CommonErrorCode.BAD_REQUEST.getCode();
+                }
+
+                @Override
+                public String getMsg() {
+                    return "存在子菜单，无法删除";
+                }
             }, null);
         }
         removeById(id);
@@ -131,10 +144,10 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
             return Collections.emptyList();
         }
 
-        // 只取目录和菜单（menuType=0），不取按钮（menuType=1）
+        // 只取目录（0）和菜单（1），不取按钮（2）
         List<SysMenu> menus = list(new LambdaQueryWrapper<SysMenu>()
                 .in(SysMenu::getId, menuIds)
-                .ne(SysMenu::getMenuType, 1)
+                .in(SysMenu::getMenuType, 0, 1)
                 .eq(SysMenu::getStatus, 1)
                 .orderByAsc(SysMenu::getSort));
 
@@ -177,7 +190,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
             if (menu.getChildren() == null || menu.getChildren().isEmpty()) {
                 // 叶子节点，标记固定
                 if (menu.getMeta() != null) {
-                    menu.getMeta().setAffixTab(true);
+                    menu.getMeta().put("affixTab", true);
                 }
                 return true;
             }
@@ -208,18 +221,54 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
             component = "BasicLayout";
         }
 
+        // 构建基础 meta：DB 独立字段
+        Map<String, Object> metaMap = new LinkedHashMap<>();
+        metaMap.put("title", menu.getMenuName());
+        metaMap.put("order", menu.getSort());
+        if (menu.getIcon() != null && !menu.getIcon().isEmpty()) {
+            metaMap.put("icon", menu.getIcon());
+        }
+
+        // 合并 meta JSON 中的扩展字段
+        if (menu.getMeta() != null && !menu.getMeta().isBlank()) {
+            try {
+                Map<String, Object> extraMeta = JsonUtils.getObjectMapper().readValue(
+                        menu.getMeta(), new TypeReference<LinkedHashMap<String, Object>>() {
+                        });
+                // 扩展字段覆盖基础字段（以 JSON 中的值为优先）
+                extraMeta.forEach(metaMap::putIfAbsent);
+            } catch (Exception e) {
+                // JSON 解析失败时忽略，不影响菜单树构建
+            }
+        }
+
         return VbenMenuResp.builder()
-                .name(menu.getName())
+                .name(generateRouteName(menu.getPath()))
                 .path(menu.getPath())
                 .component(component)
                 .redirect(children.isEmpty() ? null : children.get(0).getPath())
-                .meta(VbenMenuResp.Meta.builder()
-                        .title(menu.getName())
-                        .order(menu.getSort())
-                        .icon(menu.getIcon())
-                        .build())
+                .meta(metaMap)
                 .children(childVOs.isEmpty() ? null : childVOs)
                 .build();
+    }
+
+    /**
+     * 根据路由路径生成 PascalCase 路由名称（如 /system/user → SystemUser）
+     */
+    private String generateRouteName(String path) {
+        if (path == null || path.isEmpty()) {
+            return "Route";
+        }
+        String[] segments = path.split("/");
+        StringBuilder sb = new StringBuilder();
+        for (String segment : segments) {
+            if (segment.isEmpty()) continue;
+            sb.append(Character.toUpperCase(segment.charAt(0)));
+            if (segment.length() > 1) {
+                sb.append(segment.substring(1));
+            }
+        }
+        return sb.toString();
     }
 
     /**
@@ -232,7 +281,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         return SysMenuResp.builder()
                 .id(menu.getId())
                 .parentId(menu.getParentId())
-                .name(menu.getName())
+                .menuName(menu.getMenuName())
                 .path(menu.getPath())
                 .component(menu.getComponent())
                 .perms(menu.getPerms())
@@ -241,6 +290,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
                 .sort(menu.getSort())
                 .status(menu.getStatus())
                 .createTime(menu.getCreateTime())
+                .meta(menu.getMeta())
                 .children(new ArrayList<>())
                 .build();
     }

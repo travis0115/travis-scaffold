@@ -11,8 +11,7 @@ import { IconifyIcon } from '@vben/icons';
 import { Spin } from 'antdv-next';
 
 import { useVbenForm } from '#/adapter/form';
-import { getMenuTree } from '#/api';
-import { createRole, getRoleDetail, updateRole } from '#/api';
+import { assignRoleMenus, createRole, getMenuTree, getRoleDetail, updateRole } from '#/api';
 import { $t } from '#/locales';
 
 import { useFormSchema } from '../data';
@@ -42,11 +41,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
         await updateRole(id.value, values);
         // 更新角色菜单权限
         const checkedKeys = menuCheckedKeys.value;
-        await fetch('/api/system/role/menus', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ roleId: id.value, menuIds: checkedKeys }),
-        });
+        await assignRoleMenus({ roleId: id.value, menuIds: checkedKeys });
       } else {
         await createRole(values);
       }
@@ -119,13 +114,13 @@ const getDrawerTitle = computed(() => {
           bordered
           :default-expanded-level="2"
           value-field="id"
-          label-field="name"
+          label-field="menuName"
           icon-field="icon"
           checkable
         >
           <template #node="{ value }">
             <IconifyIcon v-if="value.icon" :icon="value.icon" />
-            {{ value.name }}
+            {{ value.menuName }}
           </template>
         </Tree>
       </Spin>

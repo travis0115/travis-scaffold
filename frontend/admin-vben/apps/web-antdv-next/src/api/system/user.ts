@@ -24,7 +24,7 @@ export namespace SystemUserApi {
  * 分页查询用户列表
  */
 async function getUserPage(params: Recordable<any>) {
-  return requestClient.get<{ items: SystemUserApi.SysUser[]; total: number }>(
+  return requestClient.get<{ records: SystemUserApi.SysUser[]; total: number }>(
     '/api/system/user/page',
     { params },
   );
@@ -61,7 +61,7 @@ async function deleteUser(id: number) {
 /**
  * 为用户分配角色
  */
-async function assignUserRoles(data: { userId: number; roleIds: number[] }) {
+async function assignUserRoles(data: { roleIds: number[]; userId: number }) {
   return requestClient.post('/api/system/user/roles', data);
 }
 

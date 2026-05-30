@@ -43,6 +43,8 @@
     "typeCatalog": "Catalog",
     "typeMenu": "Menu",
     "typeButton": "Button",
+    "typeEmbedded": "Embedded",
+    "typeLink": "Link",
     "parent": "Parent Menu",
     "path": "Route Path",
     "component": "Component",
@@ -52,7 +54,21 @@
     "status": "Status",
     "createTime": "Created At",
     "operation": "Operation",
-    "appendChildren": "Add Child"
+    "appendChildren": "Add Child",
+    "metaJson": "Extended Meta",
+    "metaJsonHelp": "JSON format. Supports keepAlive, hideInMenu, hideInTab, hideInBreadcrumb, hideChildrenInMenu, affixTab, iframeSrc, link, openInNewWindow etc.",
+    "keepAlive": "Keep Alive",
+    "hideInMenu": "Hide in Menu",
+    "hideInTab": "Hide in Tab",
+    "hideInBreadcrumb": "Hide in Breadcrumb",
+    "hideChildrenInMenu": "Hide Children",
+    "affixTab": "Affix Tab",
+    "iframeSrc": "Iframe Source",
+    "link": "External Link",
+    "linkSrc": "Link URL",
+    "activeIcon": "Active Icon",
+    "openInNewWindow": "Open in New Window",
+    "advancedSettings": "Advanced Settings"
   },
   "dept": {
     "title": "Department Management",
@@ -66,5 +82,25 @@
     "status": "Status",
     "createTime": "Created At",
     "operation": "Operation"
+  },
+  "dict": {
+    "title": "Dictionary Management",
+    "list": "Dictionary List",
+    "name": "Dictionary",
+    "dictName": "Dictionary Name",
+    "dictType": "Dictionary Code",
+    "status": "Status",
+    "remark": "Remark",
+    "createTime": "Created At",
+    "operation": "Operation",
+    "items": "Dictionary Data",
+    "item": {
+      "label": "Label",
+      "value": "Value",
+      "sort": "Sort",
+      "status": "Status",
+      "remark": "Remark",
+      "operation": "Operation"
+    }
   }
 }

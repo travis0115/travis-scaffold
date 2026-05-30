@@ -11,6 +11,8 @@ export function getMenuTypeOptions() {
     { color: 'processing', label: $t('system.menu.typeCatalog'), value: 0 },
     { color: 'default', label: $t('system.menu.typeMenu'), value: 1 },
     { color: 'error', label: $t('system.menu.typeButton'), value: 2 },
+    { color: 'success', label: $t('system.menu.typeEmbedded'), value: 3 },
+    { color: 'warning', label: $t('system.menu.typeLink'), value: 4 },
   ];
 }
 
@@ -20,8 +22,9 @@ export function useColumns(
   return [
     {
       align: 'left',
-      field: 'name',
+      field: 'menuName',
       fixed: 'left',
+      slots: { default: 'title' },
       title: $t('system.menu.menuName'),
       treeNode: true,
       width: 200,
@@ -47,6 +50,33 @@ export function useColumns(
     {
       align: 'left',
       field: 'component',
+      formatter: ({ row }) => {
+        switch (row.menuType) {
+          case 0:
+          case 1: {
+            return row.component ?? '';
+          }
+          case 3: {
+            // 内嵌类型，显示iframeSrc
+            try {
+              const meta = row.meta ? JSON.parse(row.meta) : {};
+              return meta.iframeSrc ?? '';
+            } catch {
+              return '';
+            }
+          }
+          case 4: {
+            // 外链类型，显示link
+            try {
+              const meta = row.meta ? JSON.parse(row.meta) : {};
+              return meta.link ?? '';
+            } catch {
+              return '';
+            }
+          }
+        }
+        return '';
+      },
       minWidth: 200,
       title: $t('system.menu.component'),
     },
@@ -65,7 +95,7 @@ export function useColumns(
       align: 'right',
       cellRender: {
         attrs: {
-          nameField: 'name',
+          nameField: 'menuName',
           onClick: onActionClick,
         },
         name: 'CellOperation',
