@@ -1,0 +1,64 @@
+<included>
+    <!-- 文件日志 -->
+    <appender name="APPENDER_FILE_ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FILE_PATH}/error/${LOG_FILE_NAME}-error.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_FILE_PATH}/error/${LOG_FILE_NAME}-error.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxHistory>${LOG_FILE_MAX_HISTORY}</maxHistory> <!-- 日志文件的保留天数 -->
+            <maxFileSize>${LOG_FILE_MAX_SIZE}</maxFileSize> <!-- 日志文件，到达多少容量，进行滚动 -->
+            <totalSizeCap>${LOG_FILE_TOTAL_SIZE_CAP}</totalSizeCap>    <!-- 日志文件的总大小上限，超出会自动删除旧文件 -->
+            <cleanHistoryOnStart>${LOG_FILE_CLEAN_HISTORY_ON_START}</cleanHistoryOnStart> <!-- 启动时清理 -->
+        </rollingPolicy>
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp>
+                    <fieldName>timestamp</fieldName>
+                    <timeZone>${LOG_TIMESTAMP_TIME_ZONE}</timeZone>
+                </timestamp>
+                <logLevel/>
+                <pattern>
+                    <pattern>
+                        ${LOG_CUSTOM_FIELDS}
+                    </pattern>
+                </pattern>
+                <threadName/>
+                <loggerName/>
+                <mdc class="com.travis.infrastructure.framework.logging.core.logback.provider.DesensitizeMdcJsonProvider">
+                    <!-- ********************* 链路 ********************* -->
+                    <!-- 请求链路ID -->
+                    <includeMdcKeyName>traceId</includeMdcKeyName>
+                    <!-- 节点ID -->
+                    <includeMdcKeyName>spanId</includeMdcKeyName>
+                    <!-- 请求ID -->
+                    <includeMdcKeyName>request_id</includeMdcKeyName>
+
+                    <!-- ******************* 用户 & 租户 ****************** -->
+                    <!-- 租户ID -->
+                    <includeMdcKeyName>tenant_id</includeMdcKeyName>
+                    <!-- 用户ID -->
+                    <includeMdcKeyName>user_id</includeMdcKeyName>
+                </mdc>
+                <message/>
+                <arguments class="com.travis.infrastructure.framework.logging.core.logback.provider.DeduplicatingArgumentsJsonProvider"/>
+                <stackTrace/>
+            </providers>
+        </encoder>
+        <!-- 仅接收 ERROR 级别日志 -->
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+    <!-- 异步写入文件 -->
+    <appender name="ASYNC_APPENDER_FILE_ERROR" class="ch.qos.logback.classic.AsyncAppender">
+        <!-- 队列丢弃日志的阈值，使用率超过阈值，开始丢低优先级日志，WARN/ERROR不丢弃，设置为0表示当队列满且 neverBlock=true 时，丢 TRACE/DEBUG/INFO -->
+        <discardingThreshold>${LOG_FILE_ASYNC_DISCARDING_THRESHOLD}</discardingThreshold>
+        <!-- 队列深度，该值会影响性能 -->
+        <queueSize>${LOG_FILE_ASYNC_QUEUE_SIZE}</queueSize>
+        <!-- 永不堵塞，开启时配合discarding-threshold值，达到阈值时丢弃日志，关闭则不丢弃日志，可能导致业务阻塞 -->
+        <neverBlock>${LOG_FILE_ASYNC_NEVER_BLOCK}</neverBlock>
+        <!-- 添加附加的appender,最多只能添加一个 -->
+        <appender-ref ref="APPENDER_FILE_ERROR"/>
+    </appender>
+</included>

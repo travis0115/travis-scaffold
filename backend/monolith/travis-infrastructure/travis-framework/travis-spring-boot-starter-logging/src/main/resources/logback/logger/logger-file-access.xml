@@ -1,0 +1,6 @@
+<included>
+    <!-- access 日志文件 -->
+    <logger name="LOGGER_FILE_ACCESS" level="INFO" additivity="false">
+        <appender-ref ref="ASYNC_APPENDER_FILE_ACCESS"/>
+    </logger>
+</included>

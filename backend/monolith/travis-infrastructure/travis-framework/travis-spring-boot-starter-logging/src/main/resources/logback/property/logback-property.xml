@@ -1,0 +1,69 @@
+<included>
+    <!-- *************************************************************** -->
+    <!-- * * * * * * * * * * * * * * 属性定义 * * * * * * * * * * * * * * -->
+    <!-- *************************************************************** -->
+
+    <!-- 服务名称 -->
+    <springProperty name="SERVICE_NAME" source="spring.application.name" defaultValue="travis-application"/>
+    <!-- 服务端口 -->
+    <springProperty name="SERVER_PORT" source="server.port" defaultValue="8080"/>
+
+    <!-- 日志文件路径，未定义则取默认值 -->
+    <springProperty name="LOG_FILE_PATH" source="logging.file.path"
+                    defaultValue="/data/logs/${spring.application.name}/${HOSTNAME:local}"/>
+
+    <!-- 日志文件名，不带后缀名（.log），未定义则取默认值 -->
+    <springProperty name="LOG_FILE_NAME" source="logging.file.name" defaultValue="travis-application"/>
+
+    <!-- 异步日志队列丢弃日志的阈值，使用率超过阈值，开始丢低优先级日志，WARN/ERROR不丢弃，设置为0表示当队列满且 neverBlock=true 时，丢 TRACE/DEBUG/INFO -->
+    <springProperty name="LOG_FILE_ASYNC_DISCARDING_THRESHOLD" source="logging.file.async.discarding-threshold"
+                    defaultValue="0"/>
+
+    <!-- 异步日志队列永不堵塞，开启时配合discarding-threshold值，达到阈值时丢弃日志，关闭则不丢弃日志，可能导致业务阻塞 -->
+    <springProperty name="LOG_FILE_ASYNC_NEVER_BLOCK" source="logging.file.async.never-block" defaultValue="false"/>
+
+    <!-- 异步日志队列深度，该值会影响性能 -->
+    <springProperty name="LOG_FILE_ASYNC_QUEUE_SIZE" source="logging.file.async.queue-size" defaultValue="1024"/>
+
+    <!-- 日志文件的保留天数 -->
+    <springProperty name="LOG_FILE_MAX_HISTORY" source="logging.logback.rollingpolicy.max-history" defaultValue="30"/>
+
+    <!-- 日志文件到达多少容量，进行滚动 -->
+    <springProperty name="LOG_FILE_MAX_SIZE" source="logging.logback.rollingpolicy.max-size" defaultValue="10MB"/>
+
+    <!-- 日志文件的总大小上限，超出会自动删除旧文件 -->
+    <springProperty name="LOG_FILE_TOTAL_SIZE_CAP" source="logging.logback.rollingpolicy.total-size-cap"
+                    defaultValue="5GB"/>
+
+    <!-- 启动时清理 -->
+    <springProperty name="LOG_FILE_CLEAN_HISTORY_ON_START" source="logging.logback.rollingpolicy.clean-history-on-start"
+                    defaultValue="true"/>
+
+    <!-- 日志输出方式 STDOUT/FILE -->
+    <springProperty name="LOG_OUTPUT" source="logging.output" defaultValue="STDOUT"/>
+
+    <!-- 是否启用access日志 -->
+    <springProperty name="LOG_ACCESS_ENABLED" source="logging.access.enabled" defaultValue="true"/>
+
+    <!-- timestamp 的 timezone配置 -->
+    <springProperty name="LOG_TIMESTAMP_TIME_ZONE" source="travis.application.web.time-zone"
+                    defaultValue="Asia/Shanghai"/>
+
+    <!--
+     日志格式：
+         %d：输出日志时间点的日期或时间，默认格式为ISO8601，也可以在其后指定格式，比如：%d{yyyy MMM dd HH:mm:ss,SSS}
+         %p：等价于%level/%-5level，日志级别，即TRACE，DEBUG，INFO，WARN，ERROR
+         %m：等价于%msg，日志消息内容
+         %c：等价于%logger，输出所属的类目，通常就是所在类的全名,生产环境应限制长度，如 %logger{36}
+         %t：等价于%thread，输出产生该日志事件的线程名
+         %n：换行符，跨平台安全
+         %L：等价于%line，源码行号，性能开销大，仅建议本地 dev 使用
+         %X{key}：等价于%mdc{key}，获取 MDC 中的上下文变量（如 traceId、requestId）
+     -->
+    <springProperty name="LOG_PATTERN_STDOUT_DEV" source="logging.pattern.console"
+                    defaultValue="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%level) %clr(%replace(%X{request_id}){'^(.+)$',' [$1]'}){yellow} %clr([%thread]){magenta} %clr(%logger{36}:%line){cyan} - %msg%n%wEx"/>
+
+    <!-- 日志自定义字段 -->
+    <property name="LOG_CUSTOM_FIELDS"
+              value='{"service":"${SERVICE_NAME}","service_instance":"${HOSTNAME}-${SERVER_PORT}"}'/>
+</included>

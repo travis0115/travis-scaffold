@@ -1,0 +1,11 @@
+#配置项参考
+spring:
+  cache:
+    type: redis
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      database: 0
+      client-name: travis-monolith
+      timeout: 3000ms

@@ -1,0 +1,2 @@
+com.travis.infrastructure.framework.redis.config.TravisRedisAutoConfiguration
+com.travis.infrastructure.framework.redis.config.TravisCacheAutoConfiguration

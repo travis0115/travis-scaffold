@@ -1,0 +1,2 @@
+#以该方式提供给 logstash-logback-encoder 实现arguments脱敏
+com.travis.infrastructure.framework.desensitize.core.jackson.modules.DesensitizeJacksonModule

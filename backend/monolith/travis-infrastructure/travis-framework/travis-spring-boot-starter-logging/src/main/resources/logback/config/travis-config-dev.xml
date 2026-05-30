@@ -1,0 +1,16 @@
+<included>
+    <!-- 彩色输出 -->
+    <conversionRule conversionWord="clr" class="org.springframework.boot.logging.logback.ColorConverter"/>
+    <!-- 缩进优化，增强可读性 -->
+    <conversionRule conversionWord="wEx"
+                    class="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter"/>
+    <!-- 控制台输出 -->
+    <appender name="APPENDER_STDOUT_DEV" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN_STDOUT_DEV}</pattern>
+        </encoder>
+    </appender>
+    <root level="DEBUG">
+        <appender-ref ref="APPENDER_STDOUT_DEV"/>
+    </root>
+</included>

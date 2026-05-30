@@ -1,0 +1,54 @@
+{
+  "properties": [
+    {
+      "name": "mybatis-plus.global-config.db-config.table-prefix",
+      "type": "java.lang.String",
+      "description": "表名前缀，全局配置后所有实体类对应的表名将自动添加该前缀。"
+    },
+    {
+      "name": "mybatis-plus.global-config.db-config.id-type",
+      "type": "com.baomidou.mybatisplus.annotation.IdType",
+      "description": "全局默认主键类型。"
+    },
+    {
+      "name": "mybatis-plus.global-config.db-config.logic-delete-field",
+      "type": "java.lang.String",
+      "description": "全局逻辑删除实体字段名。"
+    },
+    {
+      "name": "mybatis-plus.global-config.db-config.logic-delete-value",
+      "type": "java.lang.String",
+      "description": "逻辑已删除值（全局）。"
+    },
+    {
+      "name": "mybatis-plus.global-config.db-config.logic-not-delete-value",
+      "type": "java.lang.String",
+      "description": "逻辑未删除值（全局）。"
+    },
+    {
+      "name": "mybatis-plus.mapper-locations",
+      "type": "java.lang.String",
+      "description": "Mapper XML 文件的位置，支持 Ant 风格路径匹配。"
+    },
+    {
+      "name": "mybatis-plus.type-aliases-package",
+      "type": "java.lang.String",
+      "description": "别名包扫描路径，该包下的实体类将自动注册别名。"
+    },
+    {
+      "name": "mybatis-plus.configuration.map-underscore-to-camel-case",
+      "type": "java.lang.Boolean",
+      "description": "是否开启驼峰命名自动映射（默认 true）。"
+    },
+    {
+      "name": "mybatis-plus.configuration.log-impl",
+      "type": "java.lang.String",
+      "description": "SQL 日志输出实现类，例如 org.apache.ibatis.logging.stdout.StdOutImpl。"
+    },
+    {
+      "name": "mybatis-plus.global-config.banner",
+      "type": "java.lang.Boolean",
+      "description": "是否打印 MyBatis-Plus 启动 Banner（默认 true）。"
+    }
+  ]
+}

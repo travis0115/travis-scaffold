@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="logback/property/logback-property.xml"/>
+
+    <contextName>${SERVICE_NAME}</contextName>
+
+    <!-- *************************************************************** -->
+    <!-- * * * * * * * * * * * * * * 开发环境 * * * * * * * * * * * * * * -->
+    <!-- *************************************************************** -->
+    <springProfile name="dev">
+        <!-- 引入预定义配置 -->
+        <include resource="logback/config/travis-config-dev.xml"/>
+    </springProfile>
+
+    <!-- *************************************************************** -->
+    <!-- * * * * * * * * * * * * * * 生产环境 * * * * * * * * * * * * * * -->
+    <!-- *************************************************************** -->
+    <springProfile name="prod">
+        <!-- 引入预定义配置 -->
+        <include resource="logback/config/travis-config-prod.xml"/>
+    </springProfile>
+</configuration>

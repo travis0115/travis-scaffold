@@ -1,0 +1,63 @@
+{
+  "properties": [
+    {
+      "name": "logging.file.async.discarding-threshold",
+      "type": "java.lang.String",
+      "description": "Description for logging.file.async.discarding-threshold."
+    },
+    {
+      "name": "logging.file.async.queue-size",
+      "type": "java.lang.String",
+      "description": "Description for logging.file.async.queue-size."
+    },
+    {
+      "name": "logging.file.async.never-block",
+      "type": "java.lang.String",
+      "description": "Description for logging.file.async.never-block.",
+      "values": [
+        {
+          "value": "true"
+        },
+        {
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "name": "logging.output",
+      "type": "java.lang.String",
+      "description": "Description for logging.output.",
+      "values": [
+        {
+          "value": "stdout",
+          "description": "Log to standard output."
+        },
+        {
+          "value": "STDOUT",
+          "description": "Log to standard output."
+        },
+        {
+          "value": "file",
+          "description": "Log to file."
+        },
+        {
+          "value": "FILE",
+          "description": "Log to file."
+        }
+      ]
+    },
+    {
+      "name": "logging.access.enabled",
+      "type": "java.lang.String",
+      "description": "Description for logging.access.enabled.",
+      "values": [
+        {
+          "value": true
+        },
+        {
+          "value": false
+        }
+      ]
+    }
+  ]
+}

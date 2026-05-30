@@ -1,0 +1,10 @@
+#配置项参考
+spring:
+  jackson:
+    locale: ${spring.web.locale:zh_CN}
+    time-zone: Asia/Shanghai
+    date-format: yyyy-MM-dd HH:mm:ss
+    serialization:
+      indent-output: true #格式化输出
+    deserialization:
+      fail_on_unknown_properties: false  #若存在无法匹配的属性抛出异常
