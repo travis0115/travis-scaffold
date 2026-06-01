@@ -10,7 +10,7 @@ const menus: any[] = [
     path: '/contact',
     children: [
       { path: '/contact/email', children: [] },
-      { path: '/contact/phone', children: [] },
+      { path: '/contact/mobile', children: [] },
     ],
   },
   {

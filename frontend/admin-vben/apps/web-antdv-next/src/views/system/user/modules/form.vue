@@ -6,7 +6,13 @@ import { computed, nextTick, ref } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 
 import { useVbenForm } from '#/adapter/form';
-import { createUser, updateUser } from '#/api';
+import {
+  assignUserRoles,
+  createUser,
+  getDeptTree,
+  getUserDetail,
+  updateUser,
+} from '#/api';
 import { $t } from '#/locales';
 
 import { useFormSchema } from '../data';
@@ -14,9 +20,10 @@ import { useFormSchema } from '../data';
 const emits = defineEmits(['success']);
 
 const formData = ref<SystemUserApi.SysUser>();
+const deptTreeData = ref<any[]>([]);
 
 const [Form, formApi] = useVbenForm({
-  schema: useFormSchema(),
+  schema: useFormSchema(deptTreeData.value),
   showDefaultActions: false,
 });
 
@@ -27,14 +34,32 @@ const [Drawer, drawerApi] = useVbenDrawer({
     if (!valid) return;
     const values = await formApi.getValues();
     drawerApi.lock();
-    (id.value ? updateUser(id.value, values) : createUser(values))
-      .then(() => {
-        emits('success');
-        drawerApi.close();
-      })
-      .catch(() => {
-        drawerApi.unlock();
-      });
+
+    try {
+      // 分离角色ID，不在用户CRUD接口中传递
+      const roleIds = values.roleIds;
+      const userData = { ...values };
+      delete (userData as any).roleIds;
+
+      if (id.value) {
+        // 编辑：更新用户信息 + 分配角色（不允许修改密码）
+        delete (userData as any).password;
+        await updateUser(id.value, userData);
+        if (roleIds !== undefined) {
+          await assignUserRoles({ userId: id.value, roleIds });
+        }
+      } else {
+        // 新增：先创建用户获取ID，再分配角色
+        const newUserId = await createUser(userData) as unknown as number;
+        if (roleIds !== undefined && roleIds.length > 0) {
+          await assignUserRoles({ userId: newUserId, roleIds });
+        }
+      }
+      emits('success');
+      drawerApi.close();
+    } catch {
+      drawerApi.unlock();
+    }
   },
 
   async onOpenChange(isOpen) {
@@ -49,9 +74,27 @@ const [Drawer, drawerApi] = useVbenDrawer({
         id.value = undefined;
       }
 
+      // 预加载部门树数据，确保 TreeSelect 能正确显示名称
+      try {
+        deptTreeData.value = await getDeptTree();
+        // 更新表单 schema 中的 deptTreeData
+        formApi.updateSchema([
+          {
+            componentProps: {
+              treeData: deptTreeData.value,
+            },
+            fieldName: 'deptId',
+          },
+        ]);
+      } catch {
+        deptTreeData.value = [];
+      }
+
       await nextTick();
       if (data?.id) {
-        formApi.setValues(data);
+        // 编辑时加载完整用户详情（含 roleIds）
+        const detail = await getUserDetail(data.id);
+        formApi.setValues(detail);
       }
     }
   },

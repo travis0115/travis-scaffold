@@ -1,5 +1,8 @@
 package com.travis.monolith.system.internal.model.req;
 
+import com.travis.infrastructure.common.validation.annotation.Mobile;
+import com.travis.infrastructure.common.validation.annotation.Username;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
@@ -10,22 +13,47 @@ import lombok.Data;
  */
 @Data
 public class SysUserReq {
-    /** 用户名 */
+    /**
+     * 用户名
+     */
     @NotBlank(message = "用户名不能为空")
+    @Username
     private String username;
-    /** 密码（明文，服务端使用 BCrypt 加密后存储） */
+
+    /**
+     * 密码（明文，服务端使用 BCrypt 加密后存储）
+     */
     private String password;
-    /** 昵称 */
+
+    /**
+     * 昵称
+     */
     @NotBlank(message = "昵称不能为空")
     private String nickname;
-    /** 头像地址 */
+
+    /**
+     * 头像地址
+     */
     private String avatar;
-    /** 邮箱 */
+
+    /**
+     * 邮箱
+     */
+    @Email
     private String email;
-    /** 手机号 */
-    private String phone;
-    /** 所属部门ID */
+    /**
+     * 手机号
+     */
+    @Mobile
+    private String mobile;
+
+    /**
+     * 所属部门ID
+     */
     private Long deptId;
-    /** 状态（0-禁用 1-启用） */
+
+    /**
+     * 状态（0-禁用 1-启用）
+     */
     private Integer status;
 }

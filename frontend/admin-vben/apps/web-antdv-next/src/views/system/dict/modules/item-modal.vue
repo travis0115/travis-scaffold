@@ -6,7 +6,7 @@ import { ref } from 'vue';
 import { useVbenModal } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
 
-import { Button, message, Table } from 'antdv-next';
+import { App, Button, message, Table, Tag } from 'antdv-next';
 
 import { useVbenForm } from '#/adapter/form';
 import {
@@ -17,9 +17,11 @@ import {
 } from '#/api';
 import { $t } from '#/locales';
 
-import { useItemColumns, useItemFormSchema } from '../data';
+import { useItemFormSchema } from '../data';
 
 const emit = defineEmits(['success']);
+
+const { modal: antdModal } = App.useApp();
 
 const dictId = ref<number>();
 const loading = ref(false);
@@ -32,7 +34,41 @@ const [ItemForm, itemFormApi] = useVbenForm({
   layout: 'inline',
 });
 
-const columns = useItemColumns();
+// antdv Table 的列定义（使用 dataIndex 而非 field）
+const columns = [
+  {
+    title: $t('system.dict.item.label'),
+    dataIndex: 'label',
+    width: 150,
+  },
+  {
+    title: $t('system.dict.item.value'),
+    dataIndex: 'value',
+    width: 120,
+  },
+  {
+    title: $t('system.dict.item.sort'),
+    dataIndex: 'sort',
+    width: 80,
+  },
+  {
+    title: $t('system.dict.item.status'),
+    dataIndex: 'status',
+    width: 100,
+  },
+  {
+    title: $t('system.dict.item.remark'),
+    dataIndex: 'remark',
+    ellipsis: true,
+  },
+  {
+    title: $t('system.dict.operation'),
+    dataIndex: 'operation',
+    width: 150,
+    align: 'center' as const,
+    fixed: 'right' as const,
+  },
+];
 
 async function loadItems() {
   if (!dictId.value) return;
@@ -55,12 +91,18 @@ async function onEditItem(record: SystemDictApi.SysDictItem) {
 }
 
 async function onDeleteItem(record: SystemDictApi.SysDictItem) {
-  await deleteDictItem(record.id);
-  message.success(
-    $t('ui.actionMessage.deleteSuccess', [record.label]),
-  );
-  await loadItems();
-  emit('success');
+  antdModal.confirm({
+    title: $t('ui.actionTitle.delete', [record.label]),
+    content: `确定要删除字典数据项「${record.label}」吗？`,
+    async onOk() {
+      await deleteDictItem(record.id);
+      message.success(
+        $t('ui.actionMessage.deleteSuccess', [record.label]),
+      );
+      await loadItems();
+      emit('success');
+    },
+  });
 }
 
 async function onSaveItem() {
@@ -96,7 +138,6 @@ const [Modal, modalApi] = useVbenModal({
   },
 });
 </script>
-
 <template>
   <Modal
     :title="$t('system.dict.items')"
@@ -142,13 +183,23 @@ const [Modal, modalApi] = useVbenModal({
       size="small"
     >
       <template #bodyCell="{ column, record }">
-        <template v-if="column.field === 'operation'">
+        <template v-if="column.dataIndex === 'status'">
+          <Tag
+            :color="record.status === 1 ? 'success' : 'error'"
+          >
+            {{ record.status === 1 ? $t('common.enabled') : $t('common.disabled') }}
+          </Tag>
+        </template>
+        <template v-else-if="column.dataIndex === 'operation'">
           <Button type="link" size="small" @click="onEditItem(record)">
             {{ $t('common.edit') }}
           </Button>
           <Button type="link" danger size="small" @click="onDeleteItem(record)">
             {{ $t('common.delete') }}
           </Button>
+        </template>
+        <template v-else-if="column.dataIndex === 'remark'">
+          {{ record.remark || '-' }}
         </template>
       </template>
     </Table>

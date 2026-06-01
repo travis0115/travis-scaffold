@@ -19,9 +19,12 @@ import com.travis.monolith.system.internal.service.SysAuthService;
 import com.travis.monolith.system.internal.service.SysMenuService;
 import com.travis.monolith.system.internal.service.SysRoleService;
 import com.travis.monolith.system.internal.service.SysUserService;
+import com.travis.monolith.system.internal.util.IpUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -60,6 +63,7 @@ public class SysAuthServiceImpl implements SysAuthService {
      * 管理员登录：校验用户名密码、账号状态，通过后使用 Sa-Token 签发令牌
      */
     @Override
+    @Transactional
     public SysUserLoginResp login(SysUserLoginReq req) {
         // 显式查询密码字段（实体中 password 标记了 select=false，默认不返回）
         var user = userService.lambdaQuery()
@@ -84,6 +88,11 @@ public class SysAuthServiceImpl implements SysAuthService {
         StpUtil.login(user.getId());
         var token = StpUtil.getTokenValue();
 
+        // 更新最后登录时间和IP
+        user.setLastLoginTime(LocalDateTime.now());
+        user.setLastLoginIp(IpUtils.getClientIp());
+        userService.updateById(user);
+
         return SysUserLoginResp.builder()
                 .accessToken(token)
                 .refreshToken(token)
@@ -103,15 +112,19 @@ public class SysAuthServiceImpl implements SysAuthService {
 
         List<String> roleCodes = roleService.getRoleCodesByUserId(userId);
         List<String> permissions = getPermissionsByUserId(userId);
+        List<String> roleNames = roleService.getRoleNamesByUserId(userId);
 
         return UserInfoResp.builder()
                 .id(user.getId())
                 .username(user.getUsername())
-                .realName(user.getNickname())
+                .nickname(user.getNickname())
                 .avatar(user.getAvatar())
+                .email(user.getEmail())
+                .mobile(user.getMobile())
                 .roles(roleCodes)
+                .roleNames(roleNames)
                 .permissions(permissions)
-                .homePath("/dashboard")
+                .homePath("/")
                 .build();
     }
 

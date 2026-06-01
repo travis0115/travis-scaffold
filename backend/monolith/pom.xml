@@ -36,6 +36,7 @@
         <!-- Maven 相关 -->
         <java.version>25</java.version>
         <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
+        <mapstruct.version>1.7.0.Beta1</mapstruct.version>
         <flatten-maven-plugin.version>1.7.3</flatten-maven-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
@@ -122,6 +123,16 @@
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
+                        </path>
+                        <path>
+                            <groupId>org.mapstruct</groupId>
+                            <artifactId>mapstruct-processor</artifactId>
+                            <version>${mapstruct.version}</version>
+                        </path>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok-mapstruct-binding</artifactId>
+                            <version>0.2.0</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>

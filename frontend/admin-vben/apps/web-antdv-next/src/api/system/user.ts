@@ -10,7 +10,7 @@ export namespace SystemUserApi {
     nickname: string;
     avatar?: string;
     email?: string;
-    phone?: string;
+    mobile?: string;
     deptId?: number;
     deptName?: string;
     status: 0 | 1;
@@ -25,7 +25,7 @@ export namespace SystemUserApi {
  */
 async function getUserPage(params: Recordable<any>) {
   return requestClient.get<{ records: SystemUserApi.SysUser[]; total: number }>(
-    '/api/system/user/page',
+    '/api/admin/system/user/page',
     { params },
   );
 }
@@ -34,35 +34,48 @@ async function getUserPage(params: Recordable<any>) {
  * 获取用户详情
  */
 async function getUserDetail(id: number) {
-  return requestClient.get<SystemUserApi.SysUser>(`/api/system/user/${id}`);
+  return requestClient.get<SystemUserApi.SysUser>(`/api/admin/system/user/${id}`);
 }
 
 /**
  * 新增用户
  */
 async function createUser(data: Partial<SystemUserApi.SysUser>) {
-  return requestClient.post('/api/system/user', data);
+  return requestClient.post('/api/admin/system/user', data);
 }
 
 /**
  * 更新用户
  */
 async function updateUser(id: number, data: Partial<SystemUserApi.SysUser>) {
-  return requestClient.put(`/api/system/user/${id}`, data);
+  return requestClient.put(`/api/admin/system/user/${id}`, data);
 }
 
 /**
  * 删除用户
  */
 async function deleteUser(id: number) {
-  return requestClient.delete(`/api/system/user/${id}`);
+  return requestClient.delete(`/api/admin/system/user/${id}`);
 }
 
 /**
  * 为用户分配角色
  */
 async function assignUserRoles(data: { roleIds: number[]; userId: number }) {
-  return requestClient.post('/api/system/user/roles', data);
+  return requestClient.post('/api/admin/system/user/roles', data);
+}
+
+/**
+ * 重置用户密码（可选指定新密码，不指定则自动生成随机密码）
+ * @returns 最终使用的密码（明文）
+ */
+async function resetUserPassword(id: number, newPassword?: string) {
+  return requestClient.put<string>(
+    `/api/admin/system/user/${id}/reset-password`,
+    {
+      newPassword: newPassword || undefined,
+    },
+  );
 }
 
 export {
@@ -71,5 +84,6 @@ export {
   deleteUser,
   getUserDetail,
   getUserPage,
+  resetUserPassword,
   updateUser,
 };

@@ -29,12 +29,14 @@ const tabsValue = defineModel<string>('modelValue');
     <div class="flex size-full">
       <Card class="w-1/6 flex-none">
         <div class="mt-4 flex-col-center h-40 gap-4">
-          <VbenAvatar
-            :src="userInfo?.avatar ?? preferences.app.defaultAvatar"
-            class="size-20"
-          />
+          <slot name="avatar">
+            <VbenAvatar
+              :src="userInfo?.avatar && userInfo.avatar.trim() !== '' ? userInfo.avatar : preferences.app.defaultAvatar"
+              class="size-20"
+            />
+          </slot>
           <span class="text-lg font-semibold">
-            {{ userInfo?.realName ?? '' }}
+            {{ userInfo?.nickname ?? '' }}
           </span>
           <span class="text-sm text-foreground/80">
             {{ userInfo?.username ?? '' }}

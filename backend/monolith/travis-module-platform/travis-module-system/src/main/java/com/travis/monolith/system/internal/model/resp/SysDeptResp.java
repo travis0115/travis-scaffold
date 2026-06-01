@@ -20,22 +20,40 @@ import java.util.List;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SysDeptResp {
-    /** 部门ID */
+    /**
+     * 部门ID
+     */
     private Long id;
-    /** 父部门ID */
+    /**
+     * 父部门ID
+     */
     private Long parentId;
-    /** 部门名称 */
+    /**
+     * 部门名称
+     */
     private String deptName;
-    /** 排序号 */
+    /**
+     * 排序号
+     */
     private Integer sort;
-    /** 负责人 */
+    /**
+     * 负责人
+     */
     private String leader;
-    /** 联系电话 */
-    private String phone;
-    /** 状态（0-禁用 1-启用） */
+    /**
+     * 联系电话
+     */
+    private String mobile;
+    /**
+     * 状态（0-禁用 1-启用）
+     */
     private Integer status;
-    /** 创建时间 */
+    /**
+     * 创建时间
+     */
     private LocalDateTime createTime;
-    /** 子部门列表 */
+    /**
+     * 子部门列表
+     */
     private List<SysDeptResp> children;
 }

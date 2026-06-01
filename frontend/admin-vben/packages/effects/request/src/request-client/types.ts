@@ -7,6 +7,20 @@ import type {
 
 type ExtendOptions<T = any> = {
   /**
+   * 错误消息弹窗方式
+   * - `'modal'` 或不传：使用 Modal.error 模态弹窗（默认）
+   * - `'message'`：使用 message 轻提示
+   * - `false`：不弹窗，由调用方自行处理
+   */
+  errorMessageType?: 'message' | 'modal' | false;
+  /**
+   * 请求 loading 模式
+   * - `true` 或不传：使用默认 fullscreen loading（与页面切换 loading 一致）
+   * - `'nprogress'`：使用顶部进度条
+   * - `false`：不显示 loading
+   */
+  loading?: 'nprogress' | boolean;
+  /**
    * 参数序列化方式。预置的有
    * - brackets: ids[]=1&ids[]=2&ids[]=3
    * - comma: ids=1,2,3

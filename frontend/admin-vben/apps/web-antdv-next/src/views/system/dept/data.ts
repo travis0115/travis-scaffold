@@ -43,8 +43,8 @@ export function useSchema(): VbenFormSchema[] {
     },
     {
       component: 'Input',
-      fieldName: 'phone',
-      label: $t('system.dept.phone'),
+      fieldName: 'mobile',
+      label: $t('system.dept.mobile'),
     },
     {
       component: 'InputNumber',
@@ -87,8 +87,8 @@ export function useColumns(
       width: 120,
     },
     {
-      field: 'phone',
-      title: $t('system.dept.phone'),
+      field: 'mobile',
+      title: $t('system.dept.mobile'),
       width: 130,
     },
     {

@@ -4,6 +4,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import com.travis.infrastructure.framework.jackson.core.util.JsonUtils;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration;
 import org.springframework.boot.jackson.autoconfigure.JacksonProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -11,22 +12,24 @@ import tools.jackson.databind.JacksonModule;
 import tools.jackson.databind.ext.javatime.deser.LocalDateTimeDeserializer;
 import tools.jackson.databind.ext.javatime.ser.LocalDateTimeSerializer;
 import tools.jackson.databind.module.SimpleModule;
+import tools.jackson.databind.ser.std.ToStringSerializer;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
  * Jackson自动配置类
+ *
  * @author travis
  */
-@AutoConfiguration(after = JacksonProperties.class)
+@AutoConfiguration(after = JacksonAutoConfiguration.class)
 @EnableConfigurationProperties({JacksonProperties.class})
 @Import(JsonUtils.class)
 public class TravisJacksonAutoConfiguration {
 
     /**
      * 创建自定义Java8时间序列化解析模块
-     * 该模块用于处理LocalDateTime类型的JSON序列化和反序列化，支持通过全局配置的date-format进行格式化
+     * 该模块用于处理LocalDateTime类型的JSON序列化和反序列化,支持通过全局配置的date-format进行格式化
      */
     @Bean
     public JacksonModule javaTimeModule(JacksonProperties jacksonProperties) {
@@ -38,6 +41,18 @@ public class TravisJacksonAutoConfiguration {
                             new LocalDateTimeDeserializer(DateTimeFormatter.ofPattern(jacksonProperties.getDateFormat())));
         }
         return javaTimeModule;
+    }
+
+    /**
+     * 创建Long类型转String的序列化模块
+     * 解决前端JavaScript大整数精度丢失问题（JS安全整数范围为2^53-1）
+     */
+    @Bean
+    public JacksonModule longToStringModule() {
+        var longToStringModule = new SimpleModule();
+        longToStringModule.addSerializer(Long.class, ToStringSerializer.instance);
+        longToStringModule.addSerializer(long.class, ToStringSerializer.instance);
+        return longToStringModule;
     }
 
 

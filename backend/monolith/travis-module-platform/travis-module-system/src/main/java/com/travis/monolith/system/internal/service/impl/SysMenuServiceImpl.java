@@ -6,6 +6,7 @@ import com.travis.infrastructure.framework.jackson.core.util.JsonUtils;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.web.core.exception.IErrorCode;
+import com.travis.monolith.system.internal.converter.SystemConverter;
 import com.travis.monolith.system.internal.mapper.SysMenuMapper;
 import com.travis.monolith.system.internal.mapper.SysRoleMenuMapper;
 import com.travis.monolith.system.internal.model.entity.SysMenu;
@@ -15,7 +16,10 @@ import com.travis.monolith.system.internal.model.resp.SysMenuResp;
 import com.travis.monolith.system.internal.model.resp.VbenMenuResp;
 import com.travis.monolith.system.internal.service.SysMenuService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.core.type.TypeReference;
 
 import java.util.*;
@@ -34,15 +38,19 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
      * 角色-菜单关联 Mapper
      */
     private final SysRoleMenuMapper roleMenuMapper;
+    /** 对象转换器 */
+    private final SystemConverter converter;
 
     /**
      * 获取菜单树形列表（管理后台使用），按排序号升序排列
      */
     @Override
+    @Cacheable(value = "system:menu:tree", key = "'all'")
     public List<SysMenuResp> getMenuTree() {
         List<SysMenu> allMenus = list(new LambdaQueryWrapper<SysMenu>()
                 .orderByAsc(SysMenu::getSort));
-        List<SysMenuResp> voList = allMenus.stream().map(this::toVO).collect(Collectors.toList());
+        List<SysMenuResp> voList = converter.toMenuRespList(allMenus);
+        voList.forEach(v -> v.setChildren(new ArrayList<>()));
         return buildTree(voList);
     }
 
@@ -55,25 +63,18 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         if (menu == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
-        return toVO(menu);
+        SysMenuResp resp = converter.toMenuResp(menu);
+        resp.setChildren(new ArrayList<>());
+        return resp;
     }
 
     /**
      * 新增菜单
      */
     @Override
+    @CacheEvict(value = "system:menu:tree", key = "'all'")
     public void addMenu(SysMenuReq req) {
-        SysMenu menu = new SysMenu();
-        menu.setParentId(req.getParentId());
-        menu.setMenuName(req.getMenuName());
-        menu.setPath(req.getPath());
-        menu.setComponent(req.getComponent());
-        menu.setPerms(req.getPerms());
-        menu.setMenuType(req.getMenuType());
-        menu.setIcon(req.getIcon());
-        menu.setSort(req.getSort());
-        menu.setStatus(req.getStatus());
-        menu.setMeta(req.getMeta());
+        SysMenu menu = converter.toMenuEntity(req);
         save(menu);
     }
 
@@ -86,16 +87,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         if (menu == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
-        menu.setParentId(req.getParentId());
-        menu.setMenuName(req.getMenuName());
-        menu.setPath(req.getPath());
-        menu.setComponent(req.getComponent());
-        menu.setPerms(req.getPerms());
-        menu.setMenuType(req.getMenuType());
-        menu.setIcon(req.getIcon());
-        menu.setSort(req.getSort());
-        menu.setStatus(req.getStatus());
-        menu.setMeta(req.getMeta());
+        converter.updateMenuFromReq(req, menu);
         updateById(menu);
     }
 
@@ -103,6 +95,8 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
      * 删除菜单，存在子菜单时禁止删除
      */
     @Override
+    @Transactional
+    @CacheEvict(value = "system:menu:tree", key = "'all'")
     public void deleteMenu(Long id) {
         long childCount = count(new LambdaQueryWrapper<SysMenu>()
                 .eq(SysMenu::getParentId, id));
@@ -269,30 +263,6 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
             }
         }
         return sb.toString();
-    }
-
-    /**
-     * 实体转视图对象
-     *
-     * @param menu 菜单实体
-     * @return 菜单视图对象
-     */
-    private SysMenuResp toVO(SysMenu menu) {
-        return SysMenuResp.builder()
-                .id(menu.getId())
-                .parentId(menu.getParentId())
-                .menuName(menu.getMenuName())
-                .path(menu.getPath())
-                .component(menu.getComponent())
-                .perms(menu.getPerms())
-                .menuType(menu.getMenuType())
-                .icon(menu.getIcon())
-                .sort(menu.getSort())
-                .status(menu.getStatus())
-                .createTime(menu.getCreateTime())
-                .meta(menu.getMeta())
-                .children(new ArrayList<>())
-                .build();
     }
 
     /**

@@ -19,34 +19,68 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SysUserResp {
-    /** 用户ID */
+    /**
+     * 用户ID
+     */
     private Long id;
-    /** 用户名 */
+    /**
+     * 用户名
+     */
     private String username;
-    /** 昵称 */
+    /**
+     * 昵称
+     */
     private String nickname;
-    /** 头像地址 */
+    /**
+     * 头像地址
+     */
     private String avatar;
-    /** 邮箱 */
+    /**
+     * 邮箱
+     */
     private String email;
-    /** 手机号 */
-    private String phone;
-    /** 所属部门ID */
+    /**
+     * 手机号
+     */
+    private String mobile;
+    /**
+     * 所属部门ID
+     */
     private Long deptId;
-    /** 所属部门名称（关联查询） */
+    /**
+     * 所属部门名称（关联查询）
+     */
     private String deptName;
-    /** 可用余额 */
+    /**
+     * 可用余额
+     */
     private BigDecimal availableBalance;
-    /** 状态（0-禁用 1-启用） */
+    /**
+     * 状态（0-禁用 1-启用）
+     */
     private Integer status;
-    /** 最后登录时间 */
+    /**
+     * 最后登录时间
+     */
     private LocalDateTime lastLoginTime;
-    /** 最后登录IP */
+    /**
+     * 最后登录IP
+     */
     private String lastLoginIp;
-    /** 创建时间 */
+    /**
+     * 最后登录地点（IP解析）
+     */
+    private String lastLoginLocation;
+    /**
+     * 创建时间
+     */
     private LocalDateTime createTime;
-    /** 已分配的角色ID列表 */
+    /**
+     * 已分配的角色ID列表
+     */
     private List<Long> roleIds;
-    /** 已分配的角色名称列表 */
+    /**
+     * 已分配的角色名称列表
+     */
     private List<String> roleNames;
 }

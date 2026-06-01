@@ -3,6 +3,7 @@ package com.travis.monolith.system.internal.model.req;
 import com.travis.infrastructure.framework.web.core.model.PageRequest;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -13,28 +14,52 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 public class SysMenuReq {
-    /** 父菜单ID(0 表示顶级菜单) */
+    /**
+     * 父菜单ID(0 表示顶级菜单)
+     */
     @NotNull(message = "父菜单ID不能为空")
     private Long parentId;
-    /** 菜单名称 */
+    /**
+     * 菜单名称
+     */
     @NotBlank(message = "菜单名称不能为空")
+    @Size(max = 50, message = "菜单名称长度不能超过50个字符")
     private String menuName;
-    /** 路由路径 */
+    /**
+     * 路由路径
+     */
+    @Size(max = 200, message = "路由路径长度不能超过200个字符")
     private String path;
-    /** 前端组件路径 */
+    /**
+     * 前端组件路径
+     */
+    @Size(max = 200, message = "组件路径长度不能超过200个字符")
     private String component;
-    /** 权限标识（如 system:user:add） */
+    /**
+     * 权限标识（如 system:user:add）
+     */
+    @Size(max = 100, message = "权限标识长度不能超过100个字符")
     private String perms;
-    /** 菜单类型（0-目录 1-菜单 2-按钮） */
+    /**
+     * 菜单类型（0-目录 1-菜单 2-按钮）
+     */
     @NotNull(message = "菜单类型不能为空")
     private Integer menuType;
-    /** 图标 */
+    /**
+     * 图标
+     */
     private String icon;
-    /** 排序号 */
+    /**
+     * 排序号
+     */
     private Integer sort;
-    /** 状态（0-禁用 1-启用） */
+    /**
+     * 状态（0-禁用 1-启用）
+     */
     private Integer status;
-    /** 路由元信息JSON（Vben Admin RouteMeta 扩展字段） */
+    /**
+     * 路由元信息JSON（Vben Admin RouteMeta 扩展字段）
+     */
     private String meta;
 
     /**
@@ -44,20 +69,32 @@ public class SysMenuReq {
      */
     @Data
     public static class SysDictItemReq {
-        /** 所属字典类型ID */
+        /**
+         * 所属字典类型ID
+         */
         @NotNull(message = "字典类型ID不能为空")
         private Long dictId;
-        /** 字典项标签（显示文本） */
+        /**
+         * 字典项标签（显示文本）
+         */
         @NotBlank(message = "字典标签不能为空")
         private String label;
-        /** 字典项值（实际存储值） */
+        /**
+         * 字典项值（实际存储值）
+         */
         @NotBlank(message = "字典值不能为空")
         private String value;
-        /** 排序号 */
+        /**
+         * 排序号
+         */
         private Integer sort;
-        /** 状态（0-禁用 1-启用） */
+        /**
+         * 状态（0-禁用 1-启用）
+         */
         private Integer status;
-        /** 备注 */
+        /**
+         * 备注
+         */
         private String remark;
     }
 
@@ -68,15 +105,23 @@ public class SysMenuReq {
      */
     @Data
     public static class SysDictReq {
-        /** 字典名称 */
+        /**
+         * 字典名称
+         */
         @NotBlank(message = "字典名称不能为空")
         private String dictName;
-        /** 字典类型编码（唯一标识） */
+        /**
+         * 字典类型编码（唯一标识）
+         */
         @NotBlank(message = "字典类型编码不能为空")
         private String dictType;
-        /** 状态（0-禁用 1-启用） */
+        /**
+         * 状态（0-禁用 1-启用）
+         */
         private Integer status;
-        /** 备注 */
+        /**
+         * 备注
+         */
         private String remark;
     }
 
@@ -88,9 +133,13 @@ public class SysMenuReq {
     @EqualsAndHashCode(callSuper = true)
     @Data
     public static class SysDeptPageReq extends PageRequest {
-        /** 部门名称（模糊匹配） */
+        /**
+         * 部门名称（模糊匹配）
+         */
         private String deptName;
-        /** 状态（0-禁用 1-启用） */
+        /**
+         * 状态（0-禁用 1-启用）
+         */
         private Integer status;
     }
 
@@ -101,19 +150,31 @@ public class SysMenuReq {
      */
     @Data
     public static class SysDeptReq {
-        /** 父部门ID（0 表示顶级部门） */
+        /**
+         * 父部门ID（0 表示顶级部门）
+         */
         @NotNull(message = "父部门ID不能为空")
         private Long parentId;
-        /** 部门名称 */
+        /**
+         * 部门名称
+         */
         @NotBlank(message = "部门名称不能为空")
         private String deptName;
-        /** 排序号 */
+        /**
+         * 排序号
+         */
         private Integer sort;
-        /** 负责人 */
+        /**
+         * 负责人
+         */
         private String leader;
-        /** 联系电话 */
-        private String phone;
-        /** 状态（0-禁用 1-启用） */
+        /**
+         * 联系电话
+         */
+        private String mobile;
+        /**
+         * 状态（0-禁用 1-启用）
+         */
         private Integer status;
     }
 }

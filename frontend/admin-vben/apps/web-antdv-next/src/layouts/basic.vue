@@ -90,13 +90,14 @@ const menus = computed(() => [
     handler: () => {
       router.push({ name: 'Profile' });
     },
-    icon: 'lucide:user',
     text: $t('page.auth.profile'),
   },
 ]);
 
 const avatar = computed(() => {
-  return userStore.userInfo?.avatar ?? preferences.app.defaultAvatar;
+  return userStore.userInfo?.avatar && userStore.userInfo.avatar.trim() !== ''
+    ? userStore.userInfo.avatar
+    : preferences.app.defaultAvatar;
 });
 
 async function handleLogout() {
@@ -177,7 +178,7 @@ watch(
         },
         content:
           content ||
-          `${userStore.userInfo?.username} - ${userStore.userInfo?.realName}`,
+          `${userStore.userInfo?.username} - ${userStore.userInfo?.nickname}`,
       });
     } else {
       destroyWatermark();
@@ -195,8 +196,8 @@ watch(
       <UserDropdown
         :avatar
         :menus
-        :text="userStore.userInfo?.realName"
-        description="ann.vben@gmail.com"
+        :text="userStore.userInfo?.nickname"
+        :description="userStore.userInfo?.username"
         tag-text="Pro"
         @logout="handleLogout"
         @clear-preferences-and-logout="handleLogout"

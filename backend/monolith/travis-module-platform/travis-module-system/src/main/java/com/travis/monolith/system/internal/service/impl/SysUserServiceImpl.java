@@ -1,5 +1,7 @@
 package com.travis.monolith.system.internal.service.impl;
 
+import cn.dev33.satoken.stp.StpUtil;
+import cn.hutool.crypto.digest.BCrypt;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -7,18 +9,22 @@ import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.web.core.exception.IErrorCode;
 import com.travis.infrastructure.framework.web.core.model.PageResult;
+import com.travis.monolith.system.internal.converter.SystemConverter;
+import com.travis.monolith.system.internal.exception.SystemErrorCode;
 import com.travis.monolith.system.internal.mapper.SysDeptMapper;
 import com.travis.monolith.system.internal.mapper.SysUserMapper;
 import com.travis.monolith.system.internal.mapper.SysUserRoleMapper;
 import com.travis.monolith.system.internal.model.entity.SysDept;
 import com.travis.monolith.system.internal.model.entity.SysUser;
 import com.travis.monolith.system.internal.model.entity.SysUserRole;
+import com.travis.monolith.system.internal.model.req.ChangePasswordReq;
 import com.travis.monolith.system.internal.model.req.SysUserReq;
 import com.travis.monolith.system.internal.model.req.SysUserRoleReq;
+import com.travis.monolith.system.internal.model.req.UserProfileReq;
 import com.travis.monolith.system.internal.model.resp.SysUserResp;
 import com.travis.monolith.system.internal.service.SysRoleService;
 import com.travis.monolith.system.internal.service.SysUserService;
-import cn.hutool.crypto.digest.BCrypt;
+import com.travis.monolith.system.internal.util.IpRegionUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,15 +47,19 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     private final SysDeptMapper deptMapper;
     /** 角色管理服务 */
     private final SysRoleService roleService;
+    /** IP地址解析工具 */
+    private final IpRegionUtils ipRegionUtils;
+    /** 对象转换器 */
+    private final SystemConverter converter;
 
     /**
      * 分页查询用户列表，支持按用户名、手机号、状态、部门筛选
      */
     @Override
-    public PageResult<SysUserResp> getUserPage(String username, String phone, Integer status, Long deptId, Integer pageNum, Integer pageSize) {
+    public PageResult<SysUserResp> getUserPage(String username, String mobile, Integer status, Long deptId, Integer pageNum, Integer pageSize) {
         LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<SysUser>()
                 .like(username != null, SysUser::getUsername, username)
-                .like(phone != null, SysUser::getPhone, phone)
+                .like(mobile != null, SysUser::getMobile, mobile)
                 .eq(status != null, SysUser::getStatus, status)
                 .eq(deptId != null, SysUser::getDeptId, deptId)
                 .orderByDesc(SysUser::getCreateTime);
@@ -70,7 +80,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         SysUserResp vo = toVO(user);
         List<Long> roleIds = roleService.getRoleIdsByUserId(id);
         vo.setRoleIds(roleIds);
-        List<String> roleNames = roleService.listByIds(roleIds).stream()
+        List<String> roleNames = roleIds.isEmpty() ? List.of() : roleService.listByIds(roleIds).stream()
                 .map(r -> r.getRoleName()).collect(Collectors.toList());
         vo.setRoleNames(roleNames);
         return vo;
@@ -80,7 +90,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      * 新增用户，密码使用 BCrypt 加密存储
      */
     @Override
-    public void addUser(SysUserReq req) {
+    @Transactional
+    public Long addUser(SysUserReq req) {
         // 检查用户名唯一性
         long count = count(new LambdaQueryWrapper<SysUser>().eq(SysUser::getUsername, req.getUsername()));
         if (count > 0) {
@@ -89,22 +100,17 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                 @Override public String getMsg() { return "用户名已存在"; }
             }, null);
         }
-        SysUser user = new SysUser();
-        user.setUsername(req.getUsername());
+        SysUser user = converter.toUserEntity(req);
         user.setPassword(encodePassword(req.getPassword()));
-        user.setNickname(req.getNickname());
-        user.setAvatar(req.getAvatar());
-        user.setEmail(req.getEmail());
-        user.setPhone(req.getPhone());
-        user.setDeptId(req.getDeptId());
-        user.setStatus(req.getStatus());
         save(user);
+        return user.getId();
     }
 
     /**
      * 更新用户信息，密码为空时保持原密码不变
      */
     @Override
+    @Transactional
     public void updateUser(Long id, SysUserReq req) {
         SysUser user = getById(id);
         if (user == null) {
@@ -120,16 +126,10 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                 @Override public String getMsg() { return "用户名已存在"; }
             }, null);
         }
-        user.setUsername(req.getUsername());
+        converter.updateUserFromReq(req, user);
         if (req.getPassword() != null && !req.getPassword().isBlank()) {
             user.setPassword(encodePassword(req.getPassword()));
         }
-        user.setNickname(req.getNickname());
-        user.setAvatar(req.getAvatar());
-        user.setEmail(req.getEmail());
-        user.setPhone(req.getPhone());
-        user.setDeptId(req.getDeptId());
-        user.setStatus(req.getStatus());
         updateById(user);
     }
 
@@ -137,7 +137,11 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      * 删除用户
      */
     @Override
+    @Transactional
     public void deleteUser(Long id) {
+        // 删除用户-角色关联
+        userRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>()
+                .eq(SysUserRole::getUserId, id));
         removeById(id);
     }
 
@@ -171,7 +175,88 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     /**
-     * 密码加密，未设置密码时使用默认密码 123456
+     * 当前登录用户修改个人资料
+     */
+    @Override
+    public void updateProfile(UserProfileReq req) {
+        long userId = StpUtil.getLoginIdAsLong();
+        SysUser user = getById(userId);
+        if (user == null) {
+            throw new BizException(CommonErrorCode.NOT_FOUND);
+        }
+        user.setNickname(req.getNickname());
+        user.setEmail(req.getEmail());
+        user.setMobile(req.getMobile());
+        if (req.getAvatar() != null) {
+            user.setAvatar(req.getAvatar());
+        }
+        updateById(user);
+    }
+
+    /**
+     * 当前登录用户修改密码：校验旧密码，加密新密码后更新
+     */
+    @Override
+    public void changePassword(ChangePasswordReq req) {
+        long userId = StpUtil.getLoginIdAsLong();
+        // 显式查询密码字段（SysUser 中 password 标记了 select=false）
+        SysUser user = lambdaQuery()
+                .eq(SysUser::getId, userId)
+                .select(SysUser::getId, SysUser::getPassword)
+                .one();
+        if (user == null) {
+            throw new BizException(CommonErrorCode.NOT_FOUND);
+        }
+        // BCrypt 校验旧密码
+        if (!BCrypt.checkpw(req.getOldPassword(), user.getPassword())) {
+            throw new BizException(SystemErrorCode.SYSTEM_USER_OLD_PASSWORD_ERROR);
+        }
+        // 加密新密码并更新
+        user.setPassword(BCrypt.hashpw(req.getNewPassword()));
+        updateById(user);
+        // 修改密码后踢出当前登录，需重新登录
+        StpUtil.logout(userId);
+    }
+
+    /**
+     * 重置用户密码
+     *
+     * @param id          用户ID
+     * @param newPassword 新密码（可选，为null或空时自动生成随机密码）
+     * @return 最终使用的密码（明文，供管理员转达用户）
+     */
+    @Override
+    @Transactional
+    public String resetPassword(Long id, String newPassword) {
+        SysUser user = getById(id);
+        if (user == null) {
+            throw new BizException(CommonErrorCode.NOT_FOUND);
+        }
+        if (newPassword == null || newPassword.isBlank()) {
+            newPassword = generateRandomPassword();
+        }
+        user.setPassword(encodePassword(newPassword));
+        updateById(user);
+        // 重置密码后踢出该用户，需重新登录
+        StpUtil.logout(id);
+        return newPassword;
+    }
+
+    /**
+     * 生成随机密码（8位，包含大小写字母和数字）
+     */
+    private String generateRandomPassword() {
+        String chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+        StringBuilder sb = new StringBuilder();
+        java.util.Random random = new java.util.Random();
+        for (int i = 0; i < 8; i++) {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 密码加密
      *
      * @param rawPassword 明文密码
      * @return BCrypt 加密后的密码
@@ -184,33 +269,26 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     /**
-     * 实体转视图对象，同时关联查询部门名称
+     * 实体转视图对象，关联查询部门名称、角色名称、登录地点
      *
      * @param user 用户实体
      * @return 用户视图对象
      */
     private SysUserResp toVO(SysUser user) {
-        String deptName = null;
+        SysUserResp resp = converter.toUserResp(user);
+        // 关联查询部门名称
         if (user.getDeptId() != null) {
             SysDept dept = deptMapper.selectById(user.getDeptId());
             if (dept != null) {
-                deptName = dept.getDeptName();
+                resp.setDeptName(dept.getDeptName());
             }
         }
-        return SysUserResp.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .nickname(user.getNickname())
-                .avatar(user.getAvatar())
-                .email(user.getEmail())
-                .phone(user.getPhone())
-                .deptId(user.getDeptId())
-                .deptName(deptName)
-                .availableBalance(user.getAvailableBalance())
-                .status(user.getStatus())
-                .lastLoginTime(user.getLastLoginTime())
-                .lastLoginIp(user.getLastLoginIp())
-                .createTime(user.getCreateTime())
-                .build();
+        // 关联查询角色名称
+        resp.setRoleNames(roleService.getRoleNamesByUserId(user.getId()));
+        // 解析最后登录IP到地理位置
+        if (user.getLastLoginIp() != null && !user.getLastLoginIp().isEmpty()) {
+            resp.setLastLoginLocation(ipRegionUtils.getRegion(user.getLastLoginIp()));
+        }
+        return resp;
     }
 }

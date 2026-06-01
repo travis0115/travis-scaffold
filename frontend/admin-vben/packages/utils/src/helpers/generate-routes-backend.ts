@@ -73,10 +73,10 @@ function convertRoutes(
     }
 
     // layout转换
-    if (component && layoutMap[component]) {
+    if (component && typeof component === 'string' && layoutMap[component]) {
       route.component = layoutMap[component];
       // 页面组件转换
-    } else if (component) {
+    } else if (component && typeof component === 'string') {
       const normalizePath = normalizeViewPath(component);
       const pageKey = normalizePath.endsWith('.vue')
         ? normalizePath
@@ -94,6 +94,9 @@ function convertRoutes(
 }
 
 function normalizeViewPath(path: string): string {
+  if (typeof path !== 'string') {
+    return '';
+  }
   // 去除相对路径前缀
   const normalizedPath = path.replace(/^(\.\/|\.\.\/)+/, '');
 

@@ -5,22 +5,32 @@ import type {
 } from '#/adapter/vxe-table';
 import type { SystemUserApi } from '#/api';
 
+import { z } from '#/adapter/form';
+
+import { getRoleList } from '#/api';
 import { isDeptEnabled } from '#/features';
 import { $t } from '#/locales';
 
-export function useFormSchema(): VbenFormSchema[] {
+export function useFormSchema(deptTreeData?: any[]): VbenFormSchema[] {
   const schemas: VbenFormSchema[] = [
     {
       component: 'Input',
       fieldName: 'username',
       label: $t('system.user.username'),
-      rules: 'required',
+      rules: z
+        .string()
+        .min(3, $t('ui.formRules.minLength', [$t('system.user.username'), 3]))
+        .max(20, $t('ui.formRules.maxLength', [$t('system.user.username'), 20]))
+        .regex(/^[a-zA-Z][a-zA-Z0-9_]+$/, '用户名必须以字母开头，只能包含字母、数字和下划线'),
     },
     {
       component: 'Input',
       fieldName: 'nickname',
       label: $t('system.user.nickname'),
-      rules: 'required',
+      rules: z
+        .string()
+        .min(1, $t('ui.formRules.required', [$t('system.user.nickname')]))
+        .max(30, $t('ui.formRules.maxLength', [$t('system.user.nickname'), 30])),
     },
     {
       component: 'Input',
@@ -29,7 +39,12 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         rules: (values) => {
-          return values.id ? null : 'required';
+          if (values.id) return null;
+          return z.string().min(6, '密码长度不能少于6位').max(20, '密码长度不能超过20位');
+        },
+        show: (values) => {
+          // 编辑时隐藏密码字段
+          return !values.id;
         },
         triggerFields: ['id'],
       },
@@ -37,14 +52,44 @@ export function useFormSchema(): VbenFormSchema[] {
       label: $t('system.user.password'),
     },
     {
+      component: 'ApiSelect',
+      componentProps: {
+        api: getRoleList,
+        class: 'w-full',
+        labelField: 'roleName',
+        valueField: 'id',
+        mode: 'multiple',
+        placeholder: '请选择角色',
+      },
+      fieldName: 'roleIds',
+      label: $t('system.user.roles'),
+    },
+    {
+      component: 'TreeSelect',
+      componentProps: {
+        allowClear: true,
+        fieldNames: { label: 'deptName', value: 'id', children: 'children' },
+        placeholder: '请选择部门',
+        treeData: deptTreeData ?? [],
+      },
+      dependencies: {
+        show: () => isDeptEnabled(),
+        triggerFields: [],
+      },
+      fieldName: 'deptId',
+      label: $t('system.user.dept'),
+    },
+    {
       component: 'Input',
-      fieldName: 'phone',
-      label: $t('system.user.phone'),
+      fieldName: 'mobile',
+      label: $t('system.user.mobile'),
+      rules: z.string().regex(/^$|^1[3-9]\d{9}$/, '请输入有效的手机号').optional().or(z.literal('')),
     },
     {
       component: 'Input',
       fieldName: 'email',
       label: $t('system.user.email'),
+      rules: z.string().email('请输入有效的邮箱地址').optional().or(z.literal('')),
     },
     {
       component: 'RadioGroup',
@@ -74,8 +119,8 @@ export function useGridFormSchema(): VbenFormSchema[] {
     },
     {
       component: 'Input',
-      fieldName: 'phone',
-      label: $t('system.user.phone'),
+      fieldName: 'mobile',
+      label: $t('system.user.mobile'),
     },
     {
       component: 'Select',
@@ -111,8 +156,8 @@ export function useColumns<T = SystemUserApi.SysUser>(
       width: 120,
     },
     {
-      field: 'phone',
-      title: $t('system.user.phone'),
+      field: 'mobile',
+      title: $t('system.user.mobile'),
       width: 130,
     },
     {
@@ -120,6 +165,7 @@ export function useColumns<T = SystemUserApi.SysUser>(
       title: $t('system.user.dept'),
       width: 120,
       visible: isDeptEnabled(),
+      formatter: 'emptyPlaceholder',
     },
     {
       field: 'roleNames',
@@ -129,7 +175,7 @@ export function useColumns<T = SystemUserApi.SysUser>(
         if (row.roleNames && row.roleNames.length > 0) {
           return row.roleNames.join(', ');
         }
-        return '';
+        return '-';
       },
     },
     {
@@ -156,11 +202,12 @@ export function useColumns<T = SystemUserApi.SysUser>(
           onClick: onActionClick,
         },
         name: 'CellOperation',
+        options: ['edit', 'resetPassword', 'delete'],
       },
       field: 'operation',
       fixed: 'right',
       title: $t('system.user.operation'),
-      width: 130,
+      width: 200,
     },
   ];
 }

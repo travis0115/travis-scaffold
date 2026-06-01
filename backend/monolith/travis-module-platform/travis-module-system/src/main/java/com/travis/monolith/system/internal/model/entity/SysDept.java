@@ -31,7 +31,7 @@ public class SysDept extends BaseEntity {
     /**
      * 联系电话
      */
-    private String phone;
+    private String mobile;
     /**
      * 状态（0-禁用 1-启用）
      */

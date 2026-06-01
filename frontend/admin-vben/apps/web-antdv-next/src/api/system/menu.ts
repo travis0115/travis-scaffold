@@ -33,7 +33,7 @@ export namespace SystemMenuApi {
  */
 async function getMenuTree() {
   return requestClient.get<SystemMenuApi.SysMenu[]>(
-    '/api/system/menu/list',
+    '/api/admin/system/menu/list',
   );
 }
 
@@ -41,28 +41,28 @@ async function getMenuTree() {
  * 获取菜单详情
  */
 async function getMenuDetail(id: number) {
-  return requestClient.get<SystemMenuApi.SysMenu>(`/api/system/menu/${id}`);
+  return requestClient.get<SystemMenuApi.SysMenu>(`/api/admin/system/menu/${id}`);
 }
 
 /**
  * 新增菜单
  */
 async function createMenu(data: Partial<SystemMenuApi.SysMenu>) {
-  return requestClient.post('/api/system/menu', data);
+  return requestClient.post('/api/admin/system/menu', data);
 }
 
 /**
  * 更新菜单
  */
 async function updateMenu(id: number, data: Partial<SystemMenuApi.SysMenu>) {
-  return requestClient.put(`/api/system/menu/${id}`, data);
+  return requestClient.put(`/api/admin/system/menu/${id}`, data);
 }
 
 /**
  * 删除菜单
  */
 async function deleteMenu(id: number) {
-  return requestClient.delete(`/api/system/menu/${id}`);
+  return requestClient.delete(`/api/admin/system/menu/${id}`);
 }
 
 export { createMenu, deleteMenu, getMenuDetail, getMenuTree, updateMenu };

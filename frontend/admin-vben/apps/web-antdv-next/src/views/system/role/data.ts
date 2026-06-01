@@ -5,6 +5,8 @@ import type {
 } from '#/adapter/vxe-table';
 import type { SystemRoleApi } from '#/api';
 
+import { z } from '#/adapter/form';
+
 import { $t } from '#/locales';
 
 export function useFormSchema(): VbenFormSchema[] {
@@ -13,13 +15,20 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'Input',
       fieldName: 'roleName',
       label: $t('system.role.roleName'),
-      rules: 'required',
+      rules: z
+        .string()
+        .min(1, $t('ui.formRules.required', [$t('system.role.roleName')]))
+        .max(50, $t('ui.formRules.maxLength', [$t('system.role.roleName'), 50])),
     },
     {
       component: 'Input',
       fieldName: 'roleCode',
       label: $t('system.role.roleCode'),
-      rules: 'required',
+      rules: z
+        .string()
+        .min(1, $t('ui.formRules.required', [$t('system.role.roleCode')]))
+        .max(50, $t('ui.formRules.maxLength', [$t('system.role.roleCode'), 50]))
+        .regex(/^[a-zA-Z][a-zA-Z0-9_]+$/, '角色编码必须以字母开头，只能包含字母、数字和下划线'),
     },
     {
       component: 'Textarea',

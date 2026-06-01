@@ -17,6 +17,7 @@ public enum SystemErrorCode implements IErrorCode {
      */
     SYSTEM_AUTH_LOGIN_BAD_CREDENTIALS("SYS_0001", "用户名或密码错误"),
     SYSTEM_AUTH_LOGIN_USER_DISABLED("SYS_0002", "账号已被禁用"),
+    SYSTEM_USER_OLD_PASSWORD_ERROR("SYS_0003", "旧密码错误"),
 
     ;
 

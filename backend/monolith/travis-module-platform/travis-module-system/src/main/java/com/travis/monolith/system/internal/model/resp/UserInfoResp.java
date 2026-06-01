@@ -17,18 +17,44 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserInfoResp {
-    /** 用户ID */
+    /**
+     * 用户ID
+     */
     private Long id;
-    /** 用户名 */
+    /**
+     * 用户名
+     */
     private String username;
-    /** 真实姓名（取自昵称字段） */
-    private String realName;
-    /** 头像地址 */
+    /**
+     * 昵称
+     */
+    private String nickname;
+    /**
+     * 头像地址
+     */
     private String avatar;
-    /** 角色编码列表 */
+    /**
+     * 邮箱
+     */
+    private String email;
+    /**
+     * 手机号
+     */
+    private String mobile;
+    /**
+     * 角色编码列表
+     */
     private List<String> roles;
-    /** 权限标识列表 */
+    /**
+     * 角色名称列表
+     */
+    private List<String> roleNames;
+    /**
+     * 权限标识列表
+     */
     private List<String> permissions;
-    /** 登录后默认跳转路径 */
+    /**
+     * 登录后默认跳转路径
+     */
     private String homePath;
 }

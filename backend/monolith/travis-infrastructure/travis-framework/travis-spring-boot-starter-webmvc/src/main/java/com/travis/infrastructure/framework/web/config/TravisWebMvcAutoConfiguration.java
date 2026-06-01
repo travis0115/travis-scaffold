@@ -2,11 +2,17 @@ package com.travis.infrastructure.framework.web.config;
 
 import com.travis.infrastructure.common.web.constant.CustomHttpHeaders;
 import com.travis.infrastructure.common.web.constant.WebFilterOrders;
-import com.travis.infrastructure.framework.web.core.exception.advice.CommonExceptionHandlerAdvice;
+import com.travis.infrastructure.framework.web.core.advice.ApiResponseBodyAdvice;
+import com.travis.infrastructure.framework.web.core.advice.I18nResponseBodyAdvice;
+import com.travis.infrastructure.framework.web.core.exception.advice.BizExceptionHandlerAdvice;
+import com.travis.infrastructure.framework.web.core.exception.advice.SaTokenExceptionHandlerAdvice;
+import com.travis.infrastructure.framework.web.core.exception.advice.ServerExceptionHandlerAdvice;
+import com.travis.infrastructure.framework.web.core.exception.advice.ValidationExceptionHandlerAdvice;
 import com.travis.infrastructure.framework.web.core.filter.RequestContextFilter;
 import com.travis.infrastructure.framework.web.core.filter.RequestIdFilter;
 import jakarta.servlet.Filter;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -14,6 +20,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
@@ -23,6 +30,28 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  */
 @AutoConfiguration
 public class TravisWebMvcAutoConfiguration implements WebMvcConfigurer {
+
+    /**
+     * 应用基础包名，用于判断Controller所属模块
+     */
+    @Value("${travis.application.base-package:com.travis}")
+    private String basePackage;
+
+    /**
+     * 根据Controller所在包名自动添加路径前缀：
+     * controller.admin 包 → /api/admin
+     * controller.app 包 → /api/app
+     * 其他包不加前缀
+     */
+    @Override
+    public void configurePathMatch(PathMatchConfigurer configurer) {
+        configurer.addPathPrefix("/api/admin", clazz ->
+                clazz.getPackageName().startsWith(basePackage)
+                && clazz.getPackageName().contains(".controller.admin"));
+        configurer.addPathPrefix("/api/app", clazz ->
+                clazz.getPackageName().startsWith(basePackage)
+                && clazz.getPackageName().contains(".controller.app"));
+    }
 
     /**
      * 跨域处理
@@ -45,12 +74,48 @@ public class TravisWebMvcAutoConfiguration implements WebMvcConfigurer {
     }
 
     /**
-     * 配置全局异常处理
+     * 配置统一响应结果
+     */
+    @Bean
+    @ConditionalOnMissingBean(I18nResponseBodyAdvice.class)
+    public ApiResponseBodyAdvice apiResponseBodyAdvice() {
+        return new ApiResponseBodyAdvice();
+    }
+
+    /**
+     * 配置全局业务异常处理器
      */
     @Bean
     @ConditionalOnMissingBean
-    public CommonExceptionHandlerAdvice commonExceptionHandler() {
-        return new CommonExceptionHandlerAdvice();
+    public BizExceptionHandlerAdvice bizExceptionHandler() {
+        return new BizExceptionHandlerAdvice();
+    }
+
+    /**
+     * 配置全局Sa-Token异常处理器
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    public SaTokenExceptionHandlerAdvice saTokenExceptionHandler() {
+        return new SaTokenExceptionHandlerAdvice();
+    }
+
+    /**
+     * 配置全局服务端异常处理器
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    public ServerExceptionHandlerAdvice serverExceptionHandler() {
+        return new ServerExceptionHandlerAdvice();
+    }
+
+    /**
+     * 配置全局参数校验异常处理器
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    public ValidationExceptionHandlerAdvice validationExceptionHandler() {
+        return new ValidationExceptionHandlerAdvice();
     }
 
 

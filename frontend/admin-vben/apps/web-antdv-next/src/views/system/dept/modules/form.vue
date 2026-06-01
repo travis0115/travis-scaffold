@@ -49,18 +49,20 @@ const [Modal, modalApi] = useVbenModal({
       }
     }
   },
-  onOpenChange(isOpen) {
+  async onOpenChange(isOpen) {
     if (isOpen) {
       const data = modalApi.getData<SystemDeptApi.SysDept>();
-      if (data) {
-        if (data.parentId === 0) {
-          (data as any).parentId = undefined;
+      formApi.resetForm();
+      if (data?.id) {
+        // 编辑时加载完整详情
+        const detail = await getDeptDetail(data.id);
+        if (detail.parentId === 0) {
+          (detail as any).parentId = undefined;
         }
-        formData.value = data;
-        formApi.setValues(formData.value);
+        formData.value = detail;
+        formApi.setValues(detail);
       } else {
         formData.value = undefined;
-        formApi.resetForm();
       }
     }
   },

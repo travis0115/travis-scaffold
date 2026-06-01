@@ -143,3 +143,7 @@ travis:
         enabled: true #是否启用国际化
       locale: zh_CN #spring.web.locale和spring.jackson.locale配置，同时作为com.travis.infrastructure.framework.web.core.utils.I18nUtil工具类的默认区域，未配置会出现某些细节异常，见工具类说明
       time-zone: UTC  #全局time-zone配置，影响spring.jackson.time-zone以及日志配置
+  # 文件上传配置
+  file:
+    upload-path: ${UPLOAD_PATH:./uploads}  # 文件存储路径
+    url-prefix: /api/admin/system/file            # 文件访问URL前缀

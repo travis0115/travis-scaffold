@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.web.core.model.PageResult;
+import com.travis.monolith.system.internal.converter.SystemConverter;
 import com.travis.monolith.system.internal.mapper.SysDictMapper;
 import com.travis.monolith.system.internal.model.entity.SysDict;
 import com.travis.monolith.system.internal.model.entity.SysDictItem;
@@ -14,7 +15,10 @@ import com.travis.monolith.system.internal.model.resp.SysDictItemResp;
 import com.travis.monolith.system.internal.service.SysDictItemService;
 import com.travis.monolith.system.internal.service.SysDictService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,6 +34,9 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict> impl
 
     /** 字典数据项服务 */
     private final SysDictItemService dictItemService;
+
+    /** 对象转换器 */
+    private final SystemConverter converter;
 
     /**
      * 分页查询字典类型列表，支持按名称、类型编码、状态筛选
@@ -61,6 +68,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict> impl
      * 新增字典类型
      */
     @Override
+    @Transactional
     public void addDict(SysMenuReq.SysDictReq req) {
         SysDict dict = new SysDict();
         dict.setDictName(req.getDictName());
@@ -74,6 +82,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict> impl
      * 更新字典类型
      */
     @Override
+    @Transactional
     public void updateDict(Long id, SysMenuReq.SysDictReq req) {
         SysDict dict = getById(id);
         if (dict == null) {
@@ -87,10 +96,15 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict> impl
     }
 
     /**
-     * 删除字典类型
+     * 删除字典类型（同时删除其下所有字典数据项）
      */
     @Override
+    @Transactional
+    @CacheEvict(value = "system:dict:items", key = "#id")
     public void deleteDict(Long id) {
+        // 删除字典下的所有数据项
+        dictItemService.remove(new LambdaQueryWrapper<SysDictItem>()
+                .eq(SysDictItem::getDictId, id));
         removeById(id);
     }
 
@@ -102,23 +116,14 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict> impl
         List<SysDictItem> items = dictItemService.list(new LambdaQueryWrapper<SysDictItem>()
                 .eq(SysDictItem::getDictId, dictId)
                 .orderByAsc(SysDictItem::getSort));
-        return items.stream()
-                .map(item -> SysDictItemResp.builder()
-                        .id(item.getId())
-                        .dictId(item.getDictId())
-                        .label(item.getLabel())
-                        .value(item.getValue())
-                        .sort(item.getSort())
-                        .status(item.getStatus())
-                        .remark(item.getRemark())
-                        .build())
-                .collect(Collectors.toList());
+        return converter.toDictItemRespList(items);
     }
 
     /**
      * 新增字典数据项（委托给 {@link SysDictItemService}）
      */
     @Override
+    @CacheEvict(value = "system:dict:items", key = "#req.dictId")
     public void addDictItem(SysMenuReq.SysDictItemReq req) {
         dictItemService.addDictItem(req);
     }
@@ -127,6 +132,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict> impl
      * 更新字典数据项（委托给 {@link SysDictItemService}）
      */
     @Override
+    @CacheEvict(value = "system:dict:items", key = "#req.dictId")
     public void updateDictItem(Long id, SysMenuReq.SysDictItemReq req) {
         dictItemService.updateDictItem(id, req);
     }
@@ -135,6 +141,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict> impl
      * 删除字典数据项（委托给 {@link SysDictItemService}）
      */
     @Override
+    @CacheEvict(value = "system:dict:items", allEntries = true)
     public void deleteDictItem(Long id) {
         dictItemService.deleteDictItem(id);
     }

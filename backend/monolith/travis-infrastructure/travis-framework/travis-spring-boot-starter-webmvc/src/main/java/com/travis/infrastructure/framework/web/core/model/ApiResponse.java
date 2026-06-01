@@ -2,7 +2,6 @@ package com.travis.infrastructure.framework.web.core.model;
 
 import cn.hutool.core.lang.Assert;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.web.core.exception.IErrorCode;
 import lombok.AllArgsConstructor;
@@ -59,17 +58,6 @@ public class ApiResponse<T> {
         result.setCode(errorCode.getCode());
         result.setMsg(errorCode.getMsg());
         result.setArgs(args);
-        return result;
-    }
-
-    public static <T> ApiResponse<T> error(BizException exception) {
-        return error(exception.getErrorCode(), exception.getArgs());
-    }
-
-    public static <T> ApiResponse<T> error(String errorMsg) {
-        var result = new ApiResponse<T>();
-        result.setCode(CommonErrorCode.INTERNAL_SERVER_ERROR.getCode());
-        result.setMsg(errorMsg);
         return result;
     }
 

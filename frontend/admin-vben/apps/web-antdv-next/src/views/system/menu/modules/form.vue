@@ -11,7 +11,7 @@ import { getPopupContainer } from '@vben/utils';
 import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
 
 import { useVbenForm } from '#/adapter/form';
-import { createMenu, getMenuTree, updateMenu } from '#/api';
+import { createMenu, getMenuDetail, getMenuTree, updateMenu } from '#/api';
 import { $t } from '#/locales';
 
 import { getMenuTypeOptions } from '../data';
@@ -285,21 +285,19 @@ const schema: VbenFormSchema[] = [
     },
   },
   {
-    component: 'Textarea',
-    componentProps: {
-      placeholder: '{ "keepAlive": true, "iframeSrc": "https://..." }',
-      rows: 3,
-    },
+    component: 'Checkbox',
     dependencies: {
       show: (values) => {
-        return [0, 1].includes(values.menuType);
+        return values.menuType === 4;
       },
       triggerFields: ['menuType'],
     },
-    fieldName: 'meta',
-    formItemClass: 'col-span-2 md:col-span-2',
-    help: $t('system.menu.metaJsonHelp'),
-    label: $t('system.menu.metaJson'),
+    fieldName: '_openInNewWindow',
+    renderComponentContent() {
+      return {
+        default: () => '在新窗口打开',
+      };
+    },
   },
 ];
 
@@ -318,42 +316,45 @@ const [Form, formApi] = useVbenForm({
 
 const [Drawer, drawerApi] = useVbenDrawer({
   onConfirm: onSubmit,
-  onOpenChange(isOpen) {
+  async onOpenChange(isOpen) {
     if (isOpen) {
       const data = drawerApi.getData<SystemMenuApi.SysMenu>();
-      if (data) {
-        formData.value = data;
+      formApi.resetForm();
+      if (data?.id) {
+        // 编辑时加载完整详情
+        const detail = await getMenuDetail(data.id);
+        formData.value = detail;
         // 解析 meta JSON
-        const metaObj = parseMeta(data.meta);
+        const metaObj = parseMeta(detail.meta);
 
-        // 内嵌/外链类型回填 linkSrc
+        // 回填表单值
         const formValues: Record<string, any> = {
-          ...data,
+          ...detail,
           _keepAlive: metaObj.keepAlive ?? false,
           _affixTab: metaObj.affixTab ?? false,
           _hideInMenu: metaObj.hideInMenu ?? false,
           _hideChildrenInMenu: metaObj.hideChildrenInMenu ?? false,
           _hideInBreadcrumb: metaObj.hideInBreadcrumb ?? false,
           _hideInTab: metaObj.hideInTab ?? false,
+          _openInNewWindow: metaObj.openInNewWindow ?? false,
         };
 
         // 从 meta 推断前端菜单类型
-        if (metaObj.iframeSrc && data.menuType === 1) {
+        if (metaObj.iframeSrc && detail.menuType === 1) {
           formValues.menuType = 3; // 内嵌
           formValues.linkSrc = metaObj.iframeSrc;
-        } else if (metaObj.link && data.menuType === 1) {
+        } else if (metaObj.link && detail.menuType === 1) {
           formValues.menuType = 4; // 外链
           formValues.linkSrc = metaObj.link;
         }
 
         // 回填 menuTitle
-        formValues.menuTitle = data.menuName;
-        titleSuffix.value = data.menuName;
+        formValues.menuTitle = detail.menuName;
+        titleSuffix.value = detail.menuName;
 
         formApi.setValues(formValues);
       } else {
         formData.value = undefined;
-        formApi.resetForm();
         titleSuffix.value = '';
       }
     }
@@ -373,6 +374,7 @@ async function onSubmit() {
           _hideInMenu?: boolean;
           _hideInTab?: boolean;
           _keepAlive?: boolean;
+          _openInNewWindow?: boolean;
           linkSrc?: string;
           menuTitle?: string;
         }
@@ -386,6 +388,7 @@ async function onSubmit() {
     if (values._hideChildrenInMenu) metaObj.hideChildrenInMenu = true;
     if (values._hideInBreadcrumb) metaObj.hideInBreadcrumb = true;
     if (values._hideInTab) metaObj.hideInTab = true;
+    if (values._openInNewWindow) metaObj.openInNewWindow = true;
 
     // 清理开关未勾选的字段
     if (!values._keepAlive) delete metaObj.keepAlive;
@@ -394,6 +397,7 @@ async function onSubmit() {
     if (!values._hideChildrenInMenu) delete metaObj.hideChildrenInMenu;
     if (!values._hideInBreadcrumb) delete metaObj.hideInBreadcrumb;
     if (!values._hideInTab) delete metaObj.hideInTab;
+    if (!values._openInNewWindow) delete metaObj.openInNewWindow;
 
     // 处理内嵌/外链类型
     let actualMenuType = values.menuType;
@@ -425,6 +429,7 @@ async function onSubmit() {
     delete (data as any)._hideChildrenInMenu;
     delete (data as any)._hideInBreadcrumb;
     delete (data as any)._hideInTab;
+    delete (data as any)._openInNewWindow;
     delete (data as any).linkSrc;
     delete (data as any).menuTitle;
 
@@ -451,4 +456,3 @@ const getDrawerTitle = computed(() =>
     <Form class="mx-4" :layout="isHorizontal ? 'horizontal' : 'vertical'" />
   </Drawer>
 </template>
-

@@ -8,7 +8,7 @@ import { useVbenDrawer } from '@vben/common-ui';
 import { Button } from 'antdv-next';
 
 import { useVbenForm } from '#/adapter/form';
-import { createDict, updateDict } from '#/api';
+import { createDict, getDictDetail, updateDict } from '#/api';
 import { $t } from '#/locales';
 
 import { useFormSchema } from '../data';
@@ -48,13 +48,15 @@ const [Drawer, drawerApi] = useVbenDrawer({
       drawerApi.unlock();
     }
   },
-  onOpenChange(isOpen) {
+  async onOpenChange(isOpen) {
     if (isOpen) {
       const data = drawerApi.getData<SystemDictApi.SysDict>();
       formApi.resetForm();
       if (data?.id) {
-        formData.value = data;
-        formApi.setValues(data);
+        // 编辑时加载完整详情
+        const detail = await getDictDetail(data.id);
+        formData.value = detail;
+        formApi.setValues(detail);
       } else {
         formData.value = undefined;
       }

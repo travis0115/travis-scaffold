@@ -13,13 +13,25 @@ interface BasicUserInfo {
    */
   avatar: string;
   /**
+   * 邮箱
+   */
+  email?: string;
+  /**
    * 用户昵称
    */
-  realName: string;
+  nickname: string;
+  /**
+   * 手机号
+   */
+  mobile?: string;
   /**
    * 用户角色
    */
   roles?: string[];
+  /**
+   * 角色名称列表
+   */
+  roleNames?: string[];
   /**
    * 用户id
    */

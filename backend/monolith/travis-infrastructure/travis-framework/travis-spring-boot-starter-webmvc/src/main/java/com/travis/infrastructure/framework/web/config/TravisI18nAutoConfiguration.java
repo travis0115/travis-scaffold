@@ -1,6 +1,7 @@
 package com.travis.infrastructure.framework.web.config;
 
 import cn.hutool.core.util.StrUtil;
+import com.travis.infrastructure.framework.web.core.advice.I18nResponseBodyAdvice;
 import com.travis.infrastructure.framework.web.core.service.I18nService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.jspecify.annotations.NullMarked;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.context.MessageSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.context.MessageSourceProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -112,6 +114,19 @@ public class TravisI18nAutoConfiguration {
             }
         }
         return properties;
+    }
+
+    /**
+     * 自动装配I18nResponseBodyAdvice
+     */
+    @Bean
+    @ConditionalOnProperty(
+            prefix = "travis.application.web.i18n",
+            name = "enabled",
+            havingValue = "true"
+    )
+    public I18nResponseBodyAdvice i18nResponseBodyAdvice(I18nService i18nService) {
+        return new I18nResponseBodyAdvice(i18nService);
     }
 
     /**

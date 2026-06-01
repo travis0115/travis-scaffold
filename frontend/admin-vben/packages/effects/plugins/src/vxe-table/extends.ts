@@ -69,13 +69,24 @@ function extendProxyOption(
 export function extendsDefaultFormatter(vxeUI: VxeUIExport) {
   vxeUI.formats.add('formatDate', {
     tableCellFormatMethod({ cellValue }) {
-      return formatDate(cellValue);
+      const result = formatDate(cellValue);
+      return result === '' ? '-' : result;
     },
   });
 
   vxeUI.formats.add('formatDateTime', {
     tableCellFormatMethod({ cellValue }) {
-      return formatDateTime(cellValue);
+      const result = formatDateTime(cellValue);
+      return result === '' ? '-' : result;
+    },
+  });
+
+  // 空值占位格式化器，对 null/undefined/空字符串返回 "-"
+  vxeUI.formats.add('formatEmpty', {
+    tableCellFormatMethod({ cellValue }) {
+      return cellValue === null || cellValue === undefined || cellValue === ''
+        ? '-'
+        : cellValue;
     },
   });
 }

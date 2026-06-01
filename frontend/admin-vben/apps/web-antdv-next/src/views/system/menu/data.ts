@@ -54,28 +54,28 @@ export function useColumns(
         switch (row.menuType) {
           case 0:
           case 1: {
-            return row.component ?? '';
+            return row.component || '-';
           }
           case 3: {
             // 内嵌类型，显示iframeSrc
             try {
               const meta = row.meta ? JSON.parse(row.meta) : {};
-              return meta.iframeSrc ?? '';
+              return meta.iframeSrc || '-';
             } catch {
-              return '';
+              return '-';
             }
           }
           case 4: {
             // 外链类型，显示link
             try {
               const meta = row.meta ? JSON.parse(row.meta) : {};
-              return meta.link ?? '';
+              return meta.link || '-';
             } catch {
-              return '';
+              return '-';
             }
           }
         }
-        return '';
+        return '-';
       },
       minWidth: 200,
       title: $t('system.menu.component'),

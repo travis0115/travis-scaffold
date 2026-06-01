@@ -117,6 +117,7 @@ const getDrawerTitle = computed(() => {
           label-field="menuName"
           icon-field="icon"
           checkable
+          check-strictly
         >
           <template #node="{ value }">
             <IconifyIcon v-if="value.icon" :icon="value.icon" />

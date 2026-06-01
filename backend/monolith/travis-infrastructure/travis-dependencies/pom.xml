@@ -44,6 +44,7 @@
         <!-- 工具 -->
         <mapstruct.version>1.7.0.Beta1</mapstruct.version>
         <hutool.version>5.8.44</hutool.version>
+        <ip2region.version>3.3.7</ip2region.version>
     </properties>
 
     <dependencyManagement>
@@ -200,6 +201,13 @@
                 <groupId>net.logstash.logback</groupId>
                 <artifactId>logstash-logback-encoder</artifactId>
                 <version>${logstash-logback-encoder.version}</version>
+            </dependency>
+
+            <!-- ip2region 离线IP地址解析 -->
+            <dependency>
+                <groupId>org.lionsoul</groupId>
+                <artifactId>ip2region</artifactId>
+                <version>${ip2region.version}</version>
             </dependency>
 
         </dependencies>

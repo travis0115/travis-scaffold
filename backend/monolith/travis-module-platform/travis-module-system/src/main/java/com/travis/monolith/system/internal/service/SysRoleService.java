@@ -80,4 +80,19 @@ public interface SysRoleService extends IService<SysRole> {
      * @return 角色ID列表
      */
     List<Long> getRoleIdsByUserId(Long userId);
+
+    /**
+     * 根据用户ID查询角色名称列表
+     *
+     * @param userId 用户ID
+     * @return 角色名称列表
+     */
+    List<String> getRoleNamesByUserId(Long userId);
+
+    /**
+     * 获取所有启用角色列表（不分页）
+     *
+     * @return 角色列表
+     */
+    List<SysRoleResp> getEnabledRoleList();
 }

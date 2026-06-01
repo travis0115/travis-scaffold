@@ -5,6 +5,8 @@ import type {
 } from '#/adapter/vxe-table';
 import type { SystemDictApi } from '#/api';
 
+import { z } from '#/adapter/form';
+
 import { $t } from '#/locales';
 
 export function useFormSchema(): VbenFormSchema[] {
@@ -13,13 +15,20 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'Input',
       fieldName: 'dictName',
       label: $t('system.dict.dictName'),
-      rules: 'required',
+      rules: z
+        .string()
+        .min(1, $t('ui.formRules.required', [$t('system.dict.dictName')]))
+        .max(50, $t('ui.formRules.maxLength', [$t('system.dict.dictName'), 50])),
     },
     {
       component: 'Input',
       fieldName: 'dictType',
       label: $t('system.dict.dictType'),
-      rules: 'required',
+      rules: z
+        .string()
+        .min(1, $t('ui.formRules.required', [$t('system.dict.dictType')]))
+        .max(50, $t('ui.formRules.maxLength', [$t('system.dict.dictType'), 50]))
+        .regex(/^[a-zA-Z][a-zA-Z0-9_]+$/, '字典编码必须以字母开头，只能包含字母、数字和下划线'),
     },
     {
       component: 'Textarea',

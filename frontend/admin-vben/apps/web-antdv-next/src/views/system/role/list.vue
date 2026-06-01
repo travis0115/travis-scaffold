@@ -10,7 +10,7 @@ import type { SystemRoleApi } from '#/api';
 import { Page, useVbenDrawer } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
 
-import { Button, message, Modal } from 'antdv-next';
+import { App, Button, message } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteRole, getRolePage, updateRole } from '#/api';
@@ -18,6 +18,8 @@ import { $t } from '#/locales';
 
 import { useColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
+
+const { modal } = App.useApp();
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   connectedComponent: Form,
@@ -72,7 +74,7 @@ function onActionClick(e: OnActionClickParams<SystemRoleApi.SysRole>) {
 
 function confirm(content: string, title: string) {
   return new Promise((resolve, reject) => {
-    Modal.confirm({
+    modal.confirm({
       content,
       onCancel() {
         reject(new Error('已取消'));

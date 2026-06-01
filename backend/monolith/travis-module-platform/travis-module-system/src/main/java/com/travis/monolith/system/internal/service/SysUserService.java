@@ -3,8 +3,10 @@ package com.travis.monolith.system.internal.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.infrastructure.framework.web.core.model.PageResult;
 import com.travis.monolith.system.internal.model.entity.SysUser;
+import com.travis.monolith.system.internal.model.req.ChangePasswordReq;
 import com.travis.monolith.system.internal.model.req.SysUserReq;
 import com.travis.monolith.system.internal.model.req.SysUserRoleReq;
+import com.travis.monolith.system.internal.model.req.UserProfileReq;
 import com.travis.monolith.system.internal.model.resp.SysUserResp;
 
 /**
@@ -39,8 +41,9 @@ public interface SysUserService extends IService<SysUser> {
      * 新增用户
      *
      * @param req 用户信息请求参数
+     * @return 新建用户ID
      */
-    void addUser(SysUserReq req);
+    Long addUser(SysUserReq req);
 
     /**
      * 更新用户信息
@@ -71,4 +74,27 @@ public interface SysUserService extends IService<SysUser> {
      * @return 用户实体
      */
     SysUser getUserByUsername(String username);
+
+    /**
+     * 当前登录用户修改个人资料
+     *
+     * @param req 个人资料请求参数
+     */
+    void updateProfile(UserProfileReq req);
+
+    /**
+     * 当前登录用户修改密码
+     *
+     * @param req 修改密码请求参数
+     */
+    void changePassword(ChangePasswordReq req);
+
+    /**
+     * 重置用户密码
+     *
+     * @param id          用户ID
+     * @param newPassword 新密码（可选，为null时自动生成随机密码）
+     * @return 最终使用的密码（明文，供管理员转达用户）
+     */
+    String resetPassword(Long id, String newPassword);
 }

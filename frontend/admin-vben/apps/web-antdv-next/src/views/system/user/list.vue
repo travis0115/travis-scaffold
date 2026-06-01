@@ -7,22 +7,88 @@ import type {
 } from '#/adapter/vxe-table';
 import type { SystemUserApi } from '#/api';
 
-import { Page, useVbenDrawer } from '@vben/common-ui';
+import { onMounted, ref, watch } from 'vue';
+
+import { Page, Tree, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
 
-import { Button, message, Modal } from 'antdv-next';
+import { App, Button, Card, InputSearch, message } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { deleteUser, getUserPage, updateUser } from '#/api';
+import { deleteUser, getDeptTree, getUserPage, updateUser } from '#/api';
+import { isDeptEnabled } from '#/features';
 import { $t } from '#/locales';
 
 import { useColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
+import ResetPasswordModal from './modules/reset-password-modal.vue';
+
+const { modal } = App.useApp();
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   connectedComponent: Form,
   destroyOnClose: true,
 });
+
+const [ResetPwdModal, resetPwdModalApi] = useVbenModal({
+  connectedComponent: ResetPasswordModal,
+  destroyOnClose: true,
+});
+
+// 部门树相关
+const deptList = ref<any[]>([]);
+const deptListSource = ref<any[]>([]);
+const deptSearchValue = ref('');
+const selectedDeptId = ref<number>();
+
+async function loadDeptList() {
+  try {
+    const data = await getDeptTree();
+    deptListSource.value = data;
+    deptList.value = data;
+  } catch {
+    deptListSource.value = [];
+    deptList.value = [];
+  }
+}
+
+function searchDept(value: string) {
+  if (!value) {
+    deptList.value = deptListSource.value;
+    return;
+  }
+  function filterNodes(nodes: any[]): any[] {
+    return nodes
+      .map((node: any) => {
+        const children = node.children ? filterNodes(node.children) : [];
+        const match = node.deptName
+          .toLowerCase()
+          .includes(value.toLowerCase());
+        if (match || children.length > 0) {
+          return { ...node, children: children.length > 0 ? children : node.children };
+        }
+        return null;
+      })
+      .filter(Boolean) as any[];
+  }
+  deptList.value = filterNodes(deptListSource.value);
+}
+
+watch(deptSearchValue, (value) => {
+  searchDept(value);
+});
+
+function onSelectDept(item: any) {
+  selectedDeptId.value = item?.value?.id;
+  gridApi.query();
+}
+
+function onSelectAllDept() {
+  selectedDeptId.value = undefined;
+  gridApi.query();
+}
+
+const showDeptTree = isDeptEnabled();
 
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
@@ -40,6 +106,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
             pageNum: page.currentPage,
             pageSize: page.pageSize,
             ...formValues,
+            ...(selectedDeptId.value ? { deptId: selectedDeptId.value } : {}),
           });
         },
       },
@@ -67,12 +134,16 @@ function onActionClick(e: OnActionClickParams<SystemUserApi.SysUser>) {
       onEdit(e.row);
       break;
     }
+    case 'resetPassword': {
+      onResetPassword(e.row);
+      break;
+    }
   }
 }
 
 function confirm(content: string, title: string) {
   return new Promise((resolve, reject) => {
-    Modal.confirm({
+    modal.confirm({
       content,
       onCancel() {
         reject(new Error('已取消'));
@@ -135,11 +206,63 @@ function onRefresh() {
 function onCreate() {
   formDrawerApi.setData({}).open();
 }
+
+async function onResetPassword(row: SystemUserApi.SysUser) {
+  resetPwdModalApi.setData({ id: row.id, nickname: row.nickname }).open();
+}
+
+onMounted(() => {
+  if (showDeptTree) {
+    loadDeptList();
+  }
+});
 </script>
 <template>
   <Page auto-content-height>
     <FormDrawer @success="onRefresh" />
-    <Grid :table-title="$t('system.user.list')">
+    <ResetPwdModal @success="onRefresh" />
+    <div v-if="showDeptTree" class="flex size-full">
+      <!-- 左侧部门树 -->
+      <Card class="w-1/6 flex-none">
+        <InputSearch
+          v-model:value="deptSearchValue"
+          :placeholder="$t('system.dept.name')"
+          class="mb-2"
+        />
+        <div
+          class="mb-1 cursor-pointer rounded p-1 text-sm"
+          :class="
+            selectedDeptId === undefined
+              ? 'bg-accent text-accent-foreground font-medium'
+              : 'text-foreground/80 hover:bg-accent/50'
+          "
+          @click="onSelectAllDept"
+        >
+          {{ $t('system.user.allDepts') }}
+        </div>
+        <Tree
+          :tree-data="deptList"
+          :default-expanded-level="2"
+          label-field="deptName"
+          value-field="id"
+          children-field="children"
+          @select="onSelectDept"
+        />
+      </Card>
+      <!-- 右侧表格 -->
+      <div class="ml-4 w-5/6">
+        <Grid :table-title="$t('system.user.list')">
+          <template #toolbar-tools>
+            <Button type="primary" @click="onCreate">
+              <Plus class="size-5" />
+              {{ $t('ui.actionTitle.create', [$t('system.user.name')]) }}
+            </Button>
+          </template>
+        </Grid>
+      </div>
+    </div>
+    <!-- 未启用部门时只显示表格 -->
+    <Grid v-else :table-title="$t('system.user.list')">
       <template #toolbar-tools>
         <Button type="primary" @click="onCreate">
           <Plus class="size-5" />

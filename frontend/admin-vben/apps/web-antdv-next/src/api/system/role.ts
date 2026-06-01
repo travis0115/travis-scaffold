@@ -21,7 +21,7 @@ export namespace SystemRoleApi {
  */
 async function getRolePage(params: Recordable<any>) {
   return requestClient.get<{ records: SystemRoleApi.SysRole[]; total: number }>(
-    '/api/system/role/page',
+    '/api/admin/system/role/page',
     { params },
   );
 }
@@ -30,35 +30,42 @@ async function getRolePage(params: Recordable<any>) {
  * 获取角色详情
  */
 async function getRoleDetail(id: number) {
-  return requestClient.get<SystemRoleApi.SysRole>(`/api/system/role/${id}`);
+  return requestClient.get<SystemRoleApi.SysRole>(`/api/admin/system/role/${id}`);
 }
 
 /**
  * 新增角色
  */
 async function createRole(data: Partial<SystemRoleApi.SysRole>) {
-  return requestClient.post('/api/system/role', data);
+  return requestClient.post('/api/admin/system/role', data);
 }
 
 /**
  * 更新角色
  */
 async function updateRole(id: number, data: Partial<SystemRoleApi.SysRole>) {
-  return requestClient.put(`/api/system/role/${id}`, data);
+  return requestClient.put(`/api/admin/system/role/${id}`, data);
 }
 
 /**
  * 删除角色
  */
 async function deleteRole(id: number) {
-  return requestClient.delete(`/api/system/role/${id}`);
+  return requestClient.delete(`/api/admin/system/role/${id}`);
 }
 
 /**
  * 为角色分配菜单权限
  */
 async function assignRoleMenus(data: { menuIds: number[]; roleId: number }) {
-  return requestClient.post('/api/system/role/menus', data);
+  return requestClient.post('/api/admin/system/role/menus', data);
+}
+
+/**
+ * 获取所有启用角色列表（不分页）
+ */
+async function getRoleList() {
+  return requestClient.get<SystemRoleApi.SysRole[]>('/api/admin/system/role/list');
 }
 
 export {
@@ -66,6 +73,7 @@ export {
   createRole,
   deleteRole,
   getRoleDetail,
+  getRoleList,
   getRolePage,
   updateRole,
 };

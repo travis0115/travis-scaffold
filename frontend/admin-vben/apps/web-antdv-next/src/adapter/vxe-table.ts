@@ -25,15 +25,15 @@ setupVbenVxeTable({
     vxeUI.setConfig({
       grid: {
         align: 'center',
-        border: false,
+        border: true,
         columnConfig: {
           resizable: true,
         },
         minHeight: 180,
         formConfig: {
           // 全局禁用vxe-table的表单配置，使用formOptions
-          enabled: false,
         },
+        enabled: false,
         proxyConfig: {
           autoLoad: true,
           response: {
@@ -47,6 +47,7 @@ setupVbenVxeTable({
         round: true,
         showOverflow: true,
         size: 'small',
+        stripe: true,
       } as VxeTableGridOptions,
     });
 
@@ -84,6 +85,10 @@ setupVbenVxeTable({
     vxeUI.renderer.add('CellTag', {
       renderTableDefault({ options, props }, { column, row }) {
         const value = get(row, column.field);
+        // 空值显示占位符
+        if (value === null || value === undefined || value === '') {
+          return h('span', {}, '-');
+        }
         const tagOptions = options ?? [
           { color: 'success', label: $t('common.enabled'), value: 1 },
           { color: 'error', label: $t('common.disabled'), value: 0 },
@@ -156,6 +161,11 @@ setupVbenVxeTable({
           },
           edit: {
             text: $t('common.edit'),
+          },
+          resetPassword: {
+            text: $te('system.user.resetPassword')
+              ? $t('system.user.resetPassword')
+              : '重置密码',
           },
         };
         const operations: Array<Recordable<any>> = (
@@ -269,15 +279,68 @@ setupVbenVxeTable({
       },
     });
 
+    // 自定义格式化：空值显示占位符
+    vxeUI.formats.add('emptyPlaceholder', {
+      tableCellFormatMethod: ({ cellValue }) => {
+        return cellValue === null || cellValue === undefined || cellValue === ''
+          ? '-'
+          : cellValue;
+      },
+    });
+
+    // 自定义格式化：日期时间格式化，空值显示占位符
+    vxeUI.formats.add('formatDateTime', {
+      tableCellFormatMethod: ({ cellValue }) => {
+        if (cellValue === null || cellValue === undefined || cellValue === '') {
+          return '-';
+        }
+        const date = new Date(cellValue);
+        if (Number.isNaN(date.getTime())) {
+          return '-';
+        }
+        const pad = (n: number) => String(n).padStart(2, '0');
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+      },
+    });
+
     // 这里可以自行扩展 vxe-table 的全局配置，比如自定义格式化
     // vxeUI.formats.add
   },
   useVbenForm,
 });
 
+/**
+ * 为列配置自动添加空值占位符（显示 '-'）
+ * 对于没有 cellRender 且没有自定义 formatter 的文本列，自动添加 emptyPlaceholder 格式化
+ */
+function processColumnsWithEmptyPlaceholder(columns: any[]): any[] {
+  return columns.map((col: any) => {
+    // 跳过没有 field 的列（如操作列）
+    if (!col.field) return col;
+    // 跳过有 cellRender 的列（如 CellSwitch、CellTag、CellOperation 等，它们自行处理渲染）
+    if (col.cellRender) return col;
+    // 已有 formatter 的列，不重复添加（保留原有逻辑）
+    if (col.formatter) return col;
+    // 为文本列添加空值占位格式化
+    return {
+      ...col,
+      formatter: 'emptyPlaceholder',
+    };
+  });
+}
+
 export const useVbenVxeGrid = <T extends Record<string, any>>(
   ...rest: Parameters<typeof useGrid<T, ComponentType, ComponentPropsMap>>
-) => useGrid<T, ComponentType, ComponentPropsMap>(...rest);
+) => {
+  // 全局处理：为所有列自动添加空值占位符
+  const [options, ...restArgs] = rest;
+  if (options?.gridOptions?.columns) {
+    options.gridOptions.columns = processColumnsWithEmptyPlaceholder(
+      options.gridOptions.columns,
+    );
+  }
+  return useGrid<T, ComponentType, ComponentPropsMap>(options, ...restArgs);
+};
 
 export type OnActionClickParams<T = Recordable<any>> = {
   code: string;
