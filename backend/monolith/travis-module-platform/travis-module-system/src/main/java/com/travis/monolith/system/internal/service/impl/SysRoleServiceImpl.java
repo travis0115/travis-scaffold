@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.web.core.model.PageResult;
-import com.travis.monolith.system.internal.converter.SystemConverter;
+import com.travis.monolith.system.internal.converter.SysRoleConverter;
 import com.travis.monolith.system.internal.mapper.SysRoleMapper;
 import com.travis.monolith.system.internal.mapper.SysRoleMenuMapper;
 import com.travis.monolith.system.internal.mapper.SysUserRoleMapper;
@@ -38,7 +38,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
     /** 用户-角色关联 Mapper */
     private final SysUserRoleMapper userRoleMapper;
     /** 对象转换器 */
-    private final SystemConverter converter;
+    private final SysRoleConverter converter;
 
     /**
      * 分页查询角色列表，支持按角色名称、编码、状态筛选

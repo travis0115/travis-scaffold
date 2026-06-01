@@ -22,7 +22,7 @@ import org.springframework.context.annotation.Bean;
  */
 @AutoConfiguration
 @ConditionalOnClass(name = "com.baomidou.mybatisplus.core.mapper.BaseMapper")
-@MapperScan(basePackages = "${travis.application.base-package}", markerInterface = BaseMapper.class)
+@MapperScan(basePackages = "${travis.info.base-package}", markerInterface = BaseMapper.class)
 public class TravisMybatisPlusAutoConfiguration {
 
     /**

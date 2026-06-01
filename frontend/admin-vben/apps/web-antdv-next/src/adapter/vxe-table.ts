@@ -11,10 +11,11 @@ import {
   setupVbenVxeTable,
   useVbenVxeGrid as useGrid,
 } from '@vben/plugins/vxe-table';
+import { preferences } from '@vben/preferences';
 import { get, isFunction, isString } from '@vben/utils';
 
 import { objectOmit } from '@vueuse/core';
-import { Button, Image, Popconfirm, Switch, Tag } from 'antdv-next';
+import { Avatar, Button, Image, Popconfirm, Switch, Tag } from 'antdv-next';
 
 import { $t } from '#/locales';
 
@@ -79,6 +80,19 @@ setupVbenVxeTable({
       if (key.startsWith('Cell')) {
         vxeUI.renderer.delete(key);
       }
+    });
+
+    // 表格配置项可以用 cellRender: { name: 'CellAvatar' },
+    vxeUI.renderer.add('CellAvatar', {
+      renderTableDefault(renderOpts, params) {
+        const { props } = renderOpts;
+        const { column, row } = params;
+        const rawSrc = row[column.field];
+        const src = rawSrc && rawSrc.trim() !== ''
+          ? rawSrc
+          : preferences.app.defaultAvatar;
+        return h(Avatar, { src, size: 32, ...props });
+      },
     });
 
     // 单元格渲染： Tag

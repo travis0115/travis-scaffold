@@ -1,6 +1,7 @@
 package com.travis.monolith.system.internal.controller.admin;
 
 import com.travis.infrastructure.framework.web.core.model.ApiResponse;
+import com.travis.monolith.system.internal.model.resp.FileUploadResp;
 import com.travis.monolith.system.internal.service.SysFileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -19,13 +20,15 @@ public class SysFileController {
     private final SysFileService fileService;
 
     /**
-     * 上传文件
+     * 上传文件，返回相对路径和完整访问URL
      *
      * @param file 文件
-     * @return 文件访问URL
+     * @return 文件上传响应（path用于存储，url用于展示）
      */
     @PostMapping("/upload")
-    public ApiResponse<String> upload(@RequestParam("file") MultipartFile file) {
-        return ApiResponse.success(fileService.upload(file));
+    public ApiResponse<FileUploadResp> upload(@RequestParam("file") MultipartFile file) {
+        String path = fileService.upload(file);
+        String url = fileService.getFileUrl(path);
+        return ApiResponse.success(new FileUploadResp(path, url));
     }
 }

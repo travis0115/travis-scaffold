@@ -50,7 +50,7 @@ travis-server — 启动模块，聚合所有业务模块
 
 **版本管理**：使用 `travis-dependencies`（跨项目复用）和 `travis-module-dependencies`（项目内）两个 BOM，通过 `${revision}` + flatten-maven-plugin 统一版本。
 
-**启动入口**：`travis-server` 中的 `MonolithServerApplication`，通过 `@SpringBootApplication(scanBasePackages = {"${travis.application.base-package}"})` 扫描 `com.travis.monolith` 包。
+**启动入口**：`travis-server` 中的 `MonolithServerApplication`，通过 `@SpringBootApplication(scanBasePackages = {"${travis.info.base-package}"})` 扫描 `com.travis.monolith` 包。
 
 ### 业务模块代码分层（以 demo 为例）
 

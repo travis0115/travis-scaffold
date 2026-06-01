@@ -2,7 +2,7 @@ logging:
   access:
     enabled: true #是否启用access日志，true/false，默认开启
   file:
-    path: ${user.home}/Documents/Developer/logs/${spring.application.name}/${HOSTNAME:local}
+    path: ${user.home}/data/logs/${spring.application.name}
   level:
     root: INFO  #全局日志级别
     com.travis: DEBUG #业务代码
@@ -29,3 +29,7 @@ spring:
     database: ${MONGODB_DATABASE:travis_monolith}
     username: ${MONGODB_USERNAME:root}
     password: ${MONGODB_PASSWORD}
+
+travis:
+  web:
+    domain: http://127.0.0.1

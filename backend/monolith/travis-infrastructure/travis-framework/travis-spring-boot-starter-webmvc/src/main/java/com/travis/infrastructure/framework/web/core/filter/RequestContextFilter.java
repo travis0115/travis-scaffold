@@ -30,9 +30,12 @@ public class RequestContextFilter extends OncePerRequestFilter {
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain) {
 
-        //包装ContentCachingRequestWrapper支持重复读取body
-        var requestWrapper = ServletUtils.isJsonRequest(request) ?
-                new ContentCachingRequestWrapper(request, 0) : request;
+        // multipart/form-data 请求不使用 ContentCachingRequestWrapper
+//         因为 Spring 的 MultipartResolver 需要直接读取原始请求流
+//        boolean isMultipartRequest = ServletUtils.isMultipart(request);
+        boolean isJsonRequest = ServletUtils.isJsonRequest(request);
+//        var requestWrapper = (!isMultipartRequest && isJsonRequest) ?
+        var requestWrapper = isJsonRequest ? new ContentCachingRequestWrapper(request, 0) : request;
         var responseWrapper = new ContentCachingResponseWrapper(response);
         try {
             filterChain.doFilter(requestWrapper, responseWrapper);

@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.web.core.exception.IErrorCode;
-import com.travis.monolith.system.internal.converter.SystemConverter;
+import com.travis.monolith.system.internal.converter.SysDeptConverter;
 import com.travis.monolith.system.internal.mapper.SysDeptMapper;
 import com.travis.monolith.system.internal.model.entity.SysDept;
 import com.travis.monolith.system.internal.model.req.SysMenuReq;
@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> implements SysDeptService {
 
     /** 对象转换器 */
-    private final SystemConverter converter;
+    private final SysDeptConverter converter;
 
     /**
      * 获取部门树形列表

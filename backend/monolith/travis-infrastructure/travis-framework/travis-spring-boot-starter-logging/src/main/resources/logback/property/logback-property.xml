@@ -13,7 +13,7 @@
                     defaultValue="/data/logs/${spring.application.name}/${HOSTNAME:local}"/>
 
     <!-- 日志文件名，不带后缀名（.log），未定义则取默认值 -->
-    <springProperty name="LOG_FILE_NAME" source="logging.file.name" defaultValue="travis-application"/>
+    <springProperty name="LOG_FILE_NAME" source="logging.file.name" defaultValue="travis-monolith"/>
 
     <!-- 异步日志队列丢弃日志的阈值，使用率超过阈值，开始丢低优先级日志，WARN/ERROR不丢弃，设置为0表示当队列满且 neverBlock=true 时，丢 TRACE/DEBUG/INFO -->
     <springProperty name="LOG_FILE_ASYNC_DISCARDING_THRESHOLD" source="logging.file.async.discarding-threshold"
@@ -46,7 +46,7 @@
     <springProperty name="LOG_ACCESS_ENABLED" source="logging.access.enabled" defaultValue="true"/>
 
     <!-- timestamp 的 timezone配置 -->
-    <springProperty name="LOG_TIMESTAMP_TIME_ZONE" source="travis.application.web.time-zone"
+    <springProperty name="LOG_TIMESTAMP_TIME_ZONE" source="travis.web.time-zone"
                     defaultValue="Asia/Shanghai"/>
 
     <!--

@@ -9,7 +9,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @author travis
  */
 
-@SpringBootApplication(scanBasePackages = {"${travis.application.base-package}"})
+@SpringBootApplication(scanBasePackages = {"${travis.info.base-package}"})
 public class MonolithServerApplication {
 
     static void main(String[] args) {

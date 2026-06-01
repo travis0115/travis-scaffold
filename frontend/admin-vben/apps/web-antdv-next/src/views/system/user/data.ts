@@ -146,6 +146,12 @@ export function useColumns<T = SystemUserApi.SysUser>(
 ): VxeTableGridColumns {
   return [
     {
+      cellRender: { name: 'CellAvatar' },
+      field: 'avatar',
+      title: $t('system.user.avatar'),
+      width: 70,
+    },
+    {
       field: 'username',
       title: $t('system.user.username'),
       width: 120,

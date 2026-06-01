@@ -38,9 +38,9 @@ const tabsValue = defineModel<string>('modelValue');
           <span class="text-lg font-semibold">
             {{ userInfo?.nickname ?? '' }}
           </span>
-          <span class="text-sm text-foreground/80">
+          <!-- <span class="text-sm text-foreground/80">
             {{ userInfo?.username ?? '' }}
-          </span>
+          </span> -->
         </div>
         <Separator class="my-4" />
         <Tabs v-model="tabsValue" orientation="vertical" class="m-4">

@@ -47,8 +47,8 @@ spring:
         url-pattern: "/druid/*" #监控页面访问路径
         allow: 127.0.0.1  #允许访问的IP（默认所有IP）
         deny: #禁止访问的IP
-        login-username: ${DRUID_USERNAME:admin}  #监控页面用户名
-        login-password: ${DRUID_PASSWORD:admin123456}  #监控页面密码
+        login-username: ${DRUID_USERNAME:travis0115}  #监控页面用户名
+        login-password: ${DRUID_PASSWORD:travis0115}  #监控页面密码
         reset-enable: true  #是否可以重置
 
       #SQL监控与防注入配置
@@ -71,8 +71,8 @@ spring:
     compose:
       enabled: false
   jackson:
-    locale: ${travis.application.web.locale:zh_CN}
-    time-zone: ${travis.application.web.time-zone:UTC}
+    locale: ${travis.web.locale:zh_CN}
+    time-zone: ${travis.web.time-zone:UTC}
     date-format: yyyy-MM-dd HH:mm:ss
     serialization:
       indent-output: false #美化输出
@@ -88,7 +88,8 @@ spring:
   servlet:
     multipart:
       enabled: true #开启文件上传
-      max-file-size: 20MB #限制文件上传大小为20M
+      max-file-size: 50MB #限制单个文件上传大小
+      max-request-size: 100MB #限制整个请求体大小
   threads:
     virtual:
       enabled: true
@@ -96,7 +97,7 @@ spring:
     #    cors:
     #      exposed-headers:
     #        -Custom-Header  #自定义请求头
-    locale: ${travis.application.web.locale:zh_CN}
+    locale: ${travis.web.locale:zh_CN}
 
 # Actuator 监控端点的配置项
 management:
@@ -134,16 +135,26 @@ sa-token:
   # 是否输出操作日志
   is-log: true
 
-#################### Travis 相关配置 ####################
+#################### 应用相关配置 ####################
 travis:
-  application:
+  info:
     base-package: com.travis.monolith
-    web:
-      i18n:
-        enabled: true #是否启用国际化
-      locale: zh_CN #spring.web.locale和spring.jackson.locale配置，同时作为com.travis.infrastructure.framework.web.core.utils.I18nUtil工具类的默认区域，未配置会出现某些细节异常，见工具类说明
-      time-zone: UTC  #全局time-zone配置，影响spring.jackson.time-zone以及日志配置
-  # 文件上传配置
-  file:
-    upload-path: ${UPLOAD_PATH:./uploads}  # 文件存储路径
-    url-prefix: /api/admin/system/file            # 文件访问URL前缀
+  web:
+    # Web路径前缀配置
+    apis:
+      # 管理后台接口
+      - prefix: /api/admin
+        package-pattern: .controller.admin
+        enabled: true
+      # 客户端接口
+      - prefix: /api/app
+        package-pattern: .controller.app
+        enabled: true
+    # 文件配置
+    file:
+      resource-handler: /files/**  # 文件访问URL
+      resource-location: ${user.home}/data/uploads # 文件存储路径
+    i18n:
+      enabled: true #是否启用国际化
+    locale: zh_CN #spring.web.locale和spring.jackson.locale配置
+    time-zone: UTC  #全局time-zone配置，影响spring.jackson.time-zone以及日志配置

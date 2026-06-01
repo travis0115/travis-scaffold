@@ -7,6 +7,7 @@ import com.travis.monolith.system.internal.model.req.SysUserRoleReq;
 import com.travis.monolith.system.internal.model.req.ChangePasswordReq;
 import com.travis.monolith.system.internal.model.req.ResetPasswordReq;
 import com.travis.monolith.system.internal.model.req.UserProfileReq;
+import com.travis.monolith.system.internal.model.req.UpdateAvatarReq;
 import com.travis.monolith.system.internal.model.resp.SysUserResp;
 import com.travis.monolith.system.internal.service.SysUserService;
 import jakarta.validation.Valid;
@@ -120,6 +121,18 @@ public class SysUserController {
     @PutMapping("/profile")
     public ApiResponse<Void> updateProfile(@RequestBody @Valid UserProfileReq req) {
         userService.updateProfile(req);
+        return ApiResponse.success();
+    }
+
+    /**
+     * 当前登录用户更新头像
+     *
+     * @param req 头像更新请求
+     * @return 空响应
+     */
+    @PutMapping("/avatar")
+    public ApiResponse<Void> updateAvatar(@RequestBody @Valid UpdateAvatarReq req) {
+        userService.updateAvatar(req);
         return ApiResponse.success();
     }
 

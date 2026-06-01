@@ -24,16 +24,16 @@ import java.util.UUID;
  */
 @Slf4j
 @Component
-@ConditionalOnProperty(name = "travis.file.storage-type", havingValue = "local", matchIfMissing = true)
+@ConditionalOnProperty(name = "travis.web.file.storage-type", havingValue = "local", matchIfMissing = true)
 public class LocalFileStorageStrategy implements FileStorageStrategy {
 
-    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy/MM/dd");
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-    @Value("${travis.file.upload-path:./uploads}")
-    private String uploadPath;
+    @Value("${travis.web.file.resource-location:${user.home}/data/uploads}")
+    private String resourceLocation;
 
-    @Value("${travis.file.url-prefix:/api/admin/system/file}")
-    private String urlPrefix;
+    @Value("${travis.web.file.resource-handler:/files/**}")
+    private String resourceHandler;
 
     @Override
     public String upload(MultipartFile file) {
@@ -53,12 +53,12 @@ public class LocalFileStorageStrategy implements FileStorageStrategy {
         String filename = UUID.randomUUID().toString().replace("-", "") + extension;
 
         // 创建目标目录
-        Path dirPath = Paths.get(uploadPath, datePath);
+        Path dirPath = Paths.get(resourceLocation, datePath);
         try {
             Files.createDirectories(dirPath);
         } catch (IOException e) {
             log.error("创建上传目录失败: {}", dirPath, e);
-            throw new BizException(CommonErrorCode.INTERNAL_SERVER_ERROR);
+            throw new BizException(CommonErrorCode.FILE_UPLOAD_FAILED);
         }
 
         // 保存文件
@@ -67,10 +67,13 @@ public class LocalFileStorageStrategy implements FileStorageStrategy {
             file.transferTo(filePath.toFile());
         } catch (IOException e) {
             log.error("文件保存失败: {}", filePath, e);
-            throw new BizException(CommonErrorCode.INTERNAL_SERVER_ERROR);
+            throw new BizException(CommonErrorCode.FILE_UPLOAD_FAILED);
         }
 
-        // 返回访问URL
-        return urlPrefix + "/" + datePath + "/" + filename;
+        // 返回相对路径（去除resourceHandler中的/**通配符），调用方按需拼接域名
+        String basePath = resourceHandler.endsWith("/**")
+                ? resourceHandler.substring(0, resourceHandler.length() - 3)
+                : resourceHandler;
+        return basePath + "/" + datePath + "/" + filename;
     }
 }

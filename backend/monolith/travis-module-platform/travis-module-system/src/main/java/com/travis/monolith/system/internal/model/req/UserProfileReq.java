@@ -27,8 +27,4 @@ public class UserProfileReq {
      */
     @Mobile
     private String mobile;
-    /**
-     * 头像地址
-     */
-    private String avatar;
 }

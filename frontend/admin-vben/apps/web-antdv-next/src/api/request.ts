@@ -98,6 +98,7 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
 
       config.headers.Authorization = formatToken(accessStore.accessToken);
       config.headers['Accept-Language'] = preferences.app.locale;
+      config.headers['Client-Type'] = 'pc_web';
 
       // 处理 loading：默认 fullscreen，可单独指定 'nprogress' 或 false
       const loading = (config as any).loading;
@@ -192,6 +193,7 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
       Modal.error({
           title: '操作失败',
           content: finalMessage,
+          okText: $t('common.gotIt'),
         });
     }),
   );

@@ -15,6 +15,8 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import java.io.FileNotFoundException;
+
 /**
  * Server 异常处理器
  *
@@ -49,12 +51,21 @@ public class ServerExceptionHandlerAdvice {
 
 
     /**
-     * 上传文件过大异常
+     * 上传文件大小超出限制
      */
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ApiResponse<?> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex) {
-        log.warn("上传文件过大: ", ex);
+        log.warn("上传文件大小超过限制: ", ex);
         return ApiResponse.error(CommonErrorCode.FILE_TOO_LARGE);
+    }
+
+    /**
+     * 文件或目录未找到
+     */
+    @ExceptionHandler(FileNotFoundException.class)
+    public ApiResponse<?> handleFileNotFoundException(MaxUploadSizeExceededException ex) {
+        log.warn("文件或目录未找到: ", ex);
+        return ApiResponse.error(CommonErrorCode.FILE_NOT_FOUND);
     }
 
     /**

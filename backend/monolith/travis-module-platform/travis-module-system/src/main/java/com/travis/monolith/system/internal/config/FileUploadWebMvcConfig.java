@@ -13,16 +13,15 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class FileUploadWebMvcConfig implements WebMvcConfigurer {
 
-    @Value("${travis.file.upload-path:./uploads}")
-    private String uploadPath;
+    @Value("${travis.web.file.resource-location:./uploads}")
+    private String resourceLocation;
 
-    @Value("${travis.file.url-prefix:/api/admin/system/file}")
-    private String urlPrefix;
+    @Value("${travis.web.file.resource-handler:/files/**}")
+    private String resourceHandler;
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // 将 urlPrefix/** 映射到本地上传目录
-        registry.addResourceHandler(urlPrefix + "/**")
-                .addResourceLocations("file:" + uploadPath + "/");
+        registry.addResourceHandler(resourceHandler)
+                .addResourceLocations("file:" + resourceLocation);
     }
 }

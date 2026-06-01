@@ -29,3 +29,7 @@ spring:
     database: ${MONGODB_DATABASE:travis_monolith}
     username: ${MONGODB_USERNAME:root}
     password: ${MONGODB_PASSWORD}
+
+travis:
+  web:
+    domain: http://127.0.0.1

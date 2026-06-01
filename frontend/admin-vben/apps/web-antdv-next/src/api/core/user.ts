@@ -15,7 +15,6 @@ export async function getUserInfoApi() {
  */
 export async function updateProfileApi(
   data: {
-    avatar?: string;
     email?: string;
     mobile?: string;
     nickname?: string;
@@ -23,6 +22,18 @@ export async function updateProfileApi(
   config?: RequestClientConfig,
 ) {
   return requestClient.put('/api/admin/system/user/profile', data, config);
+}
+
+/**
+ * 更新头像
+ */
+export async function updateAvatarApi(
+  data: {
+    avatar: string;
+  },
+  config?: RequestClientConfig,
+) {
+  return requestClient.put('/api/admin/system/user/avatar', data, config);
 }
 
 /**

@@ -89,7 +89,7 @@ public class AccessLogFilter extends OncePerRequestFilter {
             var httpMethod = request.getMethod();
             var clientIp = ServletUtils.getClientIP(request);
             var userAgent = ServletUtils.getUserAgent();
-            var clientType = ClientType.from(request.getHeader(CustomHttpHeaders.CLIENT_TYPE));
+            var clientType = ClientType.from(request.getHeader(CustomHttpHeaders.CLIENT_TYPE)).getDisplayName();
             var apiCost = (System.currentTimeMillis() - beginTime) + " ms";
             var requestParams = desensitizeRequestParams(request, handlerMethod);
             var requestBody = desensitizeRequestBody(request, handlerMethod);

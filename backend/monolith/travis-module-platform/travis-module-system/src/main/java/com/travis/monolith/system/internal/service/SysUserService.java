@@ -7,6 +7,7 @@ import com.travis.monolith.system.internal.model.req.ChangePasswordReq;
 import com.travis.monolith.system.internal.model.req.SysUserReq;
 import com.travis.monolith.system.internal.model.req.SysUserRoleReq;
 import com.travis.monolith.system.internal.model.req.UserProfileReq;
+import com.travis.monolith.system.internal.model.req.UpdateAvatarReq;
 import com.travis.monolith.system.internal.model.resp.SysUserResp;
 
 /**
@@ -81,6 +82,13 @@ public interface SysUserService extends IService<SysUser> {
      * @param req 个人资料请求参数
      */
     void updateProfile(UserProfileReq req);
+
+    /**
+     * 当前登录用户更新头像
+     *
+     * @param req 头像更新请求参数
+     */
+    void updateAvatar(UpdateAvatarReq req);
 
     /**
      * 当前登录用户修改密码

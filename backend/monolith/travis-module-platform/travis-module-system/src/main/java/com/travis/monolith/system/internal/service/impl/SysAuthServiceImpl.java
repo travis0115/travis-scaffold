@@ -16,6 +16,7 @@ import com.travis.monolith.system.internal.model.resp.SysUserLoginResp;
 import com.travis.monolith.system.internal.model.resp.UserInfoResp;
 import com.travis.monolith.system.internal.model.resp.VbenMenuResp;
 import com.travis.monolith.system.internal.service.SysAuthService;
+import com.travis.monolith.system.internal.service.SysFileService;
 import com.travis.monolith.system.internal.service.SysMenuService;
 import com.travis.monolith.system.internal.service.SysRoleService;
 import com.travis.monolith.system.internal.service.SysUserService;
@@ -38,6 +39,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SysAuthServiceImpl implements SysAuthService {
 
+    /**
+     * 文件服务
+     */
+    private final SysFileService fileService;
     /**
      * 用户管理服务
      */
@@ -118,7 +123,7 @@ public class SysAuthServiceImpl implements SysAuthService {
                 .id(user.getId())
                 .username(user.getUsername())
                 .nickname(user.getNickname())
-                .avatar(user.getAvatar())
+                .avatar(fileService.getFileUrl(user.getAvatar()))
                 .email(user.getEmail())
                 .mobile(user.getMobile())
                 .roles(roleCodes)

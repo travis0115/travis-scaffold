@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.web.core.model.PageResult;
-import com.travis.monolith.system.internal.converter.SystemConverter;
+import com.travis.monolith.system.internal.converter.SysDictItemConverter;
 import com.travis.monolith.system.internal.mapper.SysDictMapper;
 import com.travis.monolith.system.internal.model.entity.SysDict;
 import com.travis.monolith.system.internal.model.entity.SysDictItem;
@@ -36,7 +36,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict> impl
     private final SysDictItemService dictItemService;
 
     /** 对象转换器 */
-    private final SystemConverter converter;
+    private final SysDictItemConverter converter;
 
     /**
      * 分页查询字典类型列表，支持按名称、类型编码、状态筛选

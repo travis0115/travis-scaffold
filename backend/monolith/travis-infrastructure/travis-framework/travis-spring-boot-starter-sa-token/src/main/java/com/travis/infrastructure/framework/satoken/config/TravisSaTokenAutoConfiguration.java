@@ -19,16 +19,21 @@ import java.util.List;
  */
 @AutoConfiguration
 public class TravisSaTokenAutoConfiguration implements WebMvcConfigurer {
-    // 注册拦截器
+    /**
+     * 注册拦截器
+     *
+     */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         // 注册 Sa-Token 拦截器，校验规则为 StpUtil.checkLogin() 登录校验。
         registry.addInterceptor(new SaInterceptor(handle -> StpUtil.checkLogin()))
-                .addPathPatterns("/**")
+                .addPathPatterns("/api/**")
                 .excludePathPatterns(excludePaths());
     }
 
-    // 动态获取哪些 path 可以忽略鉴权
+    /**
+     * 动态获取哪些 path 可以忽略鉴权
+     */
     public List<String> excludePaths() {
         return Arrays.asList("/api/admin/system/auth/login");
     }

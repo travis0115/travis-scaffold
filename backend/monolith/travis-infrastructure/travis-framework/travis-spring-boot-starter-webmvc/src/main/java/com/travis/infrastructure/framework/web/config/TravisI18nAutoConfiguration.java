@@ -121,7 +121,7 @@ public class TravisI18nAutoConfiguration {
      */
     @Bean
     @ConditionalOnProperty(
-            prefix = "travis.application.web.i18n",
+            prefix = "travis.web.i18n",
             name = "enabled",
             havingValue = "true"
     )

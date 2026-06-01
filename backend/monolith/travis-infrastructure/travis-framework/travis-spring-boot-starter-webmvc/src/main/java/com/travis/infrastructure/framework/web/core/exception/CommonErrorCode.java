@@ -28,7 +28,7 @@ public enum CommonErrorCode implements IErrorCode {
     UNSUPPORTED_MEDIA_TYPE("415", "不支持的 Content-Type"),
     TOO_MANY_REQUESTS("429", "请求过于频繁，请稍后重试"),
     REPEATED_REQUEST("1400", "重复请求，请稍后再试"),
-    FILE_TOO_LARGE("1401", "上传文件过大，请调整后重试"),
+    FILE_TOO_LARGE("1401", "上传文件大小超出限制，请调整后重试"),
 
     /**
      * ──────────────────────────────────────────────────────────────── *
@@ -42,6 +42,8 @@ public enum CommonErrorCode implements IErrorCode {
     INTERRUPTED("1500", "进程中断"),
     IO_EXCEPTION("1501", "IO异常"),
     ARITHMETIC_EXCEPTION("1502", "算数异常"),
+    FILE_NOT_FOUND("1503", "文件或目录不存在"),
+    FILE_UPLOAD_FAILED("1504", "文件上传失败"),
 
     /**
      * ──────────────────────────────────────────────────────────────── *

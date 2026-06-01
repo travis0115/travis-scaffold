@@ -6,7 +6,7 @@ import com.travis.infrastructure.framework.jackson.core.util.JsonUtils;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.web.core.exception.IErrorCode;
-import com.travis.monolith.system.internal.converter.SystemConverter;
+import com.travis.monolith.system.internal.converter.SysMenuConverter;
 import com.travis.monolith.system.internal.mapper.SysMenuMapper;
 import com.travis.monolith.system.internal.mapper.SysRoleMenuMapper;
 import com.travis.monolith.system.internal.model.entity.SysMenu;
@@ -39,7 +39,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
      */
     private final SysRoleMenuMapper roleMenuMapper;
     /** 对象转换器 */
-    private final SystemConverter converter;
+    private final SysMenuConverter converter;
 
     /**
      * 获取菜单树形列表（管理后台使用），按排序号升序排列

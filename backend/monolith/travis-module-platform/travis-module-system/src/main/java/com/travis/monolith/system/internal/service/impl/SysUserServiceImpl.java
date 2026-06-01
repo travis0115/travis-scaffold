@@ -9,7 +9,7 @@ import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.web.core.exception.IErrorCode;
 import com.travis.infrastructure.framework.web.core.model.PageResult;
-import com.travis.monolith.system.internal.converter.SystemConverter;
+import com.travis.monolith.system.internal.converter.SysUserConverter;
 import com.travis.monolith.system.internal.exception.SystemErrorCode;
 import com.travis.monolith.system.internal.mapper.SysDeptMapper;
 import com.travis.monolith.system.internal.mapper.SysUserMapper;
@@ -21,8 +21,10 @@ import com.travis.monolith.system.internal.model.req.ChangePasswordReq;
 import com.travis.monolith.system.internal.model.req.SysUserReq;
 import com.travis.monolith.system.internal.model.req.SysUserRoleReq;
 import com.travis.monolith.system.internal.model.req.UserProfileReq;
+import com.travis.monolith.system.internal.model.req.UpdateAvatarReq;
 import com.travis.monolith.system.internal.model.resp.SysUserResp;
 import com.travis.monolith.system.internal.service.SysRoleService;
+import com.travis.monolith.system.internal.service.SysFileService;
 import com.travis.monolith.system.internal.service.SysUserService;
 import com.travis.monolith.system.internal.util.IpRegionUtils;
 import lombok.RequiredArgsConstructor;
@@ -47,10 +49,12 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     private final SysDeptMapper deptMapper;
     /** 角色管理服务 */
     private final SysRoleService roleService;
+    /** 文件服务 */
+    private final SysFileService fileService;
     /** IP地址解析工具 */
     private final IpRegionUtils ipRegionUtils;
     /** 对象转换器 */
-    private final SystemConverter converter;
+    private final SysUserConverter converter;
 
     /**
      * 分页查询用户列表，支持按用户名、手机号、状态、部门筛选
@@ -187,9 +191,20 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         user.setNickname(req.getNickname());
         user.setEmail(req.getEmail());
         user.setMobile(req.getMobile());
-        if (req.getAvatar() != null) {
-            user.setAvatar(req.getAvatar());
+        updateById(user);
+    }
+
+    /**
+     * 当前登录用户更新头像
+     */
+    @Override
+    public void updateAvatar(UpdateAvatarReq req) {
+        long userId = StpUtil.getLoginIdAsLong();
+        SysUser user = getById(userId);
+        if (user == null) {
+            throw new BizException(CommonErrorCode.NOT_FOUND);
         }
+        user.setAvatar(req.getAvatar());
         updateById(user);
     }
 
@@ -276,6 +291,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      */
     private SysUserResp toVO(SysUser user) {
         SysUserResp resp = converter.toUserResp(user);
+        // 头像路径拼接完整URL
+        resp.setAvatar(fileService.getFileUrl(user.getAvatar()));
         // 关联查询部门名称
         if (user.getDeptId() != null) {
             SysDept dept = deptMapper.selectById(user.getDeptId());

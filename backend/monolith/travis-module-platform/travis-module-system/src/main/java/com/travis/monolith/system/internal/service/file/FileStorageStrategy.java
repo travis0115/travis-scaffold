@@ -11,10 +11,10 @@ import org.springframework.web.multipart.MultipartFile;
 public interface FileStorageStrategy {
 
     /**
-     * 上传文件，返回文件访问URL
+     * 上传文件，返回文件相对路径（不含域名）
      *
      * @param file 文件
-     * @return 文件访问URL
+     * @return 文件相对路径，如 /files/2026-06-02/abc.jpg
      */
     String upload(MultipartFile file);
 }

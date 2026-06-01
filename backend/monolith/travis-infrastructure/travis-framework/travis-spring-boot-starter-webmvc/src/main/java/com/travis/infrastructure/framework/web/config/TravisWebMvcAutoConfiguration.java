@@ -12,9 +12,9 @@ import com.travis.infrastructure.framework.web.core.filter.RequestContextFilter;
 import com.travis.infrastructure.framework.web.core.filter.RequestIdFilter;
 import jakarta.servlet.Filter;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpHeaders;
@@ -29,13 +29,14 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * @author travis
  */
 @AutoConfiguration
+@EnableConfigurationProperties(WebProperties.class)
 public class TravisWebMvcAutoConfiguration implements WebMvcConfigurer {
 
-    /**
-     * 应用基础包名，用于判断Controller所属模块
-     */
-    @Value("${travis.application.base-package:com.travis}")
-    private String basePackage;
+    private final WebProperties webProperties;
+
+    public TravisWebMvcAutoConfiguration(WebProperties webProperties) {
+        this.webProperties = webProperties;
+    }
 
     /**
      * 根据Controller所在包名自动添加路径前缀：
@@ -45,12 +46,28 @@ public class TravisWebMvcAutoConfiguration implements WebMvcConfigurer {
      */
     @Override
     public void configurePathMatch(PathMatchConfigurer configurer) {
-        configurer.addPathPrefix("/api/admin", clazz ->
-                clazz.getPackageName().startsWith(basePackage)
-                && clazz.getPackageName().contains(".controller.admin"));
-        configurer.addPathPrefix("/api/app", clazz ->
-                clazz.getPackageName().startsWith(basePackage)
-                && clazz.getPackageName().contains(".controller.app"));
+        webProperties.getApis().forEach(api -> {
+            if (api.isEnabled()) {
+                configurer.addPathPrefix(
+                        api.getPrefix(),
+                        clazz -> matchController(clazz, api)
+                );
+            }
+        });
+    }
+
+    /**
+     * 判断 Controller 是否匹配指定的前缀配置
+     *
+     * @param controllerClass Controller 类
+     * @param api API 前缀配置
+     * @return 是否匹配
+     */
+    private boolean matchController(Class<?> controllerClass, WebProperties.ApiPrefix api) {
+        String packageName = controllerClass.getPackageName();
+        String packagePattern = api.getPackagePattern();
+        
+        return packageName.contains(packagePattern);
     }
 
     /**
@@ -72,6 +89,7 @@ public class TravisWebMvcAutoConfiguration implements WebMvcConfigurer {
                 .maxAge(3600);
 
     }
+
 
     /**
      * 配置统一响应结果

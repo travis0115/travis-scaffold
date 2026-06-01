@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.web.core.model.PageResult;
-import com.travis.monolith.system.internal.converter.SystemConverter;
+import com.travis.monolith.system.internal.converter.SysUpdateLogConverter;
 import com.travis.monolith.system.internal.mapper.SysUpdateLogMapper;
 import com.travis.monolith.system.internal.model.entity.SysUpdateLog;
 import com.travis.monolith.system.internal.model.req.SysUpdateLogReq;
@@ -27,7 +27,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SysUpdateLogServiceImpl extends ServiceImpl<SysUpdateLogMapper, SysUpdateLog> implements SysUpdateLogService {
 
-    private final SystemConverter converter;
+    private final SysUpdateLogConverter converter;
 
     @Override
     public PageResult<SysUpdateLogResp> getUpdateLogPage(String version, String title, Integer status,
