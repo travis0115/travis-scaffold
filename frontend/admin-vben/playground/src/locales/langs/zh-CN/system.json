@@ -76,46 +76,5 @@
     "operation": "操作",
     "permissions": "权限",
     "setPermissions": "授权"
-  },
-  "config": {
-    "title": "系统配置",
-    "list": "配置列表",
-    "name": "配置",
-    "configGroup": "配置分组",
-    "configKey": "配置键",
-    "configValue": "配置值",
-    "remark": "备注",
-    "createTime": "创建时间",
-    "operation": "操作"
-  },
-  "loginLog": {
-    "title": "登录日志",
-    "list": "日志列表",
-    "name": "登录日志",
-    "username": "用户名",
-    "ip": "登录IP",
-    "location": "登录地点",
-    "browser": "浏览器",
-    "os": "操作系统",
-    "status": "状态",
-    "message": "提示信息",
-    "loginTime": "登录时间",
-    "success": "成功",
-    "fail": "失败"
-  },
-  "updateLog": {
-    "title": "更新日志",
-    "list": "日志列表",
-    "name": "更新日志",
-    "version": "版本号",
-    "updateTitle": "更新标题",
-    "content": "更新内容",
-    "publishTime": "发布时间",
-    "status": "状态",
-    "draft": "草稿",
-    "published": "已发布",
-    "createTime": "创建时间",
-    "operation": "操作",
-    "viewUpdateLog": "更新日志"
   }
 }

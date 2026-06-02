@@ -26,7 +26,7 @@ public class SysUpdateLog implements Serializable {
     @TableId(type = IdType.ASSIGN_ID)
     private Long id;
     /**
-     * 版本号
+     * 版本号（如 v1.0）
      */
     private String version;
     /**
@@ -55,4 +55,14 @@ public class SysUpdateLog implements Serializable {
      */
     @TableField(fill = FieldFill.INSERT)
     private Long createBy;
+    /**
+     * 更新时间
+     */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updateTime;
+    /**
+     * 更新人ID
+     */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private Long updateBy;
 }

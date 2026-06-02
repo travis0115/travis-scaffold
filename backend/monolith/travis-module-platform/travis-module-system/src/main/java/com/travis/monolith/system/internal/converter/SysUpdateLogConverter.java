@@ -31,6 +31,8 @@ public interface SysUpdateLogConverter {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createTime", ignore = true)
     @Mapping(target = "createBy", ignore = true)
+    @Mapping(target = "updateTime", ignore = true)
+    @Mapping(target = "updateBy", ignore = true)
     SysUpdateLog toUpdateLogEntity(SysUpdateLogReq req);
 
     /**
@@ -39,5 +41,7 @@ public interface SysUpdateLogConverter {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createTime", ignore = true)
     @Mapping(target = "createBy", ignore = true)
+    @Mapping(target = "updateTime", ignore = true)
+    @Mapping(target = "updateBy", ignore = true)
     void updateUpdateLogFromReq(SysUpdateLogReq req, @MappingTarget SysUpdateLog updateLog);
 }

@@ -25,4 +25,6 @@ public class SysUpdateLogResp {
     private Integer status;
     private LocalDateTime createTime;
     private Long createBy;
+    private LocalDateTime updateTime;
+    private Long updateBy;
 }

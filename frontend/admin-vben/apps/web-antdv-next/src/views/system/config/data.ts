@@ -1,6 +1,6 @@
 import type { VbenFormSchema } from '#/adapter/form';
 import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
-import type { SystemConfigApi } from '#/api/system/config';
+import type { SystemConfigApi } from '#/api';
 
 import { $t } from '#/locales';
 
@@ -15,7 +15,6 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'Input',
       fieldName: 'configKey',
       label: $t('system.config.configKey'),
-      rules: 'required',
     },
     {
       component: 'Textarea',
@@ -73,6 +72,7 @@ export function useColumns<T = SystemConfigApi.SystemConfig>(
       field: 'createTime',
       title: $t('system.config.createTime'),
       width: 180,
+      formatter: 'formatDateTime',
     },
     {
       align: 'center',

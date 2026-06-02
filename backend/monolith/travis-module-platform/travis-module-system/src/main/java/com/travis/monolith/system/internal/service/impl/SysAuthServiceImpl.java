@@ -28,6 +28,7 @@ import com.travis.monolith.system.internal.service.SysUserService;
 import com.travis.monolith.system.internal.util.IpUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -151,9 +152,10 @@ public class SysAuthServiceImpl implements SysAuthService {
     }
 
     /**
-     * 获取当前用户的菜单树（用于前端路由渲染）
+     * 获取当前用户的菜单树（用于前端路由渲染），按用户ID缓存
      */
     @Override
+    @Cacheable(value = "menus:vben", key = "T(cn.dev33.satoken.stp.StpUtil).getLoginIdAsLong()")
     public List<VbenMenuResp> getMenuList() {
         long userId = StpUtil.getLoginIdAsLong();
         List<Long> roleIds = roleService.getRoleIdsByUserId(userId);

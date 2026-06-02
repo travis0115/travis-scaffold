@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @Data
 public class SysUpdateLogReq {
     /**
-     * 版本号
+     * 版本号（如 v1.0）
      */
     @NotBlank(message = "版本号不能为空")
     @Size(max = 50, message = "版本号长度不能超过50个字符")

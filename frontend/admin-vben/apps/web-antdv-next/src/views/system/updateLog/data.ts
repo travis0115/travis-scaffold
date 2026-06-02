@@ -1,6 +1,9 @@
 import type { VbenFormSchema } from '#/adapter/form';
-import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
-import type { SystemUpdateLogApi } from '#/api/system/updateLog';
+import type {
+  OnActionClickFn,
+  VxeTableGridColumns,
+} from '#/adapter/vxe-table';
+import type { SystemUpdateLogApi } from '#/api';
 
 import { $t } from '#/locales';
 
@@ -10,37 +13,37 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'Input',
       fieldName: 'version',
       label: $t('system.updateLog.version'),
-      rules: 'required',
     },
     {
       component: 'Input',
       fieldName: 'title',
-      label: $t('system.updateLog.updateTitle'),
-      rules: 'required',
+      label: $t('system.updateLog.titleField'),
     },
     {
       component: 'Textarea',
-      componentProps: { rows: 6 },
       fieldName: 'content',
       label: $t('system.updateLog.content'),
-      rules: 'required',
+      componentProps: {
+        rows: 8,
+      },
     },
     {
       component: 'DatePicker',
-      componentProps: {
-        showTime: true,
-        valueFormat: 'YYYY-MM-DDTHH:mm:ss',
-      },
       fieldName: 'publishTime',
       label: $t('system.updateLog.publishTime'),
+      componentProps: {
+        showTime: true,
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+        style: { width: '100%' },
+      },
     },
     {
       component: 'RadioGroup',
       componentProps: {
         buttonStyle: 'solid',
         options: [
-          { label: $t('system.updateLog.published'), value: 1 },
-          { label: $t('system.updateLog.draft'), value: 0 },
+          { label: $t('system.updateLog.statusDraft'), value: 0 },
+          { label: $t('system.updateLog.statusPublished'), value: 1 },
         ],
         optionType: 'button',
       },
@@ -61,15 +64,15 @@ export function useGridFormSchema(): VbenFormSchema[] {
     {
       component: 'Input',
       fieldName: 'title',
-      label: $t('system.updateLog.updateTitle'),
+      label: $t('system.updateLog.titleField'),
     },
     {
       component: 'Select',
       componentProps: {
         allowClear: true,
         options: [
-          { label: $t('system.updateLog.published'), value: 1 },
-          { label: $t('system.updateLog.draft'), value: 0 },
+          { label: $t('system.updateLog.statusDraft'), value: 0 },
+          { label: $t('system.updateLog.statusPublished'), value: 1 },
         ],
       },
       fieldName: 'status',
@@ -78,9 +81,9 @@ export function useGridFormSchema(): VbenFormSchema[] {
   ];
 }
 
-export function useColumns<T = SystemUpdateLogApi.UpdateLog>(
-  onActionClick: OnActionClickFn<T>,
-): VxeTableGridColumns {
+export function useColumns(
+  onActionClick?: OnActionClickFn<SystemUpdateLogApi.UpdateLog>,
+): VxeTableGridColumns<SystemUpdateLogApi.UpdateLog> {
   return [
     {
       field: 'version',
@@ -89,49 +92,42 @@ export function useColumns<T = SystemUpdateLogApi.UpdateLog>(
     },
     {
       field: 'title',
-      title: $t('system.updateLog.updateTitle'),
+      title: $t('system.updateLog.titleField'),
       minWidth: 200,
     },
     {
-      cellRender: {
-        name: 'CellTag',
-        props: (row: any) => ({
-          color: row.status === 1 ? 'success' : 'default',
-        }),
-      },
+      cellRender: { name: 'CellTag' },
       field: 'status',
       title: $t('system.updateLog.status'),
       width: 100,
-      formatter({ cellValue }: { cellValue: number }) {
-        return cellValue === 1
-          ? $t('system.updateLog.published')
-          : $t('system.updateLog.draft');
-      },
     },
     {
       field: 'publishTime',
       title: $t('system.updateLog.publishTime'),
       width: 180,
+      formatter: 'formatDateTime',
     },
     {
       field: 'createTime',
       title: $t('system.updateLog.createTime'),
       width: 180,
+      formatter: 'formatDateTime',
     },
     {
       align: 'center',
       cellRender: {
         attrs: {
           nameField: 'title',
-          nameTitle: $t('system.updateLog.name'),
+          nameTitle: $t('system.updateLog.titleField'),
           onClick: onActionClick,
         },
         name: 'CellOperation',
+        options: ['edit', 'delete'],
       },
       field: 'operation',
       fixed: 'right',
       title: $t('system.updateLog.operation'),
-      width: 130,
+      width: 160,
     },
   ];
 }

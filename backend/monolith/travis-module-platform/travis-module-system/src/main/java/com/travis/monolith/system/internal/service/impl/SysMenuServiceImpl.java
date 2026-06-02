@@ -79,7 +79,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
      */
     @Override
     @Transactional
-    @CacheEvict(value = "system:menu:tree", key = "'all'")
+    @CacheEvict(value = {"system:menu:tree", "menus:vben"}, key = "'all'", allEntries = true)
     public void addMenu(SysMenuReq req) {
         SysMenu menu = converter.toMenuEntity(req);
         save(menu);
@@ -90,6 +90,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
      * 更新菜单信息
      */
     @Override
+    @CacheEvict(value = {"system:menu:tree", "menus:vben"}, key = "'all'", allEntries = true)
     public void updateMenu(Long id, SysMenuReq req) {
         SysMenu menu = getById(id);
         if (menu == null) {
@@ -104,7 +105,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
      */
     @Override
     @Transactional
-    @CacheEvict(value = "system:menu:tree", key = "'all'")
+    @CacheEvict(value = {"system:menu:tree", "menus:vben"}, key = "'all'", allEntries = true)
     public void deleteMenu(Long id) {
         long childCount = count(new LambdaQueryWrapper<SysMenu>()
                 .eq(SysMenu::getParentId, id));

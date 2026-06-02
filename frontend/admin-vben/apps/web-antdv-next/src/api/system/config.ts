@@ -19,7 +19,7 @@ export namespace SystemConfigApi {
  * 获取系统配置分页列表
  */
 async function getConfigList(params: Recordable<any>) {
-  return requestClient.get('/system/config/page', { params });
+  return requestClient.get('/api/admin/system/config/page', { params });
 }
 
 /**
@@ -27,7 +27,7 @@ async function getConfigList(params: Recordable<any>) {
  */
 async function getConfigDetail(id: string) {
   return requestClient.get<SystemConfigApi.SystemConfig>(
-    `/system/config/${id}`,
+    `/api/admin/system/config/${id}`,
   );
 }
 
@@ -37,7 +37,7 @@ async function getConfigDetail(id: string) {
 async function createConfig(
   data: Omit<SystemConfigApi.SystemConfig, 'id'>,
 ) {
-  return requestClient.post('/system/config', data);
+  return requestClient.post('/api/admin/system/config', data);
 }
 
 /**
@@ -47,14 +47,14 @@ async function updateConfig(
   id: string,
   data: Omit<SystemConfigApi.SystemConfig, 'id'>,
 ) {
-  return requestClient.put(`/system/config/${id}`, data);
+  return requestClient.put(`/api/admin/system/config/${id}`, data);
 }
 
 /**
  * 删除配置
  */
 async function deleteConfig(id: string) {
-  return requestClient.delete(`/system/config/${id}`);
+  return requestClient.delete(`/api/admin/system/config/${id}`)
 }
 
 export {

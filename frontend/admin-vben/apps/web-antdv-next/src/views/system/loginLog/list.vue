@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-import type { SystemLoginLogApi } from '#/api/system/loginLog';
+import type { SystemLoginLogApi } from '#/api';
 
 import { Page } from '@vben/common-ui';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getLoginLogList } from '#/api/system/loginLog';
+import { getLoginLogList } from '#/api';
 import { $t } from '#/locales';
 
 import { useColumns, useGridFormSchema } from './data';

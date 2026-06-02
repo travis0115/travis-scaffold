@@ -74,46 +74,5 @@
     "operation": "Operation",
     "permissions": "Permissions",
     "setPermissions": "Permissions"
-  },
-  "config": {
-    "title": "System Config",
-    "list": "Config List",
-    "name": "Config",
-    "configGroup": "Group",
-    "configKey": "Key",
-    "configValue": "Value",
-    "remark": "Remark",
-    "createTime": "Create Time",
-    "operation": "Operation"
-  },
-  "loginLog": {
-    "title": "Login Log",
-    "list": "Log List",
-    "name": "Login Log",
-    "username": "Username",
-    "ip": "IP Address",
-    "location": "Location",
-    "browser": "Browser",
-    "os": "OS",
-    "status": "Status",
-    "message": "Message",
-    "loginTime": "Login Time",
-    "success": "Success",
-    "fail": "Failed"
-  },
-  "updateLog": {
-    "title": "Update Log",
-    "list": "Log List",
-    "name": "Update Log",
-    "version": "Version",
-    "updateTitle": "Title",
-    "content": "Content",
-    "publishTime": "Publish Time",
-    "status": "Status",
-    "draft": "Draft",
-    "published": "Published",
-    "createTime": "Create Time",
-    "operation": "Operation",
-    "viewUpdateLog": "Update Log"
   }
 }

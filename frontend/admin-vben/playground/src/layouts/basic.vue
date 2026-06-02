@@ -108,13 +108,6 @@ const menus = computed(() => [
   },
   {
     handler: () => {
-      router.push({ name: 'UpdateLog' });
-    },
-    icon: 'ion:newspaper-outline',
-    text: $t('system.updateLog.viewUpdateLog'),
-  },
-  {
-    handler: () => {
       openWindow(VBEN_DOC_URL, {
         target: '_blank',
       });

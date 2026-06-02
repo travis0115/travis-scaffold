@@ -3,7 +3,7 @@ import type {
   OnActionClickParams,
   VxeTableGridOptions,
 } from '#/adapter/vxe-table';
-import type { SystemConfigApi } from '#/api/system/config';
+import type { SystemUpdateLogApi } from '#/api';
 
 import { Page, useVbenDrawer } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
@@ -11,7 +11,7 @@ import { Plus } from '@vben/icons';
 import { Button, message } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { deleteConfig, getConfigList } from '#/api/system/config';
+import { deleteUpdateLog, getUpdateLogPage } from '#/api';
 import { $t } from '#/locales';
 
 import { useColumns, useGridFormSchema } from './data';
@@ -34,7 +34,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
-          return await getConfigList({
+          return await getUpdateLogPage({
             pageNum: page.currentPage,
             pageSize: page.pageSize,
             ...formValues,
@@ -52,43 +52,36 @@ const [Grid, gridApi] = useVbenVxeGrid({
       search: true,
       zoom: true,
     },
-  } as VxeTableGridOptions<SystemConfigApi.SystemConfig>,
+  } as VxeTableGridOptions<SystemUpdateLogApi.UpdateLog>,
 });
 
-function onActionClick({
-  code,
-  row,
-}: OnActionClickParams<SystemConfigApi.SystemConfig>) {
-  switch (code) {
+function onActionClick(e: OnActionClickParams<SystemUpdateLogApi.UpdateLog>) {
+  switch (e.code) {
     case 'delete': {
-      onDelete(row);
+      onDelete(e.row);
       break;
     }
     case 'edit': {
-      onEdit(row);
+      onEdit(e.row);
       break;
     }
   }
 }
 
-function onEdit(row: SystemConfigApi.SystemConfig) {
+function onEdit(row: SystemUpdateLogApi.UpdateLog) {
   formDrawerApi.setData(row).open();
 }
 
-function onCreate() {
-  formDrawerApi.setData({}).open();
-}
-
-function onDelete(row: SystemConfigApi.SystemConfig) {
+function onDelete(row: SystemUpdateLogApi.UpdateLog) {
   const hideLoading = message.loading({
-    content: $t('ui.actionMessage.deleting', [row.configKey]),
+    content: $t('ui.actionMessage.deleting', [row.title]),
     duration: 0,
     key: 'action_process_msg',
   });
-  deleteConfig(row.id)
+  deleteUpdateLog(row.id)
     .then(() => {
       message.success({
-        content: $t('ui.actionMessage.deleteSuccess', [row.configKey]),
+        content: $t('ui.actionMessage.deleteSuccess', [row.title]),
         key: 'action_process_msg',
       });
       onRefresh();
@@ -101,15 +94,19 @@ function onDelete(row: SystemConfigApi.SystemConfig) {
 function onRefresh() {
   gridApi.query();
 }
+
+function onCreate() {
+  formDrawerApi.setData({}).open();
+}
 </script>
 <template>
   <Page auto-content-height>
     <FormDrawer @success="onRefresh" />
-    <Grid :table-title="$t('system.config.list')">
+    <Grid :table-title="$t('system.updateLog.list')">
       <template #toolbar-tools>
         <Button type="primary" @click="onCreate">
           <Plus class="size-5" />
-          {{ $t('ui.actionTitle.create', [$t('system.config.name')]) }}
+          {{ $t('ui.actionTitle.create', [$t('system.updateLog.name')]) }}
         </Button>
       </template>
     </Grid>
