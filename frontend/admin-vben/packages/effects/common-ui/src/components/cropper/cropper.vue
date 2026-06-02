@@ -13,6 +13,10 @@ const props = defineProps<{
   width?: number;
 }>();
 
+const emit = defineEmits<{
+  cropchange: [];
+}>();
+
 const CROPPER_CONSTANTS = {
   MIN_WIDTH: 60 as const,
   MIN_HEIGHT: 60 as const,
@@ -327,6 +331,7 @@ const handleMoveCropBox = (diffX: number, diffY: number) => {
 
   // 更新裁剪区域（仅位置变化，尺寸/比例完全不变）
   setDimension(newDimension);
+  emit('cropchange');
 };
 
 const handleFreeAspectResize = (diffX: number, diffY: number) => {
@@ -382,6 +387,7 @@ const handleFreeAspectResize = (diffX: number, diffY: number) => {
   }
 
   setDimension(currentDimensionNew);
+  emit('cropchange');
 };
 
 const handleFixedAspectResize = (diffX: number, diffY: number) => {
@@ -501,6 +507,7 @@ const handleFixedAspectResize = (diffX: number, diffY: number) => {
 
   const newDimension: Dimension = [newTop, newRight, newBottom, newLeft];
   setDimension(newDimension);
+  emit('cropchange');
 };
 
 /**
@@ -704,7 +711,7 @@ onUnmounted(() => {
   document.removeEventListener('mouseup', handleMouseUp);
 });
 
-defineExpose({ getCropImage });
+defineExpose({ currentDimension, getCropImage });
 </script>
 
 <template>

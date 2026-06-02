@@ -44,6 +44,9 @@ export const overridesPreferences = defineOverridesPreferences({
     collapsedShowTitle: false,
     fixedButton: false,
   },
+  tabbar: {
+    persist: false,
+  },
   theme: {
     builtinType: 'violet',
     colorPrimary: 'hsl(245 82% 67%)',
