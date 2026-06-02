@@ -8,8 +8,10 @@ import com.travis.infrastructure.framework.web.core.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.web.core.exception.IErrorCode;
 import com.travis.monolith.system.internal.converter.SysMenuConverter;
 import com.travis.monolith.system.internal.mapper.SysMenuMapper;
+import com.travis.monolith.system.internal.mapper.SysRoleMapper;
 import com.travis.monolith.system.internal.mapper.SysRoleMenuMapper;
 import com.travis.monolith.system.internal.model.entity.SysMenu;
+import com.travis.monolith.system.internal.model.entity.SysRole;
 import com.travis.monolith.system.internal.model.entity.SysRoleMenu;
 import com.travis.monolith.system.internal.model.req.SysMenuReq;
 import com.travis.monolith.system.internal.model.resp.SysMenuResp;
@@ -38,6 +40,10 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
      * 角色-菜单关联 Mapper
      */
     private final SysRoleMenuMapper roleMenuMapper;
+    /**
+     * 角色 Mapper
+     */
+    private final SysRoleMapper roleMapper;
     /** 对象转换器 */
     private final SysMenuConverter converter;
 
@@ -69,13 +75,15 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
     }
 
     /**
-     * 新增菜单
+     * 新增菜单，新增后自动关联到所有 admin 角色
      */
     @Override
+    @Transactional
     @CacheEvict(value = "system:menu:tree", key = "'all'")
     public void addMenu(SysMenuReq req) {
         SysMenu menu = converter.toMenuEntity(req);
         save(menu);
+        autoAssignToAdminRoles(menu.getId());
     }
 
     /**
@@ -92,7 +100,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
     }
 
     /**
-     * 删除菜单，存在子菜单时禁止删除
+     * 删除菜单，存在子菜单时禁止删除，删除时自动移除 admin 角色的关联记录
      */
     @Override
     @Transactional
@@ -113,6 +121,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
                 }
             }, null);
         }
+        autoRemoveFromAdminRoles(id);
         removeById(id);
     }
 
@@ -278,5 +287,47 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         return all.stream()
                 .filter(node -> node.getParentId() == 0)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 新增菜单后，自动为所有 role_code='admin' 的启用角色关联该菜单
+     *
+     * @param menuId 新增的菜单ID
+     */
+    private void autoAssignToAdminRoles(Long menuId) {
+        List<SysRole> adminRoles = roleMapper.selectList(
+                new LambdaQueryWrapper<SysRole>()
+                        .eq(SysRole::getRoleCode, "admin")
+                        .eq(SysRole::getStatus, 1));
+        for (SysRole role : adminRoles) {
+            long count = roleMenuMapper.selectCount(
+                    new LambdaQueryWrapper<SysRoleMenu>()
+                            .eq(SysRoleMenu::getRoleId, role.getId())
+                            .eq(SysRoleMenu::getMenuId, menuId));
+            if (count == 0) {
+                SysRoleMenu rm = new SysRoleMenu();
+                rm.setRoleId(role.getId());
+                rm.setMenuId(menuId);
+                roleMenuMapper.insert(rm);
+            }
+        }
+    }
+
+    /**
+     * 删除菜单后，自动移除所有 role_code='admin' 的角色对该菜单的关联记录
+     *
+     * @param menuId 被删除的菜单ID
+     */
+    private void autoRemoveFromAdminRoles(Long menuId) {
+        List<Long> adminRoleIds = roleMapper.selectList(
+                        new LambdaQueryWrapper<SysRole>()
+                                .eq(SysRole::getRoleCode, "admin"))
+                .stream().map(SysRole::getId).toList();
+        if (!adminRoleIds.isEmpty()) {
+            roleMenuMapper.delete(
+                    new LambdaQueryWrapper<SysRoleMenu>()
+                            .in(SysRoleMenu::getRoleId, adminRoleIds)
+                            .eq(SysRoleMenu::getMenuId, menuId));
+        }
     }
 }

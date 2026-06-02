@@ -8,7 +8,7 @@ import com.travis.infrastructure.framework.web.core.exception.IErrorCode;
 import com.travis.monolith.system.internal.converter.SysDeptConverter;
 import com.travis.monolith.system.internal.mapper.SysDeptMapper;
 import com.travis.monolith.system.internal.model.entity.SysDept;
-import com.travis.monolith.system.internal.model.req.SysMenuReq;
+import com.travis.monolith.system.internal.model.req.SysDeptReq;
 import com.travis.monolith.system.internal.model.resp.SysDeptResp;
 import com.travis.monolith.system.internal.service.SysDeptService;
 import lombok.RequiredArgsConstructor;
@@ -67,7 +67,7 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
     @Override
     @Transactional
     @CacheEvict(value = "system:dept:tree", key = "'all'")
-    public void addDept(SysMenuReq.SysDeptReq req) {
+    public void addDept(SysDeptReq req) {
         SysDept dept = new SysDept();
         dept.setParentId(req.getParentId() == null ? 0L : req.getParentId());
         dept.setDeptName(req.getDeptName());
@@ -83,7 +83,7 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
      */
     @Override
     @CacheEvict(value = "system:dept:tree", key = "'all'")
-    public void updateDept(Long id, SysMenuReq.SysDeptReq req) {
+    public void updateDept(Long id, SysDeptReq req) {
         SysDept dept = getById(id);
         if (dept == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);

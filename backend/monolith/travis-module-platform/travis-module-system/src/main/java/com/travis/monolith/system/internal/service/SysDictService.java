@@ -3,7 +3,8 @@ package com.travis.monolith.system.internal.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.infrastructure.framework.web.core.model.PageResult;
 import com.travis.monolith.system.internal.model.entity.SysDict;
-import com.travis.monolith.system.internal.model.req.SysMenuReq;
+import com.travis.monolith.system.internal.model.req.SysDictItemReq;
+import com.travis.monolith.system.internal.model.req.SysDictReq;
 import com.travis.monolith.system.internal.model.resp.SysDictItemResp;
 
 import java.util.List;
@@ -40,7 +41,7 @@ public interface SysDictService extends IService<SysDict> {
      *
      * @param req 字典信息请求参数
      */
-    void addDict(SysMenuReq.SysDictReq req);
+    void addDict(SysDictReq req);
 
     /**
      * 更新字典类型
@@ -48,7 +49,7 @@ public interface SysDictService extends IService<SysDict> {
      * @param id  字典ID
      * @param req 字典信息请求参数
      */
-    void updateDict(Long id, SysMenuReq.SysDictReq req);
+    void updateDict(Long id, SysDictReq req);
 
     /**
      * 删除字典类型
@@ -70,7 +71,7 @@ public interface SysDictService extends IService<SysDict> {
      *
      * @param req 字典数据项请求参数
      */
-    void addDictItem(SysMenuReq.SysDictItemReq req);
+    void addDictItem(SysDictItemReq req);
 
     /**
      * 更新字典数据项
@@ -78,7 +79,7 @@ public interface SysDictService extends IService<SysDict> {
      * @param id  数据项ID
      * @param req 字典数据项请求参数
      */
-    void updateDictItem(Long id, SysMenuReq.SysDictItemReq req);
+    void updateDictItem(Long id, SysDictItemReq req);
 
     /**
      * 删除字典数据项

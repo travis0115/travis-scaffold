@@ -1,7 +1,7 @@
 package com.travis.monolith.system.internal.controller.admin;
 
 import com.travis.infrastructure.framework.web.core.model.ApiResponse;
-import com.travis.monolith.system.internal.model.req.SysMenuReq;
+import com.travis.monolith.system.internal.model.req.SysDeptReq;
 import com.travis.monolith.system.internal.model.resp.SysDeptResp;
 import com.travis.monolith.system.internal.service.SysDeptService;
 import jakarta.validation.Valid;
@@ -55,7 +55,7 @@ public class SysDeptController {
      * @return 空响应
      */
     @PostMapping
-    public ApiResponse<Void> add(@RequestBody @Valid SysMenuReq.SysDeptReq req) {
+    public ApiResponse<Void> add(@RequestBody @Valid SysDeptReq req) {
         deptService.addDept(req);
         return ApiResponse.success();
     }
@@ -68,7 +68,7 @@ public class SysDeptController {
      * @return 空响应
      */
     @PutMapping("/{id}")
-    public ApiResponse<Void> update(@PathVariable Long id, @RequestBody @Valid SysMenuReq.SysDeptReq req) {
+    public ApiResponse<Void> update(@PathVariable Long id, @RequestBody @Valid SysDeptReq req) {
         deptService.updateDept(id, req);
         return ApiResponse.success();
     }

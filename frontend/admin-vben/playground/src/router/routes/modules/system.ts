@@ -48,6 +48,33 @@ const routes: RouteRecordRaw[] = [
         },
         component: () => import('#/views/system/dept/list.vue'),
       },
+      {
+        path: '/system/config',
+        name: 'SystemConfig',
+        meta: {
+          icon: 'ion:options-outline',
+          title: $t('system.config.title'),
+        },
+        component: () => import('#/views/system/config/list.vue'),
+      },
+      {
+        path: '/system/login-log',
+        name: 'SystemLoginLog',
+        meta: {
+          icon: 'ion:log-in-outline',
+          title: $t('system.loginLog.title'),
+        },
+        component: () => import('#/views/system/loginLog/list.vue'),
+      },
+      {
+        path: '/system/update-log',
+        name: 'SystemUpdateLog',
+        meta: {
+          icon: 'ion:newspaper-outline',
+          title: $t('system.updateLog.title'),
+        },
+        component: () => import('#/views/system/updateLog/list.vue'),
+      },
     ],
   },
 ];

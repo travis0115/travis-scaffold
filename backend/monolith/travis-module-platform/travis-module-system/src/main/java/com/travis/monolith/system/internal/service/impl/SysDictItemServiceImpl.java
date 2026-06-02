@@ -8,7 +8,7 @@ import com.travis.infrastructure.framework.web.core.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.web.core.model.PageResult;
 import com.travis.monolith.system.internal.mapper.SysDictItemMapper;
 import com.travis.monolith.system.internal.model.entity.SysDictItem;
-import com.travis.monolith.system.internal.model.req.SysMenuReq;
+import com.travis.monolith.system.internal.model.req.SysDictItemReq;
 import com.travis.monolith.system.internal.service.SysDictItemService;
 import org.springframework.stereotype.Service;
 
@@ -37,7 +37,7 @@ public class SysDictItemServiceImpl extends ServiceImpl<SysDictItemMapper, SysDi
      * 新增字典数据项
      */
     @Override
-    public void addDictItem(SysMenuReq.SysDictItemReq req) {
+    public void addDictItem(SysDictItemReq req) {
         SysDictItem item = new SysDictItem();
         item.setDictId(req.getDictId());
         item.setLabel(req.getLabel());
@@ -52,7 +52,7 @@ public class SysDictItemServiceImpl extends ServiceImpl<SysDictItemMapper, SysDi
      * 更新字典数据项
      */
     @Override
-    public void updateDictItem(Long id, SysMenuReq.SysDictItemReq req) {
+    public void updateDictItem(Long id, SysDictItemReq req) {
         SysDictItem item = getById(id);
         if (item == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);

@@ -2,7 +2,7 @@ package com.travis.monolith.system.internal.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.monolith.system.internal.model.entity.SysDept;
-import com.travis.monolith.system.internal.model.req.SysMenuReq;
+import com.travis.monolith.system.internal.model.req.SysDeptReq;
 import com.travis.monolith.system.internal.model.resp.SysDeptResp;
 
 import java.util.List;
@@ -34,7 +34,7 @@ public interface SysDeptService extends IService<SysDept> {
      *
      * @param req 部门信息请求参数
      */
-    void addDept(SysMenuReq.SysDeptReq req);
+    void addDept(SysDeptReq req);
 
     /**
      * 更新部门信息
@@ -42,7 +42,7 @@ public interface SysDeptService extends IService<SysDept> {
      * @param id  部门ID
      * @param req 部门信息请求参数
      */
-    void updateDept(Long id, SysMenuReq.SysDeptReq req);
+    void updateDept(Long id, SysDeptReq req);
 
     /**
      * 删除部门（存在子部门时禁止删除）

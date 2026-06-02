@@ -3,7 +3,7 @@ package com.travis.monolith.system.internal.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.infrastructure.framework.web.core.model.PageResult;
 import com.travis.monolith.system.internal.model.entity.SysDictItem;
-import com.travis.monolith.system.internal.model.req.SysMenuReq;
+import com.travis.monolith.system.internal.model.req.SysDictItemReq;
 
 /**
  * 字典数据项管理服务接口，提供字典子项的分页查询和增删改
@@ -27,7 +27,7 @@ public interface SysDictItemService extends IService<SysDictItem> {
      *
      * @param req 字典数据项请求参数
      */
-    void addDictItem(SysMenuReq.SysDictItemReq req);
+    void addDictItem(SysDictItemReq req);
 
     /**
      * 更新字典数据项
@@ -35,7 +35,7 @@ public interface SysDictItemService extends IService<SysDictItem> {
      * @param id  数据项ID
      * @param req 字典数据项请求参数
      */
-    void updateDictItem(Long id, SysMenuReq.SysDictItemReq req);
+    void updateDictItem(Long id, SysDictItemReq req);
 
     /**
      * 删除字典数据项

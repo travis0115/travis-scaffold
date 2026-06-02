@@ -10,7 +10,8 @@ import com.travis.monolith.system.internal.converter.SysDictItemConverter;
 import com.travis.monolith.system.internal.mapper.SysDictMapper;
 import com.travis.monolith.system.internal.model.entity.SysDict;
 import com.travis.monolith.system.internal.model.entity.SysDictItem;
-import com.travis.monolith.system.internal.model.req.SysMenuReq;
+import com.travis.monolith.system.internal.model.req.SysDictItemReq;
+import com.travis.monolith.system.internal.model.req.SysDictReq;
 import com.travis.monolith.system.internal.model.resp.SysDictItemResp;
 import com.travis.monolith.system.internal.service.SysDictItemService;
 import com.travis.monolith.system.internal.service.SysDictService;
@@ -69,7 +70,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict> impl
      */
     @Override
     @Transactional
-    public void addDict(SysMenuReq.SysDictReq req) {
+    public void addDict(SysDictReq req) {
         SysDict dict = new SysDict();
         dict.setDictName(req.getDictName());
         dict.setDictType(req.getDictType());
@@ -83,7 +84,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict> impl
      */
     @Override
     @Transactional
-    public void updateDict(Long id, SysMenuReq.SysDictReq req) {
+    public void updateDict(Long id, SysDictReq req) {
         SysDict dict = getById(id);
         if (dict == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
@@ -124,7 +125,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict> impl
      */
     @Override
     @CacheEvict(value = "system:dict:items", key = "#req.dictId")
-    public void addDictItem(SysMenuReq.SysDictItemReq req) {
+    public void addDictItem(SysDictItemReq req) {
         dictItemService.addDictItem(req);
     }
 
@@ -133,7 +134,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict> impl
      */
     @Override
     @CacheEvict(value = "system:dict:items", key = "#req.dictId")
-    public void updateDictItem(Long id, SysMenuReq.SysDictItemReq req) {
+    public void updateDictItem(Long id, SysDictItemReq req) {
         dictItemService.updateDictItem(id, req);
     }
 

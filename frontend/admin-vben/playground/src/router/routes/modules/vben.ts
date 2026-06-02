@@ -128,6 +128,16 @@ const routes: RouteRecordRaw[] = [
       title: $t('page.auth.profile'),
     },
   },
+  {
+    name: 'UpdateLog',
+    path: '/update-log',
+    component: () => import('#/views/_core/updateLog/index.vue'),
+    meta: {
+      icon: 'ion:newspaper-outline',
+      hideInMenu: true,
+      title: $t('system.updateLog.viewUpdateLog'),
+    },
+  },
 ];
 
 export default routes;

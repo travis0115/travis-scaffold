@@ -3,7 +3,8 @@ package com.travis.monolith.system.internal.controller.admin;
 import com.travis.infrastructure.framework.web.core.model.ApiResponse;
 import com.travis.infrastructure.framework.web.core.model.PageResult;
 import com.travis.monolith.system.internal.model.entity.SysDict;
-import com.travis.monolith.system.internal.model.req.SysMenuReq;
+import com.travis.monolith.system.internal.model.req.SysDictItemReq;
+import com.travis.monolith.system.internal.model.req.SysDictReq;
 import com.travis.monolith.system.internal.model.resp.SysDictItemResp;
 import com.travis.monolith.system.internal.service.SysDictService;
 import jakarta.validation.Valid;
@@ -58,7 +59,7 @@ public class SysDictController {
      * @return 空响应
      */
     @PostMapping
-    public ApiResponse<Void> add(@RequestBody @Valid SysMenuReq.SysDictReq req) {
+    public ApiResponse<Void> add(@RequestBody @Valid SysDictReq req) {
         dictService.addDict(req);
         return ApiResponse.success();
     }
@@ -71,7 +72,7 @@ public class SysDictController {
      * @return 空响应
      */
     @PutMapping("/{id}")
-    public ApiResponse<Void> update(@PathVariable Long id, @RequestBody @Valid SysMenuReq.SysDictReq req) {
+    public ApiResponse<Void> update(@PathVariable Long id, @RequestBody @Valid SysDictReq req) {
         dictService.updateDict(id, req);
         return ApiResponse.success();
     }
@@ -106,7 +107,7 @@ public class SysDictController {
      * @return 空响应
      */
     @PostMapping("/item")
-    public ApiResponse<Void> addDictItem(@RequestBody @Valid SysMenuReq.SysDictItemReq req) {
+    public ApiResponse<Void> addDictItem(@RequestBody @Valid SysDictItemReq req) {
         dictService.addDictItem(req);
         return ApiResponse.success();
     }
@@ -119,7 +120,7 @@ public class SysDictController {
      * @return 空响应
      */
     @PutMapping("/item/{id}")
-    public ApiResponse<Void> updateDictItem(@PathVariable Long id, @RequestBody @Valid SysMenuReq.SysDictItemReq req) {
+    public ApiResponse<Void> updateDictItem(@PathVariable Long id, @RequestBody @Valid SysDictItemReq req) {
         dictService.updateDictItem(id, req);
         return ApiResponse.success();
     }
