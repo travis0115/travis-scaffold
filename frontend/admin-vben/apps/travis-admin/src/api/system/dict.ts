@@ -33,7 +33,7 @@ async function getDictPage(params: {
   pageSize: number;
   status?: number;
 }) {
-  return requestClient.get<{ records: SystemDictApi.SysDict[]; total: number }>('/api/admin/system/dict/page', {
+  return requestClient.get<{ records: SystemDictApi.SysDict[]; total: number }>('/system/dict/page', {
     params,
   });
 }
@@ -42,28 +42,28 @@ async function getDictPage(params: {
  * 获取字典类型详情
  */
 async function getDictDetail(id: number) {
-  return requestClient.get<SystemDictApi.SysDict>(`/api/admin/system/dict/${id}`);
+  return requestClient.get<SystemDictApi.SysDict>(`/system/dict/${id}`);
 }
 
 /**
  * 新增字典类型
  */
 async function createDict(data: Partial<SystemDictApi.SysDict>) {
-  return requestClient.post('/api/admin/system/dict', data);
+  return requestClient.post('/system/dict', data);
 }
 
 /**
  * 更新字典类型
  */
 async function updateDict(id: number, data: Partial<SystemDictApi.SysDict>) {
-  return requestClient.put(`/api/admin/system/dict/${id}`, data);
+  return requestClient.put(`/system/dict/${id}`, data);
 }
 
 /**
  * 删除字典类型
  */
 async function deleteDict(id: number) {
-  return requestClient.delete(`/api/admin/system/dict/${id}`);
+  return requestClient.delete(`/system/dict/${id}`);
 }
 
 /**
@@ -71,7 +71,7 @@ async function deleteDict(id: number) {
  */
 async function getDictItems(dictId: number) {
   return requestClient.get<SystemDictApi.SysDictItem[]>(
-    `/api/admin/system/dict/items/${dictId}`,
+    `/system/dict/items/${dictId}`
   );
 }
 
@@ -79,7 +79,7 @@ async function getDictItems(dictId: number) {
  * 新增字典数据项
  */
 async function createDictItem(data: Partial<SystemDictApi.SysDictItem>) {
-  return requestClient.post('/api/admin/system/dict/item', data);
+  return requestClient.post('/system/dict/item', data);
 }
 
 /**
@@ -89,14 +89,14 @@ async function updateDictItem(
   id: number,
   data: Partial<SystemDictApi.SysDictItem>,
 ) {
-  return requestClient.put(`/api/admin/system/dict/item/${id}`, data);
+  return requestClient.put(`/system/dict/item/${id}`, data);
 }
 
 /**
  * 删除字典数据项
  */
 async function deleteDictItem(id: number) {
-  return requestClient.delete(`/api/admin/system/dict/item/${id}`);
+  return requestClient.delete(`/system/dict/item/${id}`);
 }
 
 export {

@@ -17,7 +17,7 @@ export function uploadFileApi(file: File) {
   const formData = new FormData();
   formData.append('file', file);
   return requestClient.post<FileUploadResult>(
-    '/api/admin/system/file/upload',
+    '/system/file/upload',
     formData,
     {
       headers: { 'Content-Type': 'multipart/form-data' },

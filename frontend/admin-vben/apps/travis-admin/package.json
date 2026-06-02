@@ -1,12 +1,12 @@
 {
-  "name": "@travis/web-antdv-next",
+  "name": "@travis/travis-admin",
   "version": "1.0.0",
   "homepage": "https://github.com/travis0115/travis-admin",
   "bugs": "https://github.com/travis0115/travis-admin/issues",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/travis0115/travis-admin.git",
-    "directory": "apps/web-antdv-next"
+    "directory": "apps/travis-admin"
   },
   "license": "MIT",
   "author": {

@@ -7,7 +7,7 @@ import { requestClient } from '#/api/request';
  * 获取用户信息
  */
 export async function getUserInfoApi() {
-  return requestClient.get<UserInfo>('/api/admin/system/auth/user-info');
+  return requestClient.get<UserInfo>('/system/auth/user-info');
 }
 
 /**
@@ -21,7 +21,7 @@ export async function updateProfileApi(
   },
   config?: RequestClientConfig,
 ) {
-  return requestClient.put('/api/admin/system/user/profile', data, config);
+  return requestClient.put('/system/user/profile', data, config);
 }
 
 /**
@@ -33,7 +33,7 @@ export async function updateAvatarApi(
   },
   config?: RequestClientConfig,
 ) {
-  return requestClient.put('/api/admin/system/user/avatar', data, config);
+  return requestClient.put('/system/user/avatar', data, config);
 }
 
 /**
@@ -43,5 +43,5 @@ export async function changePasswordApi(data: {
   newPassword: string;
   oldPassword: string;
 }) {
-  return requestClient.put('/api/admin/system/user/change-password', data);
+  return requestClient.put('/system/user/change-password', data);
 }

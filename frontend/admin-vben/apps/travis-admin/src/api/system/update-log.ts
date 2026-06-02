@@ -24,7 +24,7 @@ async function getUpdateLogPage(params: {
   pageSize: number;
   status?: number;
 }) {
-  return requestClient.get<{ records: SystemUpdateLogApi.UpdateLog[]; total: number }>('/api/admin/system/update-log/page', {
+  return requestClient.get<{ records: SystemUpdateLogApi.UpdateLog[]; total: number }>('/system/update-log/page', {
     params,
   });
 }
@@ -33,35 +33,35 @@ async function getUpdateLogPage(params: {
  * 获取更新日志详情
  */
 async function getUpdateLogDetail(id: number) {
-  return requestClient.get<SystemUpdateLogApi.UpdateLog>(`/api/admin/system/update-log/${id}`);
+  return requestClient.get<SystemUpdateLogApi.UpdateLog>(`/system/update-log/${id}`);
 }
 
 /**
  * 新增更新日志
  */
 async function createUpdateLog(data: Partial<SystemUpdateLogApi.UpdateLog>) {
-  return requestClient.post('/api/admin/system/update-log', data);
+  return requestClient.post('/system/update-log', data);
 }
 
 /**
  * 更新更新日志
  */
 async function updateUpdateLog(id: number, data: Partial<SystemUpdateLogApi.UpdateLog>) {
-  return requestClient.put(`/api/admin/system/update-log/${id}`, data);
+  return requestClient.put(`/system/update-log/${id}`, data);
 }
 
 /**
  * 删除更新日志
  */
 async function deleteUpdateLog(id: number) {
-  return requestClient.delete(`/api/admin/system/update-log/${id}`);
+  return requestClient.delete(`/system/update-log/${id}`);
 }
 
 /**
  * 获取已发布的更新日志列表
  */
 async function getPublishedUpdateLogs(limit: number = 10) {
-  return requestClient.get<SystemUpdateLogApi.UpdateLog[]>('/api/admin/system/update-log/published', {
+  return requestClient.get<SystemUpdateLogApi.UpdateLog[]>('/system/update-log/published', {
     params: { limit },
   });
 }

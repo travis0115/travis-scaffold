@@ -20,7 +20,7 @@ export namespace SystemLoginLogApi {
  * 获取登录日志分页列表
  */
 async function getLoginLogList(params: Recordable<any>) {
-  return requestClient.get('/api/admin/system/login-log/page', { params });
+  return requestClient.get('/system/login-log/page', { params });
 }
 
 export { getLoginLogList };
