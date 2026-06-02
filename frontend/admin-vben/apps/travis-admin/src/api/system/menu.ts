@@ -65,4 +65,26 @@ async function deleteMenu(id: number) {
   return requestClient.delete(`/system/menu/${id}`);
 }
 
-export { createMenu, deleteMenu, getMenuDetail, getMenuTree, updateMenu };
+/**
+ * 上移菜单
+ */
+async function moveUpMenu(id: number) {
+  return requestClient.put(`/system/menu/${id}/move-up`);
+}
+
+/**
+ * 下移菜单
+ */
+async function moveDownMenu(id: number) {
+  return requestClient.put(`/system/menu/${id}/move-down`);
+}
+
+export {
+  createMenu,
+  deleteMenu,
+  getMenuDetail,
+  getMenuTree,
+  moveDownMenu,
+  moveUpMenu,
+  updateMenu,
+};

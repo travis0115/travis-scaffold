@@ -13,7 +13,7 @@ import java.lang.annotation.*;
 @Documented
 public @interface Username {
 
-    String message() default "用户名格式错误";
+    String message() default "用户名格式不正确";
 
     Class<?>[] groups() default {};
 

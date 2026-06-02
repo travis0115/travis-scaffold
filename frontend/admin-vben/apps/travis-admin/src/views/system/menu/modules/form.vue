@@ -5,7 +5,6 @@ import type { SystemMenuApi } from '#/api';
 import { computed, h, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
-import { $te } from '@vben/locales';
 import { getPopupContainer } from '@vben/utils';
 
 import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
@@ -21,7 +20,6 @@ const emit = defineEmits<{
 }>();
 
 const formData = ref<SystemMenuApi.SysMenu>();
-const titleSuffix = ref<string>();
 
 /** 解析 meta JSON 为对象 */
 function parseMeta(metaStr?: string) {
@@ -57,6 +55,7 @@ const schema: VbenFormSchema[] = [
     componentProps: {
       api: getMenuTree,
       class: 'w-full',
+      allowClear: true,
       filterTreeNode(input: string, node: any) {
         if (!input || input.length === 0) {
           return true;
@@ -88,15 +87,6 @@ const schema: VbenFormSchema[] = [
     component: 'Input',
     fieldName: 'menuTitle',
     label: $t('system.menu.menuTitle'),
-    componentProps() {
-      return {
-        ...(titleSuffix.value && { addonAfter: titleSuffix.value }),
-        onChange({ target: { value } }: { target: { value: string } }) {
-          titleSuffix.value =
-            value && $te(value) ? $t(value) : undefined;
-        },
-      };
-    },
     help: $t('system.menu.menuTitle'),
   },
   {
@@ -176,6 +166,12 @@ const schema: VbenFormSchema[] = [
     defaultValue: 1,
     fieldName: 'status',
     label: $t('system.menu.status'),
+  },
+  {
+    component: 'InputNumber',
+    defaultValue: 0,
+    fieldName: 'sort',
+    label: $t('system.menu.sort'),
   },
   {
     component: 'Divider',
@@ -350,12 +346,10 @@ const [Drawer, drawerApi] = useVbenDrawer({
 
         // 回填 menuTitle
         formValues.menuTitle = detail.menuName;
-        titleSuffix.value = detail.menuName;
 
         formApi.setValues(formValues);
       } else {
         formData.value = undefined;
-        titleSuffix.value = '';
       }
     }
   },
@@ -418,6 +412,7 @@ async function onSubmit() {
 
     const data: Partial<SystemMenuApi.SysMenu> = {
       ...values,
+      parentId: values.parentId ?? 0,
       menuType: actualMenuType as any,
       menuName: values.menuTitle || values.menuName,
       meta: Object.keys(metaObj).length > 0 ? JSON.stringify(metaObj) : undefined,

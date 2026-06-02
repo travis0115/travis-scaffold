@@ -293,29 +293,16 @@ setupVbenVxeTable({
       },
     });
 
-    // 自定义格式化：空值显示占位符
-    vxeUI.formats.add('emptyPlaceholder', {
-      tableCellFormatMethod: ({ cellValue }) => {
-        return cellValue === null || cellValue === undefined || cellValue === ''
-          ? '-'
-          : cellValue;
-      },
-    });
-
-    // 自定义格式化：日期时间格式化，空值显示占位符
-    vxeUI.formats.add('formatDateTime', {
-      tableCellFormatMethod: ({ cellValue }) => {
-        if (cellValue === null || cellValue === undefined || cellValue === '') {
-          return '-';
-        }
-        const date = new Date(cellValue);
-        if (Number.isNaN(date.getTime())) {
-          return '-';
-        }
-        const pad = (n: number) => String(n).padStart(2, '0');
-        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-      },
-    });
+    // 自定义格式化：空值显示占位符（使用 guard 避免 HMR 重复注册）
+    if (!vxeUI.formats.get('emptyPlaceholder')) {
+      vxeUI.formats.add('emptyPlaceholder', {
+        tableCellFormatMethod: ({ cellValue }) => {
+          return cellValue === null || cellValue === undefined || cellValue === ''
+            ? '-'
+            : cellValue;
+        },
+      });
+    }
 
     // 这里可以自行扩展 vxe-table 的全局配置，比如自定义格式化
     // vxeUI.formats.add
@@ -348,10 +335,16 @@ export const useVbenVxeGrid = <T extends Record<string, any>>(
 ) => {
   // 全局处理：为所有列自动添加空值占位符
   const [options, ...restArgs] = rest;
-  if (options?.gridOptions?.columns) {
-    options.gridOptions.columns = processColumnsWithEmptyPlaceholder(
-      options.gridOptions.columns,
-    );
+  if (options?.gridOptions) {
+    // 树结构不支持 stripe，自动关闭
+    if (options.gridOptions.treeConfig) {
+      options.gridOptions.stripe = false;
+    }
+    if (options?.gridOptions?.columns) {
+      options.gridOptions.columns = processColumnsWithEmptyPlaceholder(
+        options.gridOptions.columns,
+      );
+    }
   }
   return useGrid<T, ComponentType, ComponentPropsMap>(options, ...restArgs);
 };

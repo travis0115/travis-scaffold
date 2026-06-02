@@ -30,6 +30,7 @@ const formSchema = computed((): VbenFormSchema[] => {
       componentProps: {
         mode: 'tags',
         options: roleOptions,
+        size: 'large',
       },
       label: '角色',
       disabled: true,
@@ -38,23 +39,35 @@ const formSchema = computed((): VbenFormSchema[] => {
       fieldName: 'username',
       component: 'Input',
       label: '用户名',
+      componentProps: {
+        size: 'large',
+      },
       disabled: true,
     },
     {
       fieldName: 'nickname',
       component: 'Input',
       label: '昵称',
+      componentProps: {
+        size: 'large',
+      },
       rules: 'required',
     },
     {
       fieldName: 'email',
       component: 'Input',
       label: '邮箱',
+      componentProps: {
+        size: 'large',
+      },
     },
     {
       fieldName: 'mobile',
       component: 'Input',
       label: '手机号',
+      componentProps: {
+        size: 'large',
+      },
     },
   ];
 });
@@ -97,9 +110,21 @@ async function handleSubmit(values: Record<string, any>) {
 }
 </script>
 <template>
-  <ProfileBaseSetting
-    ref="profileBaseSettingRef"
-    :form-schema="formSchema"
-    @submit="handleSubmit"
-  />
+  <div class="base-form w-2/3">
+    <ProfileBaseSetting
+      ref="profileBaseSettingRef"
+      :form-schema="formSchema"
+      @submit="handleSubmit"
+    />
+  </div>
 </template>
+
+<style scoped>
+.base-form :deep(.mt-4) {
+  float: right;
+}
+
+.base-form :deep(.flex-row.pb-4) {
+  padding-bottom: 1.5rem;
+}
+</style>

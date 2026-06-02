@@ -98,28 +98,31 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
     }
 
     /**
-     * 删除部门，存在子部门时禁止删除
+     * 删除部门，递归删除所有下级部门
      */
     @Override
     @Transactional
     @CacheEvict(value = "system:dept:tree", key = "'all'")
     public void deleteDept(Long id) {
-        long childCount = count(new LambdaQueryWrapper<SysDept>()
-                .eq(SysDept::getParentId, id));
-        if (childCount > 0) {
-            throw new BizException(new IErrorCode() {
-                @Override
-                public String getCode() {
-                    return CommonErrorCode.BAD_REQUEST.getCode();
-                }
+        List<Long> ids = new ArrayList<>();
+        collectAllDescendantIds(id, ids);
+        ids.add(id);
+        removeBatchByIds(ids);
+    }
 
-                @Override
-                public String getMsg() {
-                    return "存在子部门，无法删除";
-                }
-            }, null);
+    /**
+     * 递归收集所有下级部门ID
+     *
+     * @param parentId 父部门ID
+     * @param ids      收集结果
+     */
+    private void collectAllDescendantIds(Long parentId, List<Long> ids) {
+        List<SysDept> children = list(new LambdaQueryWrapper<SysDept>()
+                .eq(SysDept::getParentId, parentId));
+        for (SysDept child : children) {
+            ids.add(child.getId());
+            collectAllDescendantIds(child.getId(), ids);
         }
-        removeById(id);
     }
 
     /**

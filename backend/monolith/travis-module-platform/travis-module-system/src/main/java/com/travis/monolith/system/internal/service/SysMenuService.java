@@ -53,6 +53,20 @@ public interface SysMenuService extends IService<SysMenu> {
     void deleteMenu(Long id);
 
     /**
+     * 上移菜单（与同级上一个菜单交换排序号）
+     *
+     * @param id 菜单ID
+     */
+    void moveUp(Long id);
+
+    /**
+     * 下移菜单（与同级下一个菜单交换排序号）
+     *
+     * @param id 菜单ID
+     */
+    void moveDown(Long id);
+
+    /**
      * 根据角色ID列表生成 Vben Admin 格式的菜单树（用于前端动态路由渲染）
      *
      * @param roleIds 角色ID列表

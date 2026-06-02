@@ -1,3 +1,5 @@
+import type { Ref } from 'vue';
+
 import type {
   OnActionClickFn,
   VxeTableGridColumns,
@@ -16,8 +18,20 @@ export function getMenuTypeOptions() {
   ];
 }
 
+function flattenTree(nodes: SystemMenuApi.SysMenu[]): SystemMenuApi.SysMenu[] {
+  const result: SystemMenuApi.SysMenu[] = [];
+  for (const node of nodes) {
+    result.push(node);
+    if (node.children?.length) {
+      result.push(...flattenTree(node.children));
+    }
+  }
+  return result;
+}
+
 export function useColumns(
   onActionClick: OnActionClickFn<SystemMenuApi.SysMenu>,
+  gridData: Ref<SystemMenuApi.SysMenu[]>,
 ): VxeTableGridColumns<SystemMenuApi.SysMenu> {
   return [
     {
@@ -103,6 +117,33 @@ export function useColumns(
           {
             code: 'append',
             text: $t('system.menu.appendChildren'),
+            show: (row: SystemMenuApi.SysMenu) => [0, 1].includes(row.menuType),
+          },
+          {
+            code: 'moveUp',
+            text: $t('common.moveUp'),
+            disabled: (row: SystemMenuApi.SysMenu) => {
+              const all = flattenTree(gridData.value);
+              const siblings = all.filter(
+                (n) => (n.parentId || 0) === (row.parentId || 0),
+              );
+              siblings.sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
+              const idx = siblings.findIndex((n) => n.id === row.id);
+              return idx <= 0;
+            },
+          },
+          {
+            code: 'moveDown',
+            text: $t('common.moveDown'),
+            disabled: (row: SystemMenuApi.SysMenu) => {
+              const all = flattenTree(gridData.value);
+              const siblings = all.filter(
+                (n) => (n.parentId || 0) === (row.parentId || 0),
+              );
+              siblings.sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
+              const idx = siblings.findIndex((n) => n.id === row.id);
+              return idx >= siblings.length - 1;
+            },
           },
           'edit',
           'delete',
@@ -113,7 +154,7 @@ export function useColumns(
       headerAlign: 'center',
       showOverflow: false,
       title: $t('system.menu.operation'),
-      width: 200,
+      width: 280,
     },
   ];
 }

@@ -108,7 +108,8 @@
       "sort": "排序",
       "status": "状态",
       "remark": "备注",
-      "operation": "操作"
+      "operation": "操作",
+      "addItem": "新增数据项"
     }
   },
   "config": {

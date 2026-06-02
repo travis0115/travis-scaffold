@@ -1,7 +1,7 @@
 package com.travis.monolith.system.internal.model.req;
 
+import com.travis.infrastructure.common.validation.annotation.Password;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 /**
@@ -11,11 +11,15 @@ import lombok.Data;
  */
 @Data
 public class ChangePasswordReq {
-    /** 旧密码 */
+    /**
+     * 旧密码
+     */
     @NotBlank(message = "旧密码不能为空")
     private String oldPassword;
-    /** 新密码 */
+    /**
+     * 新密码
+     */
     @NotBlank(message = "新密码不能为空")
-    @Size(min = 6, max = 20, message = "新密码长度必须在6-20位之间")
+    @Password(message = "密码需为8-32位，并包含大写字母、小写字母、数字、特殊符号中的至少3种")
     private String newPassword;
 }

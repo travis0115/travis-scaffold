@@ -24,6 +24,13 @@ export namespace SystemDictApi {
 }
 
 /**
+ * 获取字典树形数据（字典类型 + 子数据项）
+ */
+async function getDictTree() {
+  return requestClient.get<SystemDictApi.SysDict[]>('/system/dict/tree');
+}
+
+/**
  * 分页查询字典类型列表
  */
 async function getDictPage(params: {
@@ -107,6 +114,7 @@ export {
   getDictDetail,
   getDictItems,
   getDictPage,
+  getDictTree,
   updateDict,
   updateDictItem,
 };

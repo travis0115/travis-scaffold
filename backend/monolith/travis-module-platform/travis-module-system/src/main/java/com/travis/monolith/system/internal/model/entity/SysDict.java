@@ -1,6 +1,10 @@
 package com.travis.monolith.system.internal.model.entity;
 
+import java.util.List;
+
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.travis.infrastructure.framework.mybatis.core.entity.BaseEntity;
+import com.travis.monolith.system.internal.model.resp.SysDictItemResp;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -28,4 +32,10 @@ public class SysDict extends BaseEntity {
      * 备注
      */
     private String remark;
+
+    /**
+     * 子节点（字典数据项列表），仅用于树形接口返回，非数据库字段
+     */
+    @TableField(exist = false)
+    private List<SysDictItemResp> children;
 }

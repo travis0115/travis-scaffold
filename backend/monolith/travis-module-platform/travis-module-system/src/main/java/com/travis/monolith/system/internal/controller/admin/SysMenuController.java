@@ -84,4 +84,28 @@ public class SysMenuController {
         menuService.deleteMenu(id);
         return ApiResponse.success();
     }
+
+    /**
+     * 上移菜单（与同级上一个菜单交换排序号）
+     *
+     * @param id 菜单ID
+     * @return 空响应
+     */
+    @PutMapping("/{id}/move-up")
+    public ApiResponse<Void> moveUp(@PathVariable Long id) {
+        menuService.moveUp(id);
+        return ApiResponse.success();
+    }
+
+    /**
+     * 下移菜单（与同级下一个菜单交换排序号）
+     *
+     * @param id 菜单ID
+     * @return 空响应
+     */
+    @PutMapping("/{id}/move-down")
+    public ApiResponse<Void> moveDown(@PathVariable Long id) {
+        menuService.moveDown(id);
+        return ApiResponse.success();
+    }
 }

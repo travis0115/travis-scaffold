@@ -127,6 +127,93 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
     }
 
     /**
+     * 上移菜单，与同级上一个菜单交换排序号
+     */
+    @Override
+    @Transactional
+    @CacheEvict(value = {"system:menu:tree", "menus:vben"}, key = "'all'", allEntries = true)
+    public void moveUp(Long id) {
+        SysMenu current = getById(id);
+        if (current == null) {
+            throw new BizException(CommonErrorCode.NOT_FOUND);
+        }
+        // 查询同级所有菜单，按排序号升序
+        List<SysMenu> siblings = list(new LambdaQueryWrapper<SysMenu>()
+                .eq(SysMenu::getParentId, current.getParentId())
+                .orderByAsc(SysMenu::getSort));
+        int index = findIndex(siblings, id);
+        if (index <= 0) {
+            throw new BizException(new IErrorCode() {
+                @Override
+                public String getCode() {
+                    return CommonErrorCode.BAD_REQUEST.getCode();
+                }
+
+                @Override
+                public String getMsg() {
+                    return "已处于最上方，无法上移";
+                }
+            }, null);
+        }
+        swapSort(siblings.get(index), siblings.get(index - 1));
+    }
+
+    /**
+     * 下移菜单，与同级下一个菜单交换排序号
+     */
+    @Override
+    @Transactional
+    @CacheEvict(value = {"system:menu:tree", "menus:vben"}, key = "'all'", allEntries = true)
+    public void moveDown(Long id) {
+        SysMenu current = getById(id);
+        if (current == null) {
+            throw new BizException(CommonErrorCode.NOT_FOUND);
+        }
+        // 查询同级所有菜单，按排序号升序
+        List<SysMenu> siblings = list(new LambdaQueryWrapper<SysMenu>()
+                .eq(SysMenu::getParentId, current.getParentId())
+                .orderByAsc(SysMenu::getSort));
+        int index = findIndex(siblings, id);
+        if (index < 0 || index >= siblings.size() - 1) {
+            throw new BizException(new IErrorCode() {
+                @Override
+                public String getCode() {
+                    return CommonErrorCode.BAD_REQUEST.getCode();
+                }
+
+                @Override
+                public String getMsg() {
+                    return "已处于最下方，无法下移";
+                }
+            }, null);
+        }
+        swapSort(siblings.get(index), siblings.get(index + 1));
+    }
+
+    /**
+     * 查找菜单在同级列表中的索引位置
+     */
+    private int findIndex(List<SysMenu> siblings, Long id) {
+        for (int i = 0; i < siblings.size(); i++) {
+            if (siblings.get(i).getId().equals(id)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * 交换两个菜单的排序号
+     */
+    private void swapSort(SysMenu a, SysMenu b) {
+        Integer tempSort = a.getSort();
+        a.setSort(b.getSort());
+        b.setSort(tempSort);
+        updateById(a);
+        updateById(b);
+    }
+
+    /**
      * 根据角色ID列表生成 Vben Admin 格式的菜单树，自动补充父级菜单确保树结构完整
      */
     @Override

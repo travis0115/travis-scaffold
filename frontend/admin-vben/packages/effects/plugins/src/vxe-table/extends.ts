@@ -67,26 +67,32 @@ function extendProxyOption(
 }
 
 export function extendsDefaultFormatter(vxeUI: VxeUIExport) {
-  vxeUI.formats.add('formatDate', {
-    tableCellFormatMethod({ cellValue }) {
-      const result = formatDate(cellValue);
-      return result === '' ? '-' : result;
-    },
-  });
+  if (!vxeUI.formats.get('formatDate')) {
+    vxeUI.formats.add('formatDate', {
+      tableCellFormatMethod({ cellValue }) {
+        const result = formatDate(cellValue);
+        return result === '' ? '-' : result;
+      },
+    });
+  }
 
-  vxeUI.formats.add('formatDateTime', {
-    tableCellFormatMethod({ cellValue }) {
-      const result = formatDateTime(cellValue);
-      return result === '' ? '-' : result;
-    },
-  });
+  if (!vxeUI.formats.get('formatDateTime')) {
+    vxeUI.formats.add('formatDateTime', {
+      tableCellFormatMethod({ cellValue }) {
+        const result = formatDateTime(cellValue);
+        return result === '' ? '-' : result;
+      },
+    });
+  }
 
-  // 空值占位格式化器，对 null/undefined/空字符串返回 "-"
-  vxeUI.formats.add('formatEmpty', {
-    tableCellFormatMethod({ cellValue }) {
-      return cellValue === null || cellValue === undefined || cellValue === ''
-        ? '-'
-        : cellValue;
-    },
-  });
+  if (!vxeUI.formats.get('formatEmpty')) {
+    // 空值占位格式化器，对 null/undefined/空字符串返回 "-"
+    vxeUI.formats.add('formatEmpty', {
+      tableCellFormatMethod({ cellValue }) {
+        return cellValue === null || cellValue === undefined || cellValue === ''
+          ? '-'
+          : cellValue;
+      },
+    });
+  }
 }

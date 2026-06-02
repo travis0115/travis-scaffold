@@ -5,14 +5,20 @@ import type {
 } from '#/adapter/vxe-table';
 import type { SystemMenuApi } from '#/api';
 
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+
 import { Page, useVbenDrawer } from '@vben/common-ui';
 import { IconifyIcon, Plus } from '@vben/icons';
+import { useAccessStore, useUserStore } from '@vben/stores';
 
 import { Button, message } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { deleteMenu, getMenuTree } from '#/api';
+import { deleteMenu, getMenuTree, moveDownMenu, moveUpMenu } from '#/api';
 import { $t } from '#/locales';
+import { generateAccess } from '#/router/access';
+import { accessRoutes } from '#/router/routes';
 
 import { useColumns } from './data';
 import Form from './modules/form.vue';
@@ -22,9 +28,11 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   destroyOnClose: true,
 });
 
+const gridData = ref<SystemMenuApi.SysMenu[]>([]);
+
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
-    columns: useColumns(onActionClick),
+    columns: useColumns(onActionClick, gridData),
     height: 'auto',
     keepSource: true,
     pagerConfig: {
@@ -33,7 +41,11 @@ const [Grid, gridApi] = useVbenVxeGrid({
     proxyConfig: {
       ajax: {
         query: async () => {
-          return await getMenuTree();
+          const result = await getMenuTree();
+          // 保存扁平化后的菜单数据，用于判断上移/下移按钮状态
+          const records = result.records || result;
+          gridData.value = Array.isArray(records) ? records : [];
+          return result;
         },
       },
     },
@@ -54,6 +66,8 @@ const [Grid, gridApi] = useVbenVxeGrid({
   } as VxeTableGridOptions,
 });
 
+const router = useRouter();
+
 function onActionClick({
   code,
   row,
@@ -71,13 +85,34 @@ function onActionClick({
       onEdit(row);
       break;
     }
+    case 'moveDown': {
+      onMoveDown(row);
+      break;
+    }
+    case 'moveUp': {
+      onMoveUp(row);
+      break;
+    }
     default: {
       break;
     }
   }
 }
 
-function onRefresh() {
+async function onRefresh() {
+  const accessStore = useAccessStore();
+  const userStore = useUserStore();
+
+  // 重新生成菜单和路由
+  const { accessibleMenus, accessibleRoutes } = await generateAccess({
+    roles: userStore.userInfo?.roles ?? [],
+    router,
+    routes: accessRoutes,
+  });
+
+  accessStore.setAccessMenus(accessibleMenus);
+  accessStore.setAccessRoutes(accessibleRoutes);
+  accessStore.setIsAccessChecked(true);
   gridApi.query();
 }
 
@@ -110,6 +145,26 @@ function onDelete(row: SystemMenuApi.SysMenu) {
     .catch(() => {
       hideLoading();
     });
+}
+
+function onMoveUp(row: SystemMenuApi.SysMenu) {
+  moveUpMenu(row.id).then(() => {
+    message.success({
+      content: `「${row.menuName}」已上移`,
+      key: 'action_process_msg',
+    });
+    onRefresh();
+  });
+}
+
+function onMoveDown(row: SystemMenuApi.SysMenu) {
+  moveDownMenu(row.id).then(() => {
+    message.success({
+      content: `「${row.menuName}」已下移`,
+      key: 'action_process_msg',
+    });
+    onRefresh();
+  });
 }
 </script>
 <template>

@@ -6,7 +6,6 @@ import type {
 import type { SystemDictApi } from '#/api';
 
 import { z } from '#/adapter/form';
-
 import { $t } from '#/locales';
 
 export function useFormSchema(): VbenFormSchema[] {
@@ -119,88 +118,19 @@ export function useColumns(
           onClick: onActionClick,
         },
         name: 'CellOperation',
-        options: ['edit', 'delete', {
-          code: 'items',
-          text: $t('system.dict.items'),
-        }],
+        options: [
+          {
+            code: 'addItem',
+            text: '数据项',
+          },
+          'edit',
+          'delete',
+        ],
       },
       field: 'operation',
       fixed: 'right',
       title: $t('system.dict.operation'),
       width: 200,
-    },
-  ];
-}
-
-export function useItemFormSchema(): VbenFormSchema[] {
-  return [
-    {
-      component: 'Input',
-      fieldName: 'label',
-      label: $t('system.dict.item.label'),
-      rules: 'required',
-    },
-    {
-      component: 'Input',
-      fieldName: 'value',
-      label: $t('system.dict.item.value'),
-      rules: 'required',
-    },
-    {
-      component: 'InputNumber',
-      fieldName: 'sort',
-      label: $t('system.dict.item.sort'),
-      defaultValue: 0,
-    },
-    {
-      component: 'RadioGroup',
-      componentProps: {
-        buttonStyle: 'solid',
-        options: [
-          { label: $t('common.enabled'), value: 1 },
-          { label: $t('common.disabled'), value: 0 },
-        ],
-        optionType: 'button',
-      },
-      defaultValue: 1,
-      fieldName: 'status',
-      label: $t('system.dict.item.status'),
-    },
-    {
-      component: 'Input',
-      fieldName: 'remark',
-      label: $t('system.dict.item.remark'),
-    },
-  ];
-}
-
-export function useItemColumns(): VxeTableGridColumns<SystemDictApi.SysDictItem> {
-  return [
-    {
-      field: 'label',
-      title: $t('system.dict.item.label'),
-      width: 150,
-    },
-    {
-      field: 'value',
-      title: $t('system.dict.item.value'),
-      width: 120,
-    },
-    {
-      field: 'sort',
-      title: $t('system.dict.item.sort'),
-      width: 80,
-    },
-    {
-      cellRender: { name: 'CellTag' },
-      field: 'status',
-      title: $t('system.dict.item.status'),
-      width: 100,
-    },
-    {
-      field: 'remark',
-      title: $t('system.dict.item.remark'),
-      minWidth: 100,
     },
   ];
 }

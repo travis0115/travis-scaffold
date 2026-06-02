@@ -29,6 +29,14 @@ public class SysDictController {
     private final SysDictService dictService;
 
     /**
+     * 获取字典树形数据（每个字典包含其下的数据项作为 children）
+     */
+    @GetMapping("/tree")
+    public ApiResponse<List<SysDict>> getTree() {
+        return ApiResponse.success(dictService.getDictTree());
+    }
+
+    /**
      * 分页查询字典类型列表
      */
     @GetMapping("/page")

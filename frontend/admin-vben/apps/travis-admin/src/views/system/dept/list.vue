@@ -5,7 +5,7 @@ import type {
 } from '#/adapter/vxe-table';
 import type { SystemDeptApi } from '#/api';
 
-import { Page, useVbenModal } from '@vben/common-ui';
+import { Page, useVbenDrawer } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
 
 import { Button, message } from 'antdv-next';
@@ -17,21 +17,21 @@ import { $t } from '#/locales';
 import { useColumns } from './data';
 import Form from './modules/form.vue';
 
-const [FormModal, formModalApi] = useVbenModal({
+const [FormDrawer, formDrawerApi] = useVbenDrawer({
   connectedComponent: Form,
   destroyOnClose: true,
 });
 
 function onEdit(row: SystemDeptApi.SysDept) {
-  formModalApi.setData(row).open();
+  formDrawerApi.setData(row).open();
 }
 
 function onAppend(row: SystemDeptApi.SysDept) {
-  formModalApi.setData({ parentId: row.id }).open();
+  formDrawerApi.setData({ parentId: row.id }).open();
 }
 
 function onCreate() {
-  formModalApi.setData(null).open();
+  formDrawerApi.setData(null).open();
 }
 
 function onDelete(row: SystemDeptApi.SysDept) {
@@ -108,7 +108,7 @@ function refreshGrid() {
 </script>
 <template>
   <Page auto-content-height>
-    <FormModal @success="refreshGrid" />
+    <FormDrawer @success="refreshGrid" />
     <Grid :table-title="$t('system.dept.list')">
       <template #toolbar-tools>
         <Button type="primary" @click="onCreate">

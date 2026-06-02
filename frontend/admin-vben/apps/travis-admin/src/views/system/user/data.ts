@@ -19,9 +19,14 @@ export function useFormSchema(deptTreeData?: any[]): VbenFormSchema[] {
       label: $t('system.user.username'),
       rules: z
         .string()
-        .min(3, $t('ui.formRules.minLength', [$t('system.user.username'), 3]))
-        .max(20, $t('ui.formRules.maxLength', [$t('system.user.username'), 20]))
-        .regex(/^[a-zA-Z][a-zA-Z0-9_]+$/, '用户名必须以字母开头，只能包含字母、数字和下划线'),
+        .min(6, $t('ui.formRules.minLength', [$t('system.user.username'), 6]))
+        .max(16, $t('ui.formRules.maxLength', [$t('system.user.username'), 16]))
+        .regex(
+          /^[a-zA-Z][a-zA-Z0-9_]{5,15}$/,
+          '用户名需以字母开头，长度为6-16位，仅支持字母、数字和下划线',
+        ),
+      description:
+        '用户名需以字母开头，长度为6-16位，仅支持字母、数字和下划线',
     },
     {
       component: 'Input',
@@ -40,7 +45,25 @@ export function useFormSchema(deptTreeData?: any[]): VbenFormSchema[] {
       dependencies: {
         rules: (values) => {
           if (values.id) return null;
-          return z.string().min(6, '密码长度不能少于6位').max(20, '密码长度不能超过20位');
+          return z
+            .string()
+            .min(8, '密码长度不能少于8位')
+            .max(32, '密码长度不能超过32位')
+            .refine(
+              (value) => {
+                let types = 0;
+                if (/[a-z]/.test(value)) types++;
+                if (/[A-Z]/.test(value)) types++;
+                if (/\d/.test(value)) types++;
+                if (/[~!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value))
+                  types++;
+                return types >= 3;
+              },
+              {
+                message:
+                  '密码需包含大写字母、小写字母、数字、特殊符号中的至少3种',
+              },
+            );
         },
         show: (values) => {
           // 编辑时隐藏密码字段
@@ -50,6 +73,8 @@ export function useFormSchema(deptTreeData?: any[]): VbenFormSchema[] {
       },
       fieldName: 'password',
       label: $t('system.user.password'),
+      description:
+        '密码需为8-32位，并包含大写字母、小写字母、数字、特殊符号中的至少3种',
     },
     {
       component: 'ApiSelect',

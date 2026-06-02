@@ -5,7 +5,7 @@ import type {
 } from '#/adapter/vxe-table';
 import type { SystemDictApi } from '#/api';
 
-import { Page, useVbenDrawer, useVbenModal } from '@vben/common-ui';
+import { Page, useVbenDrawer } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
 
 import { Button, message } from 'antdv-next';
@@ -15,23 +15,23 @@ import { deleteDict, getDictPage } from '#/api';
 import { $t } from '#/locales';
 
 import { useColumns, useGridFormSchema } from './data';
-import Form from './modules/form.vue';
-import ItemModal from './modules/item-modal.vue';
+import FormDrawerComponent from './modules/form.vue';
+import ItemsDrawerComponent from './modules/items.vue';
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
-  connectedComponent: Form,
+  connectedComponent: FormDrawerComponent,
   destroyOnClose: true,
 });
 
-const [DictItemModal, itemModalApi] = useVbenModal({
-  connectedComponent: ItemModal,
+const [ItemsDrawer, itemsDrawerApi] = useVbenDrawer({
+  connectedComponent: ItemsDrawerComponent,
   destroyOnClose: true,
 });
 
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
     schema: useGridFormSchema(),
-    submitOnChange: true,
+    submitOnChange: false,
   },
   gridOptions: {
     columns: useColumns(onActionClick),
@@ -61,18 +61,21 @@ const [Grid, gridApi] = useVbenVxeGrid({
   } as VxeTableGridOptions<SystemDictApi.SysDict>,
 });
 
-function onActionClick(e: OnActionClickParams<SystemDictApi.SysDict>) {
-  switch (e.code) {
+function onActionClick({
+  code,
+  row,
+}: OnActionClickParams<SystemDictApi.SysDict>) {
+  switch (code) {
+    case 'addItem': {
+      onAddItem(row);
+      break;
+    }
     case 'delete': {
-      onDelete(e.row);
+      onDelete(row);
       break;
     }
     case 'edit': {
-      onEdit(e.row);
-      break;
-    }
-    case 'items': {
-      onManageItems(e.row);
+      onEdit(row);
       break;
     }
   }
@@ -80,6 +83,10 @@ function onActionClick(e: OnActionClickParams<SystemDictApi.SysDict>) {
 
 function onEdit(row: SystemDictApi.SysDict) {
   formDrawerApi.setData(row).open();
+}
+
+function onCreate() {
+  formDrawerApi.setData({}).open();
 }
 
 function onDelete(row: SystemDictApi.SysDict) {
@@ -101,22 +108,18 @@ function onDelete(row: SystemDictApi.SysDict) {
     });
 }
 
-function onManageItems(row: SystemDictApi.SysDict) {
-  itemModalApi.setData({ id: row.id }).open();
+function onAddItem(row: SystemDictApi.SysDict) {
+  itemsDrawerApi.setData({ id: row.id, dictName: row.dictName }).open();
 }
 
 function onRefresh() {
   gridApi.query();
 }
-
-function onCreate() {
-  formDrawerApi.setData({}).open();
-}
 </script>
 <template>
   <Page auto-content-height>
     <FormDrawer @success="onRefresh" />
-    <DictItemModal @success="onRefresh" />
+    <ItemsDrawer @success="onRefresh" />
     <Grid :table-title="$t('system.dict.list')">
       <template #toolbar-tools>
         <Button type="primary" @click="onCreate">

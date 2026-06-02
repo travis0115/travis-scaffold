@@ -10,6 +10,7 @@ import { message, Modal } from 'antdv-next';
 import { updateAvatarApi, uploadFileApi } from '#/api';
 
 import ProfileBase from './base-setting.vue';
+import ProfileLoginLog from './login-log.vue';
 import ProfilePasswordSetting from './password-setting.vue';
 import ProfileUpdateLog from './update-log.vue';
 
@@ -27,12 +28,16 @@ let previewTimer: null | ReturnType<typeof setTimeout> = null;
 
 const tabs = ref([
   {
-    label: '基本设置',
+    label: '账号资料',
     value: 'basic',
   },
   {
     label: '修改密码',
     value: 'password',
+  },
+  {
+    label: '登录日志',
+    value: 'loginLog',
   },
 ]);
 
@@ -64,10 +69,15 @@ function onFileChange(event: Event) {
     return;
   }
   // 校验文件大小
-  const maxSize = Number(import.meta.env.VITE_UPLOAD_FILE_MAX_SIZE) || 20 * 1024 * 1024;
-  const maxSizeMB = maxSize / (1024 * 1024);
-  if (file.size > maxSize) {
-    message.error(`图片大小不能超过 ${maxSizeMB}MB`);
+  const maxSizeMB = Number(import.meta.env.VITE_UPLOAD_FILE_MAX_SIZE) || 20;
+  // 格式化显示：>=1 不显示小数，<1 且 >=0.01 显示两位小数，<0.01 显示 0.01
+  const displaySize = maxSizeMB >= 1
+    ? Math.floor(maxSizeMB)
+    : (maxSizeMB >= 0.01
+      ? maxSizeMB.toFixed(2)
+      : '0.01');
+  if (file.size / (1024 * 1024) > maxSizeMB) {
+    message.error(`图片大小不能超过 ${displaySize}MB`);
     return;
   }
 
@@ -89,7 +99,7 @@ function onCropChange() {
     const cropper = cropperRef.value;
     if (!cropper) return;
     try {
-      const dataUrl = await cropper.getCropImage('image/png', 0.7, 'base64');
+      const dataUrl = await cropper.getCropImage('image/png', 1, 'base64');
       if (dataUrl && typeof dataUrl === 'string') {
         previewUrl.value = dataUrl;
       }
@@ -113,7 +123,7 @@ async function onConfirm() {
   }
 
   try {
-    const dataUrl = await cropper.getCropImage('image/png', 0.92, 'base64');
+    const dataUrl = await cropper.getCropImage('image/jpeg', 0.8, 'base64');
     if (!dataUrl || typeof dataUrl !== 'string') {
       message.error('裁剪失败');
       return;
@@ -121,14 +131,14 @@ async function onConfirm() {
 
     // Base64 转 File
     const arr = dataUrl.split(',');
-    const mime = arr[0]?.match(/:(.*?);/)?.[1] || 'image/png';
+    const mime = arr[0]?.match(/:(.*?);/)?.[1] || 'image/jpeg';
     const bstr = atob(arr[1] ?? '');
     const n = bstr.length;
     const u8arr = new Uint8Array(n);
     for (let i = 0; i < n; i++) {
       u8arr[i] = bstr.codePointAt(i) ?? 0;
     }
-    const uploadFile = new File([u8arr], 'avatar.png', { type: mime });
+    const uploadFile = new File([u8arr], 'avatar.jpg', { type: mime });
 
     uploading.value = true;
     const result = await uploadFileApi(uploadFile);
@@ -205,6 +215,7 @@ function onModalCancel() {
       <template #content>
         <ProfileBase v-if="tabsValue === 'basic'" />
         <ProfilePasswordSetting v-if="tabsValue === 'password'" />
+        <ProfileLoginLog v-if="tabsValue === 'loginLog'" />
         <ProfileUpdateLog v-if="tabsValue === 'updateLog'" />
       </template>
     </Profile>

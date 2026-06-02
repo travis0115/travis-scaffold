@@ -1,207 +1,105 @@
 <script lang="ts" setup>
-import type { SystemDictApi } from '#/api';
-
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
-import { Plus } from '@vben/icons';
 
-import { App, Button, message, Table, Tag } from 'antdv-next';
-
-import { useVbenForm } from '#/adapter/form';
-import {
-  createDictItem,
-  deleteDictItem,
-  getDictItems,
-  updateDictItem,
-} from '#/api';
+import { useVbenForm, z } from '#/adapter/form';
+import { createDictItem, updateDictItem } from '#/api';
 import { $t } from '#/locales';
 
-import { useItemFormSchema } from '../data';
-
 const emit = defineEmits(['success']);
+const formData = ref<Record<string, any>>({});
+const dictId = ref(0);
+const dictName = ref('');
 
-const { modal: antdModal } = App.useApp();
-
-const dictId = ref<number>();
-const loading = ref(false);
-const items = ref<SystemDictApi.SysDictItem[]>([]);
-const editingItem = ref<SystemDictApi.SysDictItem>();
-
-const [ItemForm, itemFormApi] = useVbenForm({
-  schema: useItemFormSchema(),
-  showDefaultActions: false,
-  layout: 'inline',
+const getTitle = computed(() => {
+  return formData.value?.itemId
+    ? $t('ui.actionTitle.edit', ['数据项'])
+    : $t('system.dict.item.addItem');
 });
 
-// antdv Table 的列定义（使用 dataIndex 而非 field）
-const columns = [
-  {
-    title: $t('system.dict.item.label'),
-    dataIndex: 'label',
-    width: 150,
-  },
-  {
-    title: $t('system.dict.item.value'),
-    dataIndex: 'value',
-    width: 120,
-  },
-  {
-    title: $t('system.dict.item.sort'),
-    dataIndex: 'sort',
-    width: 80,
-  },
-  {
-    title: $t('system.dict.item.status'),
-    dataIndex: 'status',
-    width: 100,
-  },
-  {
-    title: $t('system.dict.item.remark'),
-    dataIndex: 'remark',
-    ellipsis: true,
-  },
-  {
-    title: $t('system.dict.operation'),
-    dataIndex: 'operation',
-    width: 150,
-    align: 'center' as const,
-    fixed: 'right' as const,
-  },
-];
-
-async function loadItems() {
-  if (!dictId.value) return;
-  loading.value = true;
-  try {
-    items.value = await getDictItems(dictId.value);
-  } finally {
-    loading.value = false;
-  }
-}
-
-function onCreateItem() {
-  editingItem.value = undefined;
-  itemFormApi.resetForm();
-}
-
-async function onEditItem(record: SystemDictApi.SysDictItem) {
-  editingItem.value = record;
-  itemFormApi.setValues(record);
-}
-
-async function onDeleteItem(record: SystemDictApi.SysDictItem) {
-  antdModal.confirm({
-    title: $t('ui.actionTitle.delete', [record.label]),
-    content: `确定要删除字典数据项「${record.label}」吗？`,
-    async onOk() {
-      await deleteDictItem(record.id);
-      message.success(
-        $t('ui.actionMessage.deleteSuccess', [record.label]),
-      );
-      await loadItems();
-      emit('success');
+const [Form, formApi] = useVbenForm({
+  schema: [
+    {
+      component: 'Input',
+      fieldName: 'label',
+      label: $t('system.dict.item.label'),
+      rules: z
+        .string()
+        .min(1, '请输入标签'),
     },
-  });
-}
-
-async function onSaveItem() {
-  const { valid } = await itemFormApi.validate();
-  if (!valid) return;
-  const values = await itemFormApi.getValues();
-  await (editingItem.value?.id
-    ? updateDictItem(editingItem.value.id, values)
-    : createDictItem({ ...values, dictId: dictId.value }));
-  message.success($t('ui.actionMessage.saveSuccess'));
-  editingItem.value = undefined;
-  itemFormApi.resetForm();
-  await loadItems();
-  emit('success');
-}
-
-function onCancelEdit() {
-  editingItem.value = undefined;
-  itemFormApi.resetForm();
-}
+    {
+      component: 'Input',
+      fieldName: 'value',
+      label: $t('system.dict.item.value'),
+      rules: z
+        .string()
+        .min(1, '请输入值'),
+    },
+    {
+      component: 'InputNumber',
+      fieldName: 'sort',
+      label: $t('system.dict.item.sort'),
+      defaultValue: 0,
+    },
+    {
+      component: 'RadioGroup',
+      componentProps: {
+        buttonStyle: 'solid',
+        options: [
+          { label: $t('common.enabled'), value: 1 },
+          { label: $t('common.disabled'), value: 0 },
+        ],
+        optionType: 'button',
+      },
+      defaultValue: 1,
+      fieldName: 'status',
+      label: $t('system.dict.item.status'),
+    },
+    {
+      component: 'Textarea',
+      fieldName: 'remark',
+      label: $t('system.dict.item.remark'),
+    },
+  ],
+  showDefaultActions: false,
+});
 
 const [Modal, modalApi] = useVbenModal({
+  async onConfirm() {
+    const { valid } = await formApi.validate();
+    if (!valid) return;
+    const values = await formApi.getValues();
+    modalApi.lock();
+    try {
+      const payload = { dictId: dictId.value, ...values };
+      const savePromise = formData.value?.itemId
+        ? updateDictItem(formData.value.itemId, payload)
+        : createDictItem(payload);
+      await savePromise;
+      emit('success');
+      modalApi.close();
+    } catch {
+      modalApi.unlock();
+    }
+  },
   onOpenChange(isOpen) {
     if (isOpen) {
-      const data = modalApi.getData<{ id: number }>();
-      if (data?.id) {
-        dictId.value = data.id;
-        editingItem.value = undefined;
-        itemFormApi.resetForm();
-        loadItems();
+      const data = modalApi.getData<{ dictId: number; dictName: string; itemId?: number; label?: string; remark?: string; sort?: number; status?: number; value?: string }>();
+      formApi.resetForm();
+      if (data) {
+        dictId.value = data.dictId;
+        dictName.value = data.dictName;
+        formData.value = data;
+        formApi.setValues(data);
       }
     }
   },
 });
 </script>
+
 <template>
-  <Modal
-    :title="$t('system.dict.items')"
-    class="w-[800px]"
-    :footer="false"
-  >
-    <div class="mb-4">
-      <div v-if="editingItem || editingItem === undefined" class="mb-4">
-        <div class="mb-2 flex items-center justify-between">
-          <span class="text-sm font-medium">
-            {{
-              editingItem
-                ? $t('ui.actionTitle.edit', [$t('system.dict.name')])
-                : $t('ui.actionTitle.create', [$t('system.dict.name')])
-            }}
-          </span>
-          <div>
-            <Button size="small" type="primary" @click="onSaveItem">
-              {{ $t('common.confirm') }}
-            </Button>
-            <Button size="small" class="ml-2" @click="onCancelEdit">
-              {{ $t('common.cancel') }}
-            </Button>
-          </div>
-        </div>
-        <ItemForm />
-      </div>
-    </div>
-    <div class="mb-2 flex items-center justify-between">
-      <span class="text-sm font-medium">
-        {{ $t('system.dict.items') }}
-      </span>
-      <Button size="small" type="primary" @click="onCreateItem">
-        <Plus class="mr-1 size-4" />
-        {{ $t('ui.actionTitle.create', [$t('system.dict.name')]) }}
-      </Button>
-    </div>
-    <Table
-      :columns="columns"
-      :data-source="items"
-      :loading="loading"
-      row-key="id"
-      size="small"
-    >
-      <template #bodyCell="{ column, record }">
-        <template v-if="column.dataIndex === 'status'">
-          <Tag
-            :color="record.status === 1 ? 'success' : 'error'"
-          >
-            {{ record.status === 1 ? $t('common.enabled') : $t('common.disabled') }}
-          </Tag>
-        </template>
-        <template v-else-if="column.dataIndex === 'operation'">
-          <Button type="link" size="small" @click="onEditItem(record)">
-            {{ $t('common.edit') }}
-          </Button>
-          <Button type="link" danger size="small" @click="onDeleteItem(record)">
-            {{ $t('common.delete') }}
-          </Button>
-        </template>
-        <template v-else-if="column.dataIndex === 'remark'">
-          {{ record.remark || '-' }}
-        </template>
-      </template>
-    </Table>
+  <Modal :title="getTitle">
+    <Form />
   </Modal>
 </template>

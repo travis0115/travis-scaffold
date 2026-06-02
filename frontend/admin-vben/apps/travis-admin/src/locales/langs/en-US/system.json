@@ -108,7 +108,8 @@
       "sort": "Sort",
       "status": "Status",
       "remark": "Remark",
-      "operation": "Operation"
+      "operation": "Operation",
+      "addItem": "Add Item"
     }
   },
   "config": {

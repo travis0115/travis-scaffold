@@ -124,9 +124,6 @@ export function useColumns(
           'edit',
           {
             code: 'delete',
-            disabled: (row: SystemDeptApi.SysDept) => {
-              return !!(row.children && row.children.length > 0);
-            },
           },
         ],
       },

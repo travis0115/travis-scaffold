@@ -17,7 +17,7 @@ public class SysUserReq {
      * 用户名
      */
     @NotBlank(message = "用户名不能为空")
-    @Username
+    @Username(message = "用户名格式不正确，需以字母开头，长度6-16位，仅支持字母、数字和下划线")
     private String username;
 
     /**

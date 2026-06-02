@@ -17,6 +17,13 @@ import java.util.List;
 public interface SysDictService extends IService<SysDict> {
 
     /**
+     * 获取字典树形数据（每个字典包含其下的数据项作为 children）
+     *
+     * @return 字典树形列表
+     */
+    List<SysDict> getDictTree();
+
+    /**
      * 分页查询字典类型列表
      *
      * @param dictName 字典名称（模糊匹配，可为空）

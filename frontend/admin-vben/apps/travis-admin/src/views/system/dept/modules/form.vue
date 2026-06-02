@@ -3,12 +3,10 @@ import type { SystemDeptApi } from '#/api';
 
 import { computed, ref } from 'vue';
 
-import { useVbenModal } from '@vben/common-ui';
-
-import { Button } from 'antdv-next';
+import { useVbenDrawer } from '@vben/common-ui';
 
 import { useVbenForm } from '#/adapter/form';
-import { createDept, updateDept } from '#/api';
+import { createDept, getDeptDetail, updateDept } from '#/api';
 import { $t } from '#/locales';
 
 import { useSchema } from '../data';
@@ -27,31 +25,26 @@ const [Form, formApi] = useVbenForm({
   showDefaultActions: false,
 });
 
-function resetForm() {
-  formApi.resetForm();
-  formApi.setValues(formData.value || {});
-}
-
-const [Modal, modalApi] = useVbenModal({
+const [Drawer, drawerApi] = useVbenDrawer({
   async onConfirm() {
     const { valid } = await formApi.validate();
     if (valid) {
-      modalApi.lock();
+      drawerApi.lock();
       const data = await formApi.getValues();
       try {
         await (formData.value?.id
           ? updateDept(formData.value.id, data)
           : createDept(data));
-        modalApi.close();
+        drawerApi.close();
         emit('success');
       } finally {
-        modalApi.lock(false);
+        drawerApi.lock(false);
       }
     }
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
-      const data = modalApi.getData<SystemDeptApi.SysDept>();
+      const data = drawerApi.getData<SystemDeptApi.SysDept>();
       formApi.resetForm();
       if (data?.id) {
         // 编辑时加载完整详情
@@ -70,14 +63,7 @@ const [Modal, modalApi] = useVbenModal({
 </script>
 
 <template>
-  <Modal :title="getTitle">
+  <Drawer :title="getTitle">
     <Form class="mx-4" />
-    <template #prepend-footer>
-      <div class="flex-auto">
-        <Button type="primary" danger @click="resetForm">
-          {{ $t('common.reset') }}
-        </Button>
-      </div>
-    </template>
-  </Modal>
+  </Drawer>
 </template>

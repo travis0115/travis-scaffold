@@ -23,9 +23,25 @@ const [Modal, modalApi] = useVbenModal({
   async onConfirm() {
     if (!userId.value) return;
 
-    if (resetType.value === 'custom' && !customPassword.value.trim()) {
-      message.warning($t('system.user.newPassword'));
-      return;
+    if (resetType.value === 'custom') {
+      const pwd = customPassword.value.trim();
+      if (!pwd) {
+        message.warning($t('system.user.newPassword'));
+        return;
+      }
+      if (pwd.length < 8 || pwd.length > 32) {
+        message.warning('密码长度需为8-32位');
+        return;
+      }
+      let types = 0;
+      if (/[a-z]/.test(pwd)) types++;
+      if (/[A-Z]/.test(pwd)) types++;
+      if (/\d/.test(pwd)) types++;
+      if (/[~!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(pwd)) types++;
+      if (types < 3) {
+        message.warning('密码需包含大写字母、小写字母、数字、特殊符号中的至少3种');
+        return;
+      }
     }
     modalApi.lock();
     try {
@@ -69,13 +85,16 @@ const [Modal, modalApi] = useVbenModal({
         button-style="solid"
       />
       <div v-if="resetType === 'random'" class="text-muted-foreground text-sm">
-        {{ $t('system.user.resetPasswordRandom') }}（8位，含字母和数字）
+        {{ $t('system.user.resetPasswordRandom') }}（8-32位，含大小写字母、数字和特殊符号中的至少3种）
       </div>
-      <div v-else>
+      <div v-else class="flex flex-col gap-1">
         <InputPassword
           v-model:value="customPassword"
-          :placeholder="$t('system.user.newPassword')"
+          :placeholder="$t('system.user.newPassword')"         
         />
+        <span class="text-muted-foreground text-xs">
+          密码需为8-32位，并包含大写字母、小写字母、数字、特殊符号中的至少3种
+        </span>
       </div>
     </div>
   </Modal>

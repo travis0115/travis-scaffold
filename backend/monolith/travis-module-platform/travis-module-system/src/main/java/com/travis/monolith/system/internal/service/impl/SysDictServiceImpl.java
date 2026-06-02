@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -38,6 +39,32 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict> impl
 
     /** 对象转换器 */
     private final SysDictItemConverter converter;
+
+    /**
+     * 获取字典树形数据（每个字典包含其下的数据项作为 children）
+     */
+    @Override
+    public List<SysDict> getDictTree() {
+        // 查询所有字典类型
+        List<SysDict> dictList = list();
+        if (dictList.isEmpty()) {
+            return dictList;
+        }
+        // 批量查询所有字典类型下的数据项
+        List<Long> dictIds = dictList.stream().map(SysDict::getId).toList();
+        List<SysDictItem> allItems = dictItemService.list(new LambdaQueryWrapper<SysDictItem>()
+                .in(SysDictItem::getDictId, dictIds)
+                .orderByAsc(SysDictItem::getSort));
+        // 按 dictId 分组
+        Map<Long, List<SysDictItemResp>> itemsGroup = allItems.stream()
+                .collect(Collectors.groupingBy(
+                        SysDictItem::getDictId,
+                        Collectors.mapping(converter::toDictItemResp, Collectors.toList())));
+        // 为每个字典设置 children
+        dictList.forEach(dict ->
+                dict.setChildren(itemsGroup.getOrDefault(dict.getId(), List.of())));
+        return dictList;
+    }
 
     /**
      * 分页查询字典类型列表，支持按名称、类型编码、状态筛选
