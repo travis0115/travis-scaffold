@@ -28,7 +28,7 @@ public class DevLoggerUtil {
     /**
      * 总输出宽度（字符数）
      */
-    private static final int TOTAL_WIDTH = 80;
+    private static final int TOTAL_WIDTH = 160;
 
 
     /**
@@ -71,10 +71,10 @@ public class DevLoggerUtil {
         var border = "═".repeat(TOTAL_WIDTH - 2);
 
         var sb = new StringBuilder();
-        sb.append("\n╔").append(border).append("╗\n");
-        // 包装并添加标题
-        sb.append(wrap(YELLOW + title + RESET, contentWidth)).append("\n");
-        sb.append("╠").append(border).append("╣\n");
+        sb.append("\n╔").append(border).append("\n");
+        // 包装并添加标题（标题换行后从正文起始列开始）
+        sb.append(wrap(YELLOW + title + RESET, contentWidth, 0)).append("\n");
+        sb.append("╠").append(border).append("\n");
 
         for (var entry : data.entrySet()) {
             var key = entry.getKey();
@@ -101,11 +101,11 @@ public class DevLoggerUtil {
                     // 后续行使用缩进对齐
                     line = indent + GREEN + lines.get(i) + RESET;
                 }
-                // 自动换行并添加边框
-                sb.append(wrap(line, contentWidth)).append("\n");
+                // 自动换行并添加边框，换行后从字段值起始列对齐
+                sb.append(wrap(line, contentWidth, keyWidth + 3)).append("\n");
             }
         }
-        sb.append("╚").append(border).append("╝");
+        sb.append("╚").append(border);
         logger.info(sb.toString());
     }
 
@@ -147,20 +147,67 @@ public class DevLoggerUtil {
     }
 
     /**
-     * 将内容包装在边框内，并根据可见宽度填充空格以达到指定宽度
+     * 将内容包装在边框内，超宽时自动换行，换行后的内容从指定缩进列开始
      *
-     * @param content 包含 ANSI 颜色码的内容
-     * @param width   目标宽度（不含边框）
-     * @return 包装后的字符串
+     * @param content    包含 ANSI 颜色码的内容
+     * @param width      目标宽度（不含边框）
+     * @param wrapIndent 换行后内容的缩进宽度（对齐到字段值起始列）
+     * @return 包装后的字符串（可能包含多行，以换行符分隔）
      */
-    private static String wrap(String content, int width) {
-        var clean = stripAnsi(content);
-        var visible = displayWidth(clean);
-        var padding = width - visible;
-        return "║ "
-                + content
-                + " ".repeat(Math.max(0, padding))
-                + " ║";
+    private static String wrap(String content, int width, int wrapIndent) {
+        var sb = new StringBuilder();
+        var current = new StringBuilder();
+        int visibleWidth = 0;
+        boolean firstLine = true;
+        int i = 0;
+
+        while (i < content.length()) {
+            // 跳过 ANSI 转义序列，不计入可见宽度
+            var matcher = ANSI.matcher(content.substring(i));
+            if (matcher.lookingAt()) {
+                current.append(matcher.group());
+                i += matcher.group().length();
+                continue;
+            }
+
+            char c = content.charAt(i);
+            int cw = isWideChar(c) ? 2 : 1;
+            int maxWidth = firstLine ? width : width - wrapIndent;
+
+            if (visibleWidth + cw > maxWidth) {
+                appendBorderedLine(sb, current.toString(), firstLine ? width : width - wrapIndent, firstLine, wrapIndent);
+                current = new StringBuilder();
+                visibleWidth = 0;
+                firstLine = false;
+            }
+
+            current.append(c);
+            visibleWidth += cw;
+            i++;
+        }
+
+        if (current.length() > 0) {
+            appendBorderedLine(sb, current.toString(), firstLine ? width : width - wrapIndent, firstLine, wrapIndent);
+        } else if (sb.isEmpty()) {
+            sb.append("║ ").append(" ".repeat(width));
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * 添加一行带边框的内容，首行无额外缩进，续行按 wrapIndent 缩进并补齐右侧空格
+     */
+    private static void appendBorderedLine(StringBuilder sb, String segment, int effectiveWidth,
+                                           boolean firstLine, int wrapIndent) {
+        var visible = displayWidth(stripAnsi(segment));
+        var padding = effectiveWidth - visible;
+
+        if (firstLine) {
+            sb.append("║ ").append(segment).append(" ".repeat(Math.max(0, padding)));
+        } else {
+            sb.append("\n║ ").append(" ".repeat(wrapIndent)).append(segment).append(" ".repeat(Math.max(0, padding)));
+        }
     }
 
     /**

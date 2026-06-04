@@ -9,24 +9,21 @@ import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.web.core.exception.IErrorCode;
 import com.travis.infrastructure.framework.web.core.model.PageResult;
+import com.travis.infrastructure.framework.web.core.utils.Ip2RegionUtils;
 import com.travis.monolith.system.internal.converter.SysUserConverter;
 import com.travis.monolith.system.internal.exception.SystemErrorCode;
 import com.travis.monolith.system.internal.mapper.SysDeptMapper;
 import com.travis.monolith.system.internal.mapper.SysUserMapper;
 import com.travis.monolith.system.internal.mapper.SysUserRoleMapper;
 import com.travis.monolith.system.internal.model.entity.SysDept;
+import com.travis.monolith.system.internal.model.entity.SysRole;
 import com.travis.monolith.system.internal.model.entity.SysUser;
 import com.travis.monolith.system.internal.model.entity.SysUserRole;
-import com.travis.monolith.system.internal.model.req.ChangePasswordReq;
-import com.travis.monolith.system.internal.model.req.SysUserReq;
-import com.travis.monolith.system.internal.model.req.SysUserRoleReq;
-import com.travis.monolith.system.internal.model.req.UserProfileReq;
-import com.travis.monolith.system.internal.model.req.UpdateAvatarReq;
+import com.travis.monolith.system.internal.model.req.*;
 import com.travis.monolith.system.internal.model.resp.SysUserResp;
-import com.travis.monolith.system.internal.service.SysRoleService;
 import com.travis.monolith.system.internal.service.SysFileService;
+import com.travis.monolith.system.internal.service.SysRoleService;
 import com.travis.monolith.system.internal.service.SysUserService;
-import com.travis.monolith.system.internal.util.IpRegionUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,24 +40,33 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> implements SysUserService {
 
-    /** 用户-角色关联 Mapper */
+    /**
+     * 用户-角色关联 Mapper
+     */
     private final SysUserRoleMapper userRoleMapper;
-    /** 部门 Mapper（用于关联查询部门名称） */
+    /**
+     * 部门 Mapper（用于关联查询部门名称）
+     */
     private final SysDeptMapper deptMapper;
-    /** 角色管理服务 */
+    /**
+     * 角色管理服务
+     */
     private final SysRoleService roleService;
-    /** 文件服务 */
+    /**
+     * 文件服务
+     */
     private final SysFileService fileService;
-    /** IP地址解析工具 */
-    private final IpRegionUtils ipRegionUtils;
-    /** 对象转换器 */
+    /**
+     * 对象转换器
+     */
     private final SysUserConverter converter;
 
     /**
      * 分页查询用户列表，支持按用户名、手机号、状态、部门筛选
      */
     @Override
-    public PageResult<SysUserResp> getUserPage(String username, String mobile, Integer status, Long deptId, Integer pageNum, Integer pageSize) {
+    public PageResult<SysUserResp> getUserPage(String username, String mobile, Integer status, Long deptId,
+                                               Integer pageNum, Integer pageSize) {
         LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<SysUser>()
                 .like(username != null, SysUser::getUsername, username)
                 .like(mobile != null, SysUser::getMobile, mobile)
@@ -69,7 +75,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                 .orderByDesc(SysUser::getCreateTime);
         Page<SysUser> page = page(new Page<>(pageNum, pageSize), wrapper);
         List<SysUserResp> voList = page.getRecords().stream().map(this::toVO).collect(Collectors.toList());
-        return new PageResult<>(voList, page.getTotal(), (int) page.getCurrent(), (int) page.getSize(), (int) page.getPages());
+        return new PageResult<>(voList, page.getTotal(), (int) page.getCurrent(), (int) page.getSize(),
+                (int) page.getPages());
     }
 
     /**
@@ -85,7 +92,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         List<Long> roleIds = roleService.getRoleIdsByUserId(id);
         vo.setRoleIds(roleIds);
         List<String> roleNames = roleIds.isEmpty() ? List.of() : roleService.listByIds(roleIds).stream()
-                .map(r -> r.getRoleName()).collect(Collectors.toList());
+                .map(SysRole::getRoleName).collect(Collectors.toList());
         vo.setRoleNames(roleNames);
         return vo;
     }
@@ -100,8 +107,15 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         long count = count(new LambdaQueryWrapper<SysUser>().eq(SysUser::getUsername, req.getUsername()));
         if (count > 0) {
             throw new BizException(new IErrorCode() {
-                @Override public String getCode() { return CommonErrorCode.BAD_REQUEST.getCode(); }
-                @Override public String getMsg() { return "用户名已存在"; }
+                @Override
+                public String getCode() {
+                    return CommonErrorCode.BAD_REQUEST.getCode();
+                }
+
+                @Override
+                public String getMsg() {
+                    return "用户名已存在";
+                }
             }, null);
         }
         SysUser user = converter.toUserEntity(req);
@@ -126,8 +140,15 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                 .ne(SysUser::getId, id));
         if (count > 0) {
             throw new BizException(new IErrorCode() {
-                @Override public String getCode() { return CommonErrorCode.BAD_REQUEST.getCode(); }
-                @Override public String getMsg() { return "用户名已存在"; }
+                @Override
+                public String getCode() {
+                    return CommonErrorCode.BAD_REQUEST.getCode();
+                }
+
+                @Override
+                public String getMsg() {
+                    return "用户名已存在";
+                }
             }, null);
         }
         converter.updateUserFromReq(req, user);
@@ -304,7 +325,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         resp.setRoleNames(roleService.getRoleNamesByUserId(user.getId()));
         // 解析最后登录IP到地理位置
         if (user.getLastLoginIp() != null && !user.getLastLoginIp().isEmpty()) {
-            resp.setLastLoginLocation(ipRegionUtils.getRegion(user.getLastLoginIp()));
+            resp.setLastLoginLocation(Ip2RegionUtils.getRegionByIP(user.getLastLoginIp()));
         }
         return resp;
     }

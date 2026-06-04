@@ -18,10 +18,6 @@
             <groupId>com.travis</groupId>
             <artifactId>travis-common</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.travis</groupId>
-            <artifactId>travis-spring-boot-starter-sa-token</artifactId>
-        </dependency>
 
         <!-- MySQL驱动 -->
         <dependency>

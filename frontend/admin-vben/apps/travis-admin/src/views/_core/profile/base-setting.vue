@@ -8,6 +8,7 @@ import { useUserStore } from '@vben/stores';
 
 import { App } from 'antdv-next';
 
+import { z } from '#/adapter/form';
 import { getUserInfoApi, updateProfileApi } from '#/api';
 
 const userStore = useUserStore();
@@ -51,7 +52,11 @@ const formSchema = computed((): VbenFormSchema[] => {
       componentProps: {
         size: 'large',
       },
-      rules: 'required',
+      rules: z
+        .string()
+        .min(1, '请输入昵称')
+        .min(2, '昵称长度为2-20个字符')
+        .max(20, '昵称长度为2-20个字符'),
     },
     {
       fieldName: 'email',
@@ -60,6 +65,7 @@ const formSchema = computed((): VbenFormSchema[] => {
       componentProps: {
         size: 'large',
       },
+      rules: z.string().email('请输入有效的邮箱地址').optional().or(z.literal('')),
     },
     {
       fieldName: 'mobile',
@@ -68,6 +74,7 @@ const formSchema = computed((): VbenFormSchema[] => {
       componentProps: {
         size: 'large',
       },
+      rules: z.string().regex(/^$|^1[3-9]\d{9}$/, '请输入有效的手机号').optional().or(z.literal('')),
     },
   ];
 });

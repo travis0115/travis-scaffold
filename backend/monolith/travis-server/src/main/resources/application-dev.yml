@@ -1,8 +1,6 @@
 logging:
   access:
     enabled: true #是否启用access日志，true/false，默认开启
-  file:
-    path: ${user.home}/data/logs/${spring.application.name}
   level:
     root: INFO  #全局日志级别
     com.travis: DEBUG #业务代码

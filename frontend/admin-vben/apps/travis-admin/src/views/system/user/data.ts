@@ -35,7 +35,8 @@ export function useFormSchema(deptTreeData?: any[]): VbenFormSchema[] {
       rules: z
         .string()
         .min(1, $t('ui.formRules.required', [$t('system.user.nickname')]))
-        .max(30, $t('ui.formRules.maxLength', [$t('system.user.nickname'), 30])),
+        .min(2, '昵称长度为2-20个字符')
+        .max(20, '昵称长度为2-20个字符'),
     },
     {
       component: 'Input',

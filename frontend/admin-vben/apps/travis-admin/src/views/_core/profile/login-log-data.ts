@@ -5,6 +5,11 @@ import { $t } from '#/locales';
 export function useColumns(): VxeTableGridColumns {
   return [
     {
+      field: 'loginTime',
+      title: $t('system.loginLog.loginTime'),
+      width: 180,
+    },
+    {
       field: 'ip',
       title: $t('system.loginLog.ip'),
       width: 150,
@@ -25,30 +30,22 @@ export function useColumns(): VxeTableGridColumns {
       width: 150,
     },
     {
+      field: 'message',
+      title: $t('system.loginLog.message'),
+      minWidth: 200,
+    },
+    {
       cellRender: {
         name: 'CellTag',
-        props: (row: any) => ({
-          color: row.status === 1 ? 'success' : 'error',
-        }),
+        options: [
+          { color: 'success', label: $t('system.loginLog.success'), value: 1 },
+          { color: 'error', label: $t('system.loginLog.fail'), value: 0 },
+        ],
       },
       field: 'status',
       title: $t('system.loginLog.status'),
       width: 100,
-      formatter({ cellValue }: { cellValue: number }) {
-        return cellValue === 1
-          ? $t('system.loginLog.success')
-          : $t('system.loginLog.fail');
-      },
-    },
-    {
-      field: 'message',
-      title: $t('system.loginLog.message'),
-      width: 200,
-    },
-    {
-      field: 'loginTime',
-      title: $t('system.loginLog.loginTime'),
-      width: 180,
+      fixed: 'right',
     },
   ];
 }

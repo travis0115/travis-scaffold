@@ -73,10 +73,6 @@ function onActionClick({
   row,
 }: OnActionClickParams<SystemMenuApi.SysMenu>) {
   switch (code) {
-    case 'append': {
-      onAppend(row);
-      break;
-    }
     case 'delete': {
       onDelete(row);
       break;
@@ -122,10 +118,6 @@ function onEdit(row: SystemMenuApi.SysMenu) {
 
 function onCreate() {
   formDrawerApi.setData({}).open();
-}
-
-function onAppend(row: SystemMenuApi.SysMenu) {
-  formDrawerApi.setData({ parentId: row.id }).open();
 }
 
 function onDelete(row: SystemMenuApi.SysMenu) {

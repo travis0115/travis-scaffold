@@ -11,10 +11,11 @@ import com.travis.infrastructure.framework.desensitize.core.rule.DesensitizeRule
 import com.travis.infrastructure.framework.desensitize.core.util.DesensitizeUtils;
 import com.travis.infrastructure.framework.jackson.core.util.JsonUtils;
 import com.travis.infrastructure.framework.logging.core.constant.LogKeys;
+import com.travis.infrastructure.framework.logging.core.enums.AccessLogger;
 import com.travis.infrastructure.framework.logging.core.enums.LogType;
 import com.travis.infrastructure.framework.logging.core.util.DevLoggerUtil;
-import com.travis.infrastructure.framework.logging.core.enums.AccessLogger;
 import com.travis.infrastructure.framework.web.core.utils.ServletUtils;
+import com.travis.infrastructure.framework.web.core.utils.UserAgentUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,8 +23,11 @@ import lombok.extern.slf4j.Slf4j;
 import net.logstash.logback.argument.StructuredArgument;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.BeanUtils;
 import org.springframework.core.MethodParameter;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.method.HandlerMethod;
@@ -49,7 +53,8 @@ public class AccessLogFilter extends OncePerRequestFilter {
     private final RequestMappingHandlerMapping requestMappingHandlerMapping;
     private final boolean enabledAccessLog = Boolean.parseBoolean(
             SpringUtil.getProperty("logging.access.enabled", "true"));
-    private final String accessLogOutput = SpringUtil.getProperty("logging.output", AccessLogger.STDOUT.name());
+    private final String logOutput = SpringUtil.getProperty("logging.output", AccessLogger.STDOUT.name());
+    private final String tokenName = SpringUtil.getProperty("sa-token.token-name", HttpHeaders.AUTHORIZATION);
 
     public AccessLogFilter(HandlerExceptionResolver handlerExceptionResolver,
                            RequestMappingHandlerMapping requestMappingHandlerMapping) {
@@ -76,34 +81,42 @@ public class AccessLogFilter extends OncePerRequestFilter {
      */
     private void outputAccessLog(HttpServletRequest request, HttpServletResponse response,
                                  long beginTime) {
-        if (!enabledAccessLog) {
+        if (!enabledAccessLog || HttpMethod.OPTIONS.name().equalsIgnoreCase(request.getMethod())) {
+            return;
+        }
+        // 仅对 API 请求输出访问日志，跳过静态资源等请求
+        if (!request.getRequestURI().startsWith("/api/")) {
             return;
         }
         try {
             var handlerMethod = resolveHandlerMethod(request);
 
             var logType = LogType.ACCESS.name();
-            var tenantId = request.getHeader(CustomHttpHeaders.TENANT_ID);
-            var userId = request.getHeader(CustomHttpHeaders.USER_ID);
+
             var apiUrl = request.getRequestURI();
             var httpMethod = request.getMethod();
-            var clientIp = ServletUtils.getClientIP(request);
-            var userAgent = ServletUtils.getUserAgent();
+            var tenantId = MDC.get(MdcKeys.TENANT_ID);
+            var userId = MDC.get(MdcKeys.USER_ID);
+            var clientIp = MDC.get(MdcKeys.CLIENT_IP);
             var clientType = ClientType.from(request.getHeader(CustomHttpHeaders.CLIENT_TYPE)).getDisplayName();
+            var userAgent = UserAgentUtils.getCurrentUserAgentInfo(request);
+            var platfromType = userAgent.getOs();
+            var browser = userAgent.getBrowser();
             var apiCost = (System.currentTimeMillis() - beginTime) + " ms";
             var requestParams = desensitizeRequestParams(request, handlerMethod);
             var requestBody = desensitizeRequestBody(request, handlerMethod);
             var apiResult = desensitizeResponseBody(response);
 
             var argumentsJson = new JSONObject();
-            argumentsJson.set(MdcKeys.TENANT_ID, tenantId);
-            argumentsJson.set(MdcKeys.USER_ID, userId);
             argumentsJson.set(LogKeys.LOG_TYPE, logType);
             argumentsJson.set(LogKeys.API_URL, apiUrl);
             argumentsJson.set(LogKeys.HTTP_METHOD, httpMethod);
+            argumentsJson.set(MdcKeys.TENANT_ID, tenantId);
+            argumentsJson.set(MdcKeys.USER_ID, userId);
             argumentsJson.set(LogKeys.CLIENT_IP, clientIp);
-            argumentsJson.set(LogKeys.USER_AGENT, userAgent);
             argumentsJson.set(LogKeys.CLIENT_TYPE, clientType);
+            argumentsJson.set(LogKeys.PLATFORM_TYPE, platfromType);
+            argumentsJson.set(LogKeys.BROWSER, browser);
             argumentsJson.set(LogKeys.API_COST, apiCost);
             if (!requestParams.isEmpty()) {
                 argumentsJson.set(LogKeys.REQUEST_PARAMS, requestParams);
@@ -114,16 +127,16 @@ public class AccessLogFilter extends OncePerRequestFilter {
             argumentsJson.set(LogKeys.API_RESULT, apiResult);
 
             if ("dev".equalsIgnoreCase(SpringUtil.getActiveProfile())) {
-                var logger = LoggerFactory.getLogger(this.getClass());
-                DevLoggerUtil.print(logger, "ACCESS LOG", argumentsJson);
+                DevLoggerUtil.print(log, "ACCESS LOG", argumentsJson);
             }
             if ("prod".equalsIgnoreCase(SpringUtil.getActiveProfile())) {
                 var argumentsList = new ArrayList<StructuredArgument>();
                 argumentsJson.forEach(argument ->
                         argumentsList.add(kv(argument.getKey(), argument.getValue())));
-                var logger = LoggerFactory.getLogger(AccessLogger.from(accessLogOutput).getLoggerName());
+                var logger = LoggerFactory.getLogger(AccessLogger.from(logOutput).getLoggerName());
                 logger.info(LogType.ACCESS.name(), argumentsList.toArray());
             }
+
         } catch (Exception e) {
             log.error("Access log error", e);
         }

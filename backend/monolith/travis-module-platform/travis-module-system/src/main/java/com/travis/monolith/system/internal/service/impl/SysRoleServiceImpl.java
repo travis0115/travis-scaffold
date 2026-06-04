@@ -33,18 +33,25 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> implements SysRoleService {
 
-    /** 角色-菜单关联 Mapper */
+    /**
+     * 角色-菜单关联 Mapper
+     */
     private final SysRoleMenuMapper roleMenuMapper;
-    /** 用户-角色关联 Mapper */
+    /**
+     * 用户-角色关联 Mapper
+     */
     private final SysUserRoleMapper userRoleMapper;
-    /** 对象转换器 */
+    /**
+     * 对象转换器
+     */
     private final SysRoleConverter converter;
 
     /**
      * 分页查询角色列表，支持按角色名称、编码、状态筛选
      */
     @Override
-    public PageResult<SysRoleResp> getRolePage(String roleName, String roleCode, Integer status, Integer pageNum, Integer pageSize) {
+    public PageResult<SysRoleResp> getRolePage(String roleName, String roleCode, Integer status, Integer pageNum,
+                                               Integer pageSize) {
         LambdaQueryWrapper<SysRole> wrapper = new LambdaQueryWrapper<SysRole>()
                 .like(roleName != null, SysRole::getRoleName, roleName)
                 .like(roleCode != null, SysRole::getRoleCode, roleCode)
@@ -52,7 +59,8 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
                 .orderByDesc(SysRole::getCreateTime);
         Page<SysRole> page = page(new Page<>(pageNum, pageSize), wrapper);
         List<SysRoleResp> voList = converter.toRoleRespList(page.getRecords());
-        return new PageResult<>(voList, page.getTotal(), (int) page.getCurrent(), (int) page.getSize(), (int) page.getPages());
+        return new PageResult<>(voList, page.getTotal(), (int) page.getCurrent(), (int) page.getSize(),
+                (int) page.getPages());
     }
 
     /**

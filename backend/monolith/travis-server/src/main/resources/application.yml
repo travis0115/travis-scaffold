@@ -144,12 +144,10 @@ travis:
     apis:
       # 管理后台接口
       - prefix: /api/admin
-        package-pattern: .controller.admin
-        enabled: true
+        package-pattern: controller.admin
       # 客户端接口
       - prefix: /api/app
-        package-pattern: .controller.app
-        enabled: true
+        package-pattern: controller.app
     # 文件配置
     file:
       resource-handler: /files/**  # 文件访问URL
@@ -157,4 +155,8 @@ travis:
     i18n:
       enabled: true #是否启用国际化
     locale: zh_CN #spring.web.locale和spring.jackson.locale配置
+    security:
+      # 放行请求，不校验登录
+      permit-paths:
+        - /api/admin/system/auth/login
     time-zone: UTC  #全局time-zone配置，影响spring.jackson.time-zone以及日志配置

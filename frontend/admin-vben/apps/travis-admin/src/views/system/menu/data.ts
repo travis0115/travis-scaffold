@@ -115,11 +115,6 @@ export function useColumns(
         name: 'CellOperation',
         options: [
           {
-            code: 'append',
-            text: $t('system.menu.appendChildren'),
-            show: (row: SystemMenuApi.SysMenu) => [0, 1].includes(row.menuType),
-          },
-          {
             code: 'moveUp',
             text: $t('common.moveUp'),
             disabled: (row: SystemMenuApi.SysMenu) => {

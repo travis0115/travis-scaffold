@@ -10,46 +10,21 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * 客户端类型枚举
+ * 应用类型枚举
  */
 @AllArgsConstructor
 @Slf4j
 @Getter
 public enum ClientType {
     /**
-     * PC端浏览器
+     * 网站
      */
-    PC_WEB("pc_web", "PC端浏览器"),
+    WEB("web", "Web"),
 
     /**
-     * 移动端浏览器
+     * APP
      */
-    MOBILE_WEB("mobile_web", "移动端浏览器"),
-
-    /**
-     * iPhone iOS
-     */
-    IOS("ios", "iOS"),
-
-    /**
-     * 安卓 Android
-     */
-    ANDROID("android", "Android"),
-
-    /**
-     * 鸿蒙 HarmonyOS
-     */
-    HARMONYOS("harmonyos", "HarmonyOS"),
-
-    /**
-     * MacOS桌面端
-     */
-    MACOS("macos", "MacOS"),
-
-    /**
-     * Windows桌面端
-     */
-    WINDOWS("windows", "Windows"),
+    APP("app", "APP"),
 
     /**
      * 微信小程序
@@ -74,7 +49,7 @@ public enum ClientType {
     /**
      * API调用
      */
-    API("api", "API"),
+    OPEN_API("open_api", "开放API"),
 
     /**
      * 兜底
@@ -106,7 +81,6 @@ public enum ClientType {
 
     public static ClientType from(String raw) {
         if (StrUtil.isBlank(raw)) {
-            log.warn("未传入 clientType：{}", raw);
             return UNKNOWN;
         }
         String normalizedRaw = raw.trim().toLowerCase(Locale.ROOT);

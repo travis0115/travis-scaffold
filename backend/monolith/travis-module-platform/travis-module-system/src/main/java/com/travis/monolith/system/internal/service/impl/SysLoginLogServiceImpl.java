@@ -4,18 +4,30 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.framework.web.core.model.PageResult;
+import com.travis.infrastructure.framework.web.core.utils.Ip2RegionUtils;
+import com.travis.infrastructure.framework.web.core.utils.IpUtils;
+import com.travis.infrastructure.framework.web.core.utils.UserAgentUtils;
 import com.travis.monolith.system.internal.mapper.SysLoginLogMapper;
 import com.travis.monolith.system.internal.model.entity.SysLoginLog;
 import com.travis.monolith.system.internal.service.SysLoginLogService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 /**
- * 登录日志服务实现，按登录时间倒序分页查询
+ * 登录日志服务实现，按登录时间倒序分页查询，记录登录日志
  *
  * @author travis
  */
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class SysLoginLogServiceImpl extends ServiceImpl<SysLoginLogMapper, SysLoginLog> implements SysLoginLogService {
+
 
     /**
      * 分页查询登录日志，支持按用户名、状态筛选，按登录时间倒序排列
@@ -29,5 +41,29 @@ public class SysLoginLogServiceImpl extends ServiceImpl<SysLoginLogMapper, SysLo
         Page<SysLoginLog> page = page(new Page<>(pageNum, pageSize), wrapper);
         return new PageResult<>(page.getRecords(), page.getTotal(),
                 (int) page.getCurrent(), (int) page.getSize(), (int) page.getPages());
+    }
+
+    /**
+     * 记录登录日志，使用 REQUIRES_NEW 独立事务，确保日志不受外层事务回滚影响
+     */
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void recordLoginLog(String username, int status, String message) {
+        try {
+            var ua = UserAgentUtils.getCurrentUserAgentInfo();
+            SysLoginLog loginLog = new SysLoginLog();
+            loginLog.setUsername(username);
+            loginLog.setIp(IpUtils.getClientIp());
+            loginLog.setLocation(Ip2RegionUtils.getRegionByIP(loginLog.getIp()));
+            loginLog.setBrowser(ua.getBrowser());
+            loginLog.setOs(ua.getOs());
+            loginLog.setStatus(status);
+            loginLog.setMessage(message);
+            loginLog.setLoginTime(LocalDateTime.now());
+            save(loginLog);
+        } catch (Exception e) {
+            // 日志记录失败不影响登录流程
+            log.warn("记录登录日志失败: {}", e.getMessage());
+        }
     }
 }

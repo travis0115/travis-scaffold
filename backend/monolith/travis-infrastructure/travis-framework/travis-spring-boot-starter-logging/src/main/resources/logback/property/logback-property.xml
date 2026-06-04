@@ -47,7 +47,7 @@
 
     <!-- timestamp 的 timezone配置 -->
     <springProperty name="LOG_TIMESTAMP_TIME_ZONE" source="travis.web.time-zone"
-                    defaultValue="Asia/Shanghai"/>
+                    defaultValue="UTC"/>
 
     <!--
      日志格式：

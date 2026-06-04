@@ -121,7 +121,7 @@ public class ServerExceptionHandlerAdvice {
      */
     @ExceptionHandler(NoResourceFoundException.class)
     public ApiResponse<?> handleNoResourceFoundException(NoResourceFoundException ex) {
-        log.warn("静态资源未找到：", ex);
+        log.warn("资源未找到：", ex);
         return ApiResponse.error(CommonErrorCode.NOT_FOUND);
     }
 

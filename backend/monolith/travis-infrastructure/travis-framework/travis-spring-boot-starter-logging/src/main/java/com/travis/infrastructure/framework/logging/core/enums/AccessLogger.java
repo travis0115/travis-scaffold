@@ -11,6 +11,7 @@ import java.util.Locale;
  */
 @AllArgsConstructor
 @Slf4j
+@Getter
 public enum AccessLogger {
     /**
      * 控制台
@@ -24,7 +25,6 @@ public enum AccessLogger {
 
     ;
 
-    @Getter
     private final String loggerName;
 
     public static AccessLogger from(String output) {

@@ -37,9 +37,14 @@
                     <includeMdcKeyName>tenant_id</includeMdcKeyName>
                     <!-- 用户ID -->
                     <includeMdcKeyName>user_id</includeMdcKeyName>
+
+                    <!-- ******************* 环境 ****************** -->
+                    <!-- 客户端IP -->
+                    <includeMdcKeyName>client_ip</includeMdcKeyName>
                 </mdc>
                 <message/>
-                <arguments class="com.travis.infrastructure.framework.logging.core.logback.provider.DeduplicatingArgumentsJsonProvider"/>
+                <arguments
+                        class="com.travis.infrastructure.framework.logging.core.logback.provider.DeduplicatingArgumentsJsonProvider"/>
                 <stackTrace/>
             </providers>
         </encoder>

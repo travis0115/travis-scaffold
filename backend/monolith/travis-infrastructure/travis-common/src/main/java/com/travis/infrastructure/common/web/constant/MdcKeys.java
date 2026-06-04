@@ -41,6 +41,12 @@ public final class MdcKeys {
      */
     public static final String USER_ID = "user_id";
 
-    private MdcKeys() {}
+    /**
+     * 客户端IP
+     */
+    public static final String CLIENT_IP = "client_ip";
+
+    private MdcKeys() {
+    }
 
 }

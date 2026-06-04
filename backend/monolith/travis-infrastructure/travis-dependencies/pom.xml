@@ -18,7 +18,7 @@
 
         <!-- Spring -->
         <spring-boot.version>4.0.6</spring-boot.version>
-        <spring-modulith.version>2.0.6</spring-modulith.version>
+        <spring-modulith.version>2.1.0-RC1</spring-modulith.version>
         <spring-aop.version>4.0.0-M2</spring-aop.version>
 
         <!-- 数据库 -->
@@ -45,6 +45,9 @@
         <mapstruct.version>1.7.0.Beta1</mapstruct.version>
         <hutool.version>5.8.44</hutool.version>
         <ip2region.version>3.3.7</ip2region.version>
+        <geoip2.version>5.1.0</geoip2.version>
+        <maxmind-db.version>4.1.0</maxmind-db.version>
+
     </properties>
 
     <dependencyManagement>
@@ -203,12 +206,18 @@
                 <version>${logstash-logback-encoder.version}</version>
             </dependency>
 
-            <!-- ip2region 离线IP地址解析 -->
+            <!-- geoip2 IP地址解析 -->
             <dependency>
-                <groupId>org.lionsoul</groupId>
-                <artifactId>ip2region</artifactId>
-                <version>${ip2region.version}</version>
+                <groupId>com.maxmind.geoip2</groupId>
+                <artifactId>geoip2</artifactId>
+                <version>${geoip2.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.maxmind.db</groupId>
+                <artifactId>maxmind-db</artifactId>
+                <version>${maxmind-db.version}</version>
+            </dependency>
+
 
         </dependencies>
     </dependencyManagement>

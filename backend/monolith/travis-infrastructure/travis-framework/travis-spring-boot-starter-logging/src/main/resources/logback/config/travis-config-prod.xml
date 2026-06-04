@@ -10,6 +10,9 @@
             <root level="INFO">
                 <appender-ref ref="ASYNC_APPENDER_STDOUT_APP"/>
             </root>
+            <!-- event -->
+            <include resource="logback/appenders/appender-stdout-event.xml"/>
+            <include resource="logback/logger/logger-stdout-event.xml"/>
             <condition
                     class="com.travis.infrastructure.framework.logging.core.logback.condition.TravisExpressionPropertyCondition">
                 <expression>propertyEqualsIgnoreCase("LOG_ACCESS_ENABLED","true")</expression>
@@ -36,6 +39,8 @@
                 <appender-ref ref="ASYNC_APPENDER_FILE_APP"/>
                 <appender-ref ref="ASYNC_APPENDER_FILE_ERROR"/>
             </root>
+            <include resource="logback/appenders/appender-file-event.xml"/>
+            <include resource="logback/logger/logger-file-event.xml"/>
             <condition
                     class="com.travis.infrastructure.framework.logging.core.logback.condition.TravisExpressionPropertyCondition">
                 <expression>propertyEqualsIgnoreCase("LOG_ACCESS_ENABLED","true")</expression>

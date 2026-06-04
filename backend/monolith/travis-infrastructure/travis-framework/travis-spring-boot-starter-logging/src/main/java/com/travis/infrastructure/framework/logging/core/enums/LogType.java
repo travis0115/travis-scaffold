@@ -10,18 +10,9 @@ public enum LogType {
     ACCESS,
 
     /**
-     * 指标日志
+     * 事件日志（业务事件、指标等）
      */
-    METRIC,
+    EVENT,
 
-    /**
-     * 异常日志
-     */
-    ERROR,
-
-    /**
-     * 服务日志
-     */
-    SERVICE,
 
 }

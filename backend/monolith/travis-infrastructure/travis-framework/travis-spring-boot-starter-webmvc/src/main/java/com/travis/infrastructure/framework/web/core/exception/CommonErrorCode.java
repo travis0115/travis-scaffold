@@ -22,7 +22,7 @@ public enum CommonErrorCode implements IErrorCode {
     BAD_REQUEST("400", "请求参数不正确"),
     UNAUTHORIZED("401", "账号未登录"),
     FORBIDDEN("403", "权限不足"),
-    NOT_FOUND("404", "资源未找到"),
+    NOT_FOUND("404", "请求资源不存在"),
     METHOD_NOT_ALLOWED("405", "不支持的请求方式"),
     LOCKED("423", "请求失败，请稍后重试"),
     UNSUPPORTED_MEDIA_TYPE("415", "不支持的 Content-Type"),

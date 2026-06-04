@@ -46,6 +46,15 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-aop</artifactId>
         </dependency>
+        <!-- geoip2 IP地址解析 -->
+        <dependency>
+            <groupId>com.maxmind.geoip2</groupId>
+            <artifactId>geoip2</artifactId>
+        </dependency>
+<!--         <dependency> -->
+<!--             <groupId>com.maxmind.db</groupId> -->
+<!--             <artifactId>maxmind-db</artifactId> -->
+<!--         </dependency> -->
     </dependencies>
 
 

@@ -2,16 +2,14 @@ package com.travis.monolith.system.internal.service.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.crypto.digest.BCrypt;
-import cn.hutool.http.useragent.UserAgent;
-import cn.hutool.http.useragent.UserAgentUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.exception.CommonErrorCode;
-import com.travis.infrastructure.framework.web.core.utils.ServletUtils;
+import com.travis.infrastructure.framework.web.core.utils.IpUtils;
+import com.travis.monolith.system.internal.event.LoginLogEvent;
 import com.travis.monolith.system.internal.exception.SystemErrorCode;
 import com.travis.monolith.system.internal.mapper.SysMenuMapper;
 import com.travis.monolith.system.internal.mapper.SysRoleMenuMapper;
-import com.travis.monolith.system.internal.model.entity.SysLoginLog;
 import com.travis.monolith.system.internal.model.entity.SysMenu;
 import com.travis.monolith.system.internal.model.entity.SysRoleMenu;
 import com.travis.monolith.system.internal.model.entity.SysUser;
@@ -19,16 +17,10 @@ import com.travis.monolith.system.internal.model.req.SysUserLoginReq;
 import com.travis.monolith.system.internal.model.resp.SysUserLoginResp;
 import com.travis.monolith.system.internal.model.resp.UserInfoResp;
 import com.travis.monolith.system.internal.model.resp.VbenMenuResp;
-import com.travis.monolith.system.internal.service.SysAuthService;
-import com.travis.monolith.system.internal.service.SysFileService;
-import com.travis.monolith.system.internal.service.SysLoginLogService;
-import com.travis.monolith.system.internal.service.SysMenuService;
-import com.travis.monolith.system.internal.service.SysRoleService;
-import com.travis.monolith.system.internal.service.SysUserService;
-import com.travis.monolith.system.internal.util.IpUtils;
+import com.travis.monolith.system.internal.service.*;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,7 +34,6 @@ import java.util.stream.Collectors;
  *
  * @author travis
  */
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SysAuthServiceImpl implements SysAuthService {
@@ -72,9 +63,9 @@ public class SysAuthServiceImpl implements SysAuthService {
      */
     private final SysRoleMenuMapper roleMenuMapper;
     /**
-     * 登录日志服务
+     * Spring 事件发布器
      */
-    private final SysLoginLogService loginLogService;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 管理员登录：校验用户名密码、账号状态，通过后使用 Sa-Token 签发令牌，并记录登录日志
@@ -89,18 +80,18 @@ public class SysAuthServiceImpl implements SysAuthService {
                         SysUser::getStatus)
                 .one();
         if (user == null) {
-            recordLoginLog(req.getUsername(), 0, "用户不存在");
+            eventPublisher.publishEvent(new LoginLogEvent(req.getUsername(), 0, "用户不存在"));
             throw new BizException(SystemErrorCode.SYSTEM_AUTH_LOGIN_BAD_CREDENTIALS);
         }
         // 检查账号是否被禁用
         if (user.getStatus() != null && user.getStatus() == 0) {
-            recordLoginLog(req.getUsername(), 0, "账号已被禁用");
+            eventPublisher.publishEvent(new LoginLogEvent(req.getUsername(), 0, "账号已被禁用"));
             throw new BizException(SystemErrorCode.SYSTEM_AUTH_LOGIN_USER_DISABLED);
         }
 
         // BCrypt 校验密码
         if (!BCrypt.checkpw(req.getPassword(), user.getPassword())) {
-            recordLoginLog(req.getUsername(), 0, "密码错误");
+            eventPublisher.publishEvent(new LoginLogEvent(req.getUsername(), 0, "密码错误"));
             throw new BizException(SystemErrorCode.SYSTEM_AUTH_LOGIN_BAD_CREDENTIALS);
         }
 
@@ -114,7 +105,7 @@ public class SysAuthServiceImpl implements SysAuthService {
         userService.updateById(user);
 
         // 记录登录成功日志
-        recordLoginLog(req.getUsername(), 1, "登录成功");
+        eventPublisher.publishEvent(new LoginLogEvent(req.getUsername(), 1, "登录成功"));
 
         return SysUserLoginResp.builder()
                 .accessToken(token)
@@ -209,36 +200,4 @@ public class SysAuthServiceImpl implements SysAuthService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * 记录登录日志，解析 User-Agent 获取浏览器和操作系统信息
-     *
-     * @param username 登录用户名
-     * @param status   登录状态（0-失败 1-成功）
-     * @param message  提示信息
-     */
-    private void recordLoginLog(String username, int status, String message) {
-        try {
-            String userAgentStr = ServletUtils.getUserAgent();
-            String browser = "";
-            String os = "";
-            if (userAgentStr != null && !userAgentStr.isEmpty()) {
-                UserAgent ua = UserAgentUtil.parse(userAgentStr);
-                browser = ua.getBrowser() != null ? ua.getBrowser().getName() + " " + ua.getVersion() : "";
-                os = ua.getOs() != null ? ua.getOs().getName() : "";
-            }
-
-            SysLoginLog loginLog = new SysLoginLog();
-            loginLog.setUsername(username);
-            loginLog.setIp(IpUtils.getClientIp());
-            loginLog.setBrowser(browser);
-            loginLog.setOs(os);
-            loginLog.setStatus(status);
-            loginLog.setMessage(message);
-            loginLog.setLoginTime(LocalDateTime.now());
-            loginLogService.save(loginLog);
-        } catch (Exception e) {
-            // 日志记录失败不影响登录流程
-            log.warn("记录登录日志失败: {}", e.getMessage());
-        }
-    }
 }

@@ -28,15 +28,15 @@ public final class WebFilterOrders {
     public static final int REQUEST_CONTEXT_FILTER = CORS_FILTER + STEP;
 
     /**
-     * RequestId
+     * MDC
      */
-    public static final int REQUEST_ID_FILTER = REQUEST_CONTEXT_FILTER + STEP;
+    public static final int MDC_FILTER = REQUEST_CONTEXT_FILTER + STEP;
 
     /**
      * AccessLog
      * 在REQUEST_ID_FILTER之后
      */
-    public static final int ACCESS_LOG_FILTER = REQUEST_ID_FILTER + STEP;
+    public static final int ACCESS_LOG_FILTER = MDC_FILTER + STEP;
 
     private WebFilterOrders() {
     }

@@ -1,6 +1,7 @@
 package com.travis.infrastructure.framework.logging.core.constant;
 
 import com.travis.infrastructure.common.web.enums.ClientType;
+import com.travis.infrastructure.common.web.enums.PlatformType;
 import com.travis.infrastructure.framework.logging.core.enums.LogType;
 
 /**
@@ -13,6 +14,11 @@ public final class LogKeys {
      * 参考 {@link LogType}
      */
     public static final String LOG_TYPE = "log_type";
+
+    /**
+     * 事件类型
+     */
+    public static final String EVENT_TYPE = "event_type";
 
     /**
      * 接口路径
@@ -50,10 +56,6 @@ public final class LogKeys {
      */
     public static final String CLIENT_IP = "client_ip";
 
-    /**
-     * 客户端信息
-     */
-    public static final String USER_AGENT = "user_agent";
 
     /**
      * 客户端类型
@@ -61,6 +63,16 @@ public final class LogKeys {
      */
     public static final String CLIENT_TYPE = "client_type";
 
+    /**
+     * 平台类型
+     * 参考 {@link PlatformType}
+     */
+    public static final String PLATFORM_TYPE = "platform_type";
+
+    /**
+     * 浏览器
+     */
+    public static final String BROWSER = "browser";
 
     private LogKeys() {
     }

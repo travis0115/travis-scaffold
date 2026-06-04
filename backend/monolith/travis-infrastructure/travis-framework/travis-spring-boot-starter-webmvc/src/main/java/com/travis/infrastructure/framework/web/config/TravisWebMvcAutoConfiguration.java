@@ -2,16 +2,18 @@ package com.travis.infrastructure.framework.web.config;
 
 import com.travis.infrastructure.common.web.constant.CustomHttpHeaders;
 import com.travis.infrastructure.common.web.constant.WebFilterOrders;
+import com.travis.infrastructure.framework.web.config.properties.WebProperties;
 import com.travis.infrastructure.framework.web.core.advice.ApiResponseBodyAdvice;
 import com.travis.infrastructure.framework.web.core.advice.I18nResponseBodyAdvice;
 import com.travis.infrastructure.framework.web.core.exception.advice.BizExceptionHandlerAdvice;
 import com.travis.infrastructure.framework.web.core.exception.advice.SaTokenExceptionHandlerAdvice;
 import com.travis.infrastructure.framework.web.core.exception.advice.ServerExceptionHandlerAdvice;
 import com.travis.infrastructure.framework.web.core.exception.advice.ValidationExceptionHandlerAdvice;
+import com.travis.infrastructure.framework.web.core.filter.MdcFilter;
 import com.travis.infrastructure.framework.web.core.filter.RequestContextFilter;
-import com.travis.infrastructure.framework.web.core.filter.RequestIdFilter;
 import jakarta.servlet.Filter;
-import org.springframework.beans.factory.annotation.Qualifier;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -30,14 +32,13 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  */
 @AutoConfiguration
 @EnableConfigurationProperties(WebProperties.class)
+@RequiredArgsConstructor
 public class TravisWebMvcAutoConfiguration implements WebMvcConfigurer {
 
     private final WebProperties webProperties;
 
-    public TravisWebMvcAutoConfiguration(WebProperties webProperties) {
-        this.webProperties = webProperties;
-    }
-
+//    @Qualifier("handlerExceptionResolver")
+    private HandlerExceptionResolver handlerExceptionResolver;
     /**
      * 根据Controller所在包名自动添加路径前缀：
      * controller.admin 包 → /api/admin
@@ -45,7 +46,7 @@ public class TravisWebMvcAutoConfiguration implements WebMvcConfigurer {
      * 其他包不加前缀
      */
     @Override
-    public void configurePathMatch(PathMatchConfigurer configurer) {
+    public void configurePathMatch(@NonNull PathMatchConfigurer configurer) {
         webProperties.getApis().forEach(api -> {
             if (api.isEnabled()) {
                 configurer.addPathPrefix(
@@ -66,7 +67,7 @@ public class TravisWebMvcAutoConfiguration implements WebMvcConfigurer {
     private boolean matchController(Class<?> controllerClass, WebProperties.ApiPrefix api) {
         String packageName = controllerClass.getPackageName();
         String packagePattern = api.getPackagePattern();
-        
+
         return packageName.contains(packagePattern);
     }
 
@@ -141,19 +142,18 @@ public class TravisWebMvcAutoConfiguration implements WebMvcConfigurer {
      * 配置请求上下文过滤器
      */
     @Bean("travisRequestContextFilter")
-    public FilterRegistrationBean<RequestContextFilter> requestContextFilter(@Qualifier(
-            "handlerExceptionResolver") HandlerExceptionResolver handlerExceptionResolver) {
+    public FilterRegistrationBean<RequestContextFilter> requestContextFilter() {
         return createFilterBean(new RequestContextFilter(handlerExceptionResolver),
                 WebFilterOrders.REQUEST_CONTEXT_FILTER);
     }
 
     /**
-     * 配置请求ID过滤器
+     * 配置MDC过滤器
      */
     @Bean
-    public FilterRegistrationBean<RequestIdFilter> requestIdFilter(@Qualifier("handlerExceptionResolver") HandlerExceptionResolver handlerExceptionResolver) {
-        return createFilterBean(new RequestIdFilter(handlerExceptionResolver),
-                WebFilterOrders.REQUEST_ID_FILTER);
+    public FilterRegistrationBean<MdcFilter> requestIdFilter() {
+        return createFilterBean(new MdcFilter(handlerExceptionResolver),
+                WebFilterOrders.MDC_FILTER);
     }
 
     /**

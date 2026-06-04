@@ -26,7 +26,7 @@ public class BizExceptionHandlerAdvice {
      */
     @ExceptionHandler(BizException.class)
     public ApiResponse<?> handleBizException(BizException ex) {
-        log.warn("业务异常: ", ex);
+        log.warn("业务异常: {}", ex.getErrorCode().getMsg(), ex);
         return ApiResponse.error(ex.getErrorCode(), ex.getArgs());
     }
 
