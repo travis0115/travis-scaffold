@@ -2,9 +2,9 @@ package com.travis.monolith.system.internal.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.monolith.system.internal.model.entity.SysMenu;
-import com.travis.monolith.system.internal.model.req.SysMenuReq;
-import com.travis.monolith.system.internal.model.resp.SysMenuResp;
-import com.travis.monolith.system.internal.model.resp.VbenMenuResp;
+import com.travis.monolith.system.internal.model.request.menu.SysMenuReq;
+import com.travis.monolith.system.internal.model.response.menu.SysMenuResp;
+import com.travis.monolith.system.internal.model.response.menu.VbenMenuResp;
 
 import java.util.List;
 

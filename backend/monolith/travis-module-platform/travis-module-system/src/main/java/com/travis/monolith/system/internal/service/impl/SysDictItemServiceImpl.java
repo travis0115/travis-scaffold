@@ -8,7 +8,7 @@ import com.travis.infrastructure.framework.web.core.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.web.core.model.PageResult;
 import com.travis.monolith.system.internal.mapper.SysDictItemMapper;
 import com.travis.monolith.system.internal.model.entity.SysDictItem;
-import com.travis.monolith.system.internal.model.req.SysDictItemReq;
+import com.travis.monolith.system.internal.model.request.dict.SysDictItemReq;
 import com.travis.monolith.system.internal.service.SysDictItemService;
 import org.springframework.stereotype.Service;
 

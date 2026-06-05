@@ -11,14 +11,13 @@ import com.travis.monolith.system.internal.exception.SystemErrorCode;
 import com.travis.monolith.system.internal.mapper.SysDictMapper;
 import com.travis.monolith.system.internal.model.entity.SysDict;
 import com.travis.monolith.system.internal.model.entity.SysDictItem;
-import com.travis.monolith.system.internal.model.req.SysDictItemReq;
-import com.travis.monolith.system.internal.model.req.SysDictReq;
-import com.travis.monolith.system.internal.model.resp.SysDictItemResp;
+import com.travis.monolith.system.internal.model.request.dict.SysDictItemReq;
+import com.travis.monolith.system.internal.model.request.dict.SysDictReq;
+import com.travis.monolith.system.internal.model.response.dict.SysDictItemResp;
 import com.travis.monolith.system.internal.service.SysDictItemService;
 import com.travis.monolith.system.internal.service.SysDictService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

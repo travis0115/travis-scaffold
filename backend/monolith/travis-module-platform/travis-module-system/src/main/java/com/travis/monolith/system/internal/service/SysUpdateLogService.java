@@ -3,8 +3,8 @@ package com.travis.monolith.system.internal.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.infrastructure.framework.web.core.model.PageResult;
 import com.travis.monolith.system.internal.model.entity.SysUpdateLog;
-import com.travis.monolith.system.internal.model.req.SysUpdateLogReq;
-import com.travis.monolith.system.internal.model.resp.SysUpdateLogResp;
+import com.travis.monolith.system.internal.model.request.log.SysUpdateLogReq;
+import com.travis.monolith.system.internal.model.response.log.SysUpdateLogResp;
 
 import java.util.List;
 

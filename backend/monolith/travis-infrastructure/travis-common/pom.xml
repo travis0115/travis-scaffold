@@ -47,5 +47,12 @@
             <artifactId>hutool-all</artifactId>
         </dependency>
 
+        <!-- mapstruct -->
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
     </dependencies>
 </project>

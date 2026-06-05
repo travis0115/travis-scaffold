@@ -1,7 +1,7 @@
 package com.travis.monolith.system.internal.controller.admin;
 
 import com.travis.infrastructure.framework.web.core.model.ApiResponse;
-import com.travis.monolith.system.internal.model.resp.FileUploadResp;
+import com.travis.monolith.system.internal.model.response.file.FileUploadResp;
 import com.travis.monolith.system.internal.service.SysFileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.travis.infrastructure.framework.mybatis.core.entity.BaseEntity;
-import com.travis.monolith.system.internal.model.resp.SysDictItemResp;
+import com.travis.monolith.system.internal.model.response.dict.SysDictItemResp;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 

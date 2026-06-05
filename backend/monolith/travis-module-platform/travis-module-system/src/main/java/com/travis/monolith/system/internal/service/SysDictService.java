@@ -3,9 +3,9 @@ package com.travis.monolith.system.internal.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.infrastructure.framework.web.core.model.PageResult;
 import com.travis.monolith.system.internal.model.entity.SysDict;
-import com.travis.monolith.system.internal.model.req.SysDictItemReq;
-import com.travis.monolith.system.internal.model.req.SysDictReq;
-import com.travis.monolith.system.internal.model.resp.SysDictItemResp;
+import com.travis.monolith.system.internal.model.request.dict.SysDictItemReq;
+import com.travis.monolith.system.internal.model.request.dict.SysDictReq;
+import com.travis.monolith.system.internal.model.response.dict.SysDictItemResp;
 
 import java.util.List;
 

@@ -3,12 +3,12 @@ package com.travis.monolith.system.internal.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.infrastructure.framework.web.core.model.PageResult;
 import com.travis.monolith.system.internal.model.entity.SysUser;
-import com.travis.monolith.system.internal.model.req.ChangePasswordReq;
-import com.travis.monolith.system.internal.model.req.SysUserReq;
-import com.travis.monolith.system.internal.model.req.SysUserRoleReq;
-import com.travis.monolith.system.internal.model.req.UserProfileReq;
-import com.travis.monolith.system.internal.model.req.UpdateAvatarReq;
-import com.travis.monolith.system.internal.model.resp.SysUserResp;
+import com.travis.monolith.system.internal.model.request.user.ChangePasswordReq;
+import com.travis.monolith.system.internal.model.request.user.SysUserReq;
+import com.travis.monolith.system.internal.model.request.user.SysUserRoleReq;
+import com.travis.monolith.system.internal.model.request.user.UserProfileReq;
+import com.travis.monolith.system.internal.model.request.user.UpdateAvatarReq;
+import com.travis.monolith.system.internal.model.response.user.SysUserResp;
 
 /**
  * 用户管理服务接口，提供管理员的分页查询、增删改查及角色分配

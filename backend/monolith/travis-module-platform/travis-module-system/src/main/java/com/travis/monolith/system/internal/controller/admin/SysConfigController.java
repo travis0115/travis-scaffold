@@ -2,9 +2,9 @@ package com.travis.monolith.system.internal.controller.admin;
 
 import com.travis.infrastructure.framework.web.core.model.ApiResponse;
 import com.travis.infrastructure.framework.web.core.model.PageResult;
-import com.travis.monolith.system.internal.model.req.SysConfigPageReq;
-import com.travis.monolith.system.internal.model.req.SysConfigReq;
-import com.travis.monolith.system.internal.model.resp.SysConfigResp;
+import com.travis.monolith.system.internal.model.request.config.SysConfigPageReq;
+import com.travis.monolith.system.internal.model.request.config.SysConfigReq;
+import com.travis.monolith.system.internal.model.response.config.SysConfigResp;
 import com.travis.monolith.system.internal.service.SysConfigService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

@@ -1,19 +1,18 @@
 package com.travis.monolith.system.internal.converter;
 
+import com.travis.infrastructure.common.mapstruct.BaseMapperConfig;
 import com.travis.monolith.system.internal.model.entity.SysDictItem;
-import com.travis.monolith.system.internal.model.resp.SysDictItemResp;
+import com.travis.monolith.system.internal.model.response.dict.SysDictItemResp;
 import org.mapstruct.Mapper;
-import org.mapstruct.MappingConstants;
 
 import java.util.List;
 
 /**
  * 字典数据项对象转换器
- * 处理 SysDictItem → SysDictItemResp 之间的对象映射
  *
  * @author travis
  */
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
+@Mapper(config = BaseMapperConfig.class)
 public interface SysDictItemConverter {
 
     /**

@@ -3,9 +3,9 @@ package com.travis.monolith.system.internal.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.infrastructure.framework.web.core.model.PageResult;
 import com.travis.monolith.system.internal.model.entity.SysRole;
-import com.travis.monolith.system.internal.model.req.SysRoleMenuReq;
-import com.travis.monolith.system.internal.model.req.SysRoleReq;
-import com.travis.monolith.system.internal.model.resp.SysRoleResp;
+import com.travis.monolith.system.internal.model.request.role.SysRoleMenuReq;
+import com.travis.monolith.system.internal.model.request.role.SysRoleReq;
+import com.travis.monolith.system.internal.model.response.role.SysRoleResp;
 
 import java.util.List;
 

@@ -2,8 +2,8 @@ package com.travis.monolith.system.internal.controller.admin;
 
 import com.travis.infrastructure.framework.web.core.model.ApiResponse;
 import com.travis.infrastructure.framework.web.core.model.PageResult;
-import com.travis.monolith.system.internal.model.req.SysUpdateLogReq;
-import com.travis.monolith.system.internal.model.resp.SysUpdateLogResp;
+import com.travis.monolith.system.internal.model.request.log.SysUpdateLogReq;
+import com.travis.monolith.system.internal.model.response.log.SysUpdateLogResp;
 import com.travis.monolith.system.internal.service.SysUpdateLogService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

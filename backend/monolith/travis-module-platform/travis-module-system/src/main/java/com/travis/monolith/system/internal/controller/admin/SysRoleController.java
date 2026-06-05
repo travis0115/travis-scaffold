@@ -2,9 +2,9 @@ package com.travis.monolith.system.internal.controller.admin;
 
 import com.travis.infrastructure.framework.web.core.model.ApiResponse;
 import com.travis.infrastructure.framework.web.core.model.PageResult;
-import com.travis.monolith.system.internal.model.req.SysRoleMenuReq;
-import com.travis.monolith.system.internal.model.req.SysRoleReq;
-import com.travis.monolith.system.internal.model.resp.SysRoleResp;
+import com.travis.monolith.system.internal.model.request.role.SysRoleMenuReq;
+import com.travis.monolith.system.internal.model.request.role.SysRoleReq;
+import com.travis.monolith.system.internal.model.response.role.SysRoleResp;
 import com.travis.monolith.system.internal.service.SysRoleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

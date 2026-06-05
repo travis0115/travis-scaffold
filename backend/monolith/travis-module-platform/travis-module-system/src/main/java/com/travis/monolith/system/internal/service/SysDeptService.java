@@ -2,8 +2,8 @@ package com.travis.monolith.system.internal.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.monolith.system.internal.model.entity.SysDept;
-import com.travis.monolith.system.internal.model.req.SysDeptReq;
-import com.travis.monolith.system.internal.model.resp.SysDeptResp;
+import com.travis.monolith.system.internal.model.request.dept.SysDeptReq;
+import com.travis.monolith.system.internal.model.response.dept.SysDeptResp;
 
 import java.util.List;
 
