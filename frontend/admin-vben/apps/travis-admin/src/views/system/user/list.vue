@@ -161,13 +161,13 @@ async function onStatusChange(
   row: SystemUserApi.SysUser,
 ) {
   const status: Recordable<string> = {
-    0: '禁用',
-    1: '启用',
+    0: $t('common.disabled'),
+    1: $t('common.enabled'),
   };
   try {
     await confirm(
-      `你要将${row.username}的状态切换为 【${status[newStatus.toString()]}】 吗？`,
-      `切换状态`,
+      $t('system.user.confirmStatusChange', { username: row.username, status: status[newStatus.toString()] }),
+      $t('system.user.switchStatus'),
     );
     await updateUser(row.id, { status: newStatus as 0 | 1 });
     return true;
@@ -181,22 +181,29 @@ function onEdit(row: SystemUserApi.SysUser) {
 }
 
 function onDelete(row: SystemUserApi.SysUser) {
-  const hideLoading = message.loading({
-    content: $t('ui.actionMessage.deleting', [row.username]),
-    duration: 0,
-    key: 'action_process_msg',
-  });
-  deleteUser(row.id)
-    .then(() => {
-      message.success({
-        content: $t('ui.actionMessage.deleteSuccess', [row.username]),
-        key: 'action_process_msg',
-      });
-      onRefresh();
-    })
-    .catch(() => {
-      hideLoading();
+  confirm(
+    $t('ui.actionMessage.deleteConfirm', [row.username]),
+    $t('ui.actionTitle.delete'),
+  ).then(() => {
+    const hideLoading = message.loading({
+      content: $t('ui.actionMessage.deleting', [row.username]),
+      duration: 0,
+      key: 'action_process_msg',
     });
+    deleteUser(row.id)
+      .then(() => {
+        message.success({
+          content: $t('ui.actionMessage.deleteSuccess', [row.username]),
+          key: 'action_process_msg',
+        });
+        onRefresh();
+      })
+      .catch(() => {
+        hideLoading();
+      });
+  }).catch(() => {
+    // 用户取消
+  });
 }
 
 function onRefresh() {

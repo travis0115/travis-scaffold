@@ -25,7 +25,9 @@
     "resetPasswordCustom": "自定义新密码",
     "newPassword": "新密码",
     "resetPasswordSuccess": "密码已成功重置",
-    "resetPasswordResult": "新密码为：{password}，请妥善保管"
+    "resetPasswordResult": "新密码为：{password}，请妥善保管",
+    "confirmStatusChange": "你要将{username}的状态切换为 【{status}】 吗？",
+    "switchStatus": "切换状态"
   },
   "role": {
     "title": "角色管理",
@@ -39,7 +41,9 @@
     "createTime": "创建时间",
     "operation": "操作",
     "modifiable": "可编辑",
-    "assignMenus": "分配权限"
+    "assignMenus": "分配权限",
+    "confirmStatusChange": "确定将{roleName}的状态切换为 【{status}】 吗？",
+    "switchStatus": "切换状态"
   },
   "menu": {
     "title": "菜单管理",

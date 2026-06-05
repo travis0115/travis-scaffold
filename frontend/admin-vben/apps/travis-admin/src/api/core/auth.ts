@@ -35,12 +35,10 @@ export async function refreshTokenApi() {
 }
 
 /**
- * 退出登录
+ * 退出登录（使用 requestClient 确保 Token 随请求发送）
  */
 export async function logoutApi() {
-  return baseRequestClient.post('/system/auth/logout', {
-    withCredentials: true,
-  });
+  return requestClient.post('/system/auth/logout');
 }
 
 /**

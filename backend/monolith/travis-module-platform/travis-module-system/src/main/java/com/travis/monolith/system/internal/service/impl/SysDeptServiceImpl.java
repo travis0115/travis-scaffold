@@ -4,10 +4,11 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.exception.CommonErrorCode;
-import com.travis.infrastructure.framework.web.core.exception.IErrorCode;
 import com.travis.monolith.system.internal.converter.SysDeptConverter;
 import com.travis.monolith.system.internal.mapper.SysDeptMapper;
+import com.travis.monolith.system.internal.mapper.SysUserMapper;
 import com.travis.monolith.system.internal.model.entity.SysDept;
+import com.travis.monolith.system.internal.model.entity.SysUser;
 import com.travis.monolith.system.internal.model.req.SysDeptReq;
 import com.travis.monolith.system.internal.model.resp.SysDeptResp;
 import com.travis.monolith.system.internal.service.SysDeptService;
@@ -33,6 +34,8 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
 
     /** 对象转换器 */
     private final SysDeptConverter converter;
+    /** 用户 Mapper（用于检查部门关联用户） */
+    private final SysUserMapper userMapper;
 
     /**
      * 获取部门树形列表
@@ -98,7 +101,7 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
     }
 
     /**
-     * 删除部门，递归删除所有下级部门
+     * 删除部门（递归删除所有下级部门），删除前将关联用户的部门重置为 null
      */
     @Override
     @Transactional
@@ -107,6 +110,15 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
         List<Long> ids = new ArrayList<>();
         collectAllDescendantIds(id, ids);
         ids.add(id);
+        // 将关联用户的部门重置为 null
+        for (Long deptId : ids) {
+            List<SysUser> users = userMapper.selectList(
+                    new LambdaQueryWrapper<SysUser>().eq(SysUser::getDeptId, deptId));
+            for (SysUser user : users) {
+                user.setDeptId(null);
+                userMapper.updateById(user);
+            }
+        }
         removeBatchByIds(ids);
     }
 

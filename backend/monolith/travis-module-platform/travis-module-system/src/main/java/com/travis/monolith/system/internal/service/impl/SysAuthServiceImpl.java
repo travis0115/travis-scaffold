@@ -71,7 +71,6 @@ public class SysAuthServiceImpl implements SysAuthService {
      * 管理员登录：校验用户名密码、账号状态，通过后使用 Sa-Token 签发令牌，并记录登录日志
      */
     @Override
-    @Transactional
     public SysUserLoginResp login(SysUserLoginReq req) {
         // 显式查询密码字段（实体中 password 标记了 select=false，默认不返回）
         var user = userService.lambdaQuery()

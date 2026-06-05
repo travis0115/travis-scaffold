@@ -5,8 +5,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.framework.jackson.core.util.JsonUtils;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.exception.CommonErrorCode;
-import com.travis.infrastructure.framework.web.core.exception.IErrorCode;
 import com.travis.monolith.system.internal.converter.SysMenuConverter;
+import com.travis.monolith.system.internal.exception.SystemErrorCode;
 import com.travis.monolith.system.internal.mapper.SysMenuMapper;
 import com.travis.monolith.system.internal.mapper.SysRoleMapper;
 import com.travis.monolith.system.internal.mapper.SysRoleMenuMapper;
@@ -110,17 +110,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         long childCount = count(new LambdaQueryWrapper<SysMenu>()
                 .eq(SysMenu::getParentId, id));
         if (childCount > 0) {
-            throw new BizException(new IErrorCode() {
-                @Override
-                public String getCode() {
-                    return CommonErrorCode.BAD_REQUEST.getCode();
-                }
-
-                @Override
-                public String getMsg() {
-                    return "存在子菜单，无法删除";
-                }
-            }, null);
+            throw new BizException(SystemErrorCode.SYSTEM_MENU_HAS_CHILDREN);
         }
         autoRemoveFromAdminRoles(id);
         removeById(id);
@@ -143,17 +133,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
                 .orderByAsc(SysMenu::getSort));
         int index = findIndex(siblings, id);
         if (index <= 0) {
-            throw new BizException(new IErrorCode() {
-                @Override
-                public String getCode() {
-                    return CommonErrorCode.BAD_REQUEST.getCode();
-                }
-
-                @Override
-                public String getMsg() {
-                    return "已处于最上方，无法上移";
-                }
-            }, null);
+            throw new BizException(SystemErrorCode.SYSTEM_MENU_ALREADY_TOP);
         }
         swapSort(siblings.get(index), siblings.get(index - 1));
     }
@@ -175,17 +155,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
                 .orderByAsc(SysMenu::getSort));
         int index = findIndex(siblings, id);
         if (index < 0 || index >= siblings.size() - 1) {
-            throw new BizException(new IErrorCode() {
-                @Override
-                public String getCode() {
-                    return CommonErrorCode.BAD_REQUEST.getCode();
-                }
-
-                @Override
-                public String getMsg() {
-                    return "已处于最下方，无法下移";
-                }
-            }, null);
+            throw new BizException(SystemErrorCode.SYSTEM_MENU_ALREADY_BOTTOM);
         }
         swapSort(siblings.get(index), siblings.get(index + 1));
     }
@@ -242,15 +212,22 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
                 .eq(SysMenu::getStatus, 1)
                 .orderByAsc(SysMenu::getSort));
 
-        // 补充父级菜单，确保树结构完整（避免子菜单失去父级节点）
-        Set<Long> parentIds = menus.stream()
+        // 补充父级菜单，确保树结构完整（递归补充所有祖先节点）
+        Set<Long> existingIds = menus.stream().map(SysMenu::getId).collect(Collectors.toSet());
+        Set<Long> needParentIds = menus.stream()
                 .map(SysMenu::getParentId)
-                .filter(pid -> pid != 0 && !menuIds.contains(pid))
+                .filter(pid -> pid != 0 && !existingIds.contains(pid))
                 .collect(Collectors.toSet());
-        if (!parentIds.isEmpty()) {
-            menus.addAll(list(new LambdaQueryWrapper<SysMenu>()
-                    .in(SysMenu::getId, parentIds)
-                    .eq(SysMenu::getStatus, 1)));
+        while (!needParentIds.isEmpty()) {
+            List<SysMenu> parents = list(new LambdaQueryWrapper<SysMenu>()
+                    .in(SysMenu::getId, needParentIds)
+                    .eq(SysMenu::getStatus, 1));
+            menus.addAll(parents);
+            existingIds.addAll(parents.stream().map(SysMenu::getId).collect(Collectors.toSet()));
+            needParentIds = parents.stream()
+                    .map(SysMenu::getParentId)
+                    .filter(pid -> pid != 0 && !existingIds.contains(pid))
+                    .collect(Collectors.toSet());
         }
 
         // 用 parentId 分组，构建树形 VbenMenuVO

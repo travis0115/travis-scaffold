@@ -7,6 +7,7 @@ import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.web.core.model.PageResult;
 import com.travis.monolith.system.internal.converter.SysDictItemConverter;
+import com.travis.monolith.system.internal.exception.SystemErrorCode;
 import com.travis.monolith.system.internal.mapper.SysDictMapper;
 import com.travis.monolith.system.internal.model.entity.SysDict;
 import com.travis.monolith.system.internal.model.entity.SysDictItem;
@@ -98,6 +99,12 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict> impl
     @Override
     @Transactional
     public void addDict(SysDictReq req) {
+        // 检查字典类型编码唯一性
+        long count = count(new LambdaQueryWrapper<SysDict>()
+                .eq(SysDict::getDictType, req.getDictType()));
+        if (count > 0) {
+            throw new BizException(SystemErrorCode.SYSTEM_DICT_TYPE_EXISTS);
+        }
         SysDict dict = new SysDict();
         dict.setDictName(req.getDictName());
         dict.setDictType(req.getDictType());
@@ -115,6 +122,13 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict> impl
         SysDict dict = getById(id);
         if (dict == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
+        }
+        // 检查字典类型编码唯一性（排除自身）
+        long count = count(new LambdaQueryWrapper<SysDict>()
+                .eq(SysDict::getDictType, req.getDictType())
+                .ne(SysDict::getId, id));
+        if (count > 0) {
+            throw new BizException(SystemErrorCode.SYSTEM_DICT_TYPE_EXISTS);
         }
         dict.setDictName(req.getDictName());
         dict.setDictType(req.getDictType());

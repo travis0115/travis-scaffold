@@ -1,26 +1,17 @@
 package com.travis.monolith.system.internal.model.entity;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
+import com.travis.infrastructure.framework.mybatis.core.entity.BaseEntity;
 import lombok.Data;
-
-import java.time.LocalDateTime;
+import lombok.EqualsAndHashCode;
 
 /**
  * 菜单实体，对应 sys_menu 表，支持树形结构
  *
  * @author travis
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
-public class SysMenu {
-
-    /**
-     * 主键ID
-     */
-    @TableId(type = IdType.ASSIGN_ID)
-    private Long id;
+public class SysMenu extends BaseEntity {
 
     /**
      * 上级菜单ID（0 表示顶级菜单）
@@ -62,28 +53,4 @@ public class SysMenu {
      * 路由元信息JSON（Vben Admin RouteMeta 的扩展字段，如 keepAlive、hideInMenu 等）
      */
     private String meta;
-
-    /**
-     * 创建时间
-     */
-    @TableField(fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
-
-    /**
-     * 创建人ID
-     */
-    @TableField(fill = FieldFill.INSERT)
-    private Long createBy;
-
-    /**
-     * 更新时间
-     */
-    @TableField(fill = FieldFill.UPDATE)
-    private LocalDateTime updateTime;
-
-    /**
-     * 更新人ID
-     */
-    @TableField(fill = FieldFill.UPDATE)
-    private Long updateBy;
 }

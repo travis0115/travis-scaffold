@@ -74,7 +74,7 @@ public class SysDeptController {
     }
 
     /**
-     * 删除部门（存在子部门时禁止删除）
+     * 删除部门（递归删除所有下级部门，关联用户的部门字段将重置为空）
      *
      * @param id 部门ID
      * @return 空响应

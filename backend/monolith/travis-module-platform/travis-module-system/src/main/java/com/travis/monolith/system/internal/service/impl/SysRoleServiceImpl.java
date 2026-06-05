@@ -7,6 +7,7 @@ import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.web.core.model.PageResult;
 import com.travis.monolith.system.internal.converter.SysRoleConverter;
+import com.travis.monolith.system.internal.exception.SystemErrorCode;
 import com.travis.monolith.system.internal.mapper.SysRoleMapper;
 import com.travis.monolith.system.internal.mapper.SysRoleMenuMapper;
 import com.travis.monolith.system.internal.mapper.SysUserRoleMapper;
@@ -18,6 +19,7 @@ import com.travis.monolith.system.internal.model.req.SysRoleReq;
 import com.travis.monolith.system.internal.model.resp.SysRoleResp;
 import com.travis.monolith.system.internal.service.SysRoleService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -86,6 +88,12 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
     @Override
     @Transactional
     public void addRole(SysRoleReq req) {
+        // 检查角色编码唯一性
+        long count = count(new LambdaQueryWrapper<SysRole>()
+                .eq(SysRole::getRoleCode, req.getRoleCode()));
+        if (count > 0) {
+            throw new BizException(SystemErrorCode.SYSTEM_ROLE_CODE_EXISTS);
+        }
         SysRole role = converter.toRoleEntity(req);
         save(role);
     }
@@ -94,10 +102,21 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
      * 更新角色信息
      */
     @Override
+    @Transactional
+    @CacheEvict(value = "menus:vben", allEntries = true)
     public void updateRole(Long id, SysRoleReq req) {
         SysRole role = getById(id);
         if (role == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
+        }
+        // 检查角色编码唯一性（排除自身）
+        if (req.getRoleCode() != null) {
+            long count = count(new LambdaQueryWrapper<SysRole>()
+                    .eq(SysRole::getRoleCode, req.getRoleCode())
+                    .ne(SysRole::getId, id));
+            if (count > 0) {
+                throw new BizException(SystemErrorCode.SYSTEM_ROLE_CODE_EXISTS);
+            }
         }
         converter.updateRoleFromReq(req, role);
         updateById(role);
@@ -119,10 +138,11 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
     }
 
     /**
-     * 分配角色菜单：先删除原有关联，再批量插入新关联
+     * 分配角色菜单：先删除原有关联，再批量插入新关联，清除菜单缓存
      */
     @Override
     @Transactional
+    @CacheEvict(value = "menus:vben", allEntries = true)
     public void assignMenus(SysRoleMenuReq req) {
         roleMenuMapper.delete(new LambdaQueryWrapper<SysRoleMenu>()
                 .eq(SysRoleMenu::getRoleId, req.getRoleId()));

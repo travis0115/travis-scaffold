@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.exception.CommonErrorCode;
-import com.travis.infrastructure.framework.web.core.exception.IErrorCode;
 import com.travis.infrastructure.framework.web.core.model.PageResult;
 import com.travis.infrastructure.framework.web.core.utils.Ip2RegionUtils;
 import com.travis.monolith.system.internal.converter.SysUserConverter;
@@ -25,10 +24,14 @@ import com.travis.monolith.system.internal.service.SysFileService;
 import com.travis.monolith.system.internal.service.SysRoleService;
 import com.travis.monolith.system.internal.service.SysUserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -74,7 +77,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                 .eq(deptId != null, SysUser::getDeptId, deptId)
                 .orderByDesc(SysUser::getCreateTime);
         Page<SysUser> page = page(new Page<>(pageNum, pageSize), wrapper);
-        List<SysUserResp> voList = page.getRecords().stream().map(this::toVO).collect(Collectors.toList());
+        List<SysUserResp> voList = toVOList(page.getRecords());
         return new PageResult<>(voList, page.getTotal(), (int) page.getCurrent(), (int) page.getSize(),
                 (int) page.getPages());
     }
@@ -106,17 +109,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         // 检查用户名唯一性
         long count = count(new LambdaQueryWrapper<SysUser>().eq(SysUser::getUsername, req.getUsername()));
         if (count > 0) {
-            throw new BizException(new IErrorCode() {
-                @Override
-                public String getCode() {
-                    return CommonErrorCode.BAD_REQUEST.getCode();
-                }
-
-                @Override
-                public String getMsg() {
-                    return "用户名已存在";
-                }
-            }, null);
+            throw new BizException(SystemErrorCode.SYSTEM_USER_USERNAME_EXISTS);
         }
         SysUser user = converter.toUserEntity(req);
         user.setPassword(encodePassword(req.getPassword()));
@@ -139,17 +132,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                 .eq(SysUser::getUsername, req.getUsername())
                 .ne(SysUser::getId, id));
         if (count > 0) {
-            throw new BizException(new IErrorCode() {
-                @Override
-                public String getCode() {
-                    return CommonErrorCode.BAD_REQUEST.getCode();
-                }
-
-                @Override
-                public String getMsg() {
-                    return "用户名已存在";
-                }
-            }, null);
+            throw new BizException(SystemErrorCode.SYSTEM_USER_USERNAME_EXISTS);
         }
         converter.updateUserFromReq(req, user);
         if (req.getPassword() != null && !req.getPassword().isBlank()) {
@@ -159,7 +142,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     /**
-     * 删除用户
+     * 删除用户，同时清除用户-角色关联并使其会话失效
      */
     @Override
     @Transactional
@@ -168,13 +151,16 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         userRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>()
                 .eq(SysUserRole::getUserId, id));
         removeById(id);
+        // 使用户会话失效
+        StpUtil.logout(id);
     }
 
     /**
-     * 分配用户角色：先删除原有关联，再批量插入新关联
+     * 分配用户角色：先删除原有关联，再批量插入新关联，清除菜单缓存
      */
     @Override
     @Transactional
+    @CacheEvict(value = "menus:vben", allEntries = true)
     public void assignRoles(SysUserRoleReq req) {
         userRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>()
                 .eq(SysUserRole::getUserId, req.getUserId()));
@@ -279,12 +265,12 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     /**
-     * 生成随机密码（8位，包含大小写字母和数字）
+     * 生成随机密码（8位，包含大小写字母和数字），使用密码学安全的随机数生成器
      */
     private String generateRandomPassword() {
         String chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
         StringBuilder sb = new StringBuilder();
-        java.util.Random random = new java.util.Random();
+        SecureRandom random = new SecureRandom();
         for (int i = 0; i < 8; i++) {
             sb.append(chars.charAt(random.nextInt(chars.length())));
         }
@@ -299,34 +285,102 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      */
     private String encodePassword(String rawPassword) {
         if (rawPassword == null || rawPassword.isBlank()) {
-            rawPassword = "123456";
+            rawPassword = generateRandomPassword();
         }
         return BCrypt.hashpw(rawPassword);
     }
 
     /**
-     * 实体转视图对象，关联查询部门名称、角色名称、登录地点
+     * 实体转视图对象（单条查询使用）
      *
      * @param user 用户实体
      * @return 用户视图对象
      */
     private SysUserResp toVO(SysUser user) {
         SysUserResp resp = converter.toUserResp(user);
-        // 头像路径拼接完整URL
         resp.setAvatar(fileService.getFileUrl(user.getAvatar()));
-        // 关联查询部门名称
         if (user.getDeptId() != null) {
             SysDept dept = deptMapper.selectById(user.getDeptId());
             if (dept != null) {
                 resp.setDeptName(dept.getDeptName());
             }
         }
-        // 关联查询角色名称
         resp.setRoleNames(roleService.getRoleNamesByUserId(user.getId()));
-        // 解析最后登录IP到地理位置
         if (user.getLastLoginIp() != null && !user.getLastLoginIp().isEmpty()) {
             resp.setLastLoginLocation(Ip2RegionUtils.getRegionByIP(user.getLastLoginIp()));
         }
         return resp;
+    }
+
+    /**
+     * 批量实体转视图对象，优化 N+1 查询：一次性加载所有部门和角色数据
+     *
+     * @param users 用户实体列表
+     * @return 用户视图对象列表
+     */
+    private List<SysUserResp> toVOList(List<SysUser> users) {
+        if (users.isEmpty()) {
+            return List.of();
+        }
+
+        // 批量查询所有关联的部门
+        Set<Long> deptIds = users.stream()
+                .map(SysUser::getDeptId)
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<Long, String> deptNameMap = deptIds.isEmpty() ? Map.of()
+                : deptMapper.selectBatchIds(deptIds).stream()
+                .collect(Collectors.toMap(SysDept::getId, SysDept::getDeptName));
+
+        // 批量查询所有关联的角色名称（按用户分组）
+        List<Long> userIds = users.stream().map(SysUser::getId).collect(Collectors.toList());
+        Map<Long, List<String>> userRoleNamesMap = batchGetRoleNamesByUserIds(userIds);
+
+        return users.stream().map(user -> {
+            SysUserResp resp = converter.toUserResp(user);
+            // 头像路径拼接完整URL
+            resp.setAvatar(fileService.getFileUrl(user.getAvatar()));
+            // 设置部门名称
+            if (user.getDeptId() != null) {
+                resp.setDeptName(deptNameMap.get(user.getDeptId()));
+            }
+            // 设置角色名称
+            resp.setRoleNames(userRoleNamesMap.getOrDefault(user.getId(), List.of()));
+            // 解析最后登录IP到地理位置
+            if (user.getLastLoginIp() != null && !user.getLastLoginIp().isEmpty()) {
+                resp.setLastLoginLocation(Ip2RegionUtils.getRegionByIP(user.getLastLoginIp()));
+            }
+            return resp;
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * 批量查询多个用户的角色名称映射
+     *
+     * @param userIds 用户ID列表
+     * @return userId -> roleNameList 映射
+     */
+    private Map<Long, List<String>> batchGetRoleNamesByUserIds(List<Long> userIds) {
+        if (userIds.isEmpty()) {
+            return Map.of();
+        }
+        // 批量查询用户-角色关联
+        List<SysUserRole> userRoles = userRoleMapper.selectList(
+                new LambdaQueryWrapper<SysUserRole>().in(SysUserRole::getUserId, userIds));
+        if (userRoles.isEmpty()) {
+            return Map.of();
+        }
+        // 收集所有角色ID，批量查询角色
+        Set<Long> roleIds = userRoles.stream()
+                .map(SysUserRole::getRoleId).collect(Collectors.toSet());
+        Map<Long, String> roleNameMap = roleService.listByIds(roleIds).stream()
+                .collect(Collectors.toMap(SysRole::getId, SysRole::getRoleName));
+        // 按 userId 分组
+        return userRoles.stream()
+                .collect(Collectors.groupingBy(
+                        SysUserRole::getUserId,
+                        Collectors.mapping(
+                                ur -> roleNameMap.getOrDefault(ur.getRoleId(), "未知角色"),
+                                Collectors.toList())));
     }
 }

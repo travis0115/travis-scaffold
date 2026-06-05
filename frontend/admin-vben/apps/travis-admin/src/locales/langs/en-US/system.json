@@ -25,7 +25,9 @@
     "resetPasswordCustom": "Custom Password",
     "newPassword": "New Password",
     "resetPasswordSuccess": "Password has been reset successfully",
-    "resetPasswordResult": "The new password is: {password}. Please keep it safe."
+    "resetPasswordResult": "The new password is: {password}. Please keep it safe.",
+    "confirmStatusChange": "Are you sure you want to change {username}'s status to [{status}]?",
+    "switchStatus": "Switch Status"
   },
   "role": {
     "title": "Role Management",
@@ -39,7 +41,9 @@
     "createTime": "Created At",
     "operation": "Operation",
     "modifiable": "Editable",
-    "assignMenus": "Assign Permissions"
+    "assignMenus": "Assign Permissions",
+    "confirmStatusChange": "Are you sure you want to change {roleName}'s status to [{status}]?",
+    "switchStatus": "Switch Status"
   },
   "menu": {
     "title": "Menu Management",

@@ -92,13 +92,13 @@ async function onStatusChange(
   row: SystemRoleApi.SysRole,
 ) {
   const status: Recordable<string> = {
-    0: '禁用',
-    1: '启用',
+    0: $t('common.disabled'),
+    1: $t('common.enabled'),
   };
   try {
     await confirm(
-      `你要将${row.roleName}的状态切换为 【${status[newStatus.toString()]}】 吗？`,
-      `切换状态`,
+      $t('system.role.confirmStatusChange', { roleName: row.roleName, status: status[newStatus.toString()] }),
+      $t('system.role.switchStatus'),
     );
     await updateRole(row.id, { status: newStatus as 0 | 1 });
     return true;
@@ -112,22 +112,29 @@ function onEdit(row: SystemRoleApi.SysRole) {
 }
 
 function onDelete(row: SystemRoleApi.SysRole) {
-  const hideLoading = message.loading({
-    content: $t('ui.actionMessage.deleting', [row.roleName]),
-    duration: 0,
-    key: 'action_process_msg',
-  });
-  deleteRole(row.id)
-    .then(() => {
-      message.success({
-        content: $t('ui.actionMessage.deleteSuccess', [row.roleName]),
-        key: 'action_process_msg',
-      });
-      onRefresh();
-    })
-    .catch(() => {
-      hideLoading();
+  confirm(
+    $t('ui.actionMessage.deleteConfirm', [row.roleName]),
+    $t('ui.actionTitle.delete'),
+  ).then(() => {
+    const hideLoading = message.loading({
+      content: $t('ui.actionMessage.deleting', [row.roleName]),
+      duration: 0,
+      key: 'action_process_msg',
     });
+    deleteRole(row.id)
+      .then(() => {
+        message.success({
+          content: $t('ui.actionMessage.deleteSuccess', [row.roleName]),
+          key: 'action_process_msg',
+        });
+        onRefresh();
+      })
+      .catch(() => {
+        hideLoading();
+      });
+  }).catch(() => {
+    // 用户取消
+  });
 }
 
 function onRefresh() {
