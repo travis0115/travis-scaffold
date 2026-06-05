@@ -5,6 +5,7 @@ import com.travis.monolith.system.internal.model.req.SysMenuReq;
 import com.travis.monolith.system.internal.model.resp.SysMenuResp;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingConstants;
 import org.mapstruct.MappingTarget;
 
 import java.util.List;
@@ -15,7 +16,7 @@ import java.util.List;
  *
  * @author travis
  */
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface SysMenuConverter {
 
     /**
@@ -23,9 +24,9 @@ public interface SysMenuConverter {
      * children 需在Service层手动设置
      */
     @Mapping(target = "children", ignore = true)
-    SysMenuResp toMenuResp(SysMenu menu);
+    SysMenuResp toResp(SysMenu menu);
 
-    List<SysMenuResp> toMenuRespList(List<SysMenu> menus);
+    List<SysMenuResp> toRespList(List<SysMenu> menus);
 
     /**
      * SysMenuReq → SysMenu（新增时使用）
@@ -35,7 +36,7 @@ public interface SysMenuConverter {
     @Mapping(target = "createBy", ignore = true)
     @Mapping(target = "updateTime", ignore = true)
     @Mapping(target = "updateBy", ignore = true)
-    SysMenu toMenuEntity(SysMenuReq req);
+    SysMenu toEntity(SysMenuReq req);
 
     /**
      * SysMenuReq → 更新已有的SysMenu
@@ -45,5 +46,5 @@ public interface SysMenuConverter {
     @Mapping(target = "createBy", ignore = true)
     @Mapping(target = "updateTime", ignore = true)
     @Mapping(target = "updateBy", ignore = true)
-    void updateMenuFromReq(SysMenuReq req, @MappingTarget SysMenu menu);
+    void update(SysMenuReq req, @MappingTarget SysMenu menu);
 }

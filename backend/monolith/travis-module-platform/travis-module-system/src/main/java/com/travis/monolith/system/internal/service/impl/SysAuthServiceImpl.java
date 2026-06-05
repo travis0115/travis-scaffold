@@ -1,11 +1,12 @@
 package com.travis.monolith.system.internal.service.impl;
 
-import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.crypto.digest.BCrypt;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.travis.infrastructure.common.web.enums.LoginType;
+import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.exception.CommonErrorCode;
-import com.travis.infrastructure.framework.web.core.utils.IpUtils;
+import com.travis.infrastructure.framework.web.core.util.IpUtil;
 import com.travis.monolith.system.internal.event.LoginLogEvent;
 import com.travis.monolith.system.internal.exception.SystemErrorCode;
 import com.travis.monolith.system.internal.mapper.SysMenuMapper;
@@ -22,7 +23,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -95,12 +95,12 @@ public class SysAuthServiceImpl implements SysAuthService {
         }
 
         // 校验通过，通过 Sa-Token 执行登录
-        StpUtil.login(user.getId());
-        var token = StpUtil.getTokenValue();
+        StpKit.of(LoginType.ADMIN).login(user.getId());
+        var token = StpKit.of(LoginType.ADMIN).getTokenValue();
 
         // 更新最后登录时间和IP
         user.setLastLoginTime(LocalDateTime.now());
-        user.setLastLoginIp(IpUtils.getClientIp());
+        user.setLastLoginIp(IpUtil.getClientIp());
         userService.updateById(user);
 
         // 记录登录成功日志
@@ -117,7 +117,7 @@ public class SysAuthServiceImpl implements SysAuthService {
      */
     @Override
     public UserInfoResp getUserInfo() {
-        long userId = StpUtil.getLoginIdAsLong();
+        long userId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
         SysUser user = userService.getById(userId);
         if (user == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
@@ -145,9 +145,9 @@ public class SysAuthServiceImpl implements SysAuthService {
      * 获取当前用户的菜单树（用于前端路由渲染），按用户ID缓存
      */
     @Override
-    @Cacheable(value = "menus:vben", key = "T(cn.dev33.satoken.stp.StpUtil).getLoginIdAsLong()")
+    @Cacheable(value = "menus:vben", key = "T(com.travis.infrastructure.framework.satoken.core.StpKit).getLoginIdAsLong(T(com.travis.infrastructure.common.web.enums.LoginType).ADMIN)")
     public List<VbenMenuResp> getMenuList() {
-        long userId = StpUtil.getLoginIdAsLong();
+        long userId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
         List<Long> roleIds = roleService.getRoleIdsByUserId(userId);
         return menuService.getVbenMenuTree(roleIds);
     }
@@ -157,7 +157,15 @@ public class SysAuthServiceImpl implements SysAuthService {
      */
     @Override
     public List<String> getAccessCodes() {
-        long userId = StpUtil.getLoginIdAsLong();
+        Long userId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
+        return getAccessCodes(userId);
+    }
+
+    /**
+     * 获取当前用户的权限标识列表（用于前端按钮级权限控制）
+     */
+    @Override
+    public List<String> getAccessCodes(Long userId) {
         return getPermissionsByUserId(userId);
     }
 

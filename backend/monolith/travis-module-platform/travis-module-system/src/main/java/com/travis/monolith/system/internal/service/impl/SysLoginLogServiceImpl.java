@@ -4,9 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.framework.web.core.model.PageResult;
-import com.travis.infrastructure.framework.web.core.utils.Ip2RegionUtils;
-import com.travis.infrastructure.framework.web.core.utils.IpUtils;
-import com.travis.infrastructure.framework.web.core.utils.UserAgentUtils;
+import com.travis.infrastructure.framework.web.core.util.Ip2RegionUtil;
+import com.travis.infrastructure.framework.web.core.util.IpUtil;
+import com.travis.infrastructure.framework.web.core.util.UserAgentUtil;
 import com.travis.monolith.system.internal.mapper.SysLoginLogMapper;
 import com.travis.monolith.system.internal.model.entity.SysLoginLog;
 import com.travis.monolith.system.internal.service.SysLoginLogService;
@@ -50,11 +50,11 @@ public class SysLoginLogServiceImpl extends ServiceImpl<SysLoginLogMapper, SysLo
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordLoginLog(String username, int status, String message) {
         try {
-            var ua = UserAgentUtils.getCurrentUserAgentInfo();
+            var ua = UserAgentUtil.getCurrentUserAgentInfo();
             SysLoginLog loginLog = new SysLoginLog();
             loginLog.setUsername(username);
-            loginLog.setIp(IpUtils.getClientIp());
-            loginLog.setLocation(Ip2RegionUtils.getRegionByIP(loginLog.getIp()));
+            loginLog.setIp(IpUtil.getClientIp());
+            loginLog.setLocation(Ip2RegionUtil.getRegionByIP(loginLog.getIp()));
             loginLog.setBrowser(ua.getBrowser());
             loginLog.setOs(ua.getOs());
             loginLog.setStatus(status);

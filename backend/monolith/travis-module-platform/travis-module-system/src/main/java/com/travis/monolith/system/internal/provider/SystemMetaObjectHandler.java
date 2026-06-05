@@ -1,7 +1,7 @@
 package com.travis.monolith.system.internal.provider;
 
-import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
+import com.travis.infrastructure.framework.satoken.core.StpKit;
 import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.stereotype.Component;
 
@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  * <p>
  * 覆盖基础设施层的默认实现，在技术字段的基础上额外填充业务审计字段 createBy、updateBy。
  * <p>
- * 当前用户ID通过 Sa-Token 获取，未登录时兜底返回 0L。
+ * 当前用户ID通过 StpKit 获取，未登录时兜底返回 0L。
  *
  * @author travis
  */
@@ -37,7 +37,12 @@ public class SystemMetaObjectHandler implements MetaObjectHandler {
 
     private Long getCurrentUserId() {
         try {
-            return StpUtil.getLoginIdAsLong();
+            for (var logic : StpKit.all()) {
+                if (logic.isLogin()) {
+                    return logic.getLoginIdAsLong();
+                }
+            }
+            return 0L;
         } catch (Exception e) {
             return 0L;
         }

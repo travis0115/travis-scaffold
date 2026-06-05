@@ -4,6 +4,7 @@ import com.travis.monolith.system.internal.model.entity.SysDept;
 import com.travis.monolith.system.internal.model.resp.SysDeptResp;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingConstants;
 
 import java.util.List;
 
@@ -13,7 +14,7 @@ import java.util.List;
  *
  * @author travis
  */
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface SysDeptConverter {
 
     /**
@@ -21,7 +22,7 @@ public interface SysDeptConverter {
      * children 需在Service层手动设置
      */
     @Mapping(target = "children", ignore = true)
-    SysDeptResp toDeptResp(SysDept dept);
+    SysDeptResp toResp(SysDept dept);
 
-    List<SysDeptResp> toDeptRespList(List<SysDept> depts);
+    List<SysDeptResp> toRespList(List<SysDept> depts);
 }

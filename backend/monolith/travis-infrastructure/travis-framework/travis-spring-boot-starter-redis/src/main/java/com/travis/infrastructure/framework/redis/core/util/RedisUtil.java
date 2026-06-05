@@ -14,14 +14,14 @@ import java.util.concurrent.TimeUnit;
  *
  * @author travis
  */
-public class RedisUtils {
+public class RedisUtil {
 
-    private static final Logger log = LoggerFactory.getLogger(RedisUtils.class);
+    private static final Logger log = LoggerFactory.getLogger(RedisUtil.class);
 
     private static RedisTemplate<String, Object> redisTemplate;
 
     public void setRedisTemplate(RedisTemplate<String, Object> redisTemplate) {
-        RedisUtils.redisTemplate = redisTemplate;
+        RedisUtil.redisTemplate = redisTemplate;
     }
 
     /**

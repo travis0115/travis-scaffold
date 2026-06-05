@@ -3,6 +3,7 @@ package com.travis.monolith.system.internal.converter;
 import com.travis.monolith.system.internal.model.entity.SysDictItem;
 import com.travis.monolith.system.internal.model.resp.SysDictItemResp;
 import org.mapstruct.Mapper;
+import org.mapstruct.MappingConstants;
 
 import java.util.List;
 
@@ -12,13 +13,13 @@ import java.util.List;
  *
  * @author travis
  */
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface SysDictItemConverter {
 
     /**
      * SysDictItem → SysDictItemResp（全部同名字段映射）
      */
-    SysDictItemResp toDictItemResp(SysDictItem item);
+    SysDictItemResp toResp(SysDictItem item);
 
-    List<SysDictItemResp> toDictItemRespList(List<SysDictItem> items);
+    List<SysDictItemResp> toRespList(List<SysDictItem> items);
 }

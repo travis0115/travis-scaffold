@@ -1,6 +1,6 @@
 package com.travis.infrastructure.framework.jackson.core.model;
 
-import com.travis.infrastructure.framework.jackson.core.util.JsonUtils;
+import com.travis.infrastructure.framework.jackson.core.util.JsonUtil;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
@@ -17,7 +17,7 @@ public final class JsonArray {
     private final ObjectMapper mapper;
 
     JsonArray() {
-        this.mapper = JsonUtils.getObjectMapper();
+        this.mapper = JsonUtil.getObjectMapper();
         this.node = mapper.createArrayNode();
     }
 

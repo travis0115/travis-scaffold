@@ -9,12 +9,12 @@ import org.slf4j.MDC;
  *
  * @author travis
  */
-public class TracerUtils {
+public class TracerUtil {
 
     /**
      * 私有化构造方法
      */
-    private TracerUtils() {
+    private TracerUtil() {
     }
 
     /**

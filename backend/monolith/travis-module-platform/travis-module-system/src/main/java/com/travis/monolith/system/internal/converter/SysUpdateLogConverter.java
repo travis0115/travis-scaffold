@@ -5,6 +5,7 @@ import com.travis.monolith.system.internal.model.req.SysUpdateLogReq;
 import com.travis.monolith.system.internal.model.resp.SysUpdateLogResp;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingConstants;
 import org.mapstruct.MappingTarget;
 
 import java.util.List;
@@ -15,15 +16,15 @@ import java.util.List;
  *
  * @author travis
  */
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface SysUpdateLogConverter {
 
     /**
      * SysUpdateLog → SysUpdateLogResp（全部同名字段映射）
      */
-    SysUpdateLogResp toUpdateLogResp(SysUpdateLog updateLog);
+    SysUpdateLogResp toResp(SysUpdateLog updateLog);
 
-    List<SysUpdateLogResp> toUpdateLogRespList(List<SysUpdateLog> updateLogs);
+    List<SysUpdateLogResp> toRespList(List<SysUpdateLog> updateLogs);
 
     /**
      * SysUpdateLogReq → SysUpdateLog（新增时使用）
@@ -33,7 +34,7 @@ public interface SysUpdateLogConverter {
     @Mapping(target = "createBy", ignore = true)
     @Mapping(target = "updateTime", ignore = true)
     @Mapping(target = "updateBy", ignore = true)
-    SysUpdateLog toUpdateLogEntity(SysUpdateLogReq req);
+    SysUpdateLog toEntity(SysUpdateLogReq req);
 
     /**
      * SysUpdateLogReq → 更新已有的SysUpdateLog
@@ -43,5 +44,5 @@ public interface SysUpdateLogConverter {
     @Mapping(target = "createBy", ignore = true)
     @Mapping(target = "updateTime", ignore = true)
     @Mapping(target = "updateBy", ignore = true)
-    void updateUpdateLogFromReq(SysUpdateLogReq req, @MappingTarget SysUpdateLog updateLog);
+    void update(SysUpdateLogReq req, @MappingTarget SysUpdateLog updateLog);
 }

@@ -5,6 +5,7 @@ import com.travis.monolith.system.internal.model.req.SysUserReq;
 import com.travis.monolith.system.internal.model.resp.SysUserResp;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingConstants;
 import org.mapstruct.MappingTarget;
 
 import java.util.List;
@@ -15,7 +16,7 @@ import java.util.List;
  *
  * @author travis
  */
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface SysUserConverter {
 
     /**
@@ -26,9 +27,9 @@ public interface SysUserConverter {
     @Mapping(target = "roleIds", ignore = true)
     @Mapping(target = "roleNames", ignore = true)
     @Mapping(target = "lastLoginLocation", ignore = true)
-    SysUserResp toUserResp(SysUser user);
+    SysUserResp toResp(SysUser user);
 
-    List<SysUserResp> toUserRespList(List<SysUser> users);
+    List<SysUserResp> toRespList(List<SysUser> users);
 
     /**
      * SysUserReq → SysUser（新增时使用）
@@ -45,7 +46,7 @@ public interface SysUserConverter {
     @Mapping(target = "lastLoginTime", ignore = true)
     @Mapping(target = "lastLoginIp", ignore = true)
     @Mapping(target = "version", ignore = true)
-    SysUser toUserEntity(SysUserReq req);
+    SysUser toEntity(SysUserReq req);
 
     /**
      * SysUserReq → 更新已有的SysUser
@@ -62,5 +63,5 @@ public interface SysUserConverter {
     @Mapping(target = "lastLoginTime", ignore = true)
     @Mapping(target = "lastLoginIp", ignore = true)
     @Mapping(target = "version", ignore = true)
-    void updateUserFromReq(SysUserReq req, @MappingTarget SysUser user);
+    void update(SysUserReq req, @MappingTarget SysUser user);
 }

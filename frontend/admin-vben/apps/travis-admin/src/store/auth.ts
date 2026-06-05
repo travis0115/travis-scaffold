@@ -80,12 +80,21 @@ export const useAuthStore = defineStore('auth', () => {
     };
   }
 
+  const isLoggingOut = ref(false);
+
   async function logout(redirect: boolean = true) {
+    if (isLoggingOut.value) return;
+    isLoggingOut.value = true;
+
     try {
-      await logoutApi();
+      // 仅在 token 有效时调用后端登出接口，避免 token 已失效时触发 401 死循环
+      if (accessStore.accessToken) {
+        await logoutApi();
+      }
     } catch {
       // 不做任何处理
     }
+
     resetAllStores();
     accessStore.setLoginExpired(false);
 

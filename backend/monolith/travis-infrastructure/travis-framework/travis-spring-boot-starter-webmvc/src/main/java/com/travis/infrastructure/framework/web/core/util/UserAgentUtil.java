@@ -1,7 +1,6 @@
-package com.travis.infrastructure.framework.web.core.utils;
+package com.travis.infrastructure.framework.web.core.util;
 
 import cn.hutool.http.useragent.UserAgent;
-import cn.hutool.http.useragent.UserAgentUtil;
 import com.travis.infrastructure.common.web.enums.PlatformType;
 import com.travis.infrastructure.framework.web.core.model.UserAgentInfo;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,7 +13,7 @@ import java.util.Map;
  * @author Travis
  */
 @UtilityClass
-public class UserAgentUtils {
+public class UserAgentUtil {
 
     /**
      * 操作系统映射
@@ -32,7 +31,7 @@ public class UserAgentUtils {
      * 获取当前请求UA信息
      */
     public UserAgentInfo getCurrentUserAgentInfo() {
-        String userAgent = ServletUtils.getUserAgent();
+        String userAgent = ServletUtil.getUserAgent();
         return parse(userAgent);
     }
 
@@ -40,7 +39,7 @@ public class UserAgentUtils {
      * 获取当前请求UA信息
      */
     public UserAgentInfo getCurrentUserAgentInfo(HttpServletRequest request) {
-        var userAgent = ServletUtils.getUserAgent(request);
+        var userAgent = ServletUtil.getUserAgent(request);
         return parse(userAgent);
     }
 
@@ -55,7 +54,7 @@ public class UserAgentUtils {
                     .userAgent("")
                     .build();
         }
-        UserAgent ua = UserAgentUtil.parse(userAgent);
+        UserAgent ua = cn.hutool.http.useragent.UserAgentUtil.parse(userAgent);
         return UserAgentInfo.builder()
                 .browser(buildBrowser(ua))
                 .os(buildOs(ua))

@@ -1,7 +1,7 @@
 package com.travis.infrastructure.framework.jackson.config;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import com.travis.infrastructure.framework.jackson.core.util.JsonUtils;
+import com.travis.infrastructure.framework.jackson.core.util.JsonUtil;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration;
@@ -24,7 +24,7 @@ import java.time.format.DateTimeFormatter;
  */
 @AutoConfiguration(after = JacksonAutoConfiguration.class)
 @EnableConfigurationProperties({JacksonProperties.class})
-@Import(JsonUtils.class)
+@Import(JsonUtil.class)
 public class TravisJacksonAutoConfiguration {
 
     /**

@@ -24,7 +24,7 @@ import java.util.List;
  * </ul>
  */
 @Slf4j
-public class JsonUtils {
+public class JsonUtil {
 
     /**
      * 默认 ObjectMapper 实例，用于 Spring 未注入时的兜底
@@ -48,8 +48,8 @@ public class JsonUtils {
      *
      * @param objectMapper Spring 容器创建的 ObjectMapper 实例（已配置序列化器、反序列化器等）
      */
-    JsonUtils(ObjectMapper objectMapper) {
-        JsonUtils.objectMapper = objectMapper;
+    JsonUtil(ObjectMapper objectMapper) {
+        JsonUtil.objectMapper = objectMapper;
     }
 
     /**

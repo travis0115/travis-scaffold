@@ -9,9 +9,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
  *
  * @author travis
  */
-public final class MyBatisUtils {
+public final class MyBatisUtil {
 
-    private MyBatisUtils() {
+    private MyBatisUtil() {
         // 工具类禁止实例化
     }
 

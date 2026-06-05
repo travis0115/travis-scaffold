@@ -1,9 +1,11 @@
 package com.travis.monolith.system.internal.auth;
 
+import com.travis.infrastructure.common.web.enums.LoginType;
 import com.travis.monolith.system.internal.service.SysRoleService;
 import com.travis.monolith.system.internal.service.SysAuthService;
 import cn.dev33.satoken.stp.StpInterface;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
@@ -16,6 +18,7 @@ import java.util.List;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class StpInterfaceImpl implements StpInterface {
 
     private final SysRoleService roleService;
@@ -24,14 +27,18 @@ public class StpInterfaceImpl implements StpInterface {
     /**
      * 获取当前登录用户的权限标识列表
      *
-     * @param loginId   账号id（当前实现忽略此参数，从 StpUtil 获取当前会话）
-     * @param loginType 账号类型（当前实现忽略此参数）
+     * @param loginId   账号id
+     * @param loginType 账号类型
      */
     @Override
     public List<String> getPermissionList(Object loginId, String loginType) {
         try {
-            return sysAuthService.getAccessCodes();
+            if (LoginType.ADMIN.getCode().equals(loginType)) {
+                return sysAuthService.getAccessCodes((Long) loginId);
+            }
+            return Collections.emptyList();
         } catch (Exception e) {
+            log.error("获取用户权限列表异常, loginId={}, loginType={}", loginId, loginType, e);
             return Collections.emptyList();
         }
     }
@@ -39,13 +46,16 @@ public class StpInterfaceImpl implements StpInterface {
     /**
      * 获取当前登录用户的角色编码列表
      *
-     * @param loginId   账号id（当前实现忽略此参数，从 StpUtil 获取当前会话）
-     * @param loginType 账号类型（当前实现忽略此参数）
+     * @param loginId   账号id
+     * @param loginType 账号类型
      */
     @Override
     public List<String> getRoleList(Object loginId, String loginType) {
         try {
-            return roleService.getRoleCodesByUserId(Long.parseLong(loginId.toString()));
+            if (LoginType.ADMIN.getCode().equals(loginType)) {
+                return roleService.getRoleCodesByUserId(Long.parseLong(loginId.toString()));
+            }
+            return Collections.emptyList();
         } catch (Exception e) {
             return Collections.emptyList();
         }

@@ -1,4 +1,4 @@
-package com.travis.infrastructure.framework.web.core.utils;
+package com.travis.infrastructure.framework.web.core.util;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
@@ -15,7 +15,7 @@ import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.net.multipart.MultipartFormData;
 import cn.hutool.core.net.multipart.UploadSetting;
 import cn.hutool.core.util.*;
-import com.travis.infrastructure.framework.jackson.core.util.JsonUtils;
+import com.travis.infrastructure.framework.jackson.core.util.JsonUtil;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.Cookie;
@@ -41,7 +41,7 @@ import java.util.*;
  *
  * @author travis
  */
-public class ServletUtils {
+public class ServletUtil {
 
     /**
      * 获得所有请求参数
@@ -587,7 +587,7 @@ public class ServletUtils {
      * @param object   对象，会序列化成 JSON 字符串
      */
     public static void writeJSON(HttpServletResponse response, Object object) {
-        var content = JsonUtils.toJsonString(object);
+        var content = JsonUtil.toJsonString(object);
         write(response, content, MediaType.APPLICATION_JSON_VALUE);
     }
 
@@ -702,7 +702,7 @@ public class ServletUtils {
                 : StandardCharsets.UTF_8;
         var body = new String(content, charset);
         // 去除前端传入的格式化空白（换行、缩进），压缩为单行 JSON
-        return JsonUtils.compactJson(body);
+        return JsonUtil.compactJson(body);
     }
 
     /**

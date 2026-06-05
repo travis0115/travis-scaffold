@@ -1,4 +1,4 @@
-package com.travis.infrastructure.framework.web.core.utils;
+package com.travis.infrastructure.framework.web.core.util;
 
 import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.util.ArrayUtil;
@@ -9,7 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 /**
  * IP相关工具类封装
  */
-public class IpUtils {
+public class IpUtil {
 
     private static final String LOCALHOST_IPV4 = "127.0.0.1";
     private static final String LOCALHOST_IPV6 = "0:0:0:0:0:0:0:1";
@@ -49,7 +49,7 @@ public class IpUtils {
 
 
     public static String getClientIp(String... otherHeaderNames) {
-        return getClientIp(ServletUtils.getRequest(), otherHeaderNames);
+        return getClientIp(ServletUtil.getRequest(), otherHeaderNames);
     }
 
     /**

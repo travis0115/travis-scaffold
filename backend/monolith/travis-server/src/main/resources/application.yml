@@ -156,7 +156,12 @@ travis:
       enabled: true #是否启用国际化
     locale: zh_CN #spring.web.locale和spring.jackson.locale配置
     security:
-      # 放行请求，不校验登录
-      permit-paths:
-        - /api/admin/system/auth/login
+      # 登录类型鉴权规则：每条规则对应一种 loginType 的路径拦截策略
+      # starter 会自动发现对应 loginType 的 StpLogic Bean 并注册拦截器
+      auth-rules:
+        - login-type: admin
+          path-patterns:
+            - /api/admin/**
+          exclude-path-patterns:
+            - /api/admin/system/auth/login
     time-zone: UTC  #全局time-zone配置，影响spring.jackson.time-zone以及日志配置

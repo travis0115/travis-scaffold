@@ -186,10 +186,10 @@ public class DevLoggerUtil {
             i++;
         }
 
-        if (current.length() > 0) {
+        if (!current.isEmpty()) {
             appendBorderedLine(sb, current.toString(), firstLine ? width : width - wrapIndent, firstLine, wrapIndent);
         } else if (sb.isEmpty()) {
-            sb.append("║ ").append(" ".repeat(width));
+            sb.append("║ ").repeat(" ", width);
         }
 
         return sb.toString();

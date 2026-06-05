@@ -1,6 +1,6 @@
 package com.travis.infrastructure.framework.jackson.core.model;
 
-import com.travis.infrastructure.framework.jackson.core.util.JsonUtils;
+import com.travis.infrastructure.framework.jackson.core.util.JsonUtil;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
@@ -10,7 +10,7 @@ import java.math.BigInteger;
 
 /**
  * 可变 JSON 对象，接口对齐 fastjson/hutool 的 JSONObject。
- * 底层为 Jackson {@link ObjectNode}，序列化使用 {@link JsonUtils#getObjectMapper()}。
+ * 底层为 Jackson {@link ObjectNode}，序列化使用 {@link JsonUtil#getObjectMapper()}。
  */
 public final class JsonObject {
 
@@ -18,7 +18,7 @@ public final class JsonObject {
     private final ObjectMapper mapper;
 
     public JsonObject() {
-        this.mapper = JsonUtils.getObjectMapper();
+        this.mapper = JsonUtil.getObjectMapper();
         this.node = mapper.createObjectNode();
     }
 
@@ -34,7 +34,7 @@ public final class JsonObject {
         if (json == null || json.isBlank()) {
             return new JsonObject();
         }
-        var om = JsonUtils.getObjectMapper();
+        var om = JsonUtil.getObjectMapper();
         try {
             var n = om.readTree(json);
             if (n != null && n.isObject()) {

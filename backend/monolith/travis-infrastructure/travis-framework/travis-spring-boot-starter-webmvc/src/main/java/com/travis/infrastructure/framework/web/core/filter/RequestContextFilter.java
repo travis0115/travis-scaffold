@@ -1,6 +1,6 @@
 package com.travis.infrastructure.framework.web.core.filter;
 
-import com.travis.infrastructure.framework.web.core.utils.ServletUtils;
+import com.travis.infrastructure.framework.web.core.util.ServletUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -33,7 +33,7 @@ public class RequestContextFilter extends OncePerRequestFilter {
         // multipart/form-data 请求不使用 ContentCachingRequestWrapper
 //         因为 Spring 的 MultipartResolver 需要直接读取原始请求流
 //        boolean isMultipartRequest = ServletUtils.isMultipart(request);
-        boolean isJsonRequest = ServletUtils.isJsonRequest(request);
+        boolean isJsonRequest = ServletUtil.isJsonRequest(request);
 //        var requestWrapper = (!isMultipartRequest && isJsonRequest) ?
         var requestWrapper = isJsonRequest ? new ContentCachingRequestWrapper(request, 0) : request;
         var responseWrapper = new ContentCachingResponseWrapper(response);

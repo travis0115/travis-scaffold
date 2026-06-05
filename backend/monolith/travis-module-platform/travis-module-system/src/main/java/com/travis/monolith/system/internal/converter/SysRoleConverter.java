@@ -5,6 +5,7 @@ import com.travis.monolith.system.internal.model.req.SysRoleReq;
 import com.travis.monolith.system.internal.model.resp.SysRoleResp;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingConstants;
 import org.mapstruct.MappingTarget;
 
 import java.util.List;
@@ -15,7 +16,7 @@ import java.util.List;
  *
  * @author travis
  */
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface SysRoleConverter {
 
     /**
@@ -23,9 +24,9 @@ public interface SysRoleConverter {
      * menuIds 需在Service层手动设置
      */
     @Mapping(target = "menuIds", ignore = true)
-    SysRoleResp toRoleResp(SysRole role);
+    SysRoleResp toResp(SysRole role);
 
-    List<SysRoleResp> toRoleRespList(List<SysRole> roles);
+    List<SysRoleResp> toRespList(List<SysRole> roles);
 
     /**
      * SysRoleReq → SysRole（新增时使用）
@@ -36,7 +37,7 @@ public interface SysRoleConverter {
     @Mapping(target = "updateTime", ignore = true)
     @Mapping(target = "updateBy", ignore = true)
     @Mapping(target = "isDeleted", ignore = true)
-    SysRole toRoleEntity(SysRoleReq req);
+    SysRole toEntity(SysRoleReq req);
 
     /**
      * SysRoleReq → 更新已有的SysRole
@@ -47,5 +48,5 @@ public interface SysRoleConverter {
     @Mapping(target = "updateTime", ignore = true)
     @Mapping(target = "updateBy", ignore = true)
     @Mapping(target = "isDeleted", ignore = true)
-    void updateRoleFromReq(SysRoleReq req, @MappingTarget SysRole role);
+    void update(SysRoleReq req, @MappingTarget SysRole role);
 }

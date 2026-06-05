@@ -60,7 +60,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
                 .eq(status != null, SysRole::getStatus, status)
                 .orderByDesc(SysRole::getCreateTime);
         Page<SysRole> page = page(new Page<>(pageNum, pageSize), wrapper);
-        List<SysRoleResp> voList = converter.toRoleRespList(page.getRecords());
+        List<SysRoleResp> voList = converter.toRespList(page.getRecords());
         return new PageResult<>(voList, page.getTotal(), (int) page.getCurrent(), (int) page.getSize(),
                 (int) page.getPages());
     }
@@ -74,7 +74,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
         if (role == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
-        SysRoleResp vo = converter.toRoleResp(role);
+        SysRoleResp vo = converter.toResp(role);
         List<Long> menuIds = roleMenuMapper.selectList(
                         new LambdaQueryWrapper<SysRoleMenu>().eq(SysRoleMenu::getRoleId, id))
                 .stream().map(SysRoleMenu::getMenuId).collect(Collectors.toList());
@@ -94,7 +94,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
         if (count > 0) {
             throw new BizException(SystemErrorCode.SYSTEM_ROLE_CODE_EXISTS);
         }
-        SysRole role = converter.toRoleEntity(req);
+        SysRole role = converter.toEntity(req);
         save(role);
     }
 
@@ -118,7 +118,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
                 throw new BizException(SystemErrorCode.SYSTEM_ROLE_CODE_EXISTS);
             }
         }
-        converter.updateRoleFromReq(req, role);
+        converter.update(req, role);
         updateById(role);
     }
 
@@ -202,7 +202,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
      */
     @Override
     public List<SysRoleResp> getEnabledRoleList() {
-        return converter.toRoleRespList(list(new LambdaQueryWrapper<SysRole>()
+        return converter.toRespList(list(new LambdaQueryWrapper<SysRole>()
                 .eq(SysRole::getStatus, 1)
                 .orderByAsc(SysRole::getCreateTime)));
     }

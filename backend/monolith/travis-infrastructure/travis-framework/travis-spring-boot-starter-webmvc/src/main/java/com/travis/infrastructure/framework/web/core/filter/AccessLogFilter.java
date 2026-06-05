@@ -8,14 +8,14 @@ import com.travis.infrastructure.common.web.constant.MdcKeys;
 import com.travis.infrastructure.common.web.enums.ClientType;
 import com.travis.infrastructure.framework.desensitize.core.resolver.DesensitizeResolver;
 import com.travis.infrastructure.framework.desensitize.core.rule.DesensitizeRule;
-import com.travis.infrastructure.framework.desensitize.core.util.DesensitizeUtils;
-import com.travis.infrastructure.framework.jackson.core.util.JsonUtils;
+import com.travis.infrastructure.framework.desensitize.core.util.DesensitizeUtil;
+import com.travis.infrastructure.framework.jackson.core.util.JsonUtil;
 import com.travis.infrastructure.framework.logging.core.constant.LogKeys;
 import com.travis.infrastructure.framework.logging.core.enums.AccessLogger;
 import com.travis.infrastructure.framework.logging.core.enums.LogType;
 import com.travis.infrastructure.framework.logging.core.util.DevLoggerUtil;
-import com.travis.infrastructure.framework.web.core.utils.ServletUtils;
-import com.travis.infrastructure.framework.web.core.utils.UserAgentUtils;
+import com.travis.infrastructure.framework.web.core.util.ServletUtil;
+import com.travis.infrastructure.framework.web.core.util.UserAgentUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -99,7 +99,7 @@ public class AccessLogFilter extends OncePerRequestFilter {
             var userId = MDC.get(MdcKeys.USER_ID);
             var clientIp = MDC.get(MdcKeys.CLIENT_IP);
             var clientType = ClientType.from(request.getHeader(CustomHttpHeaders.CLIENT_TYPE)).getDisplayName();
-            var userAgent = UserAgentUtils.getCurrentUserAgentInfo(request);
+            var userAgent = UserAgentUtil.getCurrentUserAgentInfo(request);
             var platfromType = userAgent.getOs();
             var browser = userAgent.getBrowser();
             var apiCost = (System.currentTimeMillis() - beginTime) + " ms";
@@ -167,7 +167,7 @@ public class AccessLogFilter extends OncePerRequestFilter {
      * 将原始 JSON 反序列化为该类型后重新序列化，Jackson 的 StringDesensitizeSerializer 自动处理脱敏注解。
      */
     private String desensitizeRequestBody(HttpServletRequest request, HandlerMethod handlerMethod) {
-        var rawBody = ServletUtils.getCachedJsonBody(request);
+        var rawBody = ServletUtil.getCachedJsonBody(request);
         if (StrUtil.isBlank(rawBody) || "{}".equals(rawBody)) {
             return null;
         }
@@ -181,9 +181,9 @@ public class AccessLogFilter extends OncePerRequestFilter {
             for (var param : handlerMethod.getMethodParameters()) {
                 if (param.hasParameterAnnotation(RequestBody.class)) {
                     var genericType = param.getGenericParameterType();
-                    var obj = JsonUtils.parseObject(rawBody, genericType);
+                    var obj = JsonUtil.parseObject(rawBody, genericType);
                     if (obj != null) {
-                        return JsonUtils.toJsonString(obj);
+                        return JsonUtil.toJsonString(obj);
                     }
                     break;
                 }
@@ -203,7 +203,7 @@ public class AccessLogFilter extends OncePerRequestFilter {
      * 2. DTO 参数：UserQueryDTO dto — 扫描 DTO 类字段上的脱敏注解，按字段名匹配参数
      */
     private Map<String, String> desensitizeRequestParams(HttpServletRequest request, HandlerMethod handlerMethod) {
-        var rawParams = ServletUtils.getParamMap(request);
+        var rawParams = ServletUtil.getParamMap(request);
         if (rawParams.isEmpty() || handlerMethod == null) {
             return rawParams;
         }
@@ -248,7 +248,7 @@ public class AccessLogFilter extends OncePerRequestFilter {
      * DTO 参数脱敏：遍历类字段（含父类），按字段名匹配请求参数，应用字段上的脱敏注解
      */
     private void desensitizeDtoRequestParams(Class<?> dtoType, Map<String, String> result) {
-        var fieldRules = DesensitizeUtils.resolveFieldRules(dtoType);
+        var fieldRules = DesensitizeUtil.resolveFieldRules(dtoType);
         for (var entry : fieldRules.entrySet()) {
             applyRule(result, entry.getKey(), entry.getValue());
         }

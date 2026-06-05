@@ -1,4 +1,4 @@
-package com.travis.infrastructure.framework.web.core.utils;
+package com.travis.infrastructure.framework.web.core.util;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @UtilityClass
-public class Ip2RegionUtils {
+public class Ip2RegionUtil {
 
     private static DatabaseReader databaseReader;
 
@@ -58,7 +58,7 @@ public class Ip2RegionUtils {
      * 根据IP地址获取国家信息
      */
     public static String getCountryByIP(String ip) throws Exception {
-        if (IpUtils.isInternalIp(ip)) {
+        if (IpUtil.isInternalIp(ip)) {
             return INTERNAL;
         }
         // 获取查询结果
@@ -78,7 +78,7 @@ public class Ip2RegionUtils {
      * 格式：国家 省份 城市
      */
     public static String getRegionByIP(String ip) {
-        if (IpUtils.isInternalIp(ip)) {
+        if (IpUtil.isInternalIp(ip)) {
             return INTERNAL;
         }
         // 获取查询结果

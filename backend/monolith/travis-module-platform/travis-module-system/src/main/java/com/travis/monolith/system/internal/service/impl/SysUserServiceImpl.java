@@ -1,14 +1,15 @@
 package com.travis.monolith.system.internal.service.impl;
 
-import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.crypto.digest.BCrypt;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.travis.infrastructure.common.web.enums.LoginType;
+import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.web.core.model.PageResult;
-import com.travis.infrastructure.framework.web.core.utils.Ip2RegionUtils;
+import com.travis.infrastructure.framework.web.core.util.Ip2RegionUtil;
 import com.travis.monolith.system.internal.converter.SysUserConverter;
 import com.travis.monolith.system.internal.exception.SystemErrorCode;
 import com.travis.monolith.system.internal.mapper.SysDeptMapper;
@@ -111,7 +112,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         if (count > 0) {
             throw new BizException(SystemErrorCode.SYSTEM_USER_USERNAME_EXISTS);
         }
-        SysUser user = converter.toUserEntity(req);
+        SysUser user = converter.toEntity(req);
         user.setPassword(encodePassword(req.getPassword()));
         save(user);
         return user.getId();
@@ -134,7 +135,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         if (count > 0) {
             throw new BizException(SystemErrorCode.SYSTEM_USER_USERNAME_EXISTS);
         }
-        converter.updateUserFromReq(req, user);
+        converter.update(req, user);
         if (req.getPassword() != null && !req.getPassword().isBlank()) {
             user.setPassword(encodePassword(req.getPassword()));
         }
@@ -152,7 +153,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                 .eq(SysUserRole::getUserId, id));
         removeById(id);
         // 使用户会话失效
-        StpUtil.logout(id);
+        StpKit.of(LoginType.ADMIN).logout(id);
     }
 
     /**
@@ -190,7 +191,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      */
     @Override
     public void updateProfile(UserProfileReq req) {
-        long userId = StpUtil.getLoginIdAsLong();
+        long userId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
         SysUser user = getById(userId);
         if (user == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
@@ -206,7 +207,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      */
     @Override
     public void updateAvatar(UpdateAvatarReq req) {
-        long userId = StpUtil.getLoginIdAsLong();
+        long userId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
         SysUser user = getById(userId);
         if (user == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
@@ -220,7 +221,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      */
     @Override
     public void changePassword(ChangePasswordReq req) {
-        long userId = StpUtil.getLoginIdAsLong();
+        long userId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
         // 显式查询密码字段（SysUser 中 password 标记了 select=false）
         SysUser user = lambdaQuery()
                 .eq(SysUser::getId, userId)
@@ -237,7 +238,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         user.setPassword(BCrypt.hashpw(req.getNewPassword()));
         updateById(user);
         // 修改密码后踢出当前登录，需重新登录
-        StpUtil.logout(userId);
+        StpKit.of(LoginType.ADMIN).logout(userId);
     }
 
     /**
@@ -260,7 +261,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         user.setPassword(encodePassword(newPassword));
         updateById(user);
         // 重置密码后踢出该用户，需重新登录
-        StpUtil.logout(id);
+        StpKit.of(LoginType.ADMIN).logout(id);
         return newPassword;
     }
 
@@ -297,7 +298,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      * @return 用户视图对象
      */
     private SysUserResp toVO(SysUser user) {
-        SysUserResp resp = converter.toUserResp(user);
+        SysUserResp resp = converter.toResp(user);
         resp.setAvatar(fileService.getFileUrl(user.getAvatar()));
         if (user.getDeptId() != null) {
             SysDept dept = deptMapper.selectById(user.getDeptId());
@@ -307,7 +308,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         }
         resp.setRoleNames(roleService.getRoleNamesByUserId(user.getId()));
         if (user.getLastLoginIp() != null && !user.getLastLoginIp().isEmpty()) {
-            resp.setLastLoginLocation(Ip2RegionUtils.getRegionByIP(user.getLastLoginIp()));
+            resp.setLastLoginLocation(Ip2RegionUtil.getRegionByIP(user.getLastLoginIp()));
         }
         return resp;
     }
@@ -337,7 +338,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         Map<Long, List<String>> userRoleNamesMap = batchGetRoleNamesByUserIds(userIds);
 
         return users.stream().map(user -> {
-            SysUserResp resp = converter.toUserResp(user);
+            SysUserResp resp = converter.toResp(user);
             // 头像路径拼接完整URL
             resp.setAvatar(fileService.getFileUrl(user.getAvatar()));
             // 设置部门名称
@@ -348,7 +349,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
             resp.setRoleNames(userRoleNamesMap.getOrDefault(user.getId(), List.of()));
             // 解析最后登录IP到地理位置
             if (user.getLastLoginIp() != null && !user.getLastLoginIp().isEmpty()) {
-                resp.setLastLoginLocation(Ip2RegionUtils.getRegionByIP(user.getLastLoginIp()));
+                resp.setLastLoginLocation(Ip2RegionUtil.getRegionByIP(user.getLastLoginIp()));
             }
             return resp;
         }).collect(Collectors.toList());

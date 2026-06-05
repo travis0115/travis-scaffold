@@ -5,6 +5,7 @@ import com.travis.monolith.system.internal.model.req.SysConfigReq;
 import com.travis.monolith.system.internal.model.resp.SysConfigResp;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingConstants;
 import org.mapstruct.MappingTarget;
 
 import java.util.List;
@@ -14,20 +15,12 @@ import java.util.List;
  *
  * @author travis
  */
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface SysConfigConverter {
 
-    SysConfigResp toConfigResp(SysConfig config);
+    SysConfigResp toResp(SysConfig config);
 
-    List<SysConfigResp> toConfigRespList(List<SysConfig> configs);
-
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createTime", ignore = true)
-    @Mapping(target = "createBy", ignore = true)
-    @Mapping(target = "updateTime", ignore = true)
-    @Mapping(target = "updateBy", ignore = true)
-    @Mapping(target = "isDeleted", ignore = true)
-    SysConfig toConfigEntity(SysConfigReq req);
+    List<SysConfigResp> toRespList(List<SysConfig> configs);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createTime", ignore = true)
@@ -35,5 +28,13 @@ public interface SysConfigConverter {
     @Mapping(target = "updateTime", ignore = true)
     @Mapping(target = "updateBy", ignore = true)
     @Mapping(target = "isDeleted", ignore = true)
-    void updateConfigFromReq(SysConfigReq req, @MappingTarget SysConfig config);
+    SysConfig toEntity(SysConfigReq req);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createTime", ignore = true)
+    @Mapping(target = "createBy", ignore = true)
+    @Mapping(target = "updateTime", ignore = true)
+    @Mapping(target = "updateBy", ignore = true)
+    @Mapping(target = "isDeleted", ignore = true)
+    void update(SysConfigReq req, @MappingTarget SysConfig config);
 }

@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * 即时用 toDesensitizedJson，日志延时用 ofDesensitizedJson
  */
 @Slf4j
-public class DesensitizeUtils {
+public class DesensitizeUtil {
 
     private static final Map<Class<?>, Map<String, DesensitizeRule>> FIELD_RULE_CACHE = new ConcurrentHashMap<>();
 
@@ -29,13 +29,13 @@ public class DesensitizeUtils {
      */
     private static volatile DesensitizeObjectSerializer objectSerializer;
 
-    private DesensitizeUtils() {
+    private DesensitizeUtil() {
     }
 
     private static DesensitizeObjectSerializer getObjectSerializer() {
         var s = objectSerializer;
         if (s != null) return s;
-        synchronized (DesensitizeUtils.class) {
+        synchronized (DesensitizeUtil.class) {
             s = objectSerializer;
             if (s != null) return s;
             try {
@@ -98,7 +98,7 @@ public class DesensitizeUtils {
      * 扫描类字段的脱敏注解，返回 fieldName → Rule 映射（缓存）
      */
     public static Map<String, DesensitizeRule> resolveFieldRules(Class<?> clazz) {
-        return FIELD_RULE_CACHE.computeIfAbsent(clazz, DesensitizeUtils::doResolveFieldRules);
+        return FIELD_RULE_CACHE.computeIfAbsent(clazz, DesensitizeUtil::doResolveFieldRules);
     }
 
     private static Map<String, DesensitizeRule> doResolveFieldRules(Class<?> clazz) {

@@ -42,4 +42,11 @@ public interface SysAuthService {
      * @return 权限标识列表
      */
     List<String> getAccessCodes();
+
+    /**
+     * 获取当前用户的权限标识列表（用于前端按钮级权限控制）
+     *
+     * @return 权限标识列表
+     */
+    List<String> getAccessCodes(Long userId);
 }

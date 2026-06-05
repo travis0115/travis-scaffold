@@ -60,7 +60,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict> impl
         Map<Long, List<SysDictItemResp>> itemsGroup = allItems.stream()
                 .collect(Collectors.groupingBy(
                         SysDictItem::getDictId,
-                        Collectors.mapping(converter::toDictItemResp, Collectors.toList())));
+                        Collectors.mapping(converter::toResp, Collectors.toList())));
         // 为每个字典设置 children
         dictList.forEach(dict ->
                 dict.setChildren(itemsGroup.getOrDefault(dict.getId(), List.of())));
@@ -158,7 +158,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict> impl
         List<SysDictItem> items = dictItemService.list(new LambdaQueryWrapper<SysDictItem>()
                 .eq(SysDictItem::getDictId, dictId)
                 .orderByAsc(SysDictItem::getSort));
-        return converter.toDictItemRespList(items);
+        return converter.toRespList(items);
     }
 
     /**

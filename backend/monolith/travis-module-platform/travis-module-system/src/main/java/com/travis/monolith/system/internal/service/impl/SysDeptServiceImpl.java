@@ -45,7 +45,7 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
     public List<SysDeptResp> getDeptTree() {
         // 查询全部部门，转为 VO 后构建树形结构
         List<SysDept> allDepts = list();
-        List<SysDeptResp> voList = converter.toDeptRespList(allDepts);
+        List<SysDeptResp> voList = converter.toRespList(allDepts);
         voList.forEach(v -> v.setChildren(new ArrayList<>()));
         return buildTree(voList);
     }
@@ -59,7 +59,7 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
         if (dept == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
-        SysDeptResp resp = converter.toDeptResp(dept);
+        SysDeptResp resp = converter.toResp(dept);
         resp.setChildren(new ArrayList<>());
         return resp;
     }

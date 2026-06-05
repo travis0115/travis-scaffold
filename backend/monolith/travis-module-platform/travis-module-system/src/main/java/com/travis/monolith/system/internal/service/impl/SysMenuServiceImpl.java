@@ -2,7 +2,7 @@ package com.travis.monolith.system.internal.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.travis.infrastructure.framework.jackson.core.util.JsonUtils;
+import com.travis.infrastructure.framework.jackson.core.util.JsonUtil;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.exception.CommonErrorCode;
 import com.travis.monolith.system.internal.converter.SysMenuConverter;
@@ -55,7 +55,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
     public List<SysMenuResp> getMenuTree() {
         List<SysMenu> allMenus = list(new LambdaQueryWrapper<SysMenu>()
                 .orderByAsc(SysMenu::getSort));
-        List<SysMenuResp> voList = converter.toMenuRespList(allMenus);
+        List<SysMenuResp> voList = converter.toRespList(allMenus);
         voList.forEach(v -> v.setChildren(new ArrayList<>()));
         return buildTree(voList);
     }
@@ -69,7 +69,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         if (menu == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
-        SysMenuResp resp = converter.toMenuResp(menu);
+        SysMenuResp resp = converter.toResp(menu);
         resp.setChildren(new ArrayList<>());
         return resp;
     }
@@ -81,7 +81,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
     @Transactional
     @CacheEvict(value = {"system:menu:tree", "menus:vben"}, key = "'all'", allEntries = true)
     public void addMenu(SysMenuReq req) {
-        SysMenu menu = converter.toMenuEntity(req);
+        SysMenu menu = converter.toEntity(req);
         save(menu);
         autoAssignToAdminRoles(menu.getId());
     }
@@ -96,7 +96,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         if (menu == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
-        converter.updateMenuFromReq(req, menu);
+        converter.update(req, menu);
         updateById(menu);
     }
 
@@ -300,7 +300,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         // 合并 meta JSON 中的扩展字段
         if (menu.getMeta() != null && !menu.getMeta().isBlank()) {
             try {
-                Map<String, Object> extraMeta = JsonUtils.getObjectMapper().readValue(
+                Map<String, Object> extraMeta = JsonUtil.getObjectMapper().readValue(
                         menu.getMeta(), new TypeReference<LinkedHashMap<String, Object>>() {
                         });
                 // 扩展字段覆盖基础字段（以 JSON 中的值为优先）

@@ -4,7 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import com.travis.infrastructure.common.web.constant.CustomHttpHeaders;
 import com.travis.infrastructure.common.web.constant.MdcKeys;
 import com.travis.infrastructure.framework.web.core.http.MutableHttpServletRequest;
-import com.travis.infrastructure.framework.web.core.utils.IpUtils;
+import com.travis.infrastructure.framework.web.core.util.IpUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -55,7 +55,7 @@ public class MdcFilter extends OncePerRequestFilter {
             }
 
             // client_ip
-            MDC.put(MdcKeys.CLIENT_IP, IpUtils.getClientIp(request));
+            MDC.put(MdcKeys.CLIENT_IP, IpUtil.getClientIp(request));
 
             filterChain.doFilter(wrappedRequest, response);
         } catch (Exception e) {

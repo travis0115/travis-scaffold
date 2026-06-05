@@ -38,7 +38,7 @@ public class SysUpdateLogServiceImpl extends ServiceImpl<SysUpdateLogMapper, Sys
                 .eq(status != null, SysUpdateLog::getStatus, status)
                 .orderByDesc(SysUpdateLog::getCreateTime);
         Page<SysUpdateLog> page = page(new Page<>(pageNum, pageSize), wrapper);
-        List<SysUpdateLogResp> records = converter.toUpdateLogRespList(page.getRecords());
+        List<SysUpdateLogResp> records = converter.toRespList(page.getRecords());
         return new PageResult<>(records, page.getTotal(),
                 (int) page.getCurrent(), (int) page.getSize(), (int) page.getPages());
     }
@@ -49,13 +49,13 @@ public class SysUpdateLogServiceImpl extends ServiceImpl<SysUpdateLogMapper, Sys
         if (updateLog == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
-        return converter.toUpdateLogResp(updateLog);
+        return converter.toResp(updateLog);
     }
 
     @Override
     @Transactional
     public void addUpdateLog(SysUpdateLogReq req) {
-        SysUpdateLog entity = converter.toUpdateLogEntity(req);
+        SysUpdateLog entity = converter.toEntity(req);
         save(entity);
     }
 
@@ -66,7 +66,7 @@ public class SysUpdateLogServiceImpl extends ServiceImpl<SysUpdateLogMapper, Sys
         if (entity == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
-        converter.updateUpdateLogFromReq(req, entity);
+        converter.update(req, entity);
         updateById(entity);
     }
 
@@ -85,6 +85,6 @@ public class SysUpdateLogServiceImpl extends ServiceImpl<SysUpdateLogMapper, Sys
                 .eq(SysUpdateLog::getStatus, 1)
                 .orderByDesc(SysUpdateLog::getPublishTime);
         Page<SysUpdateLog> page = page(new Page<>(1, limit), wrapper);
-        return converter.toUpdateLogRespList(page.getRecords());
+        return converter.toRespList(page.getRecords());
     }
 }

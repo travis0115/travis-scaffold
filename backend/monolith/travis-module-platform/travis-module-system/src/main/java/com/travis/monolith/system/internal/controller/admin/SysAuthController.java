@@ -1,6 +1,7 @@
 package com.travis.monolith.system.internal.controller.admin;
 
-import cn.dev33.satoken.stp.StpUtil;
+import com.travis.infrastructure.common.web.enums.LoginType;
+import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.model.ApiResponse;
 import com.travis.monolith.system.internal.model.req.SysUserLoginReq;
 import com.travis.monolith.system.internal.model.resp.SysUserLoginResp;
@@ -50,7 +51,7 @@ public class SysAuthController {
      */
     @PostMapping("/logout")
     public ApiResponse<Void> logout() {
-        StpUtil.logout();
+        StpKit.of(LoginType.ADMIN).logout();
         return ApiResponse.success();
     }
 

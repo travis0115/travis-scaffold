@@ -35,7 +35,7 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
                 .like(req.getConfigKey() != null, SysConfig::getConfigKey, req.getConfigKey())
                 .orderByAsc(SysConfig::getConfigGroup, SysConfig::getConfigKey);
         Page<SysConfig> page = page(new Page<>(req.getPageNum(), req.getPageSize()), wrapper);
-        return new PageResult<>(converter.toConfigRespList(page.getRecords()),
+        return new PageResult<>(converter.toRespList(page.getRecords()),
                 page.getTotal(), (int) page.getCurrent(), (int) page.getSize(), (int) page.getPages());
     }
 
@@ -45,7 +45,7 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
         if (config == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
-        return converter.toConfigResp(config);
+        return converter.toResp(config);
     }
 
     @Override
@@ -58,7 +58,7 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
     @Override
     @Transactional
     public void addConfig(SysConfigReq req) {
-        SysConfig entity = converter.toConfigEntity(req);
+        SysConfig entity = converter.toEntity(req);
         save(entity);
     }
 
@@ -69,7 +69,7 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
         if (entity == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
-        converter.updateConfigFromReq(req, entity);
+        converter.update(req, entity);
         updateById(entity);
     }
 
