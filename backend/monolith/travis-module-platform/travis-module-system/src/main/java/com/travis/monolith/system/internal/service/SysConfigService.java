@@ -14,33 +14,21 @@ import com.travis.monolith.system.internal.model.response.config.SysConfigResp;
  */
 public interface SysConfigService extends IService<SysConfig> {
 
-    /**
-     * 分页查询系统配置
-     */
+    /** 分页查询系统配置 */
     PageResult<SysConfigResp> getConfigPage(SysConfigPageReq req);
 
-    /**
-     * 获取配置详情
-     */
+    /** 获取配置详情 */
     SysConfigResp getConfigDetail(Long id);
 
-    /**
-     * 根据配置键获取配置值
-     */
+    /** 根据配置键获取配置值 */
     String getConfigValue(String configKey);
 
-    /**
-     * 新增配置
-     */
+    /** 新增配置 */
     void addConfig(SysConfigReq req);
 
-    /**
-     * 更新配置
-     */
+    /** 更新配置 */
     void updateConfig(Long id, SysConfigReq req);
 
-    /**
-     * 删除配置
-     */
+    /** 删除配置 */
     void deleteConfig(Long id);
 }

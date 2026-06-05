@@ -6,7 +6,6 @@ import com.travis.infrastructure.common.validation.annotation.Mobile;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
-
 public class MobileValidator implements ConstraintValidator<Mobile, String> {
 
     @Override
@@ -18,5 +17,4 @@ public class MobileValidator implements ConstraintValidator<Mobile, String> {
         // 校验手机
         return PhoneUtil.isMobile(value);
     }
-
 }

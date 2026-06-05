@@ -10,5 +10,4 @@ import org.apache.ibatis.annotations.Mapper;
  * @author travis
  */
 @Mapper
-public interface SysDeptMapper extends BaseMapperX<SysDept> {
-}
+public interface SysDeptMapper extends BaseMapperX<SysDept> {}

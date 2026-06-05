@@ -1,6 +1,5 @@
 package com.travis.monolith.demo.internal.controller;
 
-
 import cn.dev33.satoken.stp.StpUtil;
 import com.travis.infrastructure.framework.web.core.model.ApiResponse;
 import com.travis.monolith.demo.internal.service.UserService;
@@ -11,7 +10,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
 
 @RestController
 @Slf4j
@@ -36,5 +34,4 @@ public class TestController {
         StpUtil.checkLogin();
         return ApiResponse.success();
     }
-
 }

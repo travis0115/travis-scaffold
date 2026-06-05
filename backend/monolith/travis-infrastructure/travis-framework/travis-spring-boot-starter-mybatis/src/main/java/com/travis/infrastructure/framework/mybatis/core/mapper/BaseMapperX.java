@@ -5,13 +5,12 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-
 import java.util.List;
 
 /**
  * 扩展 MyBatis-Plus {@link BaseMapper}，提供额外便捷方法
- * <p>
- * 业务 Mapper 接口应继承此接口代替直接继承 {@link BaseMapper}。
+ *
+ * <p>业务 Mapper 接口应继承此接口代替直接继承 {@link BaseMapper}。
  *
  * @param <T> 实体类型
  * @author travis
@@ -61,9 +60,9 @@ public interface BaseMapperX<T> extends BaseMapper<T> {
     /**
      * 分页查询
      *
-     * @param pageNum  页码（从1开始）
+     * @param pageNum 页码（从1开始）
      * @param pageSize 每页大小
-     * @param wrapper  查询条件
+     * @param wrapper 查询条件
      * @return 分页结果
      */
     default Page<T> selectPage(int pageNum, int pageSize, LambdaQueryWrapper<T> wrapper) {
@@ -73,7 +72,7 @@ public interface BaseMapperX<T> extends BaseMapper<T> {
     /**
      * 无条件分页查询
      *
-     * @param pageNum  页码（从1开始）
+     * @param pageNum 页码（从1开始）
      * @param pageSize 每页大小
      * @return 分页结果
      */

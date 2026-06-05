@@ -8,37 +8,23 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * Api返回结果封装类
- *
- */
+/** Api返回结果封装类 */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class ApiResponse<T> {
 
-    /**
-     * 状态码
-     *
-     */
+    /** 状态码 */
     private String code;
 
-    /**
-     * 提示信息
-     */
+    /** 提示信息 */
     private String msg;
 
-    /**
-     * 提示信息参数
-     */
-    @JsonIgnore
-    private Object[] args;
+    /** 提示信息参数 */
+    @JsonIgnore private Object[] args;
 
-    /**
-     * 数据封装
-     */
+    /** 数据封装 */
     private T data;
-
 
     public static <T> ApiResponse<T> success() {
         return success(null);
@@ -60,5 +46,4 @@ public class ApiResponse<T> {
         result.setArgs(args);
         return result;
     }
-
 }

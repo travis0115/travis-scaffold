@@ -9,7 +9,6 @@ import org.springframework.core.annotation.Order;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-
 /**
  * 业务异常处理器
  *
@@ -21,22 +20,17 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @NoArgsConstructor
 public class BizExceptionHandlerAdvice {
 
-    /**
-     * 业务异常
-     */
+    /** 业务异常 */
     @ExceptionHandler(BizException.class)
     public ApiResponse<?> handleBizException(BizException ex) {
         log.warn("业务异常: {}", ex.getErrorCode().getMsg(), ex);
         return ApiResponse.error(ex.getErrorCode(), ex.getArgs());
     }
 
-    /**
-     * 兜底
-     */
+    /** 兜底 */
     @ExceptionHandler(Exception.class)
     public ApiResponse<?> handleException(Exception ex) {
         log.error("系统异常: ", ex);
         return ApiResponse.error(CommonErrorCode.INTERNAL_SERVER_ERROR);
     }
-
 }

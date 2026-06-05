@@ -1,30 +1,20 @@
 package com.travis.infrastructure.framework.desensitize.core.cache;
 
-import org.jspecify.annotations.NonNull;
-
 import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import org.jspecify.annotations.NonNull;
 
-/**
- * 注解属性快照构建器
- * 用于将注解的属性值提取到Map中，便于后续处理
- */
+/** 注解属性快照构建器 用于将注解的属性值提取到Map中，便于后续处理 */
 public final class AnnotationAttributeSnapshotBuilder {
 
-    /**
-     * 私构造函数，防止实例化
-     */
-    private AnnotationAttributeSnapshotBuilder() {
-    }
+    /** 私构造函数，防止实例化 */
+    private AnnotationAttributeSnapshotBuilder() {}
 
-    /**
-     * 方法句柄缓存，按注解类型分类存储
-     * 使用ClassValue确保每个类只计算一次，提高性能
-     */
+    /** 方法句柄缓存，按注解类型分类存储 使用ClassValue确保每个类只计算一次，提高性能 */
     private static final ClassValue<Map<String, MethodHandle>> HANDLE_CACHE =
             new ClassValue<>() {
                 @Override
@@ -32,13 +22,13 @@ public final class AnnotationAttributeSnapshotBuilder {
                     var map = new ConcurrentHashMap<String, MethodHandle>();
                     try {
                         var lookup = MethodHandles.lookup();
-                        //注解类型的所有方法
+                        // 注解类型的所有方法
                         for (var method : type.getMethods()) {
-                            //只处理无参方法（注解属性访问器）
+                            // 只处理无参方法（注解属性访问器）
                             if (method.getParameterCount() != 0) {
                                 continue;
                             }
-                            //将方法名和对应的方法句柄存入缓存
+                            // 将方法名和对应的方法句柄存入缓存
                             map.put(method.getName(), lookup.unreflect(method));
                         }
                         return map;
@@ -48,12 +38,9 @@ public final class AnnotationAttributeSnapshotBuilder {
                 }
             };
 
-
-    /**
-     * 构建注解属性快照
-     */
-    public static Map<String, Object> buildSnapshot(Annotation annotation,
-                                                    Set<Class<? extends Annotation>> visited) {
+    /** 构建注解属性快照 */
+    public static Map<String, Object> buildSnapshot(
+            Annotation annotation, Set<Class<? extends Annotation>> visited) {
         var snapshot = new HashMap<String, Object>();
         var type = annotation.annotationType();
         if (!visited.add(type)) {
@@ -75,11 +62,9 @@ public final class AnnotationAttributeSnapshotBuilder {
         return snapshot;
     }
 
-
-    /**
-     * 将注解属性值规范化为可用于 cache key 等价的形态（支持数组、Class、注解）。
-     */
-    private static Object normalizeForCacheKey(Object value, Set<Class<? extends Annotation>> visited) {
+    /** 将注解属性值规范化为可用于 cache key 等价的形态（支持数组、Class、注解）。 */
+    private static Object normalizeForCacheKey(
+            Object value, Set<Class<? extends Annotation>> visited) {
         if (value == null) {
             return null;
         }
@@ -104,9 +89,7 @@ public final class AnnotationAttributeSnapshotBuilder {
         return value;
     }
 
-    /**
-     * 用于 Map key 的数组包装，按内容 equals/hashCode
-     */
+    /** 用于 Map key 的数组包装，按内容 equals/hashCode */
     private record ArrayKey(Object[] array) {
         @Override
         public boolean equals(Object o) {
@@ -121,9 +104,7 @@ public final class AnnotationAttributeSnapshotBuilder {
         }
     }
 
-    /**
-     * 嵌套注解也做 snapshot，便于 key 等价
-     */
+    /** 嵌套注解也做 snapshot，便于 key 等价 */
     private static final class AnnotationSnapshot {
         private final Map<String, Object> attrs;
 
@@ -137,7 +118,9 @@ public final class AnnotationAttributeSnapshotBuilder {
             try {
                 var handles = HANDLE_CACHE.get(type);
                 for (var entry : handles.entrySet()) {
-                    attrs.put(entry.getKey(), normalizeForCacheKey(entry.getValue().invoke(annotation), visited));
+                    attrs.put(
+                            entry.getKey(),
+                            normalizeForCacheKey(entry.getValue().invoke(annotation), visited));
                 }
             } catch (Throwable e) {
                 throw new RuntimeException(e);
@@ -145,7 +128,6 @@ public final class AnnotationAttributeSnapshotBuilder {
                 visited.remove(type);
             }
         }
-
 
         @Override
         public boolean equals(Object o) {

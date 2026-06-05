@@ -34,5 +34,4 @@ public class I18nService {
     public String getMessage(IErrorCode errorCode) {
         return getMessage(errorCode.getCode(), errorCode.getMsg());
     }
-
 }

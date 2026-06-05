@@ -22,19 +22,17 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.*;
+import java.lang.reflect.Type;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.util.ContentCachingRequestWrapper;
-
-import java.io.*;
-import java.lang.reflect.Type;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-
 
 /**
  * Servlet相关工具类封装
@@ -69,8 +67,7 @@ public class ServletUtil {
     }
 
     /**
-     * 获取请求体
-     * 调用该方法后，getParam方法将失效
+     * 获取请求体 调用该方法后，getParam方法将失效
      *
      * @param request {@link ServletRequest}
      * @return 获得请求体
@@ -100,53 +97,56 @@ public class ServletUtil {
         }
     }
 
-
     /**
      * ServletRequest 参数转Bean
      *
-     * @param <T>         Bean类型
-     * @param request     ServletRequest
-     * @param bean        Bean
+     * @param <T> Bean类型
+     * @param request ServletRequest
+     * @param bean Bean
      * @param copyOptions 注入时的设置
      * @return Bean
      * @since 3.0.4
      */
     public static <T> T fillBean(final ServletRequest request, T bean, CopyOptions copyOptions) {
         final var beanName = StrUtil.lowerFirst(bean.getClass().getSimpleName());
-        return BeanUtil.fillBean(bean, new ValueProvider<String>() {
-            @Override
-            public Object value(String key, Type valueType) {
-                var values = request.getParameterValues(key);
-                if (ArrayUtil.isEmpty(values)) {
-                    values = request.getParameterValues(beanName + StrUtil.DOT + key);
-                    if (ArrayUtil.isEmpty(values)) {
-                        return null;
+        return BeanUtil.fillBean(
+                bean,
+                new ValueProvider<String>() {
+                    @Override
+                    public Object value(String key, Type valueType) {
+                        var values = request.getParameterValues(key);
+                        if (ArrayUtil.isEmpty(values)) {
+                            values = request.getParameterValues(beanName + StrUtil.DOT + key);
+                            if (ArrayUtil.isEmpty(values)) {
+                                return null;
+                            }
+                        }
+
+                        if (1 == values.length) {
+                            // 单值表单直接返回这个值
+                            return values[0];
+                        } else {
+                            // 多值表单返回数组
+                            return values;
+                        }
                     }
-                }
 
-                if (1 == values.length) {
-                    // 单值表单直接返回这个值
-                    return values[0];
-                } else {
-                    // 多值表单返回数组
-                    return values;
-                }
-            }
-
-            @Override
-            public boolean containsKey(String key) {
-                // 对于Servlet来说，返回值null意味着无此参数
-                return (null != request.getParameter(key)) || (null != request.getParameter(beanName + StrUtil.DOT + key));
-            }
-        }, copyOptions);
+                    @Override
+                    public boolean containsKey(String key) {
+                        // 对于Servlet来说，返回值null意味着无此参数
+                        return (null != request.getParameter(key))
+                                || (null != request.getParameter(beanName + StrUtil.DOT + key));
+                    }
+                },
+                copyOptions);
     }
 
     /**
      * ServletRequest 参数转Bean
      *
-     * @param <T>           Bean类型
-     * @param request       {@link ServletRequest}
-     * @param bean          Bean
+     * @param <T> Bean类型
+     * @param request {@link ServletRequest}
+     * @param bean Bean
      * @param isIgnoreError 是否忽略注入错误
      * @return Bean
      */
@@ -157,16 +157,15 @@ public class ServletUtil {
     /**
      * ServletRequest 参数转Bean
      *
-     * @param <T>           Bean类型
-     * @param request       ServletRequest
-     * @param beanClass     Bean Class
+     * @param <T> Bean类型
+     * @param request ServletRequest
+     * @param beanClass Bean Class
      * @param isIgnoreError 是否忽略注入错误
      * @return Bean
      */
     public static <T> T toBean(ServletRequest request, Class<T> beanClass, boolean isIgnoreError) {
         return fillBean(request, ReflectUtil.newInstanceIfPossible(beanClass), isIgnoreError);
     }
-
 
     /**
      * 获得MultiPart表单内容，多用于获得上传的文件 在同一次请求中，此方法只能被执行一次！
@@ -185,23 +184,24 @@ public class ServletUtil {
      * 包括文件和普通表单数据<br>
      * 在同一次请求中，此方法只能被执行一次！
      *
-     * @param request       {@link ServletRequest}
+     * @param request {@link ServletRequest}
      * @param uploadSetting 上传文件的设定，包括最大文件大小、保存在内存的边界大小、临时目录、扩展名限定等
      * @return MultiPart表单
      * @throws IORuntimeException IO异常
      * @since 4.0.2
      */
-    public static MultipartFormData getMultipart(ServletRequest request, UploadSetting uploadSetting) throws IORuntimeException {
+    public static MultipartFormData getMultipart(
+            ServletRequest request, UploadSetting uploadSetting) throws IORuntimeException {
         final var formData = new MultipartFormData(uploadSetting);
         try {
-            formData.parseRequestStream(request.getInputStream(), CharsetUtil.charset(request.getCharacterEncoding()));
+            formData.parseRequestStream(
+                    request.getInputStream(), CharsetUtil.charset(request.getCharacterEncoding()));
         } catch (IOException e) {
             throw new IORuntimeException(e);
         }
 
         return formData;
     }
-
 
     /**
      * 获取请求所有的头（header）信息
@@ -262,7 +262,7 @@ public class ServletUtil {
     /**
      * 忽略大小写获得请求header中的信息
      *
-     * @param request        请求对象{@link HttpServletRequest}
+     * @param request 请求对象{@link HttpServletRequest}
      * @param nameIgnoreCase 忽略大小写头信息的KEY
      * @return header值
      */
@@ -282,8 +282,8 @@ public class ServletUtil {
     /**
      * 获得请求header中的信息
      *
-     * @param request     请求对象{@link HttpServletRequest}
-     * @param name        头信息的KEY
+     * @param request 请求对象{@link HttpServletRequest}
+     * @param name 头信息的KEY
      * @param charsetName 字符集
      * @return header值
      */
@@ -295,7 +295,7 @@ public class ServletUtil {
      * 获得请求header中的信息
      *
      * @param request 请求对象{@link HttpServletRequest}
-     * @param name    头信息的KEY
+     * @param name 头信息的KEY
      * @param charset 字符集
      * @return header值
      * @since 4.6.2
@@ -366,7 +366,7 @@ public class ServletUtil {
      * 获得指定的Cookie
      *
      * @param httpServletRequest {@link HttpServletRequest}
-     * @param name               cookie名
+     * @param name cookie名
      * @return Cookie对象
      */
     public static Cookie getCookie(HttpServletRequest httpServletRequest, String name) {
@@ -395,7 +395,7 @@ public class ServletUtil {
      * 设定返回给客户端的Cookie
      *
      * @param response 响应对象{@link HttpServletResponse}
-     * @param cookie   Servlet Cookie对象
+     * @param cookie Servlet Cookie对象
      */
     public static void addCookie(HttpServletResponse response, Cookie cookie) {
         response.addCookie(cookie);
@@ -405,8 +405,8 @@ public class ServletUtil {
      * 设定返回给客户端的Cookie
      *
      * @param response 响应对象{@link HttpServletResponse}
-     * @param name     Cookie名
-     * @param value    Cookie值
+     * @param name Cookie名
+     * @param value Cookie值
      */
     public static void addCookie(HttpServletResponse response, String name, String value) {
         response.addCookie(new Cookie(name, value));
@@ -415,15 +415,21 @@ public class ServletUtil {
     /**
      * 设定返回给客户端的Cookie
      *
-     * @param response        响应对象{@link HttpServletResponse}
-     * @param name            cookie名
-     * @param value           cookie值
+     * @param response 响应对象{@link HttpServletResponse}
+     * @param name cookie名
+     * @param value cookie值
      * @param maxAgeInSeconds -1: 关闭浏览器清除Cookie. 0: 立即清除Cookie. &gt;0 : Cookie存在的秒数.
-     * @param path            Cookie的有效路径
-     * @param domain          the domain name within which this cookie is visible; form is according to RFC 2109
+     * @param path Cookie的有效路径
+     * @param domain the domain name within which this cookie is visible; form is according to RFC
+     *     2109
      */
-    public static void addCookie(HttpServletResponse response, String name, String value, int maxAgeInSeconds,
-                                 String path, String domain) {
+    public static void addCookie(
+            HttpServletResponse response,
+            String name,
+            String value,
+            int maxAgeInSeconds,
+            String path,
+            String domain) {
         var cookie = new Cookie(name, value);
         if (domain != null) {
             cookie.setDomain(domain);
@@ -438,12 +444,13 @@ public class ServletUtil {
      * Path: "/"<br>
      * No Domain
      *
-     * @param response        响应对象{@link HttpServletResponse}
-     * @param name            cookie名
-     * @param value           cookie值
+     * @param response 响应对象{@link HttpServletResponse}
+     * @param name cookie名
+     * @param value cookie值
      * @param maxAgeInSeconds -1: 关闭浏览器清除Cookie. 0: 立即清除Cookie. &gt;0 : Cookie存在的秒数.
      */
-    public static void addCookie(HttpServletResponse response, String name, String value, int maxAgeInSeconds) {
+    public static void addCookie(
+            HttpServletResponse response, String name, String value, int maxAgeInSeconds) {
         addCookie(response, name, value, maxAgeInSeconds, "/", null);
     }
 
@@ -465,8 +472,8 @@ public class ServletUtil {
     /**
      * 返回数据给客户端
      *
-     * @param response    响应对象{@link HttpServletResponse}
-     * @param text        返回的内容
+     * @param response 响应对象{@link HttpServletResponse}
+     * @param text 返回的内容
      * @param contentType 返回的类型
      */
     public static void write(HttpServletResponse response, String text, String contentType) {
@@ -487,12 +494,14 @@ public class ServletUtil {
      * 返回文件给客户端
      *
      * @param response 响应对象{@link HttpServletResponse}
-     * @param file     写出的文件对象
+     * @param file 写出的文件对象
      * @since 4.1.15
      */
     public static void write(HttpServletResponse response, File file) {
         final var fileName = file.getName();
-        final var contentType = ObjectUtil.defaultIfNull(FileUtil.getMimeType(fileName), "application/octet-stream");
+        final var contentType =
+                ObjectUtil.defaultIfNull(
+                        FileUtil.getMimeType(fileName), "application/octet-stream");
         BufferedInputStream in = null;
         try {
             in = FileUtil.getInputStream(file);
@@ -505,35 +514,42 @@ public class ServletUtil {
     /**
      * 返回数据给客户端
      *
-     * @param response    响应对象{@link HttpServletResponse}
-     * @param in          需要返回客户端的内容
+     * @param response 响应对象{@link HttpServletResponse}
+     * @param in 需要返回客户端的内容
      * @param contentType 返回的类型，可以使用{@link FileUtil#getMimeType(String)}获取对应扩展名的MIME信息
-     *                    <ul>
-     *                      <li>application/pdf</li>
-     *                      <li>application/vnd.ms-excel</li>
-     *                      <li>application/msword</li>
-     *                      <li>application/vnd.ms-powerpoint</li>
-     *                    </ul>
-     *                    docx、xlsx 这种 office 2007 格式 设置 MIME;网页里面docx 文件是没问题，但是下载下来了之后就变成doc格式了
-     *                    参考：
-     *                    <a href="https://my.oschina.net/shixiaobao17145/blog/32489">https://my.oschina.net/shixiaobao17145/blog/32489</a>
-     *                    <ul>
-     *                      <li>MIME_EXCELX_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml
-     *                      .sheet";</li>
-     *                      <li>MIME_PPTX_TYPE = "application/vnd.openxmlformats-officedocument.presentationml
-     *                      .presentation";</li>
-     *                      <li>MIME_WORDX_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml
-     *                      .document";</li>
-     *                      <li>MIME_STREAM_TYPE = "application/octet-stream;charset=utf-8"; #原始字节流</li>
-     *                    </ul>
-     * @param fileName    文件名，自动添加双引号
+     *     <ul>
+     *       <li>application/pdf
+     *       <li>application/vnd.ms-excel
+     *       <li>application/msword
+     *       <li>application/vnd.ms-powerpoint
+     *     </ul>
+     *     docx、xlsx 这种 office 2007 格式 设置 MIME;网页里面docx 文件是没问题，但是下载下来了之后就变成doc格式了 参考： <a
+     *     href="https://my.oschina.net/shixiaobao17145/blog/32489">https://my.oschina.net/shixiaobao17145/blog/32489</a>
+     *     <ul>
+     *       <li>MIME_EXCELX_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml
+     *           .sheet";
+     *       <li>MIME_PPTX_TYPE = "application/vnd.openxmlformats-officedocument.presentationml
+     *           .presentation";
+     *       <li>MIME_WORDX_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml
+     *           .document";
+     *       <li>MIME_STREAM_TYPE = "application/octet-stream;charset=utf-8"; #原始字节流
+     *     </ul>
+     *
+     * @param fileName 文件名，自动添加双引号
      * @since 4.1.15
      */
-    public static void write(HttpServletResponse response, InputStream in, String contentType, String fileName) {
-        final var charset = ObjectUtil.defaultIfNull(response.getCharacterEncoding(), CharsetUtil.UTF_8);
+    public static void write(
+            HttpServletResponse response, InputStream in, String contentType, String fileName) {
+        final var charset =
+                ObjectUtil.defaultIfNull(response.getCharacterEncoding(), CharsetUtil.UTF_8);
         final var encodeText = URLUtil.encodeAll(fileName, CharsetUtil.charset(charset));
-        response.setHeader("Content-Disposition",
-                StrUtil.format("attachment;filename=\"{}\";filename*={}''{}", encodeText, charset, encodeText));
+        response.setHeader(
+                "Content-Disposition",
+                StrUtil.format(
+                        "attachment;filename=\"{}\";filename*={}''{}",
+                        encodeText,
+                        charset,
+                        encodeText));
         response.setContentType(contentType);
         write(response, in);
     }
@@ -541,8 +557,8 @@ public class ServletUtil {
     /**
      * 返回数据给客户端
      *
-     * @param response    响应对象{@link HttpServletResponse}
-     * @param in          需要返回客户端的内容
+     * @param response 响应对象{@link HttpServletResponse}
+     * @param in 需要返回客户端的内容
      * @param contentType 返回的类型
      */
     public static void write(HttpServletResponse response, InputStream in, String contentType) {
@@ -554,7 +570,7 @@ public class ServletUtil {
      * 返回数据给客户端
      *
      * @param response 响应对象{@link HttpServletResponse}
-     * @param in       需要返回客户端的内容
+     * @param in 需要返回客户端的内容
      */
     public static void write(HttpServletResponse response, InputStream in) {
         write(response, in, IoUtil.DEFAULT_BUFFER_SIZE);
@@ -563,8 +579,8 @@ public class ServletUtil {
     /**
      * 返回数据给客户端
      *
-     * @param response   响应对象{@link HttpServletResponse}
-     * @param in         需要返回客户端的内容
+     * @param response 响应对象{@link HttpServletResponse}
+     * @param in 需要返回客户端的内容
      * @param bufferSize 缓存大小
      */
     public static void write(HttpServletResponse response, InputStream in, int bufferSize) {
@@ -584,37 +600,34 @@ public class ServletUtil {
      * 返回 JSON 字符串
      *
      * @param response 响应
-     * @param object   对象，会序列化成 JSON 字符串
+     * @param object 对象，会序列化成 JSON 字符串
      */
     public static void writeJSON(HttpServletResponse response, Object object) {
         var content = JsonUtil.toJsonString(object);
         write(response, content, MediaType.APPLICATION_JSON_VALUE);
     }
 
-
     /**
      * 设置响应的Header
      *
      * @param response 响应对象{@link HttpServletResponse}
-     * @param name     名
-     * @param value    值，可以是String，Date， int
+     * @param name 名
+     * @param value 值，可以是String，Date， int
      */
     public static void setHeader(HttpServletResponse response, String name, Object value) {
         if (value instanceof String) {
             response.setHeader(name, (String) value);
         } else if (Date.class.isAssignableFrom(value.getClass())) {
             response.setDateHeader(name, ((Date) value).getTime());
-        } else if (value instanceof Integer || "int".equalsIgnoreCase(value.getClass().getSimpleName())) {
+        } else if (value instanceof Integer
+                || "int".equalsIgnoreCase(value.getClass().getSimpleName())) {
             response.setIntHeader(name, (int) value);
         } else {
             response.setHeader(name, value.toString());
         }
     }
 
-    /**
-     * 获得User-Agent
-     *
-     */
+    /** 获得User-Agent */
     public static String getUserAgent() {
         var request = getRequest();
         if (request == null) {
@@ -650,19 +663,13 @@ public class ServletUtil {
         return ((ServletRequestAttributes) requestAttributes).getRequest();
     }
 
-
-    /**
-     * 是否JSON请求
-     *
-     */
+    /** 是否JSON请求 */
     public static boolean isJsonRequest(ServletRequest request) {
-        return StrUtil.startWithIgnoreCase(request.getContentType(), MediaType.APPLICATION_JSON_VALUE);
+        return StrUtil.startWithIgnoreCase(
+                request.getContentType(), MediaType.APPLICATION_JSON_VALUE);
     }
 
-    /**
-     * 获取JSON请求的Body
-     *
-     */
+    /** 获取JSON请求的Body */
     public static String getJsonBody(HttpServletRequest request) {
         if (isJsonRequest(request)) {
             return getBody(request);
@@ -670,11 +677,10 @@ public class ServletUtil {
         return null;
     }
 
-
     /**
-     * 从 ContentCachingRequestWrapper 中读取已缓存的 body。
-     * RequestContextFilter 已经在请求入口处用 ContentCachingRequestWrapper 包装了 request，
-     * Spring MVC 读取 body 后内容缓存在 wrapper 中，通过 getContentAsByteArray() 可重复读取。
+     * 从 ContentCachingRequestWrapper 中读取已缓存的 body。 RequestContextFilter 已经在请求入口处用
+     * ContentCachingRequestWrapper 包装了 request， Spring MVC 读取 body 后内容缓存在 wrapper 中，通过
+     * getContentAsByteArray() 可重复读取。
      */
     public static String getCachedJsonBody(HttpServletRequest request) {
         if (!isJsonRequest(request)) {
@@ -697,17 +703,16 @@ public class ServletUtil {
         if (content.length == 0) {
             return null;
         }
-        var charset = StrUtil.isNotEmpty(wrapper.getCharacterEncoding())
-                ? Charset.forName(wrapper.getCharacterEncoding())
-                : StandardCharsets.UTF_8;
+        var charset =
+                StrUtil.isNotEmpty(wrapper.getCharacterEncoding())
+                        ? Charset.forName(wrapper.getCharacterEncoding())
+                        : StandardCharsets.UTF_8;
         var body = new String(content, charset);
         // 去除前端传入的格式化空白（换行、缩进），压缩为单行 JSON
         return JsonUtil.compactJson(body);
     }
 
-    /**
-     * 沿 wrapper 链向内查找 ContentCachingRequestWrapper
-     */
+    /** 沿 wrapper 链向内查找 ContentCachingRequestWrapper */
     private static ContentCachingRequestWrapper findCachingWrapper(HttpServletRequest request) {
         var current = request;
         while (current instanceof HttpServletRequestWrapper wrapper) {

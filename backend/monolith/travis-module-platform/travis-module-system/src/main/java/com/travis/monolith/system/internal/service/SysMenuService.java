@@ -5,7 +5,6 @@ import com.travis.monolith.system.internal.model.entity.SysMenu;
 import com.travis.monolith.system.internal.model.request.menu.SysMenuReq;
 import com.travis.monolith.system.internal.model.response.menu.SysMenuResp;
 import com.travis.monolith.system.internal.model.response.menu.VbenMenuResp;
-
 import java.util.List;
 
 /**
@@ -40,7 +39,7 @@ public interface SysMenuService extends IService<SysMenu> {
     /**
      * 更新菜单信息
      *
-     * @param id  菜单ID
+     * @param id 菜单ID
      * @param req 菜单信息请求参数
      */
     void updateMenu(Long id, SysMenuReq req);

@@ -4,17 +4,16 @@ import com.travis.infrastructure.common.web.enums.LoginType;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.model.ApiResponse;
 import com.travis.monolith.system.internal.model.request.user.SysUserLoginReq;
+import com.travis.monolith.system.internal.model.response.menu.VbenMenuResp;
 import com.travis.monolith.system.internal.model.response.user.SysUserLoginResp;
 import com.travis.monolith.system.internal.model.response.user.UserInfoResp;
-import com.travis.monolith.system.internal.model.response.menu.VbenMenuResp;
 import com.travis.monolith.system.internal.service.SysAuthService;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * 认证控制器，提供登录、登出、获取用户信息及权限等接口
@@ -28,9 +27,7 @@ import java.util.List;
 @Slf4j
 public class SysAuthController {
 
-    /**
-     * 认证管理服务
-     */
+    /** 认证管理服务 */
     private final SysAuthService sysAuthService;
 
     /**

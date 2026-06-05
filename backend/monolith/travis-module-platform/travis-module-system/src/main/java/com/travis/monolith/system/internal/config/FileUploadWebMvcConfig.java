@@ -6,9 +6,8 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * 文件上传静态资源映射配置
- * 开发环境：由 Spring Boot 直接提供静态资源访问
- * 生产环境：建议由 Nginx 提供 /files/ 的静态资源服务，性能更优
+ * 文件上传静态资源映射配置 开发环境：由 Spring Boot 直接提供静态资源访问 生产环境：建议由 Nginx 提供 /files/ 的静态资源服务，性能更优
+ *
  * @author travis
  */
 @Configuration

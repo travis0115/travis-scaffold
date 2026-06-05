@@ -5,32 +5,23 @@ import org.slf4j.MDC;
 
 /**
  * 链路追踪工具类
+ *
  * <p>
  *
  * @author travis
  */
 public class TracerUtil {
 
-    /**
-     * 私有化构造方法
-     */
-    private TracerUtil() {
-    }
+    /** 私有化构造方法 */
+    private TracerUtil() {}
 
-    /**
-     * 获得TraceId，直接返回 MDC 的 TraceId。
-     *
-     */
+    /** 获得TraceId，直接返回 MDC 的 TraceId。 */
     public static String getTraceId() {
         return MDC.get(MdcKeys.TRACE_ID);
     }
 
-    /**
-     * 获得RequestId，直接返回 MDC 的 RequestId。
-     *
-     */
+    /** 获得RequestId，直接返回 MDC 的 RequestId。 */
     public static String getRequestId() {
         return MDC.get(MdcKeys.REQUEST_ID);
     }
-
 }

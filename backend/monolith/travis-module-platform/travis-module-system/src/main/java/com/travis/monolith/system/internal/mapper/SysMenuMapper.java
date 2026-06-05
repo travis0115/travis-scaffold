@@ -10,5 +10,4 @@ import org.apache.ibatis.annotations.Mapper;
  * @author travis
  */
 @Mapper
-public interface SysMenuMapper extends BaseMapperX<SysMenu> {
-}
+public interface SysMenuMapper extends BaseMapperX<SysMenu> {}

@@ -2,12 +2,12 @@ package com.travis.monolith.system.internal.controller.admin;
 
 import com.travis.infrastructure.framework.web.core.model.ApiResponse;
 import com.travis.infrastructure.framework.web.core.model.PageResult;
-import com.travis.monolith.system.internal.model.request.user.SysUserReq;
-import com.travis.monolith.system.internal.model.request.user.SysUserRoleReq;
 import com.travis.monolith.system.internal.model.request.user.ChangePasswordReq;
 import com.travis.monolith.system.internal.model.request.user.ResetPasswordReq;
-import com.travis.monolith.system.internal.model.request.user.UserProfileReq;
+import com.travis.monolith.system.internal.model.request.user.SysUserReq;
+import com.travis.monolith.system.internal.model.request.user.SysUserRoleReq;
 import com.travis.monolith.system.internal.model.request.user.UpdateAvatarReq;
+import com.travis.monolith.system.internal.model.request.user.UserProfileReq;
 import com.travis.monolith.system.internal.model.response.user.SysUserResp;
 import com.travis.monolith.system.internal.service.SysUserService;
 import jakarta.validation.Valid;
@@ -26,19 +26,17 @@ import org.springframework.web.bind.annotation.*;
 @Validated
 public class SysUserController {
 
-    /**
-     * 用户管理服务
-     */
+    /** 用户管理服务 */
     private final SysUserService userService;
 
     /**
      * 分页查询用户列表
      *
      * @param username 用户名（模糊匹配）
-     * @param mobile    手机号（模糊匹配）
-     * @param status   状态
-     * @param deptId   所属部门ID
-     * @param pageNum  页码
+     * @param mobile 手机号（模糊匹配）
+     * @param status 状态
+     * @param deptId 所属部门ID
+     * @param pageNum 页码
      * @param pageSize 每页条数
      * @return 分页结果
      */
@@ -50,7 +48,8 @@ public class SysUserController {
             @RequestParam(required = false) Long deptId,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize) {
-        return ApiResponse.success(userService.getUserPage(username, mobile, status, deptId, pageNum, pageSize));
+        return ApiResponse.success(
+                userService.getUserPage(username, mobile, status, deptId, pageNum, pageSize));
     }
 
     /**
@@ -78,7 +77,7 @@ public class SysUserController {
     /**
      * 更新用户信息
      *
-     * @param id  用户ID
+     * @param id 用户ID
      * @param req 用户信息
      * @return 空响应
      */
@@ -151,14 +150,17 @@ public class SysUserController {
     /**
      * 重置用户密码
      *
-     * @param id  用户ID
+     * @param id 用户ID
      * @param req 重置密码请求（可选指定新密码，不指定则自动生成随机密码）
      * @return 最终使用的密码（明文，供管理员转达用户）
      */
     @PutMapping("/{id}/reset-password")
-    public ApiResponse<String> resetPassword(@PathVariable Long id, @RequestBody(required = false) ResetPasswordReq req) {
-        String newPassword = (req != null && req.getNewPassword() != null && !req.getNewPassword().isBlank())
-                ? req.getNewPassword() : null;
+    public ApiResponse<String> resetPassword(
+            @PathVariable Long id, @RequestBody(required = false) ResetPasswordReq req) {
+        String newPassword =
+                (req != null && req.getNewPassword() != null && !req.getNewPassword().isBlank())
+                        ? req.getNewPassword()
+                        : null;
         String resultPassword = userService.resetPassword(id, newPassword);
         return ApiResponse.success(resultPassword);
     }

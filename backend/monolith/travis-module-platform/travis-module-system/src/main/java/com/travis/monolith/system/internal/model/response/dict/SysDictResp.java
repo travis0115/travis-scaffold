@@ -1,12 +1,11 @@
 package com.travis.monolith.system.internal.model.response.dict;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * 字典类型响应视图
@@ -28,8 +27,6 @@ public class SysDictResp {
     private LocalDateTime updateTime;
     private Long updateBy;
 
-    /**
-     * 子节点（字典数据项列表），仅用于树形接口返回
-     */
+    /** 子节点（字典数据项列表），仅用于树形接口返回 */
     private List<SysDictItemResp> children;
 }

@@ -4,10 +4,9 @@ import com.travis.infrastructure.common.mapstruct.BaseMapperConfig;
 import com.travis.monolith.system.internal.model.entity.SysConfig;
 import com.travis.monolith.system.internal.model.request.config.SysConfigReq;
 import com.travis.monolith.system.internal.model.response.config.SysConfigResp;
+import java.util.List;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
-
-import java.util.List;
 
 /**
  * 系统配置对象转换器

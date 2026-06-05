@@ -14,10 +14,13 @@ import lombok.EqualsAndHashCode;
 public class SysUserPageReq extends PageRequest {
     /** 用户名（模糊匹配） */
     private String username;
+
     /** 手机号（模糊匹配） */
     private String phone;
+
     /** 状态（0-禁用 1-启用） */
     private Integer status;
+
     /** 所属部门ID */
     private Long deptId;
 }

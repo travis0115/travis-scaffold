@@ -10,5 +10,4 @@ import org.apache.ibatis.annotations.Mapper;
  * @author travis
  */
 @Mapper
-public interface SysConfigMapper extends BaseMapper<SysConfig> {
-}
+public interface SysConfigMapper extends BaseMapper<SysConfig> {}

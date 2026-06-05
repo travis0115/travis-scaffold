@@ -1,10 +1,9 @@
 package com.travis.monolith.system.internal.service;
 
 import com.travis.monolith.system.internal.model.request.user.SysUserLoginReq;
+import com.travis.monolith.system.internal.model.response.menu.VbenMenuResp;
 import com.travis.monolith.system.internal.model.response.user.SysUserLoginResp;
 import com.travis.monolith.system.internal.model.response.user.UserInfoResp;
-import com.travis.monolith.system.internal.model.response.menu.VbenMenuResp;
-
 import java.util.List;
 
 /**

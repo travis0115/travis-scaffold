@@ -6,11 +6,7 @@ import com.travis.monolith.demo.internal.model.User;
 import com.travis.monolith.demo.internal.service.UserService;
 import org.springframework.stereotype.Service;
 
-/**
- * 用户服务实现类
- * 继承ServiceImpl后,自动拥有IService的所有方法实现
- * 不需要写任何代码就能用
- */
+/** 用户服务实现类 继承ServiceImpl后,自动拥有IService的所有方法实现 不需要写任何代码就能用 */
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
     // 如果只需要基本的CRUD,继承ServiceImpl就够了,不需要写任何代码

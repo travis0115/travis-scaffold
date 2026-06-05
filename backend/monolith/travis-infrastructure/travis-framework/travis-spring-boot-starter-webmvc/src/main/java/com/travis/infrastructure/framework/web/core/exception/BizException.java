@@ -4,9 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-/**
- * 业务异常
- */
+/** 业务异常 */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
@@ -17,14 +15,9 @@ public final class BizException extends RuntimeException {
         this.args = null;
     }
 
-    /**
-     * 错误码
-     */
+    /** 错误码 */
     private final IErrorCode errorCode;
 
-    /**
-     * 错误参数
-     */
+    /** 错误参数 */
     private final Object[] args;
-
 }

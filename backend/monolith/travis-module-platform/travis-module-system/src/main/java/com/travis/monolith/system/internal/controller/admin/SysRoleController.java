@@ -22,14 +22,10 @@ import org.springframework.web.bind.annotation.*;
 @Validated
 public class SysRoleController {
 
-    /**
-     * 角色管理服务
-     */
+    /** 角色管理服务 */
     private final SysRoleService roleService;
 
-    /**
-     * 分页查询角色列表
-     */
+    /** 分页查询角色列表 */
     @GetMapping("/page")
     public ApiResponse<PageResult<SysRoleResp>> page(
             @RequestParam(required = false) String roleName,
@@ -37,7 +33,8 @@ public class SysRoleController {
             @RequestParam(required = false) Integer status,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize) {
-        return ApiResponse.success(roleService.getRolePage(roleName, roleCode, status, pageNum, pageSize));
+        return ApiResponse.success(
+                roleService.getRolePage(roleName, roleCode, status, pageNum, pageSize));
     }
 
     /**
@@ -66,7 +63,7 @@ public class SysRoleController {
     /**
      * 更新角色信息
      *
-     * @param id  角色ID
+     * @param id 角色ID
      * @param req 角色信息
      * @return 空响应
      */
@@ -100,9 +97,7 @@ public class SysRoleController {
         return ApiResponse.success();
     }
 
-    /**
-     * 获取所有启用角色列表（不分页）
-     */
+    /** 获取所有启用角色列表（不分页） */
     @GetMapping("/list")
     public ApiResponse<java.util.List<SysRoleResp>> list() {
         return ApiResponse.success(roleService.getEnabledRoleList());

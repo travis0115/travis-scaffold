@@ -2,6 +2,7 @@ package com.travis.infrastructure.framework.desensitize.core.rule;
 
 /**
  * 滑动脱敏规则
+ *
  * @param prefix
  * @param suffix
  * @param mask

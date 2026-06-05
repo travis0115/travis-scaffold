@@ -8,11 +8,10 @@ import com.travis.monolith.system.internal.model.request.dict.SysDictReq;
 import com.travis.monolith.system.internal.model.response.dict.SysDictItemResp;
 import com.travis.monolith.system.internal.service.SysDictService;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * 字典管理控制器，提供字典类型及字典数据项的增删改查接口
@@ -28,17 +27,13 @@ public class SysDictController {
     /** 字典管理服务 */
     private final SysDictService dictService;
 
-    /**
-     * 获取字典树形数据（每个字典包含其下的数据项作为 children）
-     */
+    /** 获取字典树形数据（每个字典包含其下的数据项作为 children） */
     @GetMapping("/tree")
     public ApiResponse<List<SysDict>> getTree() {
         return ApiResponse.success(dictService.getDictTree());
     }
 
-    /**
-     * 分页查询字典类型列表
-     */
+    /** 分页查询字典类型列表 */
     @GetMapping("/page")
     public ApiResponse<PageResult<SysDict>> page(
             @RequestParam(required = false) String dictName,
@@ -46,7 +41,8 @@ public class SysDictController {
             @RequestParam(required = false) Integer status,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize) {
-        return ApiResponse.success(dictService.getDictPage(dictName, dictType, status, pageNum, pageSize));
+        return ApiResponse.success(
+                dictService.getDictPage(dictName, dictType, status, pageNum, pageSize));
     }
 
     /**
@@ -75,7 +71,7 @@ public class SysDictController {
     /**
      * 更新字典类型
      *
-     * @param id  字典ID
+     * @param id 字典ID
      * @param req 字典类型信息
      * @return 空响应
      */
@@ -123,12 +119,13 @@ public class SysDictController {
     /**
      * 更新字典数据项
      *
-     * @param id  数据项ID
+     * @param id 数据项ID
      * @param req 字典数据项信息
      * @return 空响应
      */
     @PutMapping("/item/{id}")
-    public ApiResponse<Void> updateDictItem(@PathVariable Long id, @RequestBody @Valid SysDictItemReq req) {
+    public ApiResponse<Void> updateDictItem(
+            @PathVariable Long id, @RequestBody @Valid SysDictItemReq req) {
         dictService.updateDictItem(id, req);
         return ApiResponse.success();
     }

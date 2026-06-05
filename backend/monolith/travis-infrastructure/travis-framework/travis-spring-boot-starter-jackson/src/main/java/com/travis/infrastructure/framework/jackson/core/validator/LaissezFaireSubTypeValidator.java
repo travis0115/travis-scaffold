@@ -5,15 +5,15 @@ import tools.jackson.databind.JavaType;
 import tools.jackson.databind.jsontype.PolymorphicTypeValidator;
 
 /**
- * 全局放行的校验器
- * 仅在缓存来源可信时使用，否则请自定义校验器或使用默认的{@link PolymorphicTypeValidator}
+ * 全局放行的校验器 仅在缓存来源可信时使用，否则请自定义校验器或使用默认的{@link PolymorphicTypeValidator}
  *
  * @author travis
  */
 public class LaissezFaireSubTypeValidator extends PolymorphicTypeValidator.Base {
 
     @Override
-    public Validity validateSubClassName(DatabindContext ctxt, JavaType baseType, String subClassName) {
+    public Validity validateSubClassName(
+            DatabindContext ctxt, JavaType baseType, String subClassName) {
         return Validity.ALLOWED;
     }
 

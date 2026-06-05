@@ -10,5 +10,4 @@ import org.apache.ibatis.annotations.Mapper;
  * @author travis
  */
 @Mapper
-public interface SysDictItemMapper extends BaseMapperX<SysDictItem> {
-}
+public interface SysDictItemMapper extends BaseMapperX<SysDictItem> {}

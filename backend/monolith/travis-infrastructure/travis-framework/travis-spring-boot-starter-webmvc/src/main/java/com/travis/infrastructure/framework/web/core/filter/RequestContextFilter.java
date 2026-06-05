@@ -4,6 +4,7 @@ import com.travis.infrastructure.framework.web.core.util.ServletUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -11,11 +12,7 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 
-import java.io.IOException;
-
-/**
- * 请求上下文过滤器
- */
+/** 请求上下文过滤器 */
 @Slf4j
 public class RequestContextFilter extends OncePerRequestFilter {
 
@@ -26,15 +23,16 @@ public class RequestContextFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request,
-                                    @NonNull HttpServletResponse response,
-                                    @NonNull FilterChain filterChain) {
+    protected void doFilterInternal(
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain) {
 
         // multipart/form-data 请求不使用 ContentCachingRequestWrapper
-//         因为 Spring 的 MultipartResolver 需要直接读取原始请求流
-//        boolean isMultipartRequest = ServletUtils.isMultipart(request);
+        //         因为 Spring 的 MultipartResolver 需要直接读取原始请求流
+        //        boolean isMultipartRequest = ServletUtils.isMultipart(request);
         boolean isJsonRequest = ServletUtil.isJsonRequest(request);
-//        var requestWrapper = (!isMultipartRequest && isJsonRequest) ?
+        //        var requestWrapper = (!isMultipartRequest && isJsonRequest) ?
         var requestWrapper = isJsonRequest ? new ContentCachingRequestWrapper(request, 0) : request;
         var responseWrapper = new ContentCachingResponseWrapper(response);
         try {
@@ -49,5 +47,4 @@ public class RequestContextFilter extends OncePerRequestFilter {
             }
         }
     }
-
 }

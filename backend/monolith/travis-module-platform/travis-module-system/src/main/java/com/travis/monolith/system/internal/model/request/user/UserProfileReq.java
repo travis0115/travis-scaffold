@@ -12,19 +12,13 @@ import lombok.Data;
  */
 @Data
 public class UserProfileReq {
-    /**
-     * 昵称
-     */
+    /** 昵称 */
     @NotBlank(message = "昵称不能为空")
     private String nickname;
-    /**
-     * 邮箱
-     */
-    @Email
-    private String email;
-    /**
-     * 手机号
-     */
-    @Mobile
-    private String mobile;
+
+    /** 邮箱 */
+    @Email private String email;
+
+    /** 手机号 */
+    @Mobile private String mobile;
 }

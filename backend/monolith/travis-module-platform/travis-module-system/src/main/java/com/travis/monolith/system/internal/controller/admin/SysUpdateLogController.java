@@ -6,11 +6,10 @@ import com.travis.monolith.system.internal.model.request.log.SysUpdateLogReq;
 import com.travis.monolith.system.internal.model.response.log.SysUpdateLogResp;
 import com.travis.monolith.system.internal.service.SysUpdateLogService;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * 系统更新日志管理控制器，提供CRUD接口和已发布日志查询
@@ -25,9 +24,7 @@ public class SysUpdateLogController {
 
     private final SysUpdateLogService updateLogService;
 
-    /**
-     * 分页查询更新日志
-     */
+    /** 分页查询更新日志 */
     @GetMapping("/page")
     public ApiResponse<PageResult<SysUpdateLogResp>> page(
             @RequestParam(required = false) String version,
@@ -35,47 +32,39 @@ public class SysUpdateLogController {
             @RequestParam(required = false) Integer status,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize) {
-        return ApiResponse.success(updateLogService.getUpdateLogPage(version, title, status, pageNum, pageSize));
+        return ApiResponse.success(
+                updateLogService.getUpdateLogPage(version, title, status, pageNum, pageSize));
     }
 
-    /**
-     * 获取更新日志详情
-     */
+    /** 获取更新日志详情 */
     @GetMapping("/{id}")
     public ApiResponse<SysUpdateLogResp> getDetail(@PathVariable Long id) {
         return ApiResponse.success(updateLogService.getUpdateLogDetail(id));
     }
 
-    /**
-     * 新增更新日志
-     */
+    /** 新增更新日志 */
     @PostMapping
     public ApiResponse<Void> add(@RequestBody @Valid SysUpdateLogReq req) {
         updateLogService.addUpdateLog(req);
         return ApiResponse.success();
     }
 
-    /**
-     * 更新更新日志
-     */
+    /** 更新更新日志 */
     @PutMapping("/{id}")
-    public ApiResponse<Void> update(@PathVariable Long id, @RequestBody @Valid SysUpdateLogReq req) {
+    public ApiResponse<Void> update(
+            @PathVariable Long id, @RequestBody @Valid SysUpdateLogReq req) {
         updateLogService.updateUpdateLog(id, req);
         return ApiResponse.success();
     }
 
-    /**
-     * 删除更新日志
-     */
+    /** 删除更新日志 */
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         updateLogService.deleteUpdateLog(id);
         return ApiResponse.success();
     }
 
-    /**
-     * 获取已发布的更新日志列表（供前端用户查看）
-     */
+    /** 获取已发布的更新日志列表（供前端用户查看） */
     @GetMapping("/published")
     public ApiResponse<List<SysUpdateLogResp>> getPublishedLogs(
             @RequestParam(defaultValue = "10") Integer limit) {

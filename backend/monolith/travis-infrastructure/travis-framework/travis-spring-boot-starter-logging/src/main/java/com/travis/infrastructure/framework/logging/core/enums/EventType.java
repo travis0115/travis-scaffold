@@ -7,13 +7,9 @@ package com.travis.infrastructure.framework.logging.core.enums;
  */
 public interface EventType {
 
-    /**
-     * 事件代码
-     */
+    /** 事件代码 */
     String getCode();
 
-    /**
-     * 事件说明
-     */
+    /** 事件说明 */
     String getDescription();
 }

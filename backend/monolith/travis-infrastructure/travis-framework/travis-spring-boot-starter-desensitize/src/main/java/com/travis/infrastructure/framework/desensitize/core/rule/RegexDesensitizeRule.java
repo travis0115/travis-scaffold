@@ -1,7 +1,6 @@
 package com.travis.infrastructure.framework.desensitize.core.rule;
 
 import cn.hutool.core.util.StrUtil;
-
 import java.util.regex.Pattern;
 
 /**
@@ -23,9 +22,7 @@ public record RegexDesensitizeRule(Pattern pattern, String replacer) implements 
         return pattern.matcher(value).replaceAll(replacer);
     }
 
-    /**
-     * 供 Resolver 调用，便于在异常中带上注解信息
-     */
+    /** 供 Resolver 调用，便于在异常中带上注解信息 */
     public static RegexDesensitizeRule of(String regex, String replacer, String annotationSource) {
         return new RegexDesensitizeRule(compile(regex, annotationSource), replacer);
     }

@@ -1,72 +1,54 @@
 package com.travis.infrastructure.framework.logging.core.util;
 
-import org.slf4j.Logger;
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.SerializationFeature;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.SerializationFeature;
 
 /**
  * 开发环境日志工具类
- * <p>
- * 用于在控制台以格式化的彩色边框输出日志信息，支持自动换行、中文宽度计算及 JSON 美化。
- * 仅用于开发环境下使用，便于调试和查看复杂数据结构。
+ *
+ * <p>用于在控制台以格式化的彩色边框输出日志信息，支持自动换行、中文宽度计算及 JSON 美化。 仅用于开发环境下使用，便于调试和查看复杂数据结构。
  */
 public class DevLoggerUtil {
 
-    /**
-     * JSON 序列化器，启用缩进输出
-     */
-    private static final ObjectMapper MAPPER = new ObjectMapper().rebuild()
-            .enable(SerializationFeature.INDENT_OUTPUT).build();
+    /** JSON 序列化器，启用缩进输出 */
+    private static final ObjectMapper MAPPER =
+            new ObjectMapper().rebuild().enable(SerializationFeature.INDENT_OUTPUT).build();
 
-
-    /**
-     * 总输出宽度（字符数）
-     */
+    /** 总输出宽度（字符数） */
     private static final int TOTAL_WIDTH = 160;
 
-
-    /**
-     * ANSI 颜色重置码
-     */
+    /** ANSI 颜色重置码 */
     private static final String RESET = "\033[0m";
-    /**
-     * ANSI 青色码（用于键名）
-     */
+
+    /** ANSI 青色码（用于键名） */
     private static final String CYAN = "\033[36m";
-    /**
-     * ANSI 绿色码（用于值）
-     */
+
+    /** ANSI 绿色码（用于值） */
     private static final String GREEN = "\033[32m";
-    /**
-     * ANSI 黄色码（用于标题）
-     */
+
+    /** ANSI 黄色码（用于标题） */
     private static final String YELLOW = "\033[33m";
 
-    /**
-     * 正则表达式：匹配 ANSI 转义序列
-     */
+    /** 正则表达式：匹配 ANSI 转义序列 */
     private static final Pattern ANSI = Pattern.compile("\u001B\\[[;\\d]*m");
 
     /**
      * 打印格式化的日志信息
      *
      * @param logger SLF4J 日志记录器
-     * @param title  日志标题
-     * @param data   要打印的键值对数据
+     * @param title 日志标题
+     * @param data 要打印的键值对数据
      */
     public static void print(Logger logger, String title, Map<String, Object> data) {
         var contentWidth = TOTAL_WIDTH - 4;
         // 计算所有键中最大的显示宽度（考虑中文字符占两格）
-        var keyWidth = data.keySet().stream()
-                .mapToInt(DevLoggerUtil::displayWidth)
-                .max()
-                .orElse(0);
+        var keyWidth = data.keySet().stream().mapToInt(DevLoggerUtil::displayWidth).max().orElse(0);
 
         var border = "═".repeat(TOTAL_WIDTH - 2);
 
@@ -111,9 +93,8 @@ public class DevLoggerUtil {
 
     /**
      * 将对象格式化为字符串列表
-     * <p>
-     * 如果值是 Map 或 Collection，则序列化为美化的 JSON 并按行拆分；
-     * 否则转换为字符串。若解析失败则返回原始字符串表示。
+     *
+     * <p>如果值是 Map 或 Collection，则序列化为美化的 JSON 并按行拆分； 否则转换为字符串。若解析失败则返回原始字符串表示。
      *
      * @param value 待格式化的对象
      * @return 格式化后的字符串列表
@@ -128,16 +109,12 @@ public class DevLoggerUtil {
                 json = String.valueOf(value).trim();
             }
 
-
             // 如果是 JSON 对象或数组，进行美化并分行
             if (json.startsWith("{") || json.startsWith("[")) {
                 if (json.contains("\n")) {
                     return Arrays.asList(json.split("\n"));
                 }
-                return Arrays.asList(
-                        MAPPER.readTree(json.trim())
-                                .toPrettyString()
-                                .split("\n"));
+                return Arrays.asList(MAPPER.readTree(json.trim()).toPrettyString().split("\n"));
             }
             return List.of(json);
         } catch (Exception e) {
@@ -149,8 +126,8 @@ public class DevLoggerUtil {
     /**
      * 将内容包装在边框内，超宽时自动换行，换行后的内容从指定缩进列开始
      *
-     * @param content    包含 ANSI 颜色码的内容
-     * @param width      目标宽度（不含边框）
+     * @param content 包含 ANSI 颜色码的内容
+     * @param width 目标宽度（不含边框）
      * @param wrapIndent 换行后内容的缩进宽度（对齐到字段值起始列）
      * @return 包装后的字符串（可能包含多行，以换行符分隔）
      */
@@ -175,7 +152,12 @@ public class DevLoggerUtil {
             int maxWidth = firstLine ? width : width - wrapIndent;
 
             if (visibleWidth + cw > maxWidth) {
-                appendBorderedLine(sb, current.toString(), firstLine ? width : width - wrapIndent, firstLine, wrapIndent);
+                appendBorderedLine(
+                        sb,
+                        current.toString(),
+                        firstLine ? width : width - wrapIndent,
+                        firstLine,
+                        wrapIndent);
                 current = new StringBuilder();
                 visibleWidth = 0;
                 firstLine = false;
@@ -187,7 +169,12 @@ public class DevLoggerUtil {
         }
 
         if (!current.isEmpty()) {
-            appendBorderedLine(sb, current.toString(), firstLine ? width : width - wrapIndent, firstLine, wrapIndent);
+            appendBorderedLine(
+                    sb,
+                    current.toString(),
+                    firstLine ? width : width - wrapIndent,
+                    firstLine,
+                    wrapIndent);
         } else if (sb.isEmpty()) {
             sb.append("║ ").repeat(" ", width);
         }
@@ -195,18 +182,23 @@ public class DevLoggerUtil {
         return sb.toString();
     }
 
-    /**
-     * 添加一行带边框的内容，首行无额外缩进，续行按 wrapIndent 缩进并补齐右侧空格
-     */
-    private static void appendBorderedLine(StringBuilder sb, String segment, int effectiveWidth,
-                                           boolean firstLine, int wrapIndent) {
+    /** 添加一行带边框的内容，首行无额外缩进，续行按 wrapIndent 缩进并补齐右侧空格 */
+    private static void appendBorderedLine(
+            StringBuilder sb,
+            String segment,
+            int effectiveWidth,
+            boolean firstLine,
+            int wrapIndent) {
         var visible = displayWidth(stripAnsi(segment));
         var padding = effectiveWidth - visible;
 
         if (firstLine) {
             sb.append("║ ").append(segment).append(" ".repeat(Math.max(0, padding)));
         } else {
-            sb.append("\n║ ").append(" ".repeat(wrapIndent)).append(segment).append(" ".repeat(Math.max(0, padding)));
+            sb.append("\n║ ")
+                    .append(" ".repeat(wrapIndent))
+                    .append(segment)
+                    .append(" ".repeat(Math.max(0, padding)));
         }
     }
 
@@ -222,8 +214,8 @@ public class DevLoggerUtil {
 
     /**
      * 计算字符串的显示宽度
-     * <p>
-     * 中文字符计为 2 个单位，其他字符计为 1 个单位。
+     *
+     * <p>中文字符计为 2 个单位，其他字符计为 1 个单位。
      *
      * @param text 输入文本
      * @return 显示宽度

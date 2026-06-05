@@ -4,10 +4,9 @@ import com.travis.infrastructure.common.mapstruct.BaseMapperConfig;
 import com.travis.monolith.system.internal.model.entity.SysUpdateLog;
 import com.travis.monolith.system.internal.model.request.log.SysUpdateLogReq;
 import com.travis.monolith.system.internal.model.response.log.SysUpdateLogResp;
+import java.util.List;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
-
-import java.util.List;
 
 /**
  * 更新日志对象转换器

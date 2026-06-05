@@ -4,6 +4,12 @@ import cn.hutool.core.util.StrUtil;
 import com.travis.infrastructure.framework.web.core.advice.I18nResponseBodyAdvice;
 import com.travis.infrastructure.framework.web.core.service.I18nService;
 import jakarta.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.time.Duration;
+import java.util.List;
+import java.util.Locale;
+import java.util.Properties;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,13 +32,6 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.time.Duration;
-import java.util.List;
-import java.util.Locale;
-import java.util.Properties;
-
 /**
  * 自动装配i18n相关组件
  *
@@ -44,10 +43,7 @@ import java.util.Properties;
 @Import(I18nService.class)
 public class TravisI18nAutoConfiguration {
 
-
-    /**
-     * 自定义LocaleResolver，优先使用请求头中的locale信息，如果不存在则使用默认locale
-     */
+    /** 自定义LocaleResolver，优先使用请求头中的locale信息，如果不存在则使用默认locale */
     @Bean
     public LocaleResolver localeResolver(@Value("${spring.web.locale:zh_CN}") Locale locale) {
         return new AcceptHeaderLocaleResolver() {
@@ -63,7 +59,6 @@ public class TravisI18nAutoConfiguration {
         };
     }
 
-
     /**
      * 自定义国际化资源文件
      *
@@ -71,8 +66,9 @@ public class TravisI18nAutoConfiguration {
      * @return 自定义国际化资源文件
      */
     @Bean
-    public MessageSource messageSource(MessageSourceProperties properties,
-                                       @Value("${spring.web.locale:zh_CN}") Locale locale) {
+    public MessageSource messageSource(
+            MessageSourceProperties properties,
+            @Value("${spring.web.locale:zh_CN}") Locale locale) {
         var messageSource = new ResourceBundleMessageSource();
         // 按照查找顺序设置basenames
         // 1.用户项目的国际化文件（高优先级）
@@ -110,33 +106,24 @@ public class TravisI18nAutoConfiguration {
             try {
                 PropertiesLoaderUtils.fillProperties(properties, resource);
             } catch (IOException ex) {
-                throw new UncheckedIOException("Failed to load common messages from '%s'".formatted(resource), ex);
+                throw new UncheckedIOException(
+                        "Failed to load common messages from '%s'".formatted(resource), ex);
             }
         }
         return properties;
     }
 
-    /**
-     * 自动装配I18nResponseBodyAdvice
-     */
+    /** 自动装配I18nResponseBodyAdvice */
     @Bean
-    @ConditionalOnProperty(
-            prefix = "travis.web.i18n",
-            name = "enabled",
-            havingValue = "true"
-    )
+    @ConditionalOnProperty(prefix = "travis.web.i18n", name = "enabled", havingValue = "true")
     public I18nResponseBodyAdvice i18nResponseBodyAdvice(I18nService i18nService) {
         return new I18nResponseBodyAdvice(i18nService);
     }
 
-    /**
-     * 自动装配I18nService
-     */
+    /** 自动装配I18nService */
     @Bean
     @ConditionalOnMissingBean
     public I18nService i18nService(MessageSource messageSource) {
         return new I18nService(messageSource);
     }
-
-
 }

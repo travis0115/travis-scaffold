@@ -4,11 +4,10 @@ import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
-import lombok.Data;
-
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import lombok.Data;
 
 /**
  * 操作日志实体，对应 sys_operation_log 表，记录管理员的关键操作
@@ -17,69 +16,52 @@ import java.time.LocalDateTime;
  */
 @Data
 public class SysOperationLog implements Serializable {
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
-    /**
-     * 主键ID（雪花算法生成）
-     */
+    /** 主键ID（雪花算法生成） */
     @TableId(type = IdType.ASSIGN_ID)
     private Long id;
-    /**
-     * 操作用户ID
-     */
+
+    /** 操作用户ID */
     private Long userId;
-    /**
-     * 操作用户名
-     */
+
+    /** 操作用户名 */
     private String username;
-    /**
-     * 操作描述
-     */
+
+    /** 操作描述 */
     private String description;
-    /**
-     * 所属业务模块
-     */
+
+    /** 所属业务模块 */
     private String module;
-    /**
-     * 请求方法全限定名
-     */
+
+    /** 请求方法全限定名 */
     private String method;
-    /**
-     * 请求URL
-     */
+
+    /** 请求URL */
     private String requestUrl;
-    /**
-     * HTTP 请求方法（GET/POST/PUT/DELETE）
-     */
+
+    /** HTTP 请求方法（GET/POST/PUT/DELETE） */
     private String requestMethod;
-    /**
-     * 请求参数（JSON 格式）
-     */
+
+    /** 请求参数（JSON 格式） */
     private String requestParams;
-    /**
-     * 响应结果（JSON 格式）
-     */
+
+    /** 响应结果（JSON 格式） */
     private String responseResult;
-    /**
-     * 操作IP地址
-     */
+
+    /** 操作IP地址 */
     private String ip;
-    /**
-     * 执行耗时（毫秒）
-     */
+
+    /** 执行耗时（毫秒） */
     private Long duration;
-    /**
-     * 操作状态（0-失败 1-成功）
-     */
+
+    /** 操作状态（0-失败 1-成功） */
     private Integer status;
-    /**
-     * 错误信息（失败时记录）
-     */
+
+    /** 错误信息（失败时记录） */
     private String errorMsg;
-    /**
-     * 操作时间
-     */
+
+    /** 操作时间 */
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 }

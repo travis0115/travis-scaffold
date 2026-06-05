@@ -16,14 +16,13 @@ import com.travis.monolith.system.internal.model.request.dict.SysDictReq;
 import com.travis.monolith.system.internal.model.response.dict.SysDictItemResp;
 import com.travis.monolith.system.internal.service.SysDictItemService;
 import com.travis.monolith.system.internal.service.SysDictService;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * 字典管理服务实现，同时代理字典数据项的操作，将字典项的增删改委托给 {@link SysDictItemService}
@@ -32,7 +31,8 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
-public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict> implements SysDictService {
+public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
+        implements SysDictService {
 
     /** 字典数据项服务 */
     private final SysDictItemService dictItemService;
@@ -40,9 +40,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict> impl
     /** 对象转换器 */
     private final SysDictItemConverter converter;
 
-    /**
-     * 获取字典树形数据（每个字典包含其下的数据项作为 children）
-     */
+    /** 获取字典树形数据（每个字典包含其下的数据项作为 children） */
     @Override
     public List<SysDict> getDictTree() {
         // 查询所有字典类型
@@ -52,37 +50,40 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict> impl
         }
         // 批量查询所有字典类型下的数据项
         List<Long> dictIds = dictList.stream().map(SysDict::getId).toList();
-        List<SysDictItem> allItems = dictItemService.list(new LambdaQueryWrapper<SysDictItem>()
-                .in(SysDictItem::getDictId, dictIds)
-                .orderByAsc(SysDictItem::getSort));
+        List<SysDictItem> allItems =
+                dictItemService.list(
+                        new LambdaQueryWrapper<SysDictItem>()
+                                .in(SysDictItem::getDictId, dictIds)
+                                .orderByAsc(SysDictItem::getSort));
         // 按 dictId 分组
-        Map<Long, List<SysDictItemResp>> itemsGroup = allItems.stream()
-                .collect(Collectors.groupingBy(
-                        SysDictItem::getDictId,
-                        Collectors.mapping(converter::toResp, Collectors.toList())));
+        Map<Long, List<SysDictItemResp>> itemsGroup =
+                allItems.stream()
+                        .collect(
+                                Collectors.groupingBy(
+                                        SysDictItem::getDictId,
+                                        Collectors.mapping(
+                                                converter::toResp, Collectors.toList())));
         // 为每个字典设置 children
-        dictList.forEach(dict ->
-                dict.setChildren(itemsGroup.getOrDefault(dict.getId(), List.of())));
+        dictList.forEach(
+                dict -> dict.setChildren(itemsGroup.getOrDefault(dict.getId(), List.of())));
         return dictList;
     }
 
-    /**
-     * 分页查询字典类型列表，支持按名称、类型编码、状态筛选
-     */
+    /** 分页查询字典类型列表，支持按名称、类型编码、状态筛选 */
     @Override
-    public PageResult<SysDict> getDictPage(String dictName, String dictType, Integer status, Integer pageNum, Integer pageSize) {
-        LambdaQueryWrapper<SysDict> wrapper = new LambdaQueryWrapper<SysDict>()
-                .like(dictName != null, SysDict::getDictName, dictName)
-                .like(dictType != null, SysDict::getDictType, dictType)
-                .eq(status != null, SysDict::getStatus, status)
-                .orderByDesc(SysDict::getCreateTime);
+    public PageResult<SysDict> getDictPage(
+            String dictName, String dictType, Integer status, Integer pageNum, Integer pageSize) {
+        LambdaQueryWrapper<SysDict> wrapper =
+                new LambdaQueryWrapper<SysDict>()
+                        .like(dictName != null, SysDict::getDictName, dictName)
+                        .like(dictType != null, SysDict::getDictType, dictType)
+                        .eq(status != null, SysDict::getStatus, status)
+                        .orderByDesc(SysDict::getCreateTime);
         Page<SysDict> page = page(new Page<>(pageNum, pageSize), wrapper);
         return toPageResult(page);
     }
 
-    /**
-     * 获取字典类型详情
-     */
+    /** 获取字典类型详情 */
     @Override
     public SysDict getDictDetail(Long id) {
         SysDict dict = getById(id);
@@ -92,15 +93,15 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict> impl
         return dict;
     }
 
-    /**
-     * 新增字典类型
-     */
+    /** 新增字典类型 */
     @Override
     @Transactional
     public void addDict(SysDictReq req) {
         // 检查字典类型编码唯一性
-        long count = count(new LambdaQueryWrapper<SysDict>()
-                .eq(SysDict::getDictType, req.getDictType()));
+        long count =
+                count(
+                        new LambdaQueryWrapper<SysDict>()
+                                .eq(SysDict::getDictType, req.getDictType()));
         if (count > 0) {
             throw new BizException(SystemErrorCode.SYSTEM_DICT_TYPE_EXISTS);
         }
@@ -112,9 +113,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict> impl
         save(dict);
     }
 
-    /**
-     * 更新字典类型
-     */
+    /** 更新字典类型 */
     @Override
     @Transactional
     public void updateDict(Long id, SysDictReq req) {
@@ -123,9 +122,11 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict> impl
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
         // 检查字典类型编码唯一性（排除自身）
-        long count = count(new LambdaQueryWrapper<SysDict>()
-                .eq(SysDict::getDictType, req.getDictType())
-                .ne(SysDict::getId, id));
+        long count =
+                count(
+                        new LambdaQueryWrapper<SysDict>()
+                                .eq(SysDict::getDictType, req.getDictType())
+                                .ne(SysDict::getId, id));
         if (count > 0) {
             throw new BizException(SystemErrorCode.SYSTEM_DICT_TYPE_EXISTS);
         }
@@ -136,51 +137,43 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict> impl
         updateById(dict);
     }
 
-    /**
-     * 删除字典类型（同时删除其下所有字典数据项）
-     */
+    /** 删除字典类型（同时删除其下所有字典数据项） */
     @Override
     @Transactional
     @CacheEvict(value = "system:dict:items", key = "#id")
     public void deleteDict(Long id) {
         // 删除字典下的所有数据项
-        dictItemService.remove(new LambdaQueryWrapper<SysDictItem>()
-                .eq(SysDictItem::getDictId, id));
+        dictItemService.remove(
+                new LambdaQueryWrapper<SysDictItem>().eq(SysDictItem::getDictId, id));
         removeById(id);
     }
 
-    /**
-     * 查询指定字典类型下的所有数据项，按排序号升序
-     */
+    /** 查询指定字典类型下的所有数据项，按排序号升序 */
     @Override
     public List<SysDictItemResp> getDictItems(Long dictId) {
-        List<SysDictItem> items = dictItemService.list(new LambdaQueryWrapper<SysDictItem>()
-                .eq(SysDictItem::getDictId, dictId)
-                .orderByAsc(SysDictItem::getSort));
+        List<SysDictItem> items =
+                dictItemService.list(
+                        new LambdaQueryWrapper<SysDictItem>()
+                                .eq(SysDictItem::getDictId, dictId)
+                                .orderByAsc(SysDictItem::getSort));
         return converter.toRespList(items);
     }
 
-    /**
-     * 新增字典数据项（委托给 {@link SysDictItemService}）
-     */
+    /** 新增字典数据项（委托给 {@link SysDictItemService}） */
     @Override
     @CacheEvict(value = "system:dict:items", key = "#req.dictId")
     public void addDictItem(SysDictItemReq req) {
         dictItemService.addDictItem(req);
     }
 
-    /**
-     * 更新字典数据项（委托给 {@link SysDictItemService}）
-     */
+    /** 更新字典数据项（委托给 {@link SysDictItemService}） */
     @Override
     @CacheEvict(value = "system:dict:items", key = "#req.dictId")
     public void updateDictItem(Long id, SysDictItemReq req) {
         dictItemService.updateDictItem(id, req);
     }
 
-    /**
-     * 删除字典数据项（委托给 {@link SysDictItemService}）
-     */
+    /** 删除字典数据项（委托给 {@link SysDictItemService}） */
     @Override
     @CacheEvict(value = "system:dict:items", allEntries = true)
     public void deleteDictItem(Long id) {
@@ -191,11 +184,15 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict> impl
      * MyBatis-Plus 分页对象转统一的分页结果
      *
      * @param page 分页对象
-     * @param <T>  数据类型
+     * @param <T> 数据类型
      * @return 分页结果
      */
     private <T> PageResult<T> toPageResult(Page<T> page) {
-        return new PageResult<>(page.getRecords(), page.getTotal(),
-                (int) page.getCurrent(), (int) page.getSize(), (int) page.getPages());
+        return new PageResult<>(
+                page.getRecords(),
+                page.getTotal(),
+                (int) page.getCurrent(),
+                (int) page.getSize(),
+                (int) page.getPages());
     }
 }

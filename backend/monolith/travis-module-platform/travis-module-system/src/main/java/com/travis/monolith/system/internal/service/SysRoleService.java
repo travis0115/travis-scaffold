@@ -6,7 +6,6 @@ import com.travis.monolith.system.internal.model.entity.SysRole;
 import com.travis.monolith.system.internal.model.request.role.SysRoleMenuReq;
 import com.travis.monolith.system.internal.model.request.role.SysRoleReq;
 import com.travis.monolith.system.internal.model.response.role.SysRoleResp;
-
 import java.util.List;
 
 /**
@@ -19,14 +18,15 @@ public interface SysRoleService extends IService<SysRole> {
     /**
      * 分页查询角色列表
      *
-     * @param roleName  角色名称（模糊匹配，可为空）
-     * @param roleCode  角色编码（模糊匹配，可为空）
-     * @param status    状态（可为空）
-     * @param pageNum   页码
-     * @param pageSize  每页条数
+     * @param roleName 角色名称（模糊匹配，可为空）
+     * @param roleCode 角色编码（模糊匹配，可为空）
+     * @param status 状态（可为空）
+     * @param pageNum 页码
+     * @param pageSize 每页条数
      * @return 分页结果
      */
-    PageResult<SysRoleResp> getRolePage(String roleName, String roleCode, Integer status, Integer pageNum, Integer pageSize);
+    PageResult<SysRoleResp> getRolePage(
+            String roleName, String roleCode, Integer status, Integer pageNum, Integer pageSize);
 
     /**
      * 获取角色详情，包含已分配的菜单ID列表
@@ -46,7 +46,7 @@ public interface SysRoleService extends IService<SysRole> {
     /**
      * 更新角色信息
      *
-     * @param id  角色ID
+     * @param id 角色ID
      * @param req 角色信息请求参数
      */
     void updateRole(Long id, SysRoleReq req);

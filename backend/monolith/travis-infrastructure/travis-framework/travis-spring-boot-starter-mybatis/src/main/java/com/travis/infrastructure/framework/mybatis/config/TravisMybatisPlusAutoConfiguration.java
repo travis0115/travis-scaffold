@@ -15,8 +15,8 @@ import org.springframework.context.annotation.Bean;
 
 /**
  * MyBatis-Plus 自动配置类
- * <p>
- * 注册分页插件、乐观锁插件、防全表更新/删除插件，以及默认的字段自动填充处理器。
+ *
+ * <p>注册分页插件、乐观锁插件、防全表更新/删除插件，以及默认的字段自动填充处理器。
  *
  * @author travis
  */
@@ -27,12 +27,13 @@ public class TravisMybatisPlusAutoConfiguration {
 
     /**
      * 注册 MyBatis-Plus 拦截器
-     * <p>
-     * 包含以下插件（注意顺序）：
+     *
+     * <p>包含以下插件（注意顺序）：
+     *
      * <ol>
-     *     <li>分页插件 {@link PaginationInnerInterceptor}</li>
-     *     <li>乐观锁插件 {@link OptimisticLockerInnerInterceptor}</li>
-     *     <li>防全表更新/删除插件 {@link BlockAttackInnerInterceptor}</li>
+     *   <li>分页插件 {@link PaginationInnerInterceptor}
+     *   <li>乐观锁插件 {@link OptimisticLockerInnerInterceptor}
+     *   <li>防全表更新/删除插件 {@link BlockAttackInnerInterceptor}
      * </ol>
      *
      * @return MybatisPlusInterceptor 实例
@@ -50,11 +51,10 @@ public class TravisMybatisPlusAutoConfiguration {
         return interceptor;
     }
 
-
     /**
      * 注册默认的字段自动填充处理器
-     * <p>
-     * 可通过自定义 {@link MetaObjectHandler} Bean 覆盖此默认实现。
+     *
+     * <p>可通过自定义 {@link MetaObjectHandler} Bean 覆盖此默认实现。
      *
      * @return MetaObjectHandler 实例
      */

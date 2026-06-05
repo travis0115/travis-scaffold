@@ -8,21 +8,20 @@ import com.travis.infrastructure.framework.web.core.util.IpUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.MDC;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
  * MDCFilter
- * <p>
- * 职责：在请求入口将必要值写入MDC，并在出口清理
- * <p>
- * 放在网关 / 单体入口 都适用
+ *
+ * <p>职责：在请求入口将必要值写入MDC，并在出口清理
+ *
+ * <p>放在网关 / 单体入口 都适用
  */
 @Slf4j
 public class MdcFilter extends OncePerRequestFilter {
@@ -34,12 +33,13 @@ public class MdcFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request,
-                                    @NonNull HttpServletResponse response,
-                                    @NonNull FilterChain filterChain) {
+    protected void doFilterInternal(
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain) {
         var wrappedRequest = new MutableHttpServletRequest(request);
         try {
-            //requestId
+            // requestId
             var requestId = wrappedRequest.getHeader(CustomHttpHeaders.REQUEST_ID);
             if (StrUtil.isBlank(requestId)) {
                 requestId = RequestIdGenerator.nextId();
@@ -66,26 +66,19 @@ public class MdcFilter extends OncePerRequestFilter {
         // 禁止执行完毕后添加代码
     }
 
-    /**
-     * 是否允许在发生错误时过滤请求
-     */
+    /** 是否允许在发生错误时过滤请求 */
     @Override
     protected boolean shouldNotFilterErrorDispatch() {
         return false;
     }
 
-    /**
-     * 是否允许在异步处理时过滤请求
-     */
+    /** 是否允许在异步处理时过滤请求 */
     @Override
     protected boolean shouldNotFilterAsyncDispatch() {
         return false;
     }
 
-    /**
-     * requestId 生成器，Base36 短 ID。
-     * 布局（64 bit）：高 42 位时间（毫秒，截断防溢出），中 12 位同毫秒序号，低 20 位随机数。
-     */
+    /** requestId 生成器，Base36 短 ID。 布局（64 bit）：高 42 位时间（毫秒，截断防溢出），中 12 位同毫秒序号，低 20 位随机数。 */
     private static final class RequestIdGenerator {
 
         private static final AtomicInteger SEQ = new AtomicInteger();
@@ -113,5 +106,4 @@ public class MdcFilter extends OncePerRequestFilter {
             return Long.toUnsignedString(value, 36);
         }
     }
-
 }

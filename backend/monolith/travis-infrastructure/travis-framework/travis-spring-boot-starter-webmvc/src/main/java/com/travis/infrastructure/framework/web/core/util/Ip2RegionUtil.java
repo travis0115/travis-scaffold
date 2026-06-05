@@ -4,18 +4,15 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.model.CityResponse;
+import java.net.InetAddress;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 
-import java.net.InetAddress;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 /**
- * 基于ip2region 3.x的离线IP地址解析工具
- * 支持国内外IPv4和IPv6地址解析到省/市级别
- * 使用Ip2Region统一查询服务，自动识别IPv4/IPv6
+ * 基于ip2region 3.x的离线IP地址解析工具 支持国内外IPv4和IPv6地址解析到省/市级别 使用Ip2Region统一查询服务，自动识别IPv4/IPv6
  *
  * @author travis
  */
@@ -41,10 +38,7 @@ public class Ip2RegionUtil {
         }
     }
 
-
-    /**
-     * 获取IP地址信息
-     */
+    /** 获取IP地址信息 */
     private static CityResponse getResponse(String ip) throws Exception {
         if (databaseReader == null) {
             return null;
@@ -53,10 +47,7 @@ public class Ip2RegionUtil {
         return databaseReader.city(ipAddress);
     }
 
-
-    /**
-     * 根据IP地址获取国家信息
-     */
+    /** 根据IP地址获取国家信息 */
     public static String getCountryByIP(String ip) throws Exception {
         if (IpUtil.isInternalIp(ip)) {
             return INTERNAL;
@@ -70,13 +61,9 @@ public class Ip2RegionUtil {
         // 获取国家信息
         var country = getName(response.country().names());
         return StrUtil.blankToDefault(country, UNKNOWN);
-
     }
 
-    /**
-     * 根据IP地址获取地址信息
-     * 格式：国家 省份 城市
-     */
+    /** 根据IP地址获取地址信息 格式：国家 省份 城市 */
     public static String getRegionByIP(String ip) {
         if (IpUtil.isInternalIp(ip)) {
             return INTERNAL;
@@ -93,13 +80,14 @@ public class Ip2RegionUtil {
             return UNKNOWN;
         }
 
-        var result = CollUtil.newArrayList(
-                        getName(response.country().names()),
-                        getName(response.mostSpecificSubdivision().names()),
-                        getName(response.city().names())
-                ).stream()
-                .filter(StrUtil::isNotBlank)
-                .collect(Collectors.joining(" "));
+        var result =
+                CollUtil.newArrayList(
+                                getName(response.country().names()),
+                                getName(response.mostSpecificSubdivision().names()),
+                                getName(response.city().names()))
+                        .stream()
+                        .filter(StrUtil::isNotBlank)
+                        .collect(Collectors.joining(" "));
 
         return StrUtil.blankToDefault(result, UNKNOWN);
     }

@@ -2,13 +2,9 @@ package com.travis.infrastructure.framework.web.core.http;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
-
 import java.util.*;
 
-
-/**
- * 可变的HttpServletRequest，支持写入Header
- */
+/** 可变的HttpServletRequest，支持写入Header */
 public class MutableHttpServletRequest extends HttpServletRequestWrapper {
 
     private final Map<String, String> customHeaders = new HashMap<>();
@@ -47,6 +43,4 @@ public class MutableHttpServletRequest extends HttpServletRequestWrapper {
         }
         return super.getHeaders(name);
     }
-
-
 }

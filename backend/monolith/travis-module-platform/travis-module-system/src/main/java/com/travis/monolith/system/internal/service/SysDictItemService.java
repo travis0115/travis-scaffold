@@ -15,8 +15,8 @@ public interface SysDictItemService extends IService<SysDictItem> {
     /**
      * 分页查询字典数据项
      *
-     * @param dictId   所属字典类型ID（可为空）
-     * @param pageNum  页码
+     * @param dictId 所属字典类型ID（可为空）
+     * @param pageNum 页码
      * @param pageSize 每页条数
      * @return 分页结果
      */
@@ -32,7 +32,7 @@ public interface SysDictItemService extends IService<SysDictItem> {
     /**
      * 更新字典数据项
      *
-     * @param id  数据项ID
+     * @param id 数据项ID
      * @param req 字典数据项请求参数
      */
     void updateDictItem(Long id, SysDictItemReq req);

@@ -4,76 +4,44 @@ import com.travis.infrastructure.common.web.enums.ClientType;
 import com.travis.infrastructure.common.web.enums.PlatformType;
 import com.travis.infrastructure.framework.logging.core.enums.LogType;
 
-/**
- * Log keys
- */
+/** Log keys */
 public final class LogKeys {
 
-    /**
-     * 日志类型
-     * 参考 {@link LogType}
-     */
+    /** 日志类型 参考 {@link LogType} */
     public static final String LOG_TYPE = "log_type";
 
-    /**
-     * 事件类型
-     */
+    /** 事件类型 */
     public static final String EVENT_TYPE = "event_type";
 
-    /**
-     * 接口路径
-     */
+    /** 接口路径 */
     public static final String API_URL = "api_url";
 
-    /**
-     * 接口请求参数
-     */
+    /** 接口请求参数 */
     public static final String REQUEST_PARAMS = "request_params";
 
-    /**
-     * 接口请求Body
-     */
+    /** 接口请求Body */
     public static final String REQUEST_BODY = "request_body";
 
-
-    /**
-     * 接口请求结果
-     */
+    /** 接口请求结果 */
     public static final String API_RESULT = "api_result";
 
-    /**
-     * 接口耗时
-     */
+    /** 接口耗时 */
     public static final String API_COST = "api_cost";
 
-    /**
-     * 请求方式
-     */
+    /** 请求方式 */
     public static final String HTTP_METHOD = "http_method";
 
-    /**
-     * 客户端IP
-     */
+    /** 客户端IP */
     public static final String CLIENT_IP = "client_ip";
 
-
-    /**
-     * 客户端类型
-     * 参考 {@link ClientType}
-     */
+    /** 客户端类型 参考 {@link ClientType} */
     public static final String CLIENT_TYPE = "client_type";
 
-    /**
-     * 平台类型
-     * 参考 {@link PlatformType}
-     */
+    /** 平台类型 参考 {@link PlatformType} */
     public static final String PLATFORM_TYPE = "platform_type";
 
-    /**
-     * 浏览器
-     */
+    /** 浏览器 */
     public static final String BROWSER = "browser";
 
-    private LogKeys() {
-    }
+    private LogKeys() {}
 }

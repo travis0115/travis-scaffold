@@ -6,7 +6,6 @@ import com.travis.monolith.system.internal.model.entity.SysDict;
 import com.travis.monolith.system.internal.model.request.dict.SysDictItemReq;
 import com.travis.monolith.system.internal.model.request.dict.SysDictReq;
 import com.travis.monolith.system.internal.model.response.dict.SysDictItemResp;
-
 import java.util.List;
 
 /**
@@ -28,12 +27,13 @@ public interface SysDictService extends IService<SysDict> {
      *
      * @param dictName 字典名称（模糊匹配，可为空）
      * @param dictType 字典类型编码（模糊匹配，可为空）
-     * @param status   状态（可为空）
-     * @param pageNum  页码
+     * @param status 状态（可为空）
+     * @param pageNum 页码
      * @param pageSize 每页条数
      * @return 分页结果
      */
-    PageResult<SysDict> getDictPage(String dictName, String dictType, Integer status, Integer pageNum, Integer pageSize);
+    PageResult<SysDict> getDictPage(
+            String dictName, String dictType, Integer status, Integer pageNum, Integer pageSize);
 
     /**
      * 获取字典类型详情
@@ -53,7 +53,7 @@ public interface SysDictService extends IService<SysDict> {
     /**
      * 更新字典类型
      *
-     * @param id  字典ID
+     * @param id 字典ID
      * @param req 字典信息请求参数
      */
     void updateDict(Long id, SysDictReq req);
@@ -83,7 +83,7 @@ public interface SysDictService extends IService<SysDict> {
     /**
      * 更新字典数据项
      *
-     * @param id  数据项ID
+     * @param id 数据项ID
      * @param req 字典数据项请求参数
      */
     void updateDictItem(Long id, SysDictItemReq req);

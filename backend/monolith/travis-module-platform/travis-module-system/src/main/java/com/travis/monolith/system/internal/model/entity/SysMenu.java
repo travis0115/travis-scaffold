@@ -13,44 +13,33 @@ import lombok.EqualsAndHashCode;
 @Data
 public class SysMenu extends BaseEntity {
 
-    /**
-     * 上级菜单ID（0 表示顶级菜单）
-     */
+    /** 上级菜单ID（0 表示顶级菜单） */
     private Long parentId;
-    /**
-     * 菜单名称
-     */
+
+    /** 菜单名称 */
     private String menuName;
-    /**
-     * 路由路径
-     */
+
+    /** 路由路径 */
     private String path;
-    /**
-     * 前端组件路径
-     */
+
+    /** 前端组件路径 */
     private String component;
-    /**
-     * 权限标识（如 system:user:add）
-     */
+
+    /** 权限标识（如 system:user:add） */
     private String perms;
-    /**
-     * 菜单类型（0-目录 1-菜单 2-按钮）
-     */
+
+    /** 菜单类型（0-目录 1-菜单 2-按钮） */
     private Integer menuType;
-    /**
-     * 图标
-     */
+
+    /** 图标 */
     private String icon;
-    /**
-     * 排序号（升序）
-     */
+
+    /** 排序号（升序） */
     private Integer sort;
-    /**
-     * 状态（0-禁用 1-启用）
-     */
+
+    /** 状态（0-禁用 1-启用） */
     private Integer status;
-    /**
-     * 路由元信息JSON（Vben Admin RouteMeta 的扩展字段，如 keepAlive、hideInMenu 等）
-     */
+
+    /** 路由元信息JSON（Vben Admin RouteMeta 的扩展字段，如 keepAlive、hideInMenu 等） */
     private String meta;
 }

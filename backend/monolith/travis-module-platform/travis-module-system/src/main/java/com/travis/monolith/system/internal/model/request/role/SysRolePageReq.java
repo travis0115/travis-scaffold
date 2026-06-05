@@ -14,8 +14,10 @@ import lombok.EqualsAndHashCode;
 public class SysRolePageReq extends PageRequest {
     /** 角色名称（模糊匹配） */
     private String roleName;
+
     /** 角色编码（模糊匹配） */
     private String roleCode;
+
     /** 状态（0-禁用 1-启用） */
     private Integer status;
 }

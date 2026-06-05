@@ -37,24 +37,23 @@ public class TravisWebMvcAutoConfiguration implements WebMvcConfigurer {
 
     private final WebProperties webProperties;
 
-//    @Qualifier("handlerExceptionResolver")
+    //    @Qualifier("handlerExceptionResolver")
     private HandlerExceptionResolver handlerExceptionResolver;
+
     /**
-     * 根据Controller所在包名自动添加路径前缀：
-     * controller.admin 包 → /api/admin
-     * controller.app 包 → /api/app
-     * 其他包不加前缀
+     * 根据Controller所在包名自动添加路径前缀： controller.admin 包 → /api/admin controller.app 包 → /api/app 其他包不加前缀
      */
     @Override
     public void configurePathMatch(@NonNull PathMatchConfigurer configurer) {
-        webProperties.getApis().forEach(api -> {
-            if (api.isEnabled()) {
-                configurer.addPathPrefix(
-                        api.getPrefix(),
-                        clazz -> matchController(clazz, api)
-                );
-            }
-        });
+        webProperties
+                .getApis()
+                .forEach(
+                        api -> {
+                            if (api.isEnabled()) {
+                                configurer.addPathPrefix(
+                                        api.getPrefix(), clazz -> matchController(clazz, api));
+                            }
+                        });
     }
 
     /**
@@ -71,10 +70,7 @@ public class TravisWebMvcAutoConfiguration implements WebMvcConfigurer {
         return packageName.contains(packagePattern);
     }
 
-    /**
-     * 跨域处理
-     * 若使用 Spring Security,开启 http.cors(withDefaults())，会自动启用该配置
-     */
+    /** 跨域处理 若使用 Spring Security,开启 http.cors(withDefaults())，会自动启用该配置 */
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
@@ -83,86 +79,67 @@ public class TravisWebMvcAutoConfiguration implements WebMvcConfigurer {
                 .allowedHeaders("*")
                 .allowCredentials(true)
                 .exposedHeaders(
-                        HttpHeaders.AUTHORIZATION
-                        , HttpHeaders.CONTENT_DISPOSITION
-                        , CustomHttpHeaders.REQUEST_ID
-                )
+                        HttpHeaders.AUTHORIZATION,
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        CustomHttpHeaders.REQUEST_ID)
                 .maxAge(3600);
-
     }
 
-
-    /**
-     * 配置统一响应结果
-     */
+    /** 配置统一响应结果 */
     @Bean
     @ConditionalOnMissingBean(I18nResponseBodyAdvice.class)
     public ApiResponseBodyAdvice apiResponseBodyAdvice() {
         return new ApiResponseBodyAdvice();
     }
 
-    /**
-     * 配置全局业务异常处理器
-     */
+    /** 配置全局业务异常处理器 */
     @Bean
     @ConditionalOnMissingBean
     public BizExceptionHandlerAdvice bizExceptionHandler() {
         return new BizExceptionHandlerAdvice();
     }
 
-    /**
-     * 配置全局Sa-Token异常处理器
-     */
+    /** 配置全局Sa-Token异常处理器 */
     @Bean
     @ConditionalOnMissingBean
     public SaTokenExceptionHandlerAdvice saTokenExceptionHandler() {
         return new SaTokenExceptionHandlerAdvice();
     }
 
-    /**
-     * 配置全局服务端异常处理器
-     */
+    /** 配置全局服务端异常处理器 */
     @Bean
     @ConditionalOnMissingBean
     public ServerExceptionHandlerAdvice serverExceptionHandler() {
         return new ServerExceptionHandlerAdvice();
     }
 
-    /**
-     * 配置全局参数校验异常处理器
-     */
+    /** 配置全局参数校验异常处理器 */
     @Bean
     @ConditionalOnMissingBean
     public ValidationExceptionHandlerAdvice validationExceptionHandler() {
         return new ValidationExceptionHandlerAdvice();
     }
 
-
-    /**
-     * 配置请求上下文过滤器
-     */
+    /** 配置请求上下文过滤器 */
     @Bean("travisRequestContextFilter")
     public FilterRegistrationBean<RequestContextFilter> requestContextFilter() {
-        return createFilterBean(new RequestContextFilter(handlerExceptionResolver),
+        return createFilterBean(
+                new RequestContextFilter(handlerExceptionResolver),
                 WebFilterOrders.REQUEST_CONTEXT_FILTER);
     }
 
-    /**
-     * 配置MDC过滤器
-     */
+    /** 配置MDC过滤器 */
     @Bean
     public FilterRegistrationBean<MdcFilter> requestIdFilter() {
-        return createFilterBean(new MdcFilter(handlerExceptionResolver),
-                WebFilterOrders.MDC_FILTER);
+        return createFilterBean(
+                new MdcFilter(handlerExceptionResolver), WebFilterOrders.MDC_FILTER);
     }
 
-    /**
-     * 创建Filter Bean
-     */
-    private static <T extends Filter> FilterRegistrationBean<T> createFilterBean(T filter, Integer order) {
+    /** 创建Filter Bean */
+    private static <T extends Filter> FilterRegistrationBean<T> createFilterBean(
+            T filter, Integer order) {
         FilterRegistrationBean<T> bean = new FilterRegistrationBean<>(filter);
         bean.setOrder(order);
         return bean;
     }
-
 }

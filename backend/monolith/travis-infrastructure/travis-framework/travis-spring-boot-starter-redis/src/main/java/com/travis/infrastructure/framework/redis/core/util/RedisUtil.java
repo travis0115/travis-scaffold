@@ -1,13 +1,12 @@
 package com.travis.infrastructure.framework.redis.core.util;
 
+import java.util.Arrays;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.CollectionUtils;
-
-import java.util.Arrays;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 /**
  * 基于 RedisTemplate 的 Redis 工具类，提供静态方法封装常用操作。
@@ -27,7 +26,7 @@ public class RedisUtil {
     /**
      * 指定 key 的过期时间
      *
-     * @param key  键
+     * @param key 键
      * @param time 时间（毫秒）
      */
     public static void setExpire(String key, long time) {
@@ -124,7 +123,7 @@ public class RedisUtil {
     /**
      * 设置 value，无过期时间
      *
-     * @param key   键
+     * @param key 键
      * @param value 值
      */
     public static void set(String key, Object value) {
@@ -139,9 +138,9 @@ public class RedisUtil {
     /**
      * 设置 value 并指定过期时间
      *
-     * @param key   键
+     * @param key 键
      * @param value 值
-     * @param time  过期时间（毫秒），&lt;=0 表示不设过期
+     * @param time 过期时间（毫秒），&lt;=0 表示不设过期
      */
     public static void set(String key, Object value, long time) {
         try {
@@ -159,7 +158,7 @@ public class RedisUtil {
     /**
      * 仅当 key 不存在时设置 value
      *
-     * @param key   键
+     * @param key 键
      * @param value 值
      * @return 是否设置成功
      */
@@ -176,14 +175,17 @@ public class RedisUtil {
     /**
      * 仅当 key 不存在时设置 value 并指定过期时间
      *
-     * @param key   键
+     * @param key 键
      * @param value 值
-     * @param time  过期时间（毫秒）
+     * @param time 过期时间（毫秒）
      * @return 是否设置成功
      */
     public static boolean setIfAbsent(String key, Object value, long time) {
         try {
-            Boolean result = redisTemplate.opsForValue().setIfAbsent(key, value, time, TimeUnit.MILLISECONDS);
+            Boolean result =
+                    redisTemplate
+                            .opsForValue()
+                            .setIfAbsent(key, value, time, TimeUnit.MILLISECONDS);
             return Boolean.TRUE.equals(result);
         } catch (Exception e) {
             log.warn("redis setIfAbsent failed, key={}", key, e);
@@ -194,7 +196,7 @@ public class RedisUtil {
     /**
      * value 递增
      *
-     * @param key   键
+     * @param key 键
      * @param delta 递增值（可为负）
      * @return 递增后的值
      */
@@ -210,7 +212,7 @@ public class RedisUtil {
     /**
      * value 递减
      *
-     * @param key   键
+     * @param key 键
      * @param delta 递减量
      * @return 递减后的值
      */

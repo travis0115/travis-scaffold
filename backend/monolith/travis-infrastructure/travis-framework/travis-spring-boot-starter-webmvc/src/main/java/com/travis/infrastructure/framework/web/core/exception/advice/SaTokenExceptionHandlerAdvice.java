@@ -13,7 +13,6 @@ import org.springframework.core.annotation.Order;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-
 /**
  * Sa-Token 异常处理器
  *
@@ -25,18 +24,14 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @NoArgsConstructor
 public class SaTokenExceptionHandlerAdvice {
 
-    /**
-     * 未登录异常
-     */
+    /** 未登录异常 */
     @ExceptionHandler(NotLoginException.class)
     public ApiResponse<?> handleNotLoginException(NotLoginException ex) {
         log.warn("未登录: {}", ex.getMessage());
         return ApiResponse.error(CommonErrorCode.UNAUTHORIZED);
     }
 
-    /**
-     * 无权限异常
-     */
+    /** 无权限异常 */
     @ExceptionHandler(NotPermissionException.class)
     public ApiResponse<?> handleNotPermissionException(
             HttpServletRequest request, NotPermissionException ex) {
@@ -44,12 +39,9 @@ public class SaTokenExceptionHandlerAdvice {
         return ApiResponse.error(CommonErrorCode.FORBIDDEN);
     }
 
-    /**
-     * 无角色异常
-     */
+    /** 无角色异常 */
     @ExceptionHandler(NotRoleException.class)
-    public ApiResponse<?> handleNotRoleException(
-            HttpServletRequest request, NotRoleException ex) {
+    public ApiResponse<?> handleNotRoleException(HttpServletRequest request, NotRoleException ex) {
         log.warn("角色不匹配: {}", ex.getMessage());
         return ApiResponse.error(CommonErrorCode.FORBIDDEN);
     }

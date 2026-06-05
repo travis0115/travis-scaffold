@@ -6,8 +6,8 @@ import com.travis.monolith.system.internal.model.entity.SysUser;
 import com.travis.monolith.system.internal.model.request.user.ChangePasswordReq;
 import com.travis.monolith.system.internal.model.request.user.SysUserReq;
 import com.travis.monolith.system.internal.model.request.user.SysUserRoleReq;
-import com.travis.monolith.system.internal.model.request.user.UserProfileReq;
 import com.travis.monolith.system.internal.model.request.user.UpdateAvatarReq;
+import com.travis.monolith.system.internal.model.request.user.UserProfileReq;
 import com.travis.monolith.system.internal.model.response.user.SysUserResp;
 
 /**
@@ -21,14 +21,20 @@ public interface SysUserService extends IService<SysUser> {
      * 分页查询用户列表
      *
      * @param username 用户名（模糊匹配，可为空）
-     * @param phone    手机号（模糊匹配，可为空）
-     * @param status   状态（可为空）
-     * @param deptId   所属部门ID（可为空）
-     * @param pageNum  页码
+     * @param phone 手机号（模糊匹配，可为空）
+     * @param status 状态（可为空）
+     * @param deptId 所属部门ID（可为空）
+     * @param pageNum 页码
      * @param pageSize 每页条数
      * @return 分页结果
      */
-    PageResult<SysUserResp> getUserPage(String username, String phone, Integer status, Long deptId, Integer pageNum, Integer pageSize);
+    PageResult<SysUserResp> getUserPage(
+            String username,
+            String phone,
+            Integer status,
+            Long deptId,
+            Integer pageNum,
+            Integer pageSize);
 
     /**
      * 获取用户详情，包含关联的角色信息
@@ -49,7 +55,7 @@ public interface SysUserService extends IService<SysUser> {
     /**
      * 更新用户信息
      *
-     * @param id  用户ID
+     * @param id 用户ID
      * @param req 用户信息请求参数
      */
     void updateUser(Long id, SysUserReq req);
@@ -100,7 +106,7 @@ public interface SysUserService extends IService<SysUser> {
     /**
      * 重置用户密码
      *
-     * @param id          用户ID
+     * @param id 用户ID
      * @param newPassword 新密码（可选，为null时自动生成随机密码）
      * @return 最终使用的密码（明文，供管理员转达用户）
      */

@@ -6,10 +6,7 @@ import org.springframework.context.expression.BeanFactoryResolver;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 
-
-/**
- * 默认的 SpEL 上下文提供者
- */
+/** 默认的 SpEL 上下文提供者 */
 public class DefaultEvaluationContextProvider implements EvaluationContextProvider {
 
     @Override

@@ -17,16 +17,22 @@ import lombok.NoArgsConstructor;
 public class SysDictItemResp {
     /** 字典项ID */
     private Long id;
+
     /** 所属字典类型ID */
     private Long dictId;
+
     /** 字典项标签（显示文本） */
     private String label;
+
     /** 字典项值（实际存储值） */
     private String value;
+
     /** 排序号 */
     private Integer sort;
+
     /** 状态（0-禁用 1-启用） */
     private Integer status;
+
     /** 备注 */
     private String remark;
 }

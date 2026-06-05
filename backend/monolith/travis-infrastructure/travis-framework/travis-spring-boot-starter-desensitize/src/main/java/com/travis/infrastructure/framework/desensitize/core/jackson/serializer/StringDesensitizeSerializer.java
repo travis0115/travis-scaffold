@@ -1,6 +1,5 @@
 package com.travis.infrastructure.framework.desensitize.core.jackson.serializer;
 
-
 import cn.hutool.core.util.StrUtil;
 import com.travis.infrastructure.framework.desensitize.core.resolver.DesensitizeResolver;
 import com.travis.infrastructure.framework.desensitize.core.rule.DesensitizeRule;
@@ -57,6 +56,4 @@ public class StringDesensitizeSerializer extends StdSerializer<String> {
         }
         return this;
     }
-
-
 }

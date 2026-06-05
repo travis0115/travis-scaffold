@@ -1,12 +1,9 @@
 package com.travis.infrastructure.framework.desensitize.core.annotation.slider;
 
 import com.travis.infrastructure.framework.desensitize.core.annotation.SliderDesensitize;
-
 import java.lang.annotation.*;
 
-/**
- * 手机号脱敏
- */
+/** 手机号脱敏 */
 @Documented
 @Target({ElementType.FIELD, ElementType.METHOD, ElementType.RECORD_COMPONENT})
 @Retention(RetentionPolicy.RUNTIME)

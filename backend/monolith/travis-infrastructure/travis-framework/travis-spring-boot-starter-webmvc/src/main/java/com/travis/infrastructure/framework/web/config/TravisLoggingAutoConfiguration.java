@@ -12,7 +12,6 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
-
 /**
  * 日志相关自动配置类
  *
@@ -22,10 +21,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 @Slf4j
 public class TravisLoggingAutoConfiguration implements WebMvcConfigurer {
 
-    /**
-     * 注册 MDC 脱敏规则。
-     * 按需为每个需要脱敏的 MDC key 绑定规则。
-     */
+    /** 注册 MDC 脱敏规则。 按需为每个需要脱敏的 MDC key 绑定规则。 */
     @PostConstruct
     public void postConstruct() {
         // 示例1：如果 trace_id 实际上是手机号等敏感数据，按 MobileDesensitize 默认规则脱敏
@@ -38,18 +34,18 @@ public class TravisLoggingAutoConfiguration implements WebMvcConfigurer {
 
     }
 
-    /**
-     * 配置 Access Log 过滤器
-     */
+    /** 配置 Access Log 过滤器 */
     @Bean
-    public FilterRegistrationBean<AccessLogFilter> accessLogFilter(@Qualifier("handlerExceptionResolver") HandlerExceptionResolver handlerExceptionResolver,
-                                                                   @Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping requestMappingHandlerMapping
-    ) {
+    public FilterRegistrationBean<AccessLogFilter> accessLogFilter(
+            @Qualifier("handlerExceptionResolver")
+                    HandlerExceptionResolver handlerExceptionResolver,
+            @Qualifier("requestMappingHandlerMapping")
+                    RequestMappingHandlerMapping requestMappingHandlerMapping) {
         FilterRegistrationBean<AccessLogFilter> bean =
-                new FilterRegistrationBean<>(new AccessLogFilter(handlerExceptionResolver,
-                        requestMappingHandlerMapping));
+                new FilterRegistrationBean<>(
+                        new AccessLogFilter(
+                                handlerExceptionResolver, requestMappingHandlerMapping));
         bean.setOrder(WebFilterOrders.ACCESS_LOG_FILTER);
         return bean;
     }
-
 }

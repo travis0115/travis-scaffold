@@ -20,22 +20,25 @@ public class I18nResponseBodyAdvice implements ResponseBodyAdvice<Object> {
     }
 
     @Override
-    public boolean supports(@NonNull MethodParameter returnType,
-                            @NonNull Class<? extends HttpMessageConverter<?>> converterType) {
+    public boolean supports(
+            @NonNull MethodParameter returnType,
+            @NonNull Class<? extends HttpMessageConverter<?>> converterType) {
         return true;
     }
 
     @Override
-    public Object beforeBodyWrite(Object body,
-                                  @NonNull MethodParameter returnType,
-                                  @NonNull MediaType selectedContentType,
-                                  @NonNull Class<? extends HttpMessageConverter<?>> selectedConverterType,
-                                  @NonNull ServerHttpRequest request,
-                                  @NonNull ServerHttpResponse response) {
+    public Object beforeBodyWrite(
+            Object body,
+            @NonNull MethodParameter returnType,
+            @NonNull MediaType selectedContentType,
+            @NonNull Class<? extends HttpMessageConverter<?>> selectedConverterType,
+            @NonNull ServerHttpRequest request,
+            @NonNull ServerHttpResponse response) {
 
         if (body instanceof ApiResponse<?> result) {
             if (result.getCode() != null) {
-                var translatedMsg = i18nService.getMessage(result.getCode(), result.getArgs(), result.getMsg());
+                var translatedMsg =
+                        i18nService.getMessage(result.getCode(), result.getArgs(), result.getMsg());
                 result.setMsg(translatedMsg);
             }
         }

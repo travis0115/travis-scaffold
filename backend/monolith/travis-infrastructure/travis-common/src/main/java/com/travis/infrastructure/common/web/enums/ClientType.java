@@ -1,73 +1,47 @@
 package com.travis.infrastructure.common.web.enums;
 
 import cn.hutool.core.util.StrUtil;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-
-/**
- * 应用类型枚举
- */
+/** 应用类型枚举 */
 @AllArgsConstructor
 @Slf4j
 @Getter
 public enum ClientType {
-    /**
-     * 网站
-     */
+    /** 网站 */
     WEB("web", "Web"),
 
-    /**
-     * APP
-     */
+    /** APP */
     APP("app", "APP"),
 
-    /**
-     * 微信小程序
-     */
+    /** 微信小程序 */
     WECHAT_MP("wechat_mp", "微信小程序"),
 
-    /**
-     * 支付宝小程序
-     */
+    /** 支付宝小程序 */
     ALIPAY_MP("alipay_mp", "支付宝小程序"),
 
-    /**
-     * 抖音小程序
-     */
+    /** 抖音小程序 */
     DOUYIN_MP("douyin_mp", "抖音小程序"),
 
-    /**
-     * 微信公众号
-     */
+    /** 微信公众号 */
     WECHAT_OFFICIAL("wechat_official", "微信公众号"),
 
-    /**
-     * API调用
-     */
+    /** API调用 */
     OPEN_API("open_api", "开放API"),
 
-    /**
-     * 兜底
-     */
+    /** 兜底 */
     UNKNOWN("unknown", "未知"),
-
     ;
 
-    /**
-     * 客户端类型
-     */
-
+    /** 客户端类型 */
     private final String code;
 
-    /**
-     * 客户端类型显示名称
-     * 未做国际化处理，若需国际化，请自行扩展（通过code）
-     */
+    /** 客户端类型显示名称 未做国际化处理，若需国际化，请自行扩展（通过code） */
     private final String displayName;
 
     private static final Map<String, ClientType> CLIENT_TYPE_MAP;

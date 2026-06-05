@@ -5,16 +5,13 @@ import lombok.AllArgsConstructor;
 
 /**
  * 业务状态码枚举
- * <p>
- * 模块前缀 + 模块内唯一
- * 例如：USER_0001
+ *
+ * <p>模块前缀 + 模块内唯一 例如：USER_0001
  */
 @AllArgsConstructor
 public enum SystemErrorCode implements IErrorCode {
 
-    /**
-     * System模块
-     */
+    /** System模块 */
     SYSTEM_AUTH_LOGIN_BAD_CREDENTIALS("SYS_0001", "用户名或密码错误"),
     SYSTEM_AUTH_LOGIN_USER_DISABLED("SYS_0002", "账号已被禁用"),
     SYSTEM_USER_OLD_PASSWORD_ERROR("SYS_0003", "旧密码错误"),
@@ -25,13 +22,11 @@ public enum SystemErrorCode implements IErrorCode {
     SYSTEM_MENU_HAS_CHILDREN("SYS_0008", "存在子菜单，无法删除"),
     SYSTEM_MENU_ALREADY_TOP("SYS_0009", "已处于最上方，无法上移"),
     SYSTEM_MENU_ALREADY_BOTTOM("SYS_0010", "已处于最下方，无法下移"),
-
     ;
 
     private final String code;
 
     private final String msg;
-
 
     @Override
     public String getCode() {

@@ -1,16 +1,13 @@
 package com.travis.infrastructure.framework.jackson.core.model;
 
 import com.travis.infrastructure.framework.jackson.core.util.JsonUtil;
+import java.util.ArrayList;
+import java.util.List;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
-import java.util.ArrayList;
-import java.util.List;
-
-/**
- * 只读 JSON 数组视图，接口对齐 fastjson/hutool 的 JSONArray 常用读操作。
- */
+/** 只读 JSON 数组视图，接口对齐 fastjson/hutool 的 JSONArray 常用读操作。 */
 public final class JsonArray {
 
     final ArrayNode node;

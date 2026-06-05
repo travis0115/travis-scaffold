@@ -5,7 +5,6 @@ import com.travis.infrastructure.framework.web.core.model.PageResult;
 import com.travis.monolith.system.internal.model.entity.SysUpdateLog;
 import com.travis.monolith.system.internal.model.request.log.SysUpdateLogReq;
 import com.travis.monolith.system.internal.model.response.log.SysUpdateLogResp;
-
 import java.util.List;
 
 /**
@@ -18,15 +17,15 @@ public interface SysUpdateLogService extends IService<SysUpdateLog> {
     /**
      * 分页查询更新日志（管理端）
      *
-     * @param version  版本号（模糊匹配，可为空）
-     * @param title    标题（模糊匹配，可为空）
-     * @param status   状态（可为空）
-     * @param pageNum  页码
+     * @param version 版本号（模糊匹配，可为空）
+     * @param title 标题（模糊匹配，可为空）
+     * @param status 状态（可为空）
+     * @param pageNum 页码
      * @param pageSize 每页条数
      * @return 分页结果
      */
-    PageResult<SysUpdateLogResp> getUpdateLogPage(String version, String title, Integer status,
-                                                    Integer pageNum, Integer pageSize);
+    PageResult<SysUpdateLogResp> getUpdateLogPage(
+            String version, String title, Integer status, Integer pageNum, Integer pageSize);
 
     /**
      * 获取更新日志详情
@@ -46,7 +45,7 @@ public interface SysUpdateLogService extends IService<SysUpdateLog> {
     /**
      * 更新更新日志
      *
-     * @param id  日志ID
+     * @param id 日志ID
      * @param req 请求参数
      */
     void updateUpdateLog(Long id, SysUpdateLogReq req);

@@ -24,51 +24,39 @@ public class SysConfigController {
 
     private final SysConfigService configService;
 
-    /**
-     * 分页查询系统配置
-     */
+    /** 分页查询系统配置 */
     @GetMapping("/page")
     public ApiResponse<PageResult<SysConfigResp>> page(SysConfigPageReq req) {
         return ApiResponse.success(configService.getConfigPage(req));
     }
 
-    /**
-     * 获取配置详情
-     */
+    /** 获取配置详情 */
     @GetMapping("/{id}")
     public ApiResponse<SysConfigResp> getDetail(@PathVariable Long id) {
         return ApiResponse.success(configService.getConfigDetail(id));
     }
 
-    /**
-     * 根据配置键获取配置值
-     */
+    /** 根据配置键获取配置值 */
     @GetMapping("/value")
     public ApiResponse<String> getValue(@RequestParam String configKey) {
         return ApiResponse.success(configService.getConfigValue(configKey));
     }
 
-    /**
-     * 新增配置
-     */
+    /** 新增配置 */
     @PostMapping
     public ApiResponse<Void> add(@RequestBody @Valid SysConfigReq req) {
         configService.addConfig(req);
         return ApiResponse.success();
     }
 
-    /**
-     * 更新配置
-     */
+    /** 更新配置 */
     @PutMapping("/{id}")
     public ApiResponse<Void> update(@PathVariable Long id, @RequestBody @Valid SysConfigReq req) {
         configService.updateConfig(id, req);
         return ApiResponse.success();
     }
 
-    /**
-     * 删除配置
-     */
+    /** 删除配置 */
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         configService.deleteConfig(id);

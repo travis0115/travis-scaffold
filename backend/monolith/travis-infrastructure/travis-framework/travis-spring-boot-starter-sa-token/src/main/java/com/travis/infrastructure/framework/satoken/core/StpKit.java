@@ -4,7 +4,6 @@ import cn.dev33.satoken.jwt.StpLogicJwtForSimple;
 import cn.dev33.satoken.stp.StpLogic;
 import com.travis.infrastructure.common.web.enums.LoginType;
 import com.travis.infrastructure.framework.satoken.config.properties.SaTokenProperties;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -12,29 +11,32 @@ import java.util.Map;
 
 /**
  * StpLogic 统一入口，根据 YAML 配置自动创建所有 {@link StpLogic} 实例。
- * <p>
- * 启动时从 {@code travis.web.security.auth-rules} 中读取所有 loginType，
- * 为每个唯一的 loginType 自动创建一个 {@link StpLogicJwtForSimple} 实例，
- * 无需在业务模块手动注册 Bean。
- * <p>
- * 用法：
+ *
+ * <p>启动时从 {@code travis.web.security.auth-rules} 中读取所有 loginType， 为每个唯一的 loginType 自动创建一个 {@link
+ * StpLogicJwtForSimple} 实例， 无需在业务模块手动注册 Bean。
+ *
+ * <p>用法：
+ *
  * <pre>
  *   StpKit.of(LoginType.ADMIN).login(userId);
  *   StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
  *   StpKit.of("admin").checkLogin();
  *   StpKit.all();
  * </pre>
- * <p>
- * SpEL 表达式：
+ *
+ * <p>SpEL 表达式：
+ *
  * <pre>
  *   T(...StpKit).getLoginIdAsLong(T(...LoginType).ADMIN)
  * </pre>
- * <p>
- * 新增 LoginType 只需：
+ *
+ * <p>新增 LoginType 只需：
+ *
  * <ol>
- *   <li>在 YAML 的 auth-rules 中添加一条 login-type 配置</li>
- *   <li>在 LoginType 枚举中添加对应枚举值</li>
+ *   <li>在 YAML 的 auth-rules 中添加一条 login-type 配置
+ *   <li>在 LoginType 枚举中添加对应枚举值
  * </ol>
+ *
  * 无需修改本类，无需手动注册 Bean。
  *
  * @author travis
@@ -87,9 +89,7 @@ public class StpKit {
         return require(loginType);
     }
 
-    /**
-     * 获取所有已创建的 StpLogic 实例
-     */
+    /** 获取所有已创建的 StpLogic 实例 */
     public static Collection<StpLogic> all() {
         return INSTANCE.logicMap.values();
     }
@@ -98,16 +98,14 @@ public class StpKit {
 
     /**
      * SpEL 桥接：获取指定 loginType 的当前登录用户 ID
-     * <p>
-     * 用法：{@code T(...StpKit).getLoginIdAsLong(T(...LoginType).ADMIN)}
+     *
+     * <p>用法：{@code T(...StpKit).getLoginIdAsLong(T(...LoginType).ADMIN)}
      */
     public static long getLoginIdAsLong(LoginType type) {
         return of(type).getLoginIdAsLong();
     }
 
-    /**
-     * SpEL 桥接：获取指定 loginType 的当前 Token 值
-     */
+    /** SpEL 桥接：获取指定 loginType 的当前 Token 值 */
     public static String getTokenValue(LoginType type) {
         return of(type).getTokenValue();
     }
@@ -118,7 +116,10 @@ public class StpKit {
         StpLogic logic = INSTANCE.logicMap.get(loginType);
         if (logic == null) {
             throw new IllegalStateException(
-                    "No StpLogic for loginType: " + loginType + ", available: " + INSTANCE.logicMap.keySet());
+                    "No StpLogic for loginType: "
+                            + loginType
+                            + ", available: "
+                            + INSTANCE.logicMap.keySet());
         }
         return logic;
     }

@@ -12,16 +12,15 @@ import com.travis.monolith.system.internal.model.entity.SysUser;
 import com.travis.monolith.system.internal.model.request.dept.SysDeptReq;
 import com.travis.monolith.system.internal.model.response.dept.SysDeptResp;
 import com.travis.monolith.system.internal.service.SysDeptService;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * 部门管理服务实现，支持树形部门结构的构建
@@ -30,16 +29,16 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
-public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> implements SysDeptService {
+public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
+        implements SysDeptService {
 
     /** 对象转换器 */
     private final SysDeptConverter converter;
+
     /** 用户 Mapper（用于检查部门关联用户） */
     private final SysUserMapper userMapper;
 
-    /**
-     * 获取部门树形列表
-     */
+    /** 获取部门树形列表 */
     @Override
     @Cacheable(value = "system:dept:tree", key = "'all'")
     public List<SysDeptResp> getDeptTree() {
@@ -50,9 +49,7 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
         return buildTree(voList);
     }
 
-    /**
-     * 获取部门详情
-     */
+    /** 获取部门详情 */
     @Override
     public SysDeptResp getDeptDetail(Long id) {
         SysDept dept = getById(id);
@@ -64,9 +61,7 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
         return resp;
     }
 
-    /**
-     * 新增部门
-     */
+    /** 新增部门 */
     @Override
     @Transactional
     @CacheEvict(value = "system:dept:tree", key = "'all'")
@@ -81,9 +76,7 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
         save(dept);
     }
 
-    /**
-     * 更新部门信息
-     */
+    /** 更新部门信息 */
     @Override
     @CacheEvict(value = "system:dept:tree", key = "'all'")
     public void updateDept(Long id, SysDeptReq req) {
@@ -100,9 +93,7 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
         updateById(dept);
     }
 
-    /**
-     * 删除部门（递归删除所有下级部门），删除前将关联用户的部门重置为 null
-     */
+    /** 删除部门（递归删除所有下级部门），删除前将关联用户的部门重置为 null */
     @Override
     @Transactional
     @CacheEvict(value = "system:dept:tree", key = "'all'")
@@ -112,8 +103,9 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
         ids.add(id);
         // 将关联用户的部门重置为 null
         for (Long deptId : ids) {
-            List<SysUser> users = userMapper.selectList(
-                    new LambdaQueryWrapper<SysUser>().eq(SysUser::getDeptId, deptId));
+            List<SysUser> users =
+                    userMapper.selectList(
+                            new LambdaQueryWrapper<SysUser>().eq(SysUser::getDeptId, deptId));
             for (SysUser user : users) {
                 user.setDeptId(null);
                 userMapper.updateById(user);
@@ -126,11 +118,11 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
      * 递归收集所有下级部门ID
      *
      * @param parentId 父部门ID
-     * @param ids      收集结果
+     * @param ids 收集结果
      */
     private void collectAllDescendantIds(Long parentId, List<Long> ids) {
-        List<SysDept> children = list(new LambdaQueryWrapper<SysDept>()
-                .eq(SysDept::getParentId, parentId));
+        List<SysDept> children =
+                list(new LambdaQueryWrapper<SysDept>().eq(SysDept::getParentId, parentId));
         for (SysDept child : children) {
             ids.add(child.getId());
             collectAllDescendantIds(child.getId(), ids);
@@ -144,11 +136,10 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
      * @return 顶层部门树
      */
     private List<SysDeptResp> buildTree(List<SysDeptResp> all) {
-        Map<Long, List<SysDeptResp>> grouped = all.stream()
-                .collect(Collectors.groupingBy(SysDeptResp::getParentId));
-        all.forEach(node -> node.setChildren(grouped.getOrDefault(node.getId(), new ArrayList<>())));
-        return all.stream()
-                .filter(node -> node.getParentId() == 0)
-                .collect(Collectors.toList());
+        Map<Long, List<SysDeptResp>> grouped =
+                all.stream().collect(Collectors.groupingBy(SysDeptResp::getParentId));
+        all.forEach(
+                node -> node.setChildren(grouped.getOrDefault(node.getId(), new ArrayList<>())));
+        return all.stream().filter(node -> node.getParentId() == 0).collect(Collectors.toList());
     }
 }

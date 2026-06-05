@@ -10,13 +10,12 @@ import com.travis.infrastructure.framework.web.core.util.UserAgentUtil;
 import com.travis.monolith.system.internal.mapper.SysLoginLogMapper;
 import com.travis.monolith.system.internal.model.entity.SysLoginLog;
 import com.travis.monolith.system.internal.service.SysLoginLogService;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
 
 /**
  * 登录日志服务实现，按登录时间倒序分页查询，记录登录日志
@@ -26,26 +25,28 @@ import java.time.LocalDateTime;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class SysLoginLogServiceImpl extends ServiceImpl<SysLoginLogMapper, SysLoginLog> implements SysLoginLogService {
+public class SysLoginLogServiceImpl extends ServiceImpl<SysLoginLogMapper, SysLoginLog>
+        implements SysLoginLogService {
 
-
-    /**
-     * 分页查询登录日志，支持按用户名、状态筛选，按登录时间倒序排列
-     */
+    /** 分页查询登录日志，支持按用户名、状态筛选，按登录时间倒序排列 */
     @Override
-    public PageResult<SysLoginLog> getLoginLogPage(String username, Integer status, Integer pageNum, Integer pageSize) {
-        LambdaQueryWrapper<SysLoginLog> wrapper = new LambdaQueryWrapper<SysLoginLog>()
-                .like(username != null, SysLoginLog::getUsername, username)
-                .eq(status != null, SysLoginLog::getStatus, status)
-                .orderByDesc(SysLoginLog::getLoginTime);
+    public PageResult<SysLoginLog> getLoginLogPage(
+            String username, Integer status, Integer pageNum, Integer pageSize) {
+        LambdaQueryWrapper<SysLoginLog> wrapper =
+                new LambdaQueryWrapper<SysLoginLog>()
+                        .like(username != null, SysLoginLog::getUsername, username)
+                        .eq(status != null, SysLoginLog::getStatus, status)
+                        .orderByDesc(SysLoginLog::getLoginTime);
         Page<SysLoginLog> page = page(new Page<>(pageNum, pageSize), wrapper);
-        return new PageResult<>(page.getRecords(), page.getTotal(),
-                (int) page.getCurrent(), (int) page.getSize(), (int) page.getPages());
+        return new PageResult<>(
+                page.getRecords(),
+                page.getTotal(),
+                (int) page.getCurrent(),
+                (int) page.getSize(),
+                (int) page.getPages());
     }
 
-    /**
-     * 记录登录日志，使用 REQUIRES_NEW 独立事务，确保日志不受外层事务回滚影响
-     */
+    /** 记录登录日志，使用 REQUIRES_NEW 独立事务，确保日志不受外层事务回滚影响 */
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordLoginLog(String username, int status, String message) {

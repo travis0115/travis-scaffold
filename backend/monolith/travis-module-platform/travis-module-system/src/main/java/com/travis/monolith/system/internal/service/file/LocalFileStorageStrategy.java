@@ -2,12 +2,6 @@ package com.travis.monolith.system.internal.service.file;
 
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.exception.CommonErrorCode;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,16 +9,23 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
- * 本地文件存储策略
- * 将文件保存到服务器本地磁盘，通过静态资源映射提供访问
+ * 本地文件存储策略 将文件保存到服务器本地磁盘，通过静态资源映射提供访问
  *
  * @author travis
  */
 @Slf4j
 @Component
-@ConditionalOnProperty(name = "travis.web.file.storage-type", havingValue = "local", matchIfMissing = true)
+@ConditionalOnProperty(
+        name = "travis.web.file.storage-type",
+        havingValue = "local",
+        matchIfMissing = true)
 public class LocalFileStorageStrategy implements FileStorageStrategy {
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -71,9 +72,10 @@ public class LocalFileStorageStrategy implements FileStorageStrategy {
         }
 
         // 返回相对路径（去除resourceHandler中的/**通配符），调用方按需拼接域名
-        String basePath = resourceHandler.endsWith("/**")
-                ? resourceHandler.substring(0, resourceHandler.length() - 3)
-                : resourceHandler;
+        String basePath =
+                resourceHandler.endsWith("/**")
+                        ? resourceHandler.substring(0, resourceHandler.length() - 3)
+                        : resourceHandler;
         return basePath + "/" + datePath + "/" + filename;
     }
 }

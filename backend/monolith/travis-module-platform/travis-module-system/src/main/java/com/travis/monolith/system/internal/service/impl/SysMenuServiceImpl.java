@@ -17,15 +17,14 @@ import com.travis.monolith.system.internal.model.request.menu.SysMenuReq;
 import com.travis.monolith.system.internal.model.response.menu.SysMenuResp;
 import com.travis.monolith.system.internal.model.response.menu.VbenMenuResp;
 import com.travis.monolith.system.internal.service.SysMenuService;
+import java.util.*;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.core.type.TypeReference;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 菜单管理服务实现，支持菜单树构建和前端 Vben 路由菜单生成
@@ -34,35 +33,30 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
-public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> implements SysMenuService {
+public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
+        implements SysMenuService {
 
-    /**
-     * 角色-菜单关联 Mapper
-     */
+    /** 角色-菜单关联 Mapper */
     private final SysRoleMenuMapper roleMenuMapper;
-    /**
-     * 角色 Mapper
-     */
+
+    /** 角色 Mapper */
     private final SysRoleMapper roleMapper;
+
     /** 对象转换器 */
     private final SysMenuConverter converter;
 
-    /**
-     * 获取菜单树形列表（管理后台使用），按排序号升序排列
-     */
+    /** 获取菜单树形列表（管理后台使用），按排序号升序排列 */
     @Override
     @Cacheable(value = "system:menu:tree", key = "'all'")
     public List<SysMenuResp> getMenuTree() {
-        List<SysMenu> allMenus = list(new LambdaQueryWrapper<SysMenu>()
-                .orderByAsc(SysMenu::getSort));
+        List<SysMenu> allMenus =
+                list(new LambdaQueryWrapper<SysMenu>().orderByAsc(SysMenu::getSort));
         List<SysMenuResp> voList = converter.toRespList(allMenus);
         voList.forEach(v -> v.setChildren(new ArrayList<>()));
         return buildTree(voList);
     }
 
-    /**
-     * 获取菜单详情
-     */
+    /** 获取菜单详情 */
     @Override
     public SysMenuResp getMenuDetail(Long id) {
         SysMenu menu = getById(id);
@@ -74,23 +68,25 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         return resp;
     }
 
-    /**
-     * 新增菜单，新增后自动关联到所有 admin 角色
-     */
+    /** 新增菜单，新增后自动关联到所有 admin 角色 */
     @Override
     @Transactional
-    @CacheEvict(value = {"system:menu:tree", "menus:vben"}, key = "'all'", allEntries = true)
+    @CacheEvict(
+            value = {"system:menu:tree", "menus:vben"},
+            key = "'all'",
+            allEntries = true)
     public void addMenu(SysMenuReq req) {
         SysMenu menu = converter.toEntity(req);
         save(menu);
         autoAssignToAdminRoles(menu.getId());
     }
 
-    /**
-     * 更新菜单信息
-     */
+    /** 更新菜单信息 */
     @Override
-    @CacheEvict(value = {"system:menu:tree", "menus:vben"}, key = "'all'", allEntries = true)
+    @CacheEvict(
+            value = {"system:menu:tree", "menus:vben"},
+            key = "'all'",
+            allEntries = true)
     public void updateMenu(Long id, SysMenuReq req) {
         SysMenu menu = getById(id);
         if (menu == null) {
@@ -100,15 +96,15 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         updateById(menu);
     }
 
-    /**
-     * 删除菜单，存在子菜单时禁止删除，删除时自动移除 admin 角色的关联记录
-     */
+    /** 删除菜单，存在子菜单时禁止删除，删除时自动移除 admin 角色的关联记录 */
     @Override
     @Transactional
-    @CacheEvict(value = {"system:menu:tree", "menus:vben"}, key = "'all'", allEntries = true)
+    @CacheEvict(
+            value = {"system:menu:tree", "menus:vben"},
+            key = "'all'",
+            allEntries = true)
     public void deleteMenu(Long id) {
-        long childCount = count(new LambdaQueryWrapper<SysMenu>()
-                .eq(SysMenu::getParentId, id));
+        long childCount = count(new LambdaQueryWrapper<SysMenu>().eq(SysMenu::getParentId, id));
         if (childCount > 0) {
             throw new BizException(SystemErrorCode.SYSTEM_MENU_HAS_CHILDREN);
         }
@@ -116,21 +112,24 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         removeById(id);
     }
 
-    /**
-     * 上移菜单，与同级上一个菜单交换排序号
-     */
+    /** 上移菜单，与同级上一个菜单交换排序号 */
     @Override
     @Transactional
-    @CacheEvict(value = {"system:menu:tree", "menus:vben"}, key = "'all'", allEntries = true)
+    @CacheEvict(
+            value = {"system:menu:tree", "menus:vben"},
+            key = "'all'",
+            allEntries = true)
     public void moveUp(Long id) {
         SysMenu current = getById(id);
         if (current == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
         // 查询同级所有菜单，按排序号升序
-        List<SysMenu> siblings = list(new LambdaQueryWrapper<SysMenu>()
-                .eq(SysMenu::getParentId, current.getParentId())
-                .orderByAsc(SysMenu::getSort));
+        List<SysMenu> siblings =
+                list(
+                        new LambdaQueryWrapper<SysMenu>()
+                                .eq(SysMenu::getParentId, current.getParentId())
+                                .orderByAsc(SysMenu::getSort));
         int index = findIndex(siblings, id);
         if (index <= 0) {
             throw new BizException(SystemErrorCode.SYSTEM_MENU_ALREADY_TOP);
@@ -138,21 +137,24 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         swapSort(siblings.get(index), siblings.get(index - 1));
     }
 
-    /**
-     * 下移菜单，与同级下一个菜单交换排序号
-     */
+    /** 下移菜单，与同级下一个菜单交换排序号 */
     @Override
     @Transactional
-    @CacheEvict(value = {"system:menu:tree", "menus:vben"}, key = "'all'", allEntries = true)
+    @CacheEvict(
+            value = {"system:menu:tree", "menus:vben"},
+            key = "'all'",
+            allEntries = true)
     public void moveDown(Long id) {
         SysMenu current = getById(id);
         if (current == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
         // 查询同级所有菜单，按排序号升序
-        List<SysMenu> siblings = list(new LambdaQueryWrapper<SysMenu>()
-                .eq(SysMenu::getParentId, current.getParentId())
-                .orderByAsc(SysMenu::getSort));
+        List<SysMenu> siblings =
+                list(
+                        new LambdaQueryWrapper<SysMenu>()
+                                .eq(SysMenu::getParentId, current.getParentId())
+                                .orderByAsc(SysMenu::getSort));
         int index = findIndex(siblings, id);
         if (index < 0 || index >= siblings.size() - 1) {
             throw new BizException(SystemErrorCode.SYSTEM_MENU_ALREADY_BOTTOM);
@@ -160,9 +162,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         swapSort(siblings.get(index), siblings.get(index + 1));
     }
 
-    /**
-     * 查找菜单在同级列表中的索引位置
-     */
+    /** 查找菜单在同级列表中的索引位置 */
     private int findIndex(List<SysMenu> siblings, Long id) {
         for (int i = 0; i < siblings.size(); i++) {
             if (siblings.get(i).getId().equals(id)) {
@@ -172,9 +172,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         return -1;
     }
 
-    /**
-     * 交换两个菜单的排序号
-     */
+    /** 交换两个菜单的排序号 */
     private void swapSort(SysMenu a, SysMenu b) {
         Integer tempSort = a.getSort();
         a.setSort(b.getSort());
@@ -183,9 +181,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         updateById(b);
     }
 
-    /**
-     * 根据角色ID列表生成 Vben Admin 格式的菜单树，自动补充父级菜单确保树结构完整
-     */
+    /** 根据角色ID列表生成 Vben Admin 格式的菜单树，自动补充父级菜单确保树结构完整 */
     @Override
     public List<VbenMenuResp> getVbenMenuTree(List<Long> roleIds) {
         if (roleIds == null || roleIds.isEmpty()) {
@@ -193,50 +189,59 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         }
 
         // 根据角色ID列表查询关联的菜单ID
-        List<Long> menuIds = roleMenuMapper.selectList(
-                        new LambdaQueryWrapper<SysRoleMenu>()
-                                .in(SysRoleMenu::getRoleId, roleIds))
-                .stream()
-                .map(SysRoleMenu::getMenuId)
-                .distinct()
-                .collect(Collectors.toList());
+        List<Long> menuIds =
+                roleMenuMapper
+                        .selectList(
+                                new LambdaQueryWrapper<SysRoleMenu>()
+                                        .in(SysRoleMenu::getRoleId, roleIds))
+                        .stream()
+                        .map(SysRoleMenu::getMenuId)
+                        .distinct()
+                        .collect(Collectors.toList());
 
         if (menuIds.isEmpty()) {
             return Collections.emptyList();
         }
 
         // 只取目录（0）和菜单（1），不取按钮（2）
-        List<SysMenu> menus = list(new LambdaQueryWrapper<SysMenu>()
-                .in(SysMenu::getId, menuIds)
-                .in(SysMenu::getMenuType, 0, 1)
-                .eq(SysMenu::getStatus, 1)
-                .orderByAsc(SysMenu::getSort));
+        List<SysMenu> menus =
+                list(
+                        new LambdaQueryWrapper<SysMenu>()
+                                .in(SysMenu::getId, menuIds)
+                                .in(SysMenu::getMenuType, 0, 1)
+                                .eq(SysMenu::getStatus, 1)
+                                .orderByAsc(SysMenu::getSort));
 
         // 补充父级菜单，确保树结构完整（递归补充所有祖先节点）
         Set<Long> existingIds = menus.stream().map(SysMenu::getId).collect(Collectors.toSet());
-        Set<Long> needParentIds = menus.stream()
-                .map(SysMenu::getParentId)
-                .filter(pid -> pid != 0 && !existingIds.contains(pid))
-                .collect(Collectors.toSet());
+        Set<Long> needParentIds =
+                menus.stream()
+                        .map(SysMenu::getParentId)
+                        .filter(pid -> pid != 0 && !existingIds.contains(pid))
+                        .collect(Collectors.toSet());
         while (!needParentIds.isEmpty()) {
-            List<SysMenu> parents = list(new LambdaQueryWrapper<SysMenu>()
-                    .in(SysMenu::getId, needParentIds)
-                    .eq(SysMenu::getStatus, 1));
+            List<SysMenu> parents =
+                    list(
+                            new LambdaQueryWrapper<SysMenu>()
+                                    .in(SysMenu::getId, needParentIds)
+                                    .eq(SysMenu::getStatus, 1));
             menus.addAll(parents);
             existingIds.addAll(parents.stream().map(SysMenu::getId).collect(Collectors.toSet()));
-            needParentIds = parents.stream()
-                    .map(SysMenu::getParentId)
-                    .filter(pid -> pid != 0 && !existingIds.contains(pid))
-                    .collect(Collectors.toSet());
+            needParentIds =
+                    parents.stream()
+                            .map(SysMenu::getParentId)
+                            .filter(pid -> pid != 0 && !existingIds.contains(pid))
+                            .collect(Collectors.toSet());
         }
 
         // 用 parentId 分组，构建树形 VbenMenuVO
-        Map<Long, List<SysMenu>> grouped = menus.stream()
-                .collect(Collectors.groupingBy(SysMenu::getParentId));
-        List<VbenMenuResp> result = menus.stream()
-                .filter(m -> m.getParentId() == 0)
-                .map(m -> toVbenTree(m, grouped))
-                .collect(Collectors.toList());
+        Map<Long, List<SysMenu>> grouped =
+                menus.stream().collect(Collectors.groupingBy(SysMenu::getParentId));
+        List<VbenMenuResp> result =
+                menus.stream()
+                        .filter(m -> m.getParentId() == 0)
+                        .map(m -> toVbenTree(m, grouped))
+                        .collect(Collectors.toList());
 
         // 固定第一个叶子菜单（递归取第一个无子菜单的节点，标记 affixTab）
         affixFirstLeafMenu(result);
@@ -273,15 +278,16 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
     /**
      * 递归构建 Vben Admin 菜单树，一级目录使用 BasicLayout 组件
      *
-     * @param menu    菜单实体
+     * @param menu 菜单实体
      * @param grouped 按 parentId 分组的菜单映射
      * @return Vben 菜单视图
      */
     private VbenMenuResp toVbenTree(SysMenu menu, Map<Long, List<SysMenu>> grouped) {
         List<SysMenu> children = grouped.getOrDefault(menu.getId(), Collections.emptyList());
-        List<VbenMenuResp> childVOs = children.stream()
-                .map(child -> toVbenTree(child, grouped))
-                .collect(Collectors.toList());
+        List<VbenMenuResp> childVOs =
+                children.stream()
+                        .map(child -> toVbenTree(child, grouped))
+                        .collect(Collectors.toList());
 
         // 一级目录（parentId=0 且有子菜单）使用 BasicLayout
         String component = menu.getComponent();
@@ -300,9 +306,11 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         // 合并 meta JSON 中的扩展字段
         if (menu.getMeta() != null && !menu.getMeta().isBlank()) {
             try {
-                Map<String, Object> extraMeta = JsonUtil.getObjectMapper().readValue(
-                        menu.getMeta(), new TypeReference<LinkedHashMap<String, Object>>() {
-                        });
+                Map<String, Object> extraMeta =
+                        JsonUtil.getObjectMapper()
+                                .readValue(
+                                        menu.getMeta(),
+                                        new TypeReference<LinkedHashMap<String, Object>>() {});
                 // 扩展字段覆盖基础字段（以 JSON 中的值为优先）
                 extraMeta.forEach(metaMap::putIfAbsent);
             } catch (Exception e) {
@@ -320,9 +328,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
                 .build();
     }
 
-    /**
-     * 根据路由路径生成 PascalCase 路由名称（如 /system/user → SystemUser）
-     */
+    /** 根据路由路径生成 PascalCase 路由名称（如 /system/user → SystemUser） */
     private String generateRouteName(String path) {
         if (path == null || path.isEmpty()) {
             return "Route";
@@ -346,12 +352,11 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
      * @return 顶层菜单树
      */
     private List<SysMenuResp> buildTree(List<SysMenuResp> all) {
-        Map<Long, List<SysMenuResp>> grouped = all.stream()
-                .collect(Collectors.groupingBy(SysMenuResp::getParentId));
-        all.forEach(node -> node.setChildren(grouped.getOrDefault(node.getId(), new ArrayList<>())));
-        return all.stream()
-                .filter(node -> node.getParentId() == 0)
-                .collect(Collectors.toList());
+        Map<Long, List<SysMenuResp>> grouped =
+                all.stream().collect(Collectors.groupingBy(SysMenuResp::getParentId));
+        all.forEach(
+                node -> node.setChildren(grouped.getOrDefault(node.getId(), new ArrayList<>())));
+        return all.stream().filter(node -> node.getParentId() == 0).collect(Collectors.toList());
     }
 
     /**
@@ -360,15 +365,17 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
      * @param menuId 新增的菜单ID
      */
     private void autoAssignToAdminRoles(Long menuId) {
-        List<SysRole> adminRoles = roleMapper.selectList(
-                new LambdaQueryWrapper<SysRole>()
-                        .eq(SysRole::getRoleCode, "admin")
-                        .eq(SysRole::getStatus, 1));
+        List<SysRole> adminRoles =
+                roleMapper.selectList(
+                        new LambdaQueryWrapper<SysRole>()
+                                .eq(SysRole::getRoleCode, "admin")
+                                .eq(SysRole::getStatus, 1));
         for (SysRole role : adminRoles) {
-            long count = roleMenuMapper.selectCount(
-                    new LambdaQueryWrapper<SysRoleMenu>()
-                            .eq(SysRoleMenu::getRoleId, role.getId())
-                            .eq(SysRoleMenu::getMenuId, menuId));
+            long count =
+                    roleMenuMapper.selectCount(
+                            new LambdaQueryWrapper<SysRoleMenu>()
+                                    .eq(SysRoleMenu::getRoleId, role.getId())
+                                    .eq(SysRoleMenu::getMenuId, menuId));
             if (count == 0) {
                 SysRoleMenu rm = new SysRoleMenu();
                 rm.setRoleId(role.getId());
@@ -384,10 +391,13 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
      * @param menuId 被删除的菜单ID
      */
     private void autoRemoveFromAdminRoles(Long menuId) {
-        List<Long> adminRoleIds = roleMapper.selectList(
-                        new LambdaQueryWrapper<SysRole>()
-                                .eq(SysRole::getRoleCode, "admin"))
-                .stream().map(SysRole::getId).toList();
+        List<Long> adminRoleIds =
+                roleMapper
+                        .selectList(
+                                new LambdaQueryWrapper<SysRole>().eq(SysRole::getRoleCode, "admin"))
+                        .stream()
+                        .map(SysRole::getId)
+                        .toList();
         if (!adminRoleIds.isEmpty()) {
             roleMenuMapper.delete(
                     new LambdaQueryWrapper<SysRoleMenu>()

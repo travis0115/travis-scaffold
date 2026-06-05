@@ -3,7 +3,6 @@ package com.travis.infrastructure.framework.web.core.filter;
 import lombok.AllArgsConstructor;
 
 /**
- *
  * @author Travis
  */
 @AllArgsConstructor

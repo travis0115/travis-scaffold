@@ -10,9 +10,7 @@ import lombok.Data;
  */
 @Data
 public class UpdateAvatarReq {
-    /**
-     * 头像地址
-     */
+    /** 头像地址 */
     @NotBlank(message = "头像地址不能为空")
     private String avatar;
 }

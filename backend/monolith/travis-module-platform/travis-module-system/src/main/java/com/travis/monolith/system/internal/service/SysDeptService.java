@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.monolith.system.internal.model.entity.SysDept;
 import com.travis.monolith.system.internal.model.request.dept.SysDeptReq;
 import com.travis.monolith.system.internal.model.response.dept.SysDeptResp;
-
 import java.util.List;
 
 /**
@@ -39,7 +38,7 @@ public interface SysDeptService extends IService<SysDept> {
     /**
      * 更新部门信息
      *
-     * @param id  部门ID
+     * @param id 部门ID
      * @param req 部门信息请求参数
      */
     void updateDept(Long id, SysDeptReq req);

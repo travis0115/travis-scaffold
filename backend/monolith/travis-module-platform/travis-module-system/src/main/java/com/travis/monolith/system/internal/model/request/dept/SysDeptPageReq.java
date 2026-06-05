@@ -12,12 +12,9 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class SysDeptPageReq extends PageRequest {
-    /**
-     * 部门名称（模糊匹配）
-     */
+    /** 部门名称（模糊匹配） */
     private String deptName;
-    /**
-     * 状态（0-禁用 1-启用）
-     */
+
+    /** 状态（0-禁用 1-启用） */
     private Integer status;
 }

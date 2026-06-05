@@ -24,19 +24,31 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 @RequiredArgsConstructor
-public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig> implements SysConfigService {
+public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig>
+        implements SysConfigService {
 
     private final SysConfigConverter converter;
 
     @Override
     public PageResult<SysConfigResp> getConfigPage(SysConfigPageReq req) {
-        LambdaQueryWrapper<SysConfig> wrapper = new LambdaQueryWrapper<SysConfig>()
-                .like(req.getConfigGroup() != null, SysConfig::getConfigGroup, req.getConfigGroup())
-                .like(req.getConfigKey() != null, SysConfig::getConfigKey, req.getConfigKey())
-                .orderByAsc(SysConfig::getConfigGroup, SysConfig::getConfigKey);
+        LambdaQueryWrapper<SysConfig> wrapper =
+                new LambdaQueryWrapper<SysConfig>()
+                        .like(
+                                req.getConfigGroup() != null,
+                                SysConfig::getConfigGroup,
+                                req.getConfigGroup())
+                        .like(
+                                req.getConfigKey() != null,
+                                SysConfig::getConfigKey,
+                                req.getConfigKey())
+                        .orderByAsc(SysConfig::getConfigGroup, SysConfig::getConfigKey);
         Page<SysConfig> page = page(new Page<>(req.getPageNum(), req.getPageSize()), wrapper);
-        return new PageResult<>(converter.toRespList(page.getRecords()),
-                page.getTotal(), (int) page.getCurrent(), (int) page.getSize(), (int) page.getPages());
+        return new PageResult<>(
+                converter.toRespList(page.getRecords()),
+                page.getTotal(),
+                (int) page.getCurrent(),
+                (int) page.getSize(),
+                (int) page.getPages());
     }
 
     @Override
@@ -50,8 +62,8 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
 
     @Override
     public String getConfigValue(String configKey) {
-        SysConfig config = getOne(new LambdaQueryWrapper<SysConfig>()
-                .eq(SysConfig::getConfigKey, configKey));
+        SysConfig config =
+                getOne(new LambdaQueryWrapper<SysConfig>().eq(SysConfig::getConfigKey, configKey));
         return config != null ? config.getConfigValue() : null;
     }
 

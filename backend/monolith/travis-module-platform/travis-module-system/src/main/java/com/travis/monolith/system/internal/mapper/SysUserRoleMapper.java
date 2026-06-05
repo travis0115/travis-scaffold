@@ -10,5 +10,4 @@ import org.apache.ibatis.annotations.Mapper;
  * @author travis
  */
 @Mapper
-public interface SysUserRoleMapper extends BaseMapperX<SysUserRole> {
-}
+public interface SysUserRoleMapper extends BaseMapperX<SysUserRole> {}

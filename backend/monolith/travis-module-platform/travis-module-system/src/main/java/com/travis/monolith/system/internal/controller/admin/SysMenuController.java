@@ -5,11 +5,10 @@ import com.travis.monolith.system.internal.model.request.menu.SysMenuReq;
 import com.travis.monolith.system.internal.model.response.menu.SysMenuResp;
 import com.travis.monolith.system.internal.service.SysMenuService;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * 菜单管理控制器，提供菜单树的增删改查接口
@@ -22,9 +21,7 @@ import java.util.List;
 @Validated
 public class SysMenuController {
 
-    /**
-     * 菜单管理服务
-     */
+    /** 菜单管理服务 */
     private final SysMenuService menuService;
 
     /**
@@ -63,7 +60,7 @@ public class SysMenuController {
     /**
      * 更新菜单信息
      *
-     * @param id  菜单ID
+     * @param id 菜单ID
      * @param req 菜单信息
      * @return 空响应
      */

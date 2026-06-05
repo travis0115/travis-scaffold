@@ -24,8 +24,8 @@ public class SysLoginLogController {
      * 分页查询登录日志
      *
      * @param username 用户名（模糊匹配）
-     * @param status   登录状态
-     * @param pageNum  页码
+     * @param status 登录状态
+     * @param pageNum 页码
      * @param pageSize 每页条数
      * @return 分页结果
      */
@@ -35,6 +35,7 @@ public class SysLoginLogController {
             @RequestParam(required = false) Integer status,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "20") Integer pageSize) {
-        return ApiResponse.success(loginLogService.getLoginLogPage(username, status, pageNum, pageSize));
+        return ApiResponse.success(
+                loginLogService.getLoginLogPage(username, status, pageNum, pageSize));
     }
 }

@@ -12,28 +12,21 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class SysDept extends BaseEntity {
-    /**
-     * 上级部门ID（0 表示顶级部门）
-     */
+    /** 上级部门ID（0 表示顶级部门） */
     private Long parentId;
-    /**
-     * 部门名称
-     */
+
+    /** 部门名称 */
     private String deptName;
-    /**
-     * 排序号（升序）
-     */
+
+    /** 排序号（升序） */
     private Integer sort;
-    /**
-     * 负责人
-     */
+
+    /** 负责人 */
     private String leader;
-    /**
-     * 联系电话
-     */
+
+    /** 联系电话 */
     private String mobile;
-    /**
-     * 状态（0-禁用 1-启用）
-     */
+
+    /** 状态（0-禁用 1-启用） */
     private Integer status;
 }

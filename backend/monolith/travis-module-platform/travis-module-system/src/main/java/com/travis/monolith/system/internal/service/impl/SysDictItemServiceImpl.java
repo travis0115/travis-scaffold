@@ -18,24 +18,26 @@ import org.springframework.stereotype.Service;
  * @author travis
  */
 @Service
-public class SysDictItemServiceImpl extends ServiceImpl<SysDictItemMapper, SysDictItem> implements SysDictItemService {
+public class SysDictItemServiceImpl extends ServiceImpl<SysDictItemMapper, SysDictItem>
+        implements SysDictItemService {
 
-    /**
-     * 分页查询字典数据项，按排序号升序
-     */
+    /** 分页查询字典数据项，按排序号升序 */
     @Override
     public PageResult<SysDictItem> getDictItemPage(Long dictId, Integer pageNum, Integer pageSize) {
-        LambdaQueryWrapper<SysDictItem> wrapper = new LambdaQueryWrapper<SysDictItem>()
-                .eq(dictId != null, SysDictItem::getDictId, dictId)
-                .orderByAsc(SysDictItem::getSort);
+        LambdaQueryWrapper<SysDictItem> wrapper =
+                new LambdaQueryWrapper<SysDictItem>()
+                        .eq(dictId != null, SysDictItem::getDictId, dictId)
+                        .orderByAsc(SysDictItem::getSort);
         Page<SysDictItem> page = page(new Page<>(pageNum, pageSize), wrapper);
-        return new PageResult<>(page.getRecords(), page.getTotal(),
-                (int) page.getCurrent(), (int) page.getSize(), (int) page.getPages());
+        return new PageResult<>(
+                page.getRecords(),
+                page.getTotal(),
+                (int) page.getCurrent(),
+                (int) page.getSize(),
+                (int) page.getPages());
     }
 
-    /**
-     * 新增字典数据项
-     */
+    /** 新增字典数据项 */
     @Override
     public void addDictItem(SysDictItemReq req) {
         SysDictItem item = new SysDictItem();
@@ -48,9 +50,7 @@ public class SysDictItemServiceImpl extends ServiceImpl<SysDictItemMapper, SysDi
         save(item);
     }
 
-    /**
-     * 更新字典数据项
-     */
+    /** 更新字典数据项 */
     @Override
     public void updateDictItem(Long id, SysDictItemReq req) {
         SysDictItem item = getById(id);
@@ -66,9 +66,7 @@ public class SysDictItemServiceImpl extends ServiceImpl<SysDictItemMapper, SysDi
         updateById(item);
     }
 
-    /**
-     * 删除字典数据项
-     */
+    /** 删除字典数据项 */
     @Override
     public void deleteDictItem(Long id) {
         removeById(id);

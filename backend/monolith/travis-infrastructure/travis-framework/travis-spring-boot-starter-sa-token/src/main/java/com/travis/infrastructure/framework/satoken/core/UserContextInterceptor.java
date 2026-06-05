@@ -8,15 +8,17 @@ import org.slf4j.MDC;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 /**
- * 用户上下文拦截器，遍历所有已注册的 StpLogic 实例，
- * 找到当前已登录的用户并将其 ID 写入 MDC。
+ * 用户上下文拦截器，遍历所有已注册的 StpLogic 实例， 找到当前已登录的用户并将其 ID 写入 MDC。
  *
  * @author Travis
  */
 public class UserContextInterceptor implements HandlerInterceptor {
 
     @Override
-    public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler) {
+    public boolean preHandle(
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull Object handler) {
         try {
             for (var logic : StpKit.all()) {
                 if (logic.isLogin()) {

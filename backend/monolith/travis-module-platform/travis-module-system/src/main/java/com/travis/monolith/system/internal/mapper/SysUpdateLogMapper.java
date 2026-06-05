@@ -10,5 +10,4 @@ import org.apache.ibatis.annotations.Mapper;
  * @author travis
  */
 @Mapper
-public interface SysUpdateLogMapper extends BaseMapperX<SysUpdateLog> {
-}
+public interface SysUpdateLogMapper extends BaseMapperX<SysUpdateLog> {}

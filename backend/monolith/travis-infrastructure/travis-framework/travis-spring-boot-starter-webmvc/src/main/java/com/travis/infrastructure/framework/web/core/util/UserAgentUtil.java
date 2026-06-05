@@ -4,55 +4,41 @@ import cn.hutool.http.useragent.UserAgent;
 import com.travis.infrastructure.common.web.enums.PlatformType;
 import com.travis.infrastructure.framework.web.core.model.UserAgentInfo;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.Map;
 import lombok.experimental.UtilityClass;
 
-import java.util.Map;
-
 /**
- *
  * @author Travis
  */
 @UtilityClass
 public class UserAgentUtil {
 
-    /**
-     * 操作系统映射
-     */
-    private static final Map<String, String> OS_MAPPING = Map.of(
-            "OSX", PlatformType.MACOS.getDisplayName(),
-            "iPhone", PlatformType.IOS.getDisplayName(),
-            "iPad", PlatformType.IPADOS.getDisplayName(),
-            "Android", PlatformType.ANDROID.getDisplayName(),
-            "Harmony", PlatformType.HARMONYOS.getDisplayName(),
-            "Windows", PlatformType.WINDOWS.getDisplayName()
-    );
+    /** 操作系统映射 */
+    private static final Map<String, String> OS_MAPPING =
+            Map.of(
+                    "OSX", PlatformType.MACOS.getDisplayName(),
+                    "iPhone", PlatformType.IOS.getDisplayName(),
+                    "iPad", PlatformType.IPADOS.getDisplayName(),
+                    "Android", PlatformType.ANDROID.getDisplayName(),
+                    "Harmony", PlatformType.HARMONYOS.getDisplayName(),
+                    "Windows", PlatformType.WINDOWS.getDisplayName());
 
-    /**
-     * 获取当前请求UA信息
-     */
+    /** 获取当前请求UA信息 */
     public UserAgentInfo getCurrentUserAgentInfo() {
         String userAgent = ServletUtil.getUserAgent();
         return parse(userAgent);
     }
 
-    /**
-     * 获取当前请求UA信息
-     */
+    /** 获取当前请求UA信息 */
     public UserAgentInfo getCurrentUserAgentInfo(HttpServletRequest request) {
         var userAgent = ServletUtil.getUserAgent(request);
         return parse(userAgent);
     }
 
-    /**
-     * 解析UA
-     */
+    /** 解析UA */
     public UserAgentInfo parse(String userAgent) {
         if (userAgent == null || userAgent.isBlank()) {
-            return UserAgentInfo.builder()
-                    .browser("Unknown")
-                    .os("Unknown")
-                    .userAgent("")
-                    .build();
+            return UserAgentInfo.builder().browser("Unknown").os("Unknown").userAgent("").build();
         }
         UserAgent ua = cn.hutool.http.useragent.UserAgentUtil.parse(userAgent);
         return UserAgentInfo.builder()
@@ -86,18 +72,13 @@ public class UserAgentUtil {
         return OS_MAPPING.getOrDefault(os, os);
     }
 
-    /**
-     * 获取浏览器
-     */
+    /** 获取浏览器 */
     public String getBrowser() {
         return getCurrentUserAgentInfo().getBrowser();
     }
 
-    /**
-     * 获取操作系统
-     */
+    /** 获取操作系统 */
     public String getOs() {
         return getCurrentUserAgentInfo().getOs();
     }
-
 }

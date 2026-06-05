@@ -12,20 +12,15 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class SysConfig extends BaseEntity {
-    /**
-     * 配置分组
-     */
+    /** 配置分组 */
     private String configGroup;
-    /**
-     * 配置键（唯一标识）
-     */
+
+    /** 配置键（唯一标识） */
     private String configKey;
-    /**
-     * 配置值
-     */
+
+    /** 配置值 */
     private String configValue;
-    /**
-     * 备注
-     */
+
+    /** 备注 */
     private String remark;
 }

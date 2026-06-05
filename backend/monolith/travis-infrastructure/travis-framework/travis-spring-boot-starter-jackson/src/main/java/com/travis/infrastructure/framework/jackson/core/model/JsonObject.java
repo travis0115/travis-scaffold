@@ -1,16 +1,15 @@
 package com.travis.infrastructure.framework.jackson.core.model;
 
 import com.travis.infrastructure.framework.jackson.core.util.JsonUtil;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-
 /**
- * 可变 JSON 对象，接口对齐 fastjson/hutool 的 JSONObject。
- * 底层为 Jackson {@link ObjectNode}，序列化使用 {@link JsonUtil#getObjectMapper()}。
+ * 可变 JSON 对象，接口对齐 fastjson/hutool 的 JSONObject。 底层为 Jackson {@link ObjectNode}，序列化使用 {@link
+ * JsonUtil#getObjectMapper()}。
  */
 public final class JsonObject {
 
@@ -27,9 +26,7 @@ public final class JsonObject {
         this.mapper = mapper;
     }
 
-    /**
-     * 从 JSON 字符串解析，根须为对象；否则返回空 JsonObject
-     */
+    /** 从 JSON 字符串解析，根须为对象；否则返回空 JsonObject */
     public static JsonObject of(String json) {
         if (json == null || json.isBlank()) {
             return new JsonObject();
@@ -87,27 +84,21 @@ public final class JsonObject {
         return v.bigIntegerValue();
     }
 
-    /**
-     * 获取子对象（只读包装），若不存在或非对象则返回 null
-     */
+    /** 获取子对象（只读包装），若不存在或非对象则返回 null */
     public JsonObject getObject(String key) {
         var v = node.path(key);
         if (v.isMissingNode() || !v.isObject()) return null;
         return new JsonObject((ObjectNode) v, mapper);
     }
 
-    /**
-     * 获取数组包装，若不存在或非数组则返回 null
-     */
+    /** 获取数组包装，若不存在或非数组则返回 null */
     public JsonArray getArray(String key) {
         var v = node.path(key);
         if (v.isMissingNode() || !v.isArray()) return null;
         return new JsonArray((ArrayNode) v, mapper);
     }
 
-    /**
-     * 按类型获取并转为 Bean
-     */
+    /** 按类型获取并转为 Bean */
     public <T> T get(String key, Class<T> clazz) {
         var v = node.path(key);
         if (v.isMissingNode() || v.isNull()) return null;
@@ -118,9 +109,7 @@ public final class JsonObject {
         }
     }
 
-    /**
-     * 写入任意值（null/基本类型/String/Map/List/JsonObject/JsonArray 等）
-     */
+    /** 写入任意值（null/基本类型/String/Map/List/JsonObject/JsonArray 等） */
     public JsonObject put(String key, Object value) {
         switch (value) {
             case null -> node.set(key, node.nullNode());
@@ -148,9 +137,7 @@ public final class JsonObject {
         }
     }
 
-    /**
-     * 转为指定类型 Bean
-     */
+    /** 转为指定类型 Bean */
     public <T> T toBean(Class<T> clazz) {
         try {
             return mapper.treeToValue(node, clazz);
@@ -159,9 +146,7 @@ public final class JsonObject {
         }
     }
 
-    /**
-     * 暴露底层 ObjectNode，便于与 Jackson 生态互操作
-     */
+    /** 暴露底层 ObjectNode，便于与 Jackson 生态互操作 */
     public ObjectNode unwrap() {
         return node;
     }

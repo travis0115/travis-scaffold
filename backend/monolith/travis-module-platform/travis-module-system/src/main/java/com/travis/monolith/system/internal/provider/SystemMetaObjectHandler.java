@@ -2,17 +2,16 @@ package com.travis.monolith.system.internal.provider;
 
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
+import java.time.LocalDateTime;
 import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-
 /**
  * 系统模块字段自动填充处理器
- * <p>
- * 覆盖基础设施层的默认实现，在技术字段的基础上额外填充业务审计字段 createBy、updateBy。
- * <p>
- * 当前用户ID通过 StpKit 获取，未登录时兜底返回 0L。
+ *
+ * <p>覆盖基础设施层的默认实现，在技术字段的基础上额外填充业务审计字段 createBy、updateBy。
+ *
+ * <p>当前用户ID通过 StpKit 获取，未登录时兜底返回 0L。
  *
  * @author travis
  */

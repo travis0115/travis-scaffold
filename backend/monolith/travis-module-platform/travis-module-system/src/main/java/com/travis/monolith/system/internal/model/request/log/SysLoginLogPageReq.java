@@ -14,6 +14,7 @@ import lombok.EqualsAndHashCode;
 public class SysLoginLogPageReq extends PageRequest {
     /** 用户名（模糊匹配） */
     private String username;
+
     /** 登录状态（0-失败 1-成功） */
     private Integer status;
 }

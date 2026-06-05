@@ -5,11 +5,10 @@ import com.travis.monolith.system.internal.model.request.dept.SysDeptReq;
 import com.travis.monolith.system.internal.model.response.dept.SysDeptResp;
 import com.travis.monolith.system.internal.service.SysDeptService;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * 部门管理控制器，提供部门树的增删改查接口
@@ -22,9 +21,7 @@ import java.util.List;
 @Validated
 public class SysDeptController {
 
-    /**
-     * 部门管理服务
-     */
+    /** 部门管理服务 */
     private final SysDeptService deptService;
 
     /**
@@ -63,7 +60,7 @@ public class SysDeptController {
     /**
      * 更新部门信息
      *
-     * @param id  部门ID
+     * @param id 部门ID
      * @param req 部门信息
      * @return 空响应
      */
