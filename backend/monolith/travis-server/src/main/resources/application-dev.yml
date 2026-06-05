@@ -17,16 +17,9 @@ logging:
 
 spring:
   datasource:
-    url: ${MYSQL_URL:jdbc:mysql://127.0.0.1:3306/travis_monolith?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false}
+    url: ${MYSQL_URL:jdbc:mysql://127.0.0.1:3306/travis_monolith?serverTimezone=${travis.web.time-zone:UTC}&useSSL=false}
     username: ${MYSQL_USERNAME:root}
     password: ${MYSQL_PASSWORD}
-  mongodb:
-    host: ${MONGODB_HOST:127.0.0.1}
-    port: ${MONGODB_PORT:27017}
-    authentication-database: ${MONGODB_AUTHENTICATION_DATABASE:admin}
-    database: ${MONGODB_DATABASE:travis_monolith}
-    username: ${MONGODB_USERNAME:root}
-    password: ${MONGODB_PASSWORD}
 
 travis:
   web:

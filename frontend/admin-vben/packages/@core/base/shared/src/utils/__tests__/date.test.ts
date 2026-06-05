@@ -140,4 +140,43 @@ describe('dateUtils', () => {
       expect(d.tz().format('HH')).not.toBe('00');
     });
   });
+
+  // ===============================
+  // UTC字符串解析（后端统一UTC时间）
+  // ===============================
+  describe('UTC string parsing', () => {
+    it('should treat string without timezone suffix as UTC and convert to target timezone', () => {
+      // 后端 Jackson date-format: yyyy-MM-dd HH:mm:ss，无时区后缀
+      setCurrentTimezone('Asia/Shanghai');
+      const result = formatDate('2024-10-30 04:34:56', 'YYYY-MM-DD HH:mm:ss');
+      // UTC 04:34:56 → Asia/Shanghai 12:34:56 (+8)
+      expect(result).toBe('2024-10-30 12:34:56');
+    });
+
+    it('should convert UTC string to America/New_York correctly', () => {
+      setCurrentTimezone('America/New_York');
+      const result = formatDate('2024-10-30 12:34:56', 'YYYY-MM-DD HH:mm:ss');
+      // UTC 12:34:56 → America/New_York 08:34:56 (-4, EDT夏令时)
+      expect(result).toBe('2024-10-30 08:34:56');
+    });
+
+    it('should still correctly parse ISO string with Z suffix', () => {
+      setCurrentTimezone('Asia/Shanghai');
+      const result = formatDate('2024-10-30T04:34:56Z', 'YYYY-MM-DD HH:mm:ss');
+      expect(result).toBe('2024-10-30 12:34:56');
+    });
+
+    it('should still correctly parse ISO string with +HH:mm offset', () => {
+      setCurrentTimezone('Asia/Shanghai');
+      // +08:00 偏移的字符串不应被当作UTC
+      const result = formatDate('2024-10-30T12:34:56+08:00', 'YYYY-MM-DD HH:mm:ss');
+      expect(result).toBe('2024-10-30 12:34:56');
+    });
+
+    it('should handle formatDateTime for UTC backend string', () => {
+      setCurrentTimezone('Asia/Shanghai');
+      const result = formatDateTime('2024-10-30 04:34:56');
+      expect(result).toBe('2024-10-30 12:34:56');
+    });
+  });
 });

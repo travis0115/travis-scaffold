@@ -8,6 +8,7 @@ export function useColumns(): VxeTableGridColumns {
       field: 'loginTime',
       title: $t('system.loginLog.loginTime'),
       width: 180,
+      formatter: 'formatDateTime',
     },
     {
       field: 'ip',

@@ -3,6 +3,8 @@ import type { SystemUpdateLogApi } from '#/api';
 
 import { onMounted, ref } from 'vue';
 
+import { formatDate } from '@vben/utils';
+
 import { Card, Empty, Spin, Tag } from 'antdv-next';
 
 import { getPublishedUpdateLogs } from '#/api';
@@ -20,16 +22,6 @@ onMounted(async () => {
     loading.value = false;
   }
 });
-
-/** 格式化日期 */
-function formatDate(dateStr?: string) {
-  if (!dateStr) return '';
-  const date = new Date(dateStr);
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
 </script>
 
 <template>

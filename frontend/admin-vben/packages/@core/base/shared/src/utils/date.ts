@@ -19,12 +19,26 @@ type Format =
   | 'YYYY-MM-DD HH:mm:ss'
   | (string & {});
 
+/**
+ * 判断时间字符串是否包含时区信息
+ * 匹配：Z、z、+HH:mm、+HHmm、-HH:mm、-HHmm 等时区后缀
+ */
+const TIMEZONE_REGEX = /[Zz]|[+-]\d{2}:?\d{2}$/;
+
 export function formatDate(time?: FormatDate, format: Format = 'YYYY-MM-DD') {
   if (time === undefined || time === null || time === '') {
     return '';
   }
   try {
-    const date = dayjs.isDayjs(time) ? time : dayjs(time);
+    let date: dayjs.Dayjs;
+    if (dayjs.isDayjs(time)) {
+      date = time;
+    } else if (typeof time === 'string' && !TIMEZONE_REGEX.test(time)) {
+      // 无时区标记的字符串视为UTC时间（后端统一使用UTC）
+      date = dayjs.utc(time);
+    } else {
+      date = dayjs(time);
+    }
     if (!date.isValid()) {
       throw new Error('Invalid date');
     }
