@@ -1,0 +1,166 @@
+server:
+  port: 8080
+spring:
+  profiles:
+    active: dev
+  #    active: prod
+  application:
+    name: travis-monolith
+  cache:
+    type: redis
+  #  config:
+  #    import:
+  #      - classpath:travis-xx.yml
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      database: ${REDIS_DATABASE:0}
+      client-name: ${spring.application.name}
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 2000  #最大连接数
+          max-idle: 20  #最大空闲连接数
+          min-idle: 5 #最小空闲连接数
+
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource  #指定使用Druid连接池
+    druid:
+      #连接池核心参数
+      initial-size: 5 #连接池初始化大小
+      min-idle: 10  #最小空闲连接数
+      max-active: 20  #最大连接数
+      max-wait: 60000  #连接超时时间，时间单位都是毫秒ms
+      time-between-eviction-runs-millis: 60000  #连接检测周期
+      min-evictable-idle-time-millis: 300000  #连接在池中最小生存的时间
+      validation-query: SELECT 1 FROM DUAL
+      test-while-idle: true #空闲时检测连接有效性
+      test-on-borrow: false  #获取连接时检测
+      test-on-return: false # 归还连接时检测
+      pool-prepared-statements: true #是否缓存preparedStatement，也就是PSCache
+      connection-properties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=500 #通过connectProperties属性来打开mergeSql功能；慢SQL记录
+      use-global-data-source-stat: true #开启全局监控
+      #监控配置
+      stat-view-servlet:
+        enabled: true #启用监控页面
+        url-pattern: "/druid/*" #监控页面访问路径
+        allow: 127.0.0.1  #允许访问的IP（默认所有IP）
+        deny: #禁止访问的IP
+        login-username: ${DRUID_USERNAME:travis0115}  #监控页面用户名
+        login-password: ${DRUID_PASSWORD:travis0115}  #监控页面密码
+        reset-enable: true  #是否可以重置
+
+      #SQL监控与防注入配置
+      filters: stat,wall  # 启用统计插件和防注入插件
+      filter:
+        stat:
+          log-slow-sql: true  #记录慢查询
+          slow-sql-millis: 2000 #慢查询阈值（2秒）
+          merge-sql: true #合并相同SQL的统计结果
+        wall:
+          config:
+            multi-statement-allow: true #允许执行多语句SQL
+      #Web统计过滤器配置项
+      web-stat-filter:
+        enabled: true #启用web统计过滤器
+        url-pattern: "/*"
+        exclusions: "*.js,*.gif,*.jpg,*.bmp,*.png,*.css,*.ico,/druid/*" #不统计这些请求数据
+
+  docker:
+    compose:
+      enabled: false
+  jackson:
+    locale: ${travis.web.locale:zh_CN}
+    time-zone: ${travis.web.time-zone:UTC}
+    date-format: yyyy-MM-dd HH:mm:ss
+    serialization:
+      indent-output: false #美化输出
+    deserialization:
+      fail_on_unknown_properties: false  #若存在无法匹配的属性抛出异常
+  jmx:
+    enabled: false
+  messages:
+    basename: i18n/messages
+    fallback-to-system-locale: false  #是否使用系统区域信息
+    use-code-as-default-message: false #使用消息代码作为默认消息而不是抛出“NoSuchMessageException”,仅在开发期间推荐
+  servlet:
+    multipart:
+      enabled: true #开启文件上传
+      max-file-size: 50MB #限制单个文件上传大小
+      max-request-size: 100MB #限制整个请求体大小
+  threads:
+    virtual:
+      enabled: true
+  web:
+    #    cors:
+    #      exposed-headers:
+    #        -Custom-Header  #自定义请求头
+    locale: ${travis.web.locale:zh_CN}
+
+# Actuator 监控端点的配置项
+management:
+  #  endpoints:
+  #    web:
+  #      exposure:
+  #        include: "*"  # 通过 HTTP 暴露所有 Actuator 端点（默认只开放 health 和 info）,生产环境不建议全部开放，建议按需开启
+  otlp:
+    metrics:
+      export:
+        enabled: false  # 是否启用 OTLP（OpenTelemetry Protocol）指标导出，false 表示不向外部观测系统（如 SkyWalking / Prometheus OTLP / Tempo 等）上报指标，如果后续接入 OpenTelemetry Collector 或可观测平台，可改为 true 并配置 endpoint
+
+# MyBatis-Plus配置
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  mapper-locations: classpath*:mapper/*.xml # XML映射文件位置(可选,如果只用BaseMapper可以不配置)
+
+# Sa-Token 配置
+sa-token:
+  # token前缀
+  token-prefix: Bearer
+  # token 名称（同时也是 cookie 名称）
+  token-name: Authorization
+  # token 有效期（单位：秒） 默认30天，-1 代表永久有效
+  timeout: 604800
+  # 设置用于生成和解析 JWT 的密钥
+  jwt-secret-key: ${JWT_SECRET_KEY}
+  # 是否尝试从 请求体 里读取 Token
+  is-read-body: false
+  # 是否尝试从 cookie 里读取 Token
+  is-read-cookie: false
+  # 是否在登录后将 Token 写入到响应头
+  is-write-header: true
+  # 是否输出操作日志
+  is-log: true
+
+#################### 应用相关配置 ####################
+travis:
+  info:
+    base-package: com.travis.monolith
+  web:
+    # Web路径前缀配置
+    apis:
+      # 管理后台接口
+      - prefix: /api/admin
+        package-pattern: controller.admin
+      # 客户端接口
+      - prefix: /api/app
+        package-pattern: controller.app
+    # 文件配置
+    file:
+      resource-handler: /files/**  # 文件访问URL
+      resource-location: ${user.home}/data/uploads # 文件存储路径
+    i18n:
+      enabled: true #是否启用国际化
+    locale: zh_CN #spring.web.locale和spring.jackson.locale配置
+    security:
+      # 登录类型鉴权规则：每条规则对应一种 loginType 的路径拦截策略
+      # starter 会自动发现对应 loginType 的 StpLogic Bean 并注册拦截器
+      auth-rules:
+        - login-type: admin
+          path-patterns:
+            - /api/admin/**
+          exclude-path-patterns:
+            - /api/admin/system/auth/login
+    time-zone: UTC  #全局time-zone配置，影响spring.jackson.time-zone以及日志配置

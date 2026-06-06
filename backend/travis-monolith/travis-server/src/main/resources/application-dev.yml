@@ -1,0 +1,26 @@
+logging:
+  access:
+    enabled: true #是否启用access日志，true/false，默认开启
+  level:
+    root: INFO  #全局日志级别
+    com.travis: DEBUG #业务代码
+  pattern:
+    #该配置仅控制dev环境终端输出格式，生产输出为json
+    console: >
+      %clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint}
+      %clr(%level)
+      %clr(%replace(%X{request_id}){'^(.+)$',' [$1]'}){yellow}
+      %clr([%thread]){magenta}
+      %clr(%logger{36}:%line){cyan}
+      - %msg%n%wEx
+
+
+spring:
+  datasource:
+    url: ${MYSQL_URL:jdbc:mysql://127.0.0.1:3306/travis_monolith?serverTimezone=${travis.web.time-zone:UTC}&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD}
+
+travis:
+  web:
+    domain: http://127.0.0.1
