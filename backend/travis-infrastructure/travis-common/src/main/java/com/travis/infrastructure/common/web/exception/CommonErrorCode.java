@@ -73,8 +73,6 @@ public enum CommonErrorCode implements IErrorCode {
     /** 授权 */
     AUTH_LOGIN_BAD_CREDENTIALS("3000", "用户名或密码错误"),
     AUTH_LOGIN_USER_DISABLED("3001", "账号已被禁用"),
-    USER_USERNAME_EXISTS("3002", "用户名已存在"),
-    USER_OLD_PASSWORD_ERROR("3003", "原密码错误"),
     ;
 
     private final String code;

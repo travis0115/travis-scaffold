@@ -11,10 +11,4 @@ public class SysConfigKeyConstant {
      */
     public static final String API_PREFIX = "api_prefix";
 
-    /**
-     * 静态资源url前缀
-     */
-    public static final String RESOURCE_PREFIX = "resource_prefix";
-
-
 }

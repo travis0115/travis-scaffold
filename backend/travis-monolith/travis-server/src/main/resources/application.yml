@@ -91,7 +91,7 @@ spring:
         schema-initialization:
           enabled: true
           mode: always # 始终执行初始化
-    republish-outstanding-events-on-restart: true # 重启时重新发布未处理的事件
+      republish-outstanding-events-on-restart: true # 重启时重新发布未处理的事件
     detection-strategy: explicitly-annotated  #只选择显式注释的包作为应用程序模块的基础包（通过 @ApplicationModules 或 jMolecules 的 DDD @Module）。
   servlet:
     multipart:
