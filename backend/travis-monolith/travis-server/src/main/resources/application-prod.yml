@@ -23,7 +23,9 @@ spring:
     url: ${MYSQL_URL:jdbc:mysql://127.0.0.1:3306/travis_monolith?serverTimezone=${travis.web.time-zone:UTC}&useSSL=false&allowPublicKeyRetrieval=true}
     username: ${MYSQL_USERNAME:root}
     password: ${MYSQL_PASSWORD}
-
+  modulith:
+    runtime:
+      verification-enabled: false #是否启用运行时验证，true/false
 travis:
   web:
     domain: http://127.0.0.1

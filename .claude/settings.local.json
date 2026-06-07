@@ -4,7 +4,9 @@
       "WebSearch",
       "Bash(python3 *)",
       "Bash(mvn compile *)",
-      "Bash(grep -E \"\\\\.\\(sql|yml|yaml\\)$\")"
+      "Bash(grep -E \"\\\\.\\(sql|yml|yaml\\)$\")",
+      "Bash(xargs ls -la)",
+      "Bash(grep -E \"\\\\.\\(sql|ddl|schema\\)$\")"
     ]
   }
 }

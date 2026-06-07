@@ -27,7 +27,7 @@ spring:
     password: ${MYSQL_PASSWORD}
   modulith:
     runtime:
-      verification-enabled: true
+      verification-enabled: true  #是否启用运行时验证，true/false
 
 travis:
   web:

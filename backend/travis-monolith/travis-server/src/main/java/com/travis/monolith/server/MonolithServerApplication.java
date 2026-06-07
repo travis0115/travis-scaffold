@@ -12,7 +12,6 @@ import java.util.TimeZone;
  * @author travis
  */
 @SpringBootApplication(scanBasePackages = {"${travis.info.base-package}"})
-//@Modulithic(additionalPackages = {"com.travis.monolith.system"})
 public class MonolithServerApplication {
 
     static void main(String[] args) {
