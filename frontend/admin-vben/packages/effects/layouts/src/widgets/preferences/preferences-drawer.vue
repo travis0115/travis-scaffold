@@ -290,6 +290,8 @@ async function handleClearCache() {
   await resetPreferences();
   await clearCache();
   emit('clearPreferencesAndLogout');
+  // 同时派发全局自定义事件，确保在 connectedComponent 事件链断裂时仍能触发退出登录
+  window.dispatchEvent(new CustomEvent('vben:clear-preferences-and-logout'));
 }
 
 async function handleReset() {

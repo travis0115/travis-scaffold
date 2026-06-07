@@ -12,7 +12,7 @@ export const overridesPreferences = defineOverridesPreferences({
     accessMode: 'backend',
     defaultAvatar: '/static/img/default-avatar.png',
     defaultHomePath: '/dashboard',
-    enablePreferences: true,
+    enablePreferences: false,
   },
   breadcrumb: {
     enable: false,

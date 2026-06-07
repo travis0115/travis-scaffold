@@ -54,4 +54,4 @@ log/
 !package.json
 !yarn.lock
 !pnpm-lock.yaml
-!**/src/main/java/**/log/
+!**/src/**/java/**/log/

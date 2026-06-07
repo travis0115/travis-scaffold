@@ -84,6 +84,11 @@ spring:
     basename: i18n/messages
     fallback-to-system-locale: false  #是否使用系统区域信息
     use-code-as-default-message: false #使用消息代码作为默认消息而不是抛出“NoSuchMessageException”,仅在开发期间推荐
+  modulith:
+    events:
+      jdbc:
+        schema-initialization:
+          enabled: true
   servlet:
     multipart:
       enabled: true #开启文件上传

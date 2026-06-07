@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { NotificationItem } from '@vben/layouts';
 
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
 import { AuthenticationLoginExpiredModal } from '@vben/common-ui';
@@ -103,6 +103,25 @@ const avatar = computed(() => {
 async function handleLogout() {
   await authStore.logout(false);
 }
+
+// 监听偏好设置清除缓存后的全局事件，作为组件 emit 链的兑底
+function handleClearPreferencesLogout() {
+  handleLogout();
+}
+
+onMounted(() => {
+  window.addEventListener(
+    'vben:clear-preferences-and-logout',
+    handleClearPreferencesLogout,
+  );
+});
+
+onUnmounted(() => {
+  window.removeEventListener(
+    'vben:clear-preferences-and-logout',
+    handleClearPreferencesLogout,
+  );
+});
 
 function handleNoticeClear() {
   notifications.value = [];

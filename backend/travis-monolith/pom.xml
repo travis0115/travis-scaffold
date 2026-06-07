@@ -21,7 +21,6 @@
 
     <modules>
         <module>travis-module-dependencies</module>
-        <module>travis-module-demo</module>
         <module>travis-module-platform</module>
         <module>travis-server</module>
     </modules>

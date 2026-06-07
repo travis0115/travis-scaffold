@@ -87,26 +87,30 @@ export const useAuthStore = defineStore('auth', () => {
     isLoggingOut.value = true;
 
     try {
-      // 仅在 token 有效时调用后端登出接口，避免 token 已失效时触发 401 死循环
-      if (accessStore.accessToken) {
-        await logoutApi();
+      try {
+        // 仅在 token 有效时调用后端登出接口，避免 token 已失效时触发 401 死循环
+        if (accessStore.accessToken) {
+          await logoutApi();
+        }
+      } catch {
+        // 不做任何处理
       }
-    } catch {
-      // 不做任何处理
+
+      resetAllStores();
+      accessStore.setLoginExpired(false);
+
+      // 回登录页带上当前路由地址
+      await router.replace({
+        path: LOGIN_PATH,
+        query: redirect
+          ? {
+              redirect: encodeURIComponent(router.currentRoute.value.fullPath),
+            }
+          : {},
+      });
+    } finally {
+      isLoggingOut.value = false;
     }
-
-    resetAllStores();
-    accessStore.setLoginExpired(false);
-
-    // 回登录页带上当前路由地址
-    await router.replace({
-      path: LOGIN_PATH,
-      query: redirect
-        ? {
-            redirect: encodeURIComponent(router.currentRoute.value.fullPath),
-          }
-        : {},
-    });
   }
 
   async function fetchUserInfo() {
@@ -117,6 +121,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   function $reset() {
     loginLoading.value = false;
+    isLoggingOut.value = false;
   }
 
   return {
