@@ -1,26 +1,21 @@
 package com.travis.monolith.system.user.internal.service.impl;
 
 import cn.hutool.crypto.digest.BCrypt;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.travis.infrastructure.common.web.enums.LoginType;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.util.IpUtil;
 import com.travis.monolith.system.file.api.SysFileService;
-import com.travis.monolith.system.log.loginlog.api.event.LoginLogEvent;
+import com.travis.monolith.system.user.api.event.UserLoginEvent;
 import com.travis.monolith.system.menu.api.SysMenuService;
-import com.travis.monolith.system.menu.internal.mapper.SysMenuMapper;
-import com.travis.monolith.system.menu.internal.model.entity.SysMenu;
+import com.travis.monolith.system.menu.api.model.VbenMenuResp;
 import com.travis.monolith.system.role.api.SysRoleService;
-import com.travis.monolith.system.role.internal.mapper.SysRoleMenuMapper;
-import com.travis.monolith.system.role.internal.model.entity.SysRoleMenu;
 import com.travis.monolith.system.user.api.SysAuthService;
 import com.travis.monolith.system.user.api.SysUserService;
 import com.travis.monolith.system.user.api.model.SysUserLoginReq;
 import com.travis.monolith.system.user.api.model.SysUserLoginResp;
 import com.travis.monolith.system.user.api.model.UserInfoResp;
-import com.travis.monolith.system.user.api.model.VbenMenuResp;
 import com.travis.monolith.system.user.internal.model.entity.SysUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
@@ -53,12 +48,6 @@ public class SysAuthServiceImpl implements SysAuthService {
     /** 菜单管理服务 */
     private final SysMenuService menuService;
 
-    /** 菜单 Mapper */
-    private final SysMenuMapper menuMapper;
-
-    /** 角色-菜单关联 Mapper */
-    private final SysRoleMenuMapper roleMenuMapper;
-
     /** Spring 事件发布器 */
     private final ApplicationEventPublisher eventPublisher;
 
@@ -77,18 +66,18 @@ public class SysAuthServiceImpl implements SysAuthService {
                                 SysUser::getStatus)
                         .one();
         if (user == null) {
-            eventPublisher.publishEvent(new LoginLogEvent(req.getUsername(), 0, "用户不存在"));
+            eventPublisher.publishEvent(new UserLoginEvent(req.getUsername(), 0, "用户不存在"));
             throw new BizException(CommonErrorCode.AUTH_LOGIN_BAD_CREDENTIALS);
         }
         // 检查账号是否被禁用
         if (user.getStatus() != null && user.getStatus() == 0) {
-            eventPublisher.publishEvent(new LoginLogEvent(req.getUsername(), 0, "账号已被禁用"));
+            eventPublisher.publishEvent(new UserLoginEvent(req.getUsername(), 0, "账号已被禁用"));
             throw new BizException(CommonErrorCode.AUTH_LOGIN_USER_DISABLED);
         }
 
         // BCrypt 校验密码
         if (!BCrypt.checkpw(req.getPassword(), user.getPassword())) {
-            eventPublisher.publishEvent(new LoginLogEvent(req.getUsername(), 0, "密码错误"));
+            eventPublisher.publishEvent(new UserLoginEvent(req.getUsername(), 0, "密码错误"));
             throw new BizException(CommonErrorCode.AUTH_LOGIN_BAD_CREDENTIALS);
         }
 
@@ -102,7 +91,7 @@ public class SysAuthServiceImpl implements SysAuthService {
         userService.updateById(user);
 
         // 记录登录成功日志
-        eventPublisher.publishEvent(new LoginLogEvent(req.getUsername(), 1, "登录成功"));
+        eventPublisher.publishEvent(new UserLoginEvent(req.getUsername(), 1, "登录成功"));
 
         return SysUserLoginResp.builder().accessToken(token).refreshToken(token).build();
     }
@@ -171,32 +160,13 @@ public class SysAuthServiceImpl implements SysAuthService {
             return Collections.emptyList();
         }
 
-        // 通过角色ID查询关联的菜单ID
-        List<Long> menuIds =
-                roleMenuMapper
-                        .selectList(
-                                new LambdaQueryWrapper<SysRoleMenu>()
-                                        .in(SysRoleMenu::getRoleId, roleIds))
-                        .stream()
-                        .map(SysRoleMenu::getMenuId)
-                        .distinct()
-                        .collect(Collectors.toList());
-
+        // 通过角色服务查询关联的菜单ID
+        List<Long> menuIds = roleService.getMenuIdsByRoleIds(roleIds);
         if (menuIds.isEmpty()) {
             return Collections.emptyList();
         }
 
-        // 查询菜单中有权限标识且状态启用的 perms 字段
-        return menuMapper
-                .selectList(
-                        new LambdaQueryWrapper<SysMenu>()
-                                .in(SysMenu::getId, menuIds)
-                                .isNotNull(SysMenu::getPerms)
-                                .ne(SysMenu::getPerms, "")
-                                .eq(SysMenu::getStatus, 1))
-                .stream()
-                .map(SysMenu::getPerms)
-                .distinct()
-                .collect(Collectors.toList());
+        // 通过菜单服务查询权限标识
+        return menuService.getPermissionsByMenuIds(menuIds);
     }
 }

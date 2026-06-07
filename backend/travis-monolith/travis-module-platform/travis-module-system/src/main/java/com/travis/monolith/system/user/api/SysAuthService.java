@@ -1,7 +1,7 @@
 package com.travis.monolith.system.user.api;
 
 import com.travis.monolith.system.user.api.model.SysUserLoginReq;
-import com.travis.monolith.system.user.api.model.VbenMenuResp;
+import com.travis.monolith.system.menu.api.model.VbenMenuResp;
 import com.travis.monolith.system.user.api.model.SysUserLoginResp;
 import com.travis.monolith.system.user.api.model.UserInfoResp;
 import java.util.List;

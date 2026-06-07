@@ -89,6 +89,8 @@ spring:
       jdbc:
         schema-initialization:
           enabled: true
+      republish-outstanding-events-on-restart: true
+    detection-strategy: explicitly-annotated  #只选择显式注释的包作为应用程序模块的基础包（通过 @ApplicationModules 或 jMolecules 的 DDD @Module）。
   servlet:
     multipart:
       enabled: true #开启文件上传

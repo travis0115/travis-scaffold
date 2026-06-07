@@ -1,4 +1,4 @@
-package com.travis.monolith.system.user.internal.model.entity;
+package com.travis.monolith.system.role.internal.model.entity;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;

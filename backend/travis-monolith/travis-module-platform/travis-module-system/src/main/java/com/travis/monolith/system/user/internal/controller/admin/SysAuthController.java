@@ -4,7 +4,7 @@ import com.travis.infrastructure.common.web.enums.LoginType;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.monolith.system.user.api.model.SysUserLoginReq;
-import com.travis.monolith.system.user.api.model.VbenMenuResp;
+import com.travis.monolith.system.menu.api.model.VbenMenuResp;
 import com.travis.monolith.system.user.api.model.SysUserLoginResp;
 import com.travis.monolith.system.user.api.model.UserInfoResp;
 import com.travis.monolith.system.user.api.SysAuthService;

@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.monolith.system.menu.internal.model.entity.SysMenu;
 import com.travis.monolith.system.menu.internal.model.request.SysMenuReq;
 import com.travis.monolith.system.menu.api.model.SysMenuResp;
-import com.travis.monolith.system.user.api.model.VbenMenuResp;
+import com.travis.monolith.system.menu.api.model.VbenMenuResp;
 import java.util.List;
 
 /**
@@ -72,4 +72,12 @@ public interface SysMenuService extends IService<SysMenu> {
      * @return Vben Admin 格式的菜单树
      */
     List<VbenMenuResp> getVbenMenuTree(List<Long> roleIds);
+
+    /**
+     * 根据菜单ID列表查询已启用菜单的权限标识列表
+     *
+     * @param menuIds 菜单ID列表
+     * @return 权限标识列表（去重）
+     */
+    List<String> getPermissionsByMenuIds(List<Long> menuIds);
 }

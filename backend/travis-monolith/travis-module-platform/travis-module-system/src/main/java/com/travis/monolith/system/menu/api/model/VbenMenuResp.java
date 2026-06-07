@@ -1,4 +1,4 @@
-package com.travis.monolith.system.user.api.model;
+package com.travis.monolith.system.menu.api.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.List;

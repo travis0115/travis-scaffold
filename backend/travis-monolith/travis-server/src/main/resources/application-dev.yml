@@ -14,12 +14,20 @@ logging:
       %clr(%logger{36}:%line){cyan}
       - %msg%n%wEx
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: modulith
 
 spring:
   datasource:
     url: ${MYSQL_URL:jdbc:mysql://127.0.0.1:3306/travis_monolith?serverTimezone=${travis.web.time-zone:UTC}&useSSL=false&allowPublicKeyRetrieval=true}
     username: ${MYSQL_USERNAME:root}
     password: ${MYSQL_PASSWORD}
+  modulith:
+    runtime:
+      verification-enabled: true
 
 travis:
   web:

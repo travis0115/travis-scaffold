@@ -1,7 +1,7 @@
-package com.travis.monolith.system.user.internal.mapper;
+package com.travis.monolith.system.role.internal.mapper;
 
 import com.travis.infrastructure.framework.mybatis.core.mapper.BaseMapperX;
-import com.travis.monolith.system.user.internal.model.entity.SysUserRole;
+import com.travis.monolith.system.role.internal.model.entity.SysUserRole;
 import org.apache.ibatis.annotations.Mapper;
 
 /**

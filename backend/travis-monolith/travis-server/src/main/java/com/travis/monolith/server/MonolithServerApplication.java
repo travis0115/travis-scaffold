@@ -2,7 +2,6 @@ package com.travis.monolith.server;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.modulith.Modulithic;
 
 import java.time.ZoneOffset;
 import java.util.TimeZone;
@@ -13,7 +12,7 @@ import java.util.TimeZone;
  * @author travis
  */
 @SpringBootApplication(scanBasePackages = {"${travis.info.base-package}"})
-@Modulithic
+//@Modulithic(additionalPackages = {"com.travis.monolith.system"})
 public class MonolithServerApplication {
 
     static void main(String[] args) {

@@ -4,21 +4,22 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
+import com.travis.monolith.system.dept.api.event.DeptDeletedEvent;
 import com.travis.monolith.system.dept.internal.converter.SysDeptConverter;
 import com.travis.monolith.system.dept.internal.mapper.SysDeptMapper;
-import com.travis.monolith.system.user.internal.mapper.SysUserMapper;
 import com.travis.monolith.system.dept.internal.model.entity.SysDept;
-import com.travis.monolith.system.user.internal.model.entity.SysUser;
 import com.travis.monolith.system.dept.internal.model.request.SysDeptReq;
 import com.travis.monolith.system.dept.api.model.SysDeptResp;
 import com.travis.monolith.system.dept.api.SysDeptService;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,8 +36,8 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
     /** 对象转换器 */
     private final SysDeptConverter converter;
 
-    /** 用户 Mapper（用于检查部门关联用户） */
-    private final SysUserMapper userMapper;
+    /** Spring 事件发布器（用于发布部门删除事件） */
+    private final ApplicationEventPublisher eventPublisher;
 
     /** 获取部门树形列表 */
     @Override
@@ -49,6 +50,16 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
         return buildTree(voList);
     }
 
+    /** 根据部门ID列表批量获取部门名称映射 */
+    @Override
+    public Map<Long, String> getDeptNameMapByIds(Collection<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Map.of();
+        }
+        return listByIds(ids).stream()
+                .collect(Collectors.toMap(SysDept::getId, SysDept::getDeptName));
+    }
+
     /** 获取部门详情 */
     @Override
     public SysDeptResp getDeptDetail(Long id) {
@@ -59,6 +70,16 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
         SysDeptResp resp = converter.toResp(dept);
         resp.setChildren(new ArrayList<>());
         return resp;
+    }
+
+    /** 根据部门ID查询部门名称 */
+    @Override
+    public String getDeptNameById(Long deptId) {
+        if (deptId == null) {
+            return null;
+        }
+        SysDept dept = getById(deptId);
+        return dept != null ? dept.getDeptName() : null;
     }
 
     /** 新增部门 */
@@ -93,7 +114,7 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
         updateById(dept);
     }
 
-    /** 删除部门（递归删除所有下级部门），删除前将关联用户的部门重置为 null */
+    /** 删除部门（递归删除所有下级部门），通过事件通知用户模块清除关联 */
     @Override
     @Transactional
     @CacheEvict(value = "system:dept:tree", key = "'all'")
@@ -101,16 +122,8 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
         List<Long> ids = new ArrayList<>();
         collectAllDescendantIds(id, ids);
         ids.add(id);
-        // 将关联用户的部门重置为 null
-        for (Long deptId : ids) {
-            List<SysUser> users =
-                    userMapper.selectList(
-                            new LambdaQueryWrapper<SysUser>().eq(SysUser::getDeptId, deptId));
-            for (SysUser user : users) {
-                user.setDeptId(null);
-                userMapper.updateById(user);
-            }
-        }
+        // 通过事件通知用户模块清除关联用户的部门归属
+        eventPublisher.publishEvent(new DeptDeletedEvent(ids));
         removeBatchByIds(ids);
     }
 

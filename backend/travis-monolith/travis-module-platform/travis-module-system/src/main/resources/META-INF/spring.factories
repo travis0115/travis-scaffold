@@ -1,0 +1,2 @@
+org.springframework.modulith.core.ApplicationModuleSourceFactory=\
+  com.travis.monolith.system.common.internal.SystemModuleSourceFactory

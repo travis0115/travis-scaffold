@@ -12,17 +12,14 @@ import com.travis.infrastructure.common.web.model.PageResult;
 import com.travis.infrastructure.framework.web.core.util.Ip2RegionUtil;
 import com.travis.monolith.system.user.internal.converter.SysUserConverter;
 import com.travis.monolith.system.common.api.exception.SystemErrorCode;
-import com.travis.monolith.system.dept.internal.mapper.SysDeptMapper;
+import com.travis.monolith.system.dept.api.SysDeptService;
+import com.travis.monolith.system.dept.api.event.DeptDeletedEvent;
 import com.travis.monolith.system.user.internal.mapper.SysUserMapper;
-import com.travis.monolith.system.user.internal.mapper.SysUserRoleMapper;
-import com.travis.monolith.system.dept.internal.model.entity.SysDept;
-import com.travis.monolith.system.role.internal.model.entity.SysRole;
+import com.travis.monolith.system.role.api.SysRoleService;
 import com.travis.monolith.system.user.internal.model.entity.SysUser;
-import com.travis.monolith.system.user.internal.model.entity.SysUserRole;
 import com.travis.monolith.system.user.api.model.*;
 import com.travis.monolith.system.user.api.model.SysUserResp;
 import com.travis.monolith.system.file.api.SysFileService;
-import com.travis.monolith.system.role.api.SysRoleService;
 import com.travis.monolith.system.user.api.SysUserService;
 import java.security.SecureRandom;
 import java.util.List;
@@ -32,6 +29,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
+import org.springframework.context.event.EventListener;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -44,11 +42,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
         implements SysUserService {
 
-    /** 用户-角色关联 Mapper */
-    private final SysUserRoleMapper userRoleMapper;
-
-    /** 部门 Mapper（用于关联查询部门名称） */
-    private final SysDeptMapper deptMapper;
+    /** 部门服务（用于关联查询部门名称） */
+    private final SysDeptService deptService;
 
     /** 角色管理服务 */
     private final SysRoleService roleService;
@@ -95,12 +90,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
         SysUserResp vo = toVO(user);
         List<Long> roleIds = roleService.getRoleIdsByUserId(id);
         vo.setRoleIds(roleIds);
-        List<String> roleNames =
-                roleIds.isEmpty()
-                        ? List.of()
-                        : roleService.listByIds(roleIds).stream()
-                                .map(SysRole::getRoleName)
-                                .collect(Collectors.toList());
+        List<String> roleNames = roleService.getRoleNamesByUserId(id);
         vo.setRoleNames(roleNames);
         return vo;
     }
@@ -151,33 +141,19 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
     @Override
     @Transactional
     public void deleteUser(Long id) {
-        // 删除用户-角色关联
-        userRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getUserId, id));
+        // 通过角色服务删除用户-角色关联
+        roleService.deleteUserRolesByUserId(id);
         removeById(id);
         // 使用户会话失效
         StpKit.of(LoginType.ADMIN).logout(id);
     }
 
-    /** 分配用户角色：先删除原有关联，再批量插入新关联，清除菜单缓存 */
+    /** 分配用户角色：委托给角色服务，清除菜单缓存 */
     @Override
     @Transactional
     @CacheEvict(value = "menus:vben", allEntries = true)
     public void assignRoles(SysUserRoleReq req) {
-        userRoleMapper.delete(
-                new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getUserId, req.getUserId()));
-        if (req.getRoleIds() != null && !req.getRoleIds().isEmpty()) {
-            List<SysUserRole> list =
-                    req.getRoleIds().stream()
-                            .map(
-                                    roleId -> {
-                                        SysUserRole ur = new SysUserRole();
-                                        ur.setUserId(req.getUserId());
-                                        ur.setRoleId(roleId);
-                                        return ur;
-                                    })
-                            .collect(Collectors.toList());
-            list.forEach(userRoleMapper::insert);
-        }
+        roleService.assignUserRoles(req.getUserId(), req.getRoleIds());
     }
 
     /** 根据用户名查询用户（限制返回1条） */
@@ -297,9 +273,10 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
         SysUserResp resp = converter.toResp(user);
         resp.setAvatar(fileService.getFileUrl(user.getAvatar()));
         if (user.getDeptId() != null) {
-            SysDept dept = deptMapper.selectById(user.getDeptId());
-            if (dept != null) {
-                resp.setDeptName(dept.getDeptName());
+            Map<Long, String> deptMap = deptService.getDeptNameMapByIds(List.of(user.getDeptId()));
+            String deptName = deptMap.get(user.getDeptId());
+            if (deptName != null) {
+                resp.setDeptName(deptName);
             }
         }
         resp.setRoleNames(roleService.getRoleNamesByUserId(user.getId()));
@@ -326,15 +303,11 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
                         .map(SysUser::getDeptId)
                         .filter(java.util.Objects::nonNull)
                         .collect(Collectors.toSet());
-        Map<Long, String> deptNameMap =
-                deptIds.isEmpty()
-                        ? Map.of()
-                        : deptMapper.selectBatchIds(deptIds).stream()
-                                .collect(Collectors.toMap(SysDept::getId, SysDept::getDeptName));
+        Map<Long, String> deptNameMap = deptService.getDeptNameMapByIds(deptIds);
 
         // 批量查询所有关联的角色名称（按用户分组）
         List<Long> userIds = users.stream().map(SysUser::getId).collect(Collectors.toList());
-        Map<Long, List<String>> userRoleNamesMap = batchGetRoleNamesByUserIds(userIds);
+        Map<Long, List<String>> userRoleNamesMap = roleService.batchGetRoleNamesByUserIds(userIds);
 
         return users.stream()
                 .map(
@@ -360,35 +333,21 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
     }
 
     /**
-     * 批量查询多个用户的角色名称映射
+     * 监听部门删除事件，将关联用户的部门ID重置为 null
      *
-     * @param userIds 用户ID列表
-     * @return userId -> roleNameList 映射
+     * @param event 部门删除事件
      */
-    private Map<Long, List<String>> batchGetRoleNamesByUserIds(List<Long> userIds) {
-        if (userIds.isEmpty()) {
-            return Map.of();
+    @EventListener
+    @Transactional
+    public void onDeptDeleted(DeptDeletedEvent event) {
+        List<Long> deptIds = event.getDeptIds();
+        for (Long deptId : deptIds) {
+            List<SysUser> users =
+                    list(new LambdaQueryWrapper<SysUser>().eq(SysUser::getDeptId, deptId));
+            for (SysUser user : users) {
+                user.setDeptId(null);
+                updateById(user);
+            }
         }
-        // 批量查询用户-角色关联
-        List<SysUserRole> userRoles =
-                userRoleMapper.selectList(
-                        new LambdaQueryWrapper<SysUserRole>().in(SysUserRole::getUserId, userIds));
-        if (userRoles.isEmpty()) {
-            return Map.of();
-        }
-        // 收集所有角色ID，批量查询角色
-        Set<Long> roleIds =
-                userRoles.stream().map(SysUserRole::getRoleId).collect(Collectors.toSet());
-        Map<Long, String> roleNameMap =
-                roleService.listByIds(roleIds).stream()
-                        .collect(Collectors.toMap(SysRole::getId, SysRole::getRoleName));
-        // 按 userId 分组
-        return userRoles.stream()
-                .collect(
-                        Collectors.groupingBy(
-                                SysUserRole::getUserId,
-                                Collectors.mapping(
-                                        ur -> roleNameMap.getOrDefault(ur.getRoleId(), "未知角色"),
-                                        Collectors.toList())));
     }
 }

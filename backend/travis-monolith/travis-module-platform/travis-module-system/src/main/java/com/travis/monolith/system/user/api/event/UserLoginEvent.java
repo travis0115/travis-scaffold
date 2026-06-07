@@ -1,14 +1,14 @@
-package com.travis.monolith.system.log.loginlog.api.event;
+package com.travis.monolith.system.user.api.event;
 
 import lombok.Getter;
 
 /**
- * 登录日志事件，记录登录的用户名、状态和提示信息
+ * 用户登录事件，由认证服务在登录成功或失败时发布
  *
  * @author travis
  */
 @Getter
-public class LoginLogEvent {
+public class UserLoginEvent {
 
     /** 登录用户名 */
     private final String username;
@@ -19,7 +19,7 @@ public class LoginLogEvent {
     /** 提示信息 */
     private final String message;
 
-    public LoginLogEvent(String username, int status, String message) {
+    public UserLoginEvent(String username, int status, String message) {
         this.username = username;
         this.status = status;
         this.message = message;
