@@ -1,6 +1,5 @@
 server:
   port: 8080
-  shutdown: graceful
 spring:
   profiles:
     active: dev
@@ -86,12 +85,6 @@ spring:
     fallback-to-system-locale: false  #是否使用系统区域信息
     use-code-as-default-message: false #使用消息代码作为默认消息而不是抛出“NoSuchMessageException”,仅在开发期间推荐
   modulith:
-    events:
-      jdbc:
-        schema-initialization:
-          enabled: true
-          mode: always # 始终执行初始化
-      republish-outstanding-events-on-restart: true # 重启时重新发布未处理的事件
     detection-strategy: explicitly-annotated  #只选择显式注释的包作为应用程序模块的基础包（通过 @ApplicationModules 或 jMolecules 的 DDD @Module）。
   servlet:
     multipart:
@@ -123,6 +116,15 @@ mybatis-plus:
   configuration:
     log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
   mapper-locations: classpath*:mapper/*.xml # XML映射文件位置(可选,如果只用BaseMapper可以不配置)
+
+# RocketMQ配置
+rocketmq:
+  # 生产者配置
+  producer:
+    # 生产者组名: 用于标识一组生产者
+    group: ${spring.application.name}
+    # 发送消息超时时间(毫秒)
+    send-message-timeout: 3000
 
 # Sa-Token 配置
 sa-token:

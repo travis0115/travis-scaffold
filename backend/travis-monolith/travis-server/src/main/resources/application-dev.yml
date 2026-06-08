@@ -20,10 +20,25 @@ management:
       exposure:
         include: modulith
 
+# RocketMQ配置
+rocketmq:
+  # 消费者配置(全局默认配置)
+  consumer:
+    # 是否启用消息轨迹，本地开发可以关闭消息轨迹
+    enable-msg-trace: false
+    # Proxy 模式访问，端口为 Docker 映射的 8081
+    endpoints: 127.0.0.1:8081
+  # 生产者配置
+  producer:
+    # 是否启用消息轨迹，本地开发可以关闭消息轨迹
+    enable-msg-trace: false
+    # Proxy 模式访问，端口为 Docker 映射的 8081
+    endpoints: 127.0.0.1:8081
+
 spring:
   datasource:
     url: ${MYSQL_URL:jdbc:mysql://127.0.0.1:3306/travis_monolith?serverTimezone=${travis.web.time-zone:UTC}&useSSL=false&allowPublicKeyRetrieval=true}
-    username: ${MYSQL_USERNAME:root}
+    username: ${MYSQL_USERNAME}
     password: ${MYSQL_PASSWORD}
   modulith:
     runtime:

@@ -25,8 +25,9 @@
         <module>travis-spring-boot-starter-desensitize</module>
         <module>travis-spring-boot-starter-jackson</module>
         <module>travis-spring-boot-starter-logging</module>
-        <module>travis-spring-boot-starter-redis</module>
         <module>travis-spring-boot-starter-mybatis</module>
+        <module>travis-spring-boot-starter-redis</module>
+        <module>travis-spring-boot-starter-rocketmq</module>
         <module>travis-spring-boot-starter-sa-token</module>
         <module>travis-spring-boot-starter-webmvc</module>
     </modules>

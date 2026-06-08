@@ -28,6 +28,9 @@
         <!-- 缓存 -->
         <redisson.version>4.4.0</redisson.version>
 
+        <!-- 消息队列 -->
+        <rocketmq.version>2.3.6</rocketmq.version>
+
         <!-- 日志 -->
         <logstash-logback-encoder.version>9.0</logstash-logback-encoder.version>
 
@@ -112,6 +115,11 @@
             </dependency>
             <dependency>
                 <groupId>com.travis</groupId>
+                <artifactId>travis-spring-boot-starter-rocketmq</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.travis</groupId>
                 <artifactId>travis-spring-boot-starter-sa-token</artifactId>
                 <version>${revision}</version>
             </dependency>
@@ -152,6 +160,13 @@
                 <groupId>org.redisson</groupId>
                 <artifactId>redisson-spring-boot-starter</artifactId>
                 <version>${redisson.version}</version>
+            </dependency>
+
+            <!-- rocketmq -->
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-v5-client-spring-boot-starter</artifactId>
+                <version>${rocketmq.version}</version>
             </dependency>
 
             <!-- sa-token -->

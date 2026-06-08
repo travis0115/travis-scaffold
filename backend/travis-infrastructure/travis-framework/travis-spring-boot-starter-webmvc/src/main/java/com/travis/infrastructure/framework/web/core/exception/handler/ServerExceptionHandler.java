@@ -28,30 +28,37 @@ import java.io.FileNotFoundException;
 @NoArgsConstructor
 public class ServerExceptionHandler {
     /** 算数异常 */
+    @ExceptionHandler(IllegalStateException.class)
+    public ApiResponse<?> handleIllegalStateException(IllegalStateException ex) {
+        log.error("状态异常：", ex);
+        return ApiResponse.error(CommonErrorCode.ILLEGALSTATE_EXCEPTION);
+    }
+
+    /** 算数异常 */
     @ExceptionHandler(ArithmeticException.class)
     public ApiResponse<?> handleArithmeticException(ArithmeticException ex) {
-        log.error("算数异常: ", ex);
+        log.error("算数异常：", ex);
         return ApiResponse.error(CommonErrorCode.ARITHMETIC_EXCEPTION);
     }
 
     /** 中断异常 */
     @ExceptionHandler(InterruptedException.class)
     public ApiResponse<?> handleInterruptedException(InterruptedException ex) {
-        log.warn("中断异常: ", ex);
+        log.warn("中断异常：", ex);
         return ApiResponse.error(CommonErrorCode.INTERRUPTED);
     }
 
     /** 上传文件大小超出限制 */
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ApiResponse<?> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex) {
-        log.warn("上传文件大小超过限制: ", ex);
+        log.warn("上传文件大小超过限制：", ex);
         return ApiResponse.error(CommonErrorCode.FILE_TOO_LARGE);
     }
 
     /** 文件或目录未找到 */
     @ExceptionHandler(FileNotFoundException.class)
     public ApiResponse<?> handleFileNotFoundException(MaxUploadSizeExceededException ex) {
-        log.warn("文件或目录未找到: ", ex);
+        log.warn("文件或目录未找到：", ex);
         return ApiResponse.error(CommonErrorCode.FILE_NOT_FOUND);
     }
 

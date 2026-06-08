@@ -6,7 +6,9 @@
       "Bash(mvn compile *)",
       "Bash(grep -E \"\\\\.\\(sql|yml|yaml\\)$\")",
       "Bash(xargs ls -la)",
-      "Bash(grep -E \"\\\\.\\(sql|ddl|schema\\)$\")"
+      "Bash(grep -E \"\\\\.\\(sql|ddl|schema\\)$\")",
+      "Bash(mvn clean *)",
+      "Bash(mvn spotless:apply)"
     ]
   }
 }

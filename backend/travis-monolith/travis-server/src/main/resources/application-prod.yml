@@ -18,6 +18,30 @@ logging:
       max-file-size: 10MB  #日志文件，到达多少容量，进行滚动
       total-size-cap: 5GB #日志文件的总大小上限，超出会自动删除旧文件
       clean-history-on-start: true  #启动时清理
+
+rocketmq:
+  # 消费者配置(全局默认配置)
+  consumer:
+    # 访问密钥(如果启用ACL)
+    access-key: ${ROCKETMQ_CONSUMER_ACCESS_KEY}
+    # 密钥(如果启用ACL)
+    secret-key: ${ROCKETMQ_CONSUMER_SECRET_KEY}
+    # 是否启用消息轨迹，本地开发可以关闭消息轨迹
+    enable-msg-trace: true
+    # Proxy 模式访问，端口为 Docker 映射的 8081
+    endpoints: 127.0.0.1:8081
+
+  # 生产者配置
+  producer:
+    # 访问密钥(如果启用ACL)
+    access-key: ${ROCKETMQ_PRODUCER_ACCESS_KEY}
+    # 密钥(如果启用ACL)
+    secret-key: ${ROCKETMQ_PRODUCER_SECRET_KEY}
+    # 是否启用消息轨迹，本地开发可以关闭消息轨迹
+    enable-msg-trace: true
+    # Proxy 模式访问，端口为 Docker 映射的 8081
+    endpoints: 127.0.0.1:8081
+
 spring:
   datasource:
     url: ${MYSQL_URL:jdbc:mysql://127.0.0.1:3306/travis_monolith?serverTimezone=${travis.web.time-zone:UTC}&useSSL=false&allowPublicKeyRetrieval=true}
