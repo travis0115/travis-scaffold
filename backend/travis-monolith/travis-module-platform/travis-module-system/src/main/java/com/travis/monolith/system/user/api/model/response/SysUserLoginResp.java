@@ -1,4 +1,4 @@
-package com.travis.monolith.system.user.api.model;
+package com.travis.monolith.system.user.api.model.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

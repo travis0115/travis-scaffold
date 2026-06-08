@@ -1,4 +1,4 @@
-package com.travis.monolith.system.user.api.model;
+package com.travis.monolith.system.user.api.model.request;
 
 import com.travis.infrastructure.common.validation.annotation.Password;
 import lombok.Data;

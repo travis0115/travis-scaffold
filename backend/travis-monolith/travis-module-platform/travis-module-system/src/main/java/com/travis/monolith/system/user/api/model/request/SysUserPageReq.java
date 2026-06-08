@@ -1,4 +1,4 @@
-package com.travis.monolith.system.user.api.model;
+package com.travis.monolith.system.user.api.model.request;
 
 import com.travis.infrastructure.common.web.model.PageRequest;
 import lombok.Data;

@@ -2,7 +2,7 @@ package com.travis.monolith.system.user.internal.auth;
 
 import cn.dev33.satoken.stp.StpInterface;
 import com.travis.infrastructure.common.web.enums.LoginType;
-import com.travis.monolith.system.user.api.SysAuthService;
+import com.travis.monolith.system.user.internal.service.SysAuthService;
 import com.travis.monolith.system.role.api.SysRoleService;
 import java.util.Collections;
 import java.util.List;

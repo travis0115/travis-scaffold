@@ -1,4 +1,4 @@
-package com.travis.monolith.system.user.api.model;
+package com.travis.monolith.system.user.api.model.request;
 
 import jakarta.validation.constraints.NotNull;
 import java.util.List;

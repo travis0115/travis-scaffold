@@ -5,32 +5,33 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.web.enums.LoginType;
-import com.travis.infrastructure.framework.satoken.core.StpKit;
-import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResult;
+import com.travis.infrastructure.framework.satoken.core.StpKit;
+import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.util.Ip2RegionUtil;
-import com.travis.monolith.system.user.internal.converter.SysUserConverter;
 import com.travis.monolith.system.common.api.exception.SystemErrorCode;
 import com.travis.monolith.system.dept.api.SysDeptService;
 import com.travis.monolith.system.dept.api.event.DeptDeletedEvent;
-import com.travis.monolith.system.user.internal.mapper.SysUserMapper;
-import com.travis.monolith.system.role.api.SysRoleService;
-import com.travis.monolith.system.user.internal.model.entity.SysUser;
-import com.travis.monolith.system.user.api.model.*;
-import com.travis.monolith.system.user.api.model.SysUserResp;
 import com.travis.monolith.system.file.api.SysFileService;
-import com.travis.monolith.system.user.api.SysUserService;
+import com.travis.monolith.system.role.api.SysRoleService;
+import com.travis.monolith.system.user.internal.service.SysUserService;
+import com.travis.monolith.system.user.api.model.request.*;
+import com.travis.monolith.system.user.api.model.response.SysUserResp;
+import com.travis.monolith.system.user.internal.converter.SysUserConverter;
+import com.travis.monolith.system.user.internal.entity.SysUser;
+import com.travis.monolith.system.user.internal.mapper.SysUserMapper;
+import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.stereotype.Service;
-import org.springframework.context.event.EventListener;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 用户管理服务实现，包含密码加密（BCrypt）、角色分配及部门名称关联查询

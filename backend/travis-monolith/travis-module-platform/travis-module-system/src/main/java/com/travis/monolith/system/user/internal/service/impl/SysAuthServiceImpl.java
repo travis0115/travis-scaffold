@@ -11,12 +11,12 @@ import com.travis.monolith.system.user.api.event.UserLoginEvent;
 import com.travis.monolith.system.menu.api.SysMenuService;
 import com.travis.monolith.system.menu.api.model.VbenMenuResp;
 import com.travis.monolith.system.role.api.SysRoleService;
-import com.travis.monolith.system.user.api.SysAuthService;
-import com.travis.monolith.system.user.api.SysUserService;
-import com.travis.monolith.system.user.api.model.SysUserLoginReq;
-import com.travis.monolith.system.user.api.model.SysUserLoginResp;
-import com.travis.monolith.system.user.api.model.UserInfoResp;
-import com.travis.monolith.system.user.internal.model.entity.SysUser;
+import com.travis.monolith.system.user.internal.service.SysAuthService;
+import com.travis.monolith.system.user.internal.service.SysUserService;
+import com.travis.monolith.system.user.api.model.request.SysUserLoginReq;
+import com.travis.monolith.system.user.api.model.response.SysUserLoginResp;
+import com.travis.monolith.system.user.api.model.response.UserInfoResp;
+import com.travis.monolith.system.user.internal.entity.SysUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
@@ -25,7 +25,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 后台认证服务实现，处理登录验证（BCrypt 密码校验）、用户信息获取及权限查询

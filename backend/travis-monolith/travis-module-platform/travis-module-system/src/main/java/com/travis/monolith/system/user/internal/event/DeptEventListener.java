@@ -3,7 +3,7 @@ package com.travis.monolith.system.user.internal.event;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.travis.monolith.system.dept.api.event.DeptDeletedEvent;
 import com.travis.monolith.system.user.internal.mapper.SysUserMapper;
-import com.travis.monolith.system.user.internal.model.entity.SysUser;
+import com.travis.monolith.system.user.internal.entity.SysUser;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
