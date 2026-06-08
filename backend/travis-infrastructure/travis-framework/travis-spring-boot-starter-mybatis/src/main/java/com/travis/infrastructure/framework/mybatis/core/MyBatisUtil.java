@@ -1,4 +1,4 @@
-package com.travis.infrastructure.framework.mybatis.core.util;
+package com.travis.infrastructure.framework.mybatis.core;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 

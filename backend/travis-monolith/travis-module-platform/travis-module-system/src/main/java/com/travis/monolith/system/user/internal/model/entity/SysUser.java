@@ -1,7 +1,7 @@
 package com.travis.monolith.system.user.internal.model.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.travis.infrastructure.framework.mybatis.core.entity.BaseEntity;
+import com.travis.infrastructure.framework.mybatis.core.BaseEntity;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.Data;

@@ -3,7 +3,7 @@ package com.travis.monolith.system.menu.internal.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
-import com.travis.infrastructure.framework.jackson.core.util.JsonUtil;
+import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.monolith.system.menu.internal.converter.SysMenuConverter;
 import com.travis.monolith.system.common.api.exception.SystemErrorCode;

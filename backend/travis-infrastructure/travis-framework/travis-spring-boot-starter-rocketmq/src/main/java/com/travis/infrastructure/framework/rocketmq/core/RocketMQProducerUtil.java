@@ -1,4 +1,4 @@
-package com.travis.infrastructure.framework.rocketmq.core.util;
+package com.travis.infrastructure.framework.rocketmq.core;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.apis.producer.SendReceipt;

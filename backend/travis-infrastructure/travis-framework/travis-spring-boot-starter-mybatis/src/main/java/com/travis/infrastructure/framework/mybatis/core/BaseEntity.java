@@ -1,4 +1,4 @@
-package com.travis.infrastructure.framework.mybatis.core.entity;
+package com.travis.infrastructure.framework.mybatis.core;
 
 import com.baomidou.mybatisplus.annotation.*;
 import java.io.Serial;

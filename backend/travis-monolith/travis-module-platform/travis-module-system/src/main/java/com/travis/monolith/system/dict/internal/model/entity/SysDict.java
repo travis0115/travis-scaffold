@@ -1,7 +1,7 @@
 package com.travis.monolith.system.dict.internal.model.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.travis.infrastructure.framework.mybatis.core.entity.BaseEntity;
+import com.travis.infrastructure.framework.mybatis.core.BaseEntity;
 import com.travis.monolith.system.dict.api.model.SysDictItemResp;
 import java.util.List;
 import lombok.Data;

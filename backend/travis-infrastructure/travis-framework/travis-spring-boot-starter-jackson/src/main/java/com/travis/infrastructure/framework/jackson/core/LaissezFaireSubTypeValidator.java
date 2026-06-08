@@ -1,4 +1,4 @@
-package com.travis.infrastructure.framework.jackson.core.validator;
+package com.travis.infrastructure.framework.jackson.core;
 
 import tools.jackson.databind.DatabindContext;
 import tools.jackson.databind.JavaType;

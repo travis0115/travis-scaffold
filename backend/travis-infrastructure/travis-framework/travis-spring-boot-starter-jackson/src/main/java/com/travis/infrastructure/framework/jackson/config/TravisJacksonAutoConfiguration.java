@@ -1,7 +1,7 @@
 package com.travis.infrastructure.framework.jackson.config;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import com.travis.infrastructure.framework.jackson.core.util.JsonUtil;
+import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import org.springframework.boot.autoconfigure.AutoConfiguration;

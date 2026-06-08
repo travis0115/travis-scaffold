@@ -1,6 +1,6 @@
 package com.travis.monolith.system.user.internal.mapper;
 
-import com.travis.infrastructure.framework.mybatis.core.mapper.BaseMapperX;
+import com.travis.infrastructure.framework.mybatis.core.BaseMapperX;
 import com.travis.monolith.system.user.internal.model.entity.SysUser;
 import org.apache.ibatis.annotations.Mapper;
 

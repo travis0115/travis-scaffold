@@ -1,8 +1,8 @@
 package com.travis.infrastructure.framework.redis.config;
 
 import com.travis.infrastructure.framework.jackson.config.TravisJacksonAutoConfiguration;
-import com.travis.infrastructure.framework.jackson.core.validator.LaissezFaireSubTypeValidator;
-import com.travis.infrastructure.framework.redis.core.util.RedisUtil;
+import com.travis.infrastructure.framework.jackson.core.LaissezFaireSubTypeValidator;
+import com.travis.infrastructure.framework.redis.core.RedisUtil;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;

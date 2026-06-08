@@ -1,9 +1,9 @@
-package com.travis.infrastructure.framework.jackson.core.util;
+package com.travis.infrastructure.framework.jackson.core;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.travis.infrastructure.framework.jackson.core.model.JsonObject;
+
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;

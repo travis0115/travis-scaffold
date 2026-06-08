@@ -1,6 +1,6 @@
 package com.travis.monolith.system.log.loginlog.internal.mapper;
 
-import com.travis.infrastructure.framework.mybatis.core.mapper.BaseMapperX;
+import com.travis.infrastructure.framework.mybatis.core.BaseMapperX;
 import com.travis.monolith.system.log.loginlog.internal.model.entity.SysLoginLog;
 import org.apache.ibatis.annotations.Mapper;
 

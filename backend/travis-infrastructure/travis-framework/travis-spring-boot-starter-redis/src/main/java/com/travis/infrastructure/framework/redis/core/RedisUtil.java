@@ -1,4 +1,4 @@
-package com.travis.infrastructure.framework.redis.core.util;
+package com.travis.infrastructure.framework.redis.core;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;

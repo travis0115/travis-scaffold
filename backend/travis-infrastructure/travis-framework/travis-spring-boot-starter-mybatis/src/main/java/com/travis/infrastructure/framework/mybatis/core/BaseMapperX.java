@@ -1,4 +1,4 @@
-package com.travis.infrastructure.framework.mybatis.core.mapper;
+package com.travis.infrastructure.framework.mybatis.core;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;

@@ -1,6 +1,6 @@
 package com.travis.monolith.system.menu.internal.model.entity;
 
-import com.travis.infrastructure.framework.mybatis.core.entity.BaseEntity;
+import com.travis.infrastructure.framework.mybatis.core.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 

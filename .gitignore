@@ -10,6 +10,14 @@
 out/
 build/
 
+# AI 工具本地配置文件
+.agent
+.agents
+.claude
+.codex
+.cursor
+.atomcode
+
 # 编程语言&框架编译/产物文件（核心规则，屏蔽非源码文件）
 *.class
 *.jar

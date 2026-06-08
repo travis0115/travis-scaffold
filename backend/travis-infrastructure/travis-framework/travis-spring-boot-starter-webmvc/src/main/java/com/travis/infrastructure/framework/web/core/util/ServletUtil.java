@@ -15,7 +15,7 @@ import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.net.multipart.MultipartFormData;
 import cn.hutool.core.net.multipart.UploadSetting;
 import cn.hutool.core.util.*;
-import com.travis.infrastructure.framework.jackson.core.util.JsonUtil;
+import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.Cookie;

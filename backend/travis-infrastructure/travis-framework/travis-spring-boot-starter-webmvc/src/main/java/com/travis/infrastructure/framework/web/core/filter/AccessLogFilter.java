@@ -11,7 +11,7 @@ import com.travis.infrastructure.common.web.enums.ClientType;
 import com.travis.infrastructure.framework.desensitize.core.resolver.DesensitizeResolver;
 import com.travis.infrastructure.framework.desensitize.core.rule.DesensitizeRule;
 import com.travis.infrastructure.framework.desensitize.core.util.DesensitizeUtil;
-import com.travis.infrastructure.framework.jackson.core.util.JsonUtil;
+import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.logging.core.constant.LogKeys;
 import com.travis.infrastructure.framework.logging.core.enums.AccessLogger;
 import com.travis.infrastructure.framework.logging.core.enums.LogType;

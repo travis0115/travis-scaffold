@@ -1,4 +1,4 @@
-package com.travis.infrastructure.framework.mybatis.core.handler;
+package com.travis.infrastructure.framework.mybatis.core;
 
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import java.time.LocalDateTime;

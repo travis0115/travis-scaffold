@@ -1,6 +1,5 @@
-package com.travis.infrastructure.framework.jackson.core.model;
+package com.travis.infrastructure.framework.jackson.core;
 
-import com.travis.infrastructure.framework.jackson.core.util.JsonUtil;
 import java.util.ArrayList;
 import java.util.List;
 import tools.jackson.databind.ObjectMapper;
