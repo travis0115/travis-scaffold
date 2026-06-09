@@ -26,12 +26,12 @@ import java.nio.ByteBuffer;
  *         tag = "user-login",
  *         consumerGroup = "system-user-login-consumer")
  * @RequiredArgsConstructor
- * public class LoginLogEventConsumer extends AbstractEventConsumer<UserLoginEvent> {
+ * public class LoginLogEventConsumer extends AbstractEventConsumer<UserLoginPayload> {
  *
  *     private final SysLoginLogService loginLogService;
  *
  *     @Override
- *     protected void onEvent(UserLoginEvent payload) {
+ *     protected void onEvent(UserLoginPayload payload) {
  *         loginLogService.recordLoginLog(payload.getUsername(), payload.getStatus(), payload.getMessage());
  *     }
  * }

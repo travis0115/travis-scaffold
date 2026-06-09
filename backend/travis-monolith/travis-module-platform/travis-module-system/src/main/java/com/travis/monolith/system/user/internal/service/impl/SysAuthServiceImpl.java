@@ -12,7 +12,7 @@ import com.travis.monolith.system.file.api.SysFileApi;
 import com.travis.monolith.system.menu.api.SysMenuApi;
 import com.travis.monolith.system.menu.api.response.VbenMenuResp;
 import com.travis.monolith.system.role.api.SysRoleApi;
-import com.travis.monolith.system.user.api.event.UserLoginEvent;
+import com.travis.monolith.system.user.api.event.UserLoginPayload;
 import com.travis.monolith.system.user.api.request.SysUserLoginReq;
 import com.travis.monolith.system.user.api.response.SysUserLoginResp;
 import com.travis.monolith.system.user.api.response.UserInfoResp;
@@ -66,20 +66,20 @@ public class SysAuthServiceImpl implements SysAuthService {
                         .one();
         if (user == null) {
             messagePublisher.publish(
-                    SystemEvent.USER_LOGIN, new UserLoginEvent(req.getUsername(), 0, "用户不存在"));
+                    SystemEvent.USER_LOGIN, new UserLoginPayload(req.getUsername(), 0, "用户不存在"));
             throw new BizException(CommonErrorCode.AUTH_LOGIN_BAD_CREDENTIALS);
         }
         // 检查账号是否被禁用
         if (user.getStatus() != null && user.getStatus() == 0) {
             messagePublisher.publish(
-                    SystemEvent.USER_LOGIN, new UserLoginEvent(req.getUsername(), 0, "账号已被禁用"));
+                    SystemEvent.USER_LOGIN, new UserLoginPayload(req.getUsername(), 0, "账号已被禁用"));
             throw new BizException(CommonErrorCode.AUTH_LOGIN_USER_DISABLED);
         }
 
         // BCrypt 校验密码
         if (!BCrypt.checkpw(req.getPassword(), user.getPassword())) {
             messagePublisher.publish(
-                    SystemEvent.USER_LOGIN, new UserLoginEvent(req.getUsername(), 0, "密码错误"));
+                    SystemEvent.USER_LOGIN, new UserLoginPayload(req.getUsername(), 0, "密码错误"));
             throw new BizException(CommonErrorCode.AUTH_LOGIN_BAD_CREDENTIALS);
         }
 
@@ -94,7 +94,7 @@ public class SysAuthServiceImpl implements SysAuthService {
 
         // 记录登录成功日志
         messagePublisher.publish(
-                SystemEvent.USER_LOGIN, new UserLoginEvent(req.getUsername(), 1, "登录成功"));
+                SystemEvent.USER_LOGIN, new UserLoginPayload(req.getUsername(), 1, "登录成功"));
 
         return SysUserLoginResp.builder().accessToken(token).refreshToken(token).build();
     }

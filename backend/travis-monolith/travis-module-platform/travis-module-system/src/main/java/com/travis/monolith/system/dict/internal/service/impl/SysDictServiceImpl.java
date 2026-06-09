@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResult;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
-import com.travis.monolith.system.common.api.exception.SystemErrorCode;
+import com.travis.monolith.system.common.api.SystemErrorCode;
 import com.travis.monolith.system.dict.api.response.SysDictItemResp;
 import com.travis.monolith.system.dict.internal.converter.SysDictItemConverter;
 import com.travis.monolith.system.dict.internal.entity.SysDict;

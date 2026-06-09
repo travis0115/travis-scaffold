@@ -1,4 +1,4 @@
-package com.travis.infrastructure.common.monitor.util;
+package com.travis.infrastructure.common.monitor;
 
 import com.travis.infrastructure.common.web.constant.MdcKey;
 import org.slf4j.MDC;

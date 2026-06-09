@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 
 /** 全局通用状态码枚举 */
 @AllArgsConstructor
-public enum CommonErrorCode implements IErrorCode {
+public enum CommonErrorCode implements ErrorCode {
     /** 通用状态码 */
     SUCCESS("200", "操作成功"),
 

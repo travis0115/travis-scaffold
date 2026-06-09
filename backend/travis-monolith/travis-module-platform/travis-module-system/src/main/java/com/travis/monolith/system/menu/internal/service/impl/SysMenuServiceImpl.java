@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
-import com.travis.monolith.system.common.api.exception.SystemErrorCode;
+import com.travis.monolith.system.common.api.SystemErrorCode;
 import com.travis.monolith.system.menu.api.response.SysMenuResp;
 import com.travis.monolith.system.menu.api.response.VbenMenuResp;
 import com.travis.monolith.system.menu.internal.converter.SysMenuConverter;

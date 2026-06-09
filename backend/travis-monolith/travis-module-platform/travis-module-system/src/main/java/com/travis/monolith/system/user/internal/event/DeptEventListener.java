@@ -2,7 +2,8 @@ package com.travis.monolith.system.user.internal.event;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.travis.infrastructure.framework.rocketmq.core.AbstractEventConsumer;
-import com.travis.monolith.system.dept.api.event.DeptDeletedEvent;
+import com.travis.monolith.system.common.api.SystemEvent;
+import com.travis.monolith.system.dept.api.event.DeptDeletedPayload;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.mapper.SysUserMapper;
 import java.util.List;
@@ -17,16 +18,16 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RocketMQMessageListener(
-        topic = "system-event",
-        tag = "dept-deleted",
-        consumerGroup = "system-dept-deleted-consumer")
+        topic = SystemEvent.TOPIC,
+        tag = SystemEvent.DEPT_DELETED_TAG,
+        consumerGroup = SystemEvent.DEPT_DELETED_GROUP)
 @RequiredArgsConstructor
-public class DeptEventListener extends AbstractEventConsumer<DeptDeletedEvent> {
+public class DeptEventListener extends AbstractEventConsumer<DeptDeletedPayload> {
 
     private final SysUserMapper userMapper;
 
     @Override
-    protected void onEvent(DeptDeletedEvent payload) {
+    protected void onEvent(DeptDeletedPayload payload) {
         for (Long deptId : payload.getDeptIds()) {
             List<SysUser> users =
                     userMapper.selectList(

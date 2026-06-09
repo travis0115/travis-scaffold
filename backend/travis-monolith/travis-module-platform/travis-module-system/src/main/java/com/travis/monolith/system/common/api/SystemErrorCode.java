@@ -1,6 +1,6 @@
-package com.travis.monolith.system.common.api.exception;
+package com.travis.monolith.system.common.api;
 
-import com.travis.infrastructure.common.web.exception.IErrorCode;
+import com.travis.infrastructure.common.web.exception.ErrorCode;
 import lombok.AllArgsConstructor;
 
 /**
@@ -9,7 +9,7 @@ import lombok.AllArgsConstructor;
  * <p>模块前缀 + 模块内唯一 例如：USER_0001
  */
 @AllArgsConstructor
-public enum SystemErrorCode implements IErrorCode {
+public enum SystemErrorCode implements ErrorCode {
 
     /** System模块 */
     SYSTEM_USER_OLD_PASSWORD_ERROR("SYS_001", "原密码错误"),

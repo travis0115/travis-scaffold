@@ -1,6 +1,6 @@
 package com.travis.infrastructure.framework.web.core.service;
 
-import com.travis.infrastructure.common.web.exception.IErrorCode;
+import com.travis.infrastructure.common.web.exception.ErrorCode;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 
@@ -31,7 +31,7 @@ public class I18nService {
         return messageSource.getMessage(code, args, defaultMsg, locale);
     }
 
-    public String getMessage(IErrorCode errorCode) {
+    public String getMessage(ErrorCode errorCode) {
         return getMessage(errorCode.getCode(), errorCode.getMsg());
     }
 }

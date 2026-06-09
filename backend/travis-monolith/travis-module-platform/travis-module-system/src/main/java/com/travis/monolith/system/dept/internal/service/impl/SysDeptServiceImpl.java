@@ -6,7 +6,7 @@ import com.travis.infrastructure.common.event.MessagePublisher;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.monolith.system.common.api.SystemEvent;
-import com.travis.monolith.system.dept.api.event.DeptDeletedEvent;
+import com.travis.monolith.system.dept.api.event.DeptDeletedPayload;
 import com.travis.monolith.system.dept.api.response.SysDeptResp;
 import com.travis.monolith.system.dept.internal.converter.SysDeptConverter;
 import com.travis.monolith.system.dept.internal.entity.SysDept;
@@ -124,7 +124,7 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
         collectAllDescendantIds(id, ids);
         ids.add(id);
         // 通过 RocketMQ 通知用户模块清除关联用户的部门归属
-        messagePublisher.publish(SystemEvent.DEPT_DELETED, new DeptDeletedEvent(ids));
+        messagePublisher.publish(SystemEvent.DEPT_DELETED, new DeptDeletedPayload(ids));
         removeBatchByIds(ids);
     }
 

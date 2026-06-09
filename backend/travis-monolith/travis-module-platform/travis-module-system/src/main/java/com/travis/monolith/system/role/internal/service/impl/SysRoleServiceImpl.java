@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResult;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
-import com.travis.monolith.system.common.api.exception.SystemErrorCode;
+import com.travis.monolith.system.common.api.SystemErrorCode;
 import com.travis.monolith.system.role.api.request.SysRoleMenuReq;
 import com.travis.monolith.system.role.api.response.SysRoleResp;
 import com.travis.monolith.system.role.internal.converter.SysRoleConverter;

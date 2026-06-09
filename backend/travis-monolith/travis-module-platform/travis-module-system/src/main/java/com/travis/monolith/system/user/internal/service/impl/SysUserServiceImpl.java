@@ -10,7 +10,7 @@ import com.travis.infrastructure.common.web.model.PageResult;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.util.Ip2RegionUtil;
-import com.travis.monolith.system.common.api.exception.SystemErrorCode;
+import com.travis.monolith.system.common.api.SystemErrorCode;
 import com.travis.monolith.system.dept.api.SysDeptApi;
 import com.travis.monolith.system.file.api.SysFileApi;
 import com.travis.monolith.system.role.api.SysRoleApi;

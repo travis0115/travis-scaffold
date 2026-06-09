@@ -1,4 +1,4 @@
-package com.travis.monolith.system.common.api.constant;
+package com.travis.monolith.system.common.api;
 
 /**
  * 系统参数键值

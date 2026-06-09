@@ -3,7 +3,7 @@ package com.travis.infrastructure.common.web.model;
 import cn.hutool.core.lang.Assert;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
-import com.travis.infrastructure.common.web.exception.IErrorCode;
+import com.travis.infrastructure.common.web.exception.ErrorCode;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -38,7 +38,7 @@ public class ApiResponse<T> {
         return result;
     }
 
-    public static <T> ApiResponse<T> error(IErrorCode errorCode, Object... args) {
+    public static <T> ApiResponse<T> error(ErrorCode errorCode, Object... args) {
         Assert.notEquals(CommonErrorCode.SUCCESS.getCode(), errorCode.getCode(), "Code 不能与成功时相同");
         var result = new ApiResponse<T>();
         result.setCode(errorCode.getCode());
