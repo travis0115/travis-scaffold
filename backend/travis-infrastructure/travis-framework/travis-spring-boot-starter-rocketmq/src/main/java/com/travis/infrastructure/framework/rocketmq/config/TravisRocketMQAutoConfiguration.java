@@ -6,6 +6,7 @@ import com.travis.infrastructure.framework.rocketmq.core.RocketMQMessagePublishe
 import com.travis.infrastructure.framework.rocketmq.core.RocketMQProducerUtil;
 import org.apache.rocketmq.client.core.RocketMQClientTemplate;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -28,6 +29,7 @@ import org.springframework.context.annotation.Bean;
  */
 @AutoConfiguration
 @ConditionalOnClass(RocketMQClientTemplate.class)
+@AutoConfigureAfter(name = "org.apache.rocketmq.client.autoconfigure.RocketMQAutoConfiguration")
 public class TravisRocketMQAutoConfiguration {
 
     /** 创建 RocketMQProducerUtil Bean，注入 RocketMQClientTemplate（底层工具，供 MessagePublisher 内部调用） */

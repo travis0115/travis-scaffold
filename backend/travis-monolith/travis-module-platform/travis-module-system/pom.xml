@@ -37,16 +37,14 @@
             <groupId>com.travis</groupId>
             <artifactId>travis-spring-boot-starter-webmvc</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.travis</groupId>
+            <artifactId>travis-spring-boot-starter-rocketmq</artifactId>
+        </dependency>
         <!-- mapstruct -->
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
-        </dependency>
-
-        <!-- RocketMQ -->
-        <dependency>
-            <groupId>com.travis</groupId>
-            <artifactId>travis-spring-boot-starter-rocketmq</artifactId>
         </dependency>
 
         <!-- spring-modulith -->

@@ -1,15 +1,10 @@
 package com.travis.monolith.system.log.loginlog.internal.event.consumer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.travis.infrastructure.framework.rocketmq.core.AbstractEventConsumer;
 import com.travis.monolith.system.log.loginlog.internal.service.SysLoginLogService;
 import com.travis.monolith.system.user.api.event.UserLoginEvent;
-import java.nio.ByteBuffer;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.annotation.RocketMQMessageListener;
-import org.apache.rocketmq.client.apis.consumer.ConsumeResult;
-import org.apache.rocketmq.client.apis.message.MessageView;
-import org.apache.rocketmq.client.core.RocketMQListener;
 import org.springframework.stereotype.Component;
 
 /**
@@ -19,31 +14,19 @@ import org.springframework.stereotype.Component;
  *
  * @author travis
  */
-@Slf4j
 @Component
 @RocketMQMessageListener(
         topic = "system-event",
         tag = "user-login",
         consumerGroup = "system-user-login-consumer")
 @RequiredArgsConstructor
-public class LoginLogEventConsumer implements RocketMQListener {
+public class LoginLogEventConsumer extends AbstractEventConsumer<UserLoginEvent> {
 
     private final SysLoginLogService loginLogService;
-    private final ObjectMapper objectMapper;
 
     @Override
-    public ConsumeResult consume(MessageView messageView) {
-        try {
-            ByteBuffer buf = messageView.getBody();
-            byte[] body = new byte[buf.remaining()];
-            buf.get(body);
-            UserLoginEvent event = objectMapper.readValue(body, UserLoginEvent.class);
-            loginLogService.recordLoginLog(
-                    event.getUsername(), event.getStatus(), event.getMessage());
-            return ConsumeResult.SUCCESS;
-        } catch (Exception e) {
-            log.error("消费用户登录事件失败", e);
-            return ConsumeResult.FAILURE;
-        }
+    protected void onEvent(UserLoginEvent payload) {
+        loginLogService.recordLoginLog(
+                payload.getUsername(), payload.getStatus(), payload.getMessage());
     }
 }

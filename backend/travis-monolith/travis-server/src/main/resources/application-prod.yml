@@ -19,6 +19,16 @@ logging:
       total-size-cap: 5GB #日志文件的总大小上限，超出会自动删除旧文件
       clean-history-on-start: true  #启动时清理
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,modulith,metrics,prometheus  # 通过 HTTP 暴露所有 Actuator 端点（默认只开放 health 和 info）,生产环境不建议全部开放，建议按需开启
+  otlp:
+    metrics:
+      export:
+        enabled: false  # 是否启用 OTLP（OpenTelemetry Protocol）指标导出
+
 rocketmq:
   # 消费者配置(全局默认配置)
   consumer:
