@@ -2,11 +2,11 @@ package com.travis.monolith.system.dict.internal.controller.admin;
 
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResult;
-import com.travis.monolith.system.dict.internal.model.entity.SysDict;
-import com.travis.monolith.system.dict.internal.model.request.SysDictItemReq;
-import com.travis.monolith.system.dict.internal.model.request.SysDictReq;
-import com.travis.monolith.system.dict.api.model.SysDictItemResp;
-import com.travis.monolith.system.dict.api.SysDictService;
+import com.travis.monolith.system.dict.api.response.SysDictItemResp;
+import com.travis.monolith.system.dict.internal.entity.SysDict;
+import com.travis.monolith.system.dict.internal.request.SysDictItemReq;
+import com.travis.monolith.system.dict.internal.request.SysDictReq;
+import com.travis.monolith.system.dict.internal.service.SysDictService;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

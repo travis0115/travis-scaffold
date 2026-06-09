@@ -5,24 +5,23 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
-import com.travis.monolith.system.menu.internal.converter.SysMenuConverter;
 import com.travis.monolith.system.common.api.exception.SystemErrorCode;
+import com.travis.monolith.system.menu.api.response.SysMenuResp;
+import com.travis.monolith.system.menu.api.response.VbenMenuResp;
+import com.travis.monolith.system.menu.internal.converter.SysMenuConverter;
+import com.travis.monolith.system.menu.internal.entity.SysMenu;
 import com.travis.monolith.system.menu.internal.mapper.SysMenuMapper;
-import com.travis.monolith.system.role.api.SysRoleService;
-import com.travis.monolith.system.menu.internal.model.entity.SysMenu;
-import com.travis.monolith.system.menu.internal.model.request.SysMenuReq;
-import com.travis.monolith.system.menu.api.model.SysMenuResp;
-import com.travis.monolith.system.menu.api.model.VbenMenuResp;
-import com.travis.monolith.system.menu.api.SysMenuService;
+import com.travis.monolith.system.menu.internal.request.SysMenuReq;
+import com.travis.monolith.system.menu.internal.service.SysMenuService;
+import com.travis.monolith.system.role.api.SysRoleApi;
+import java.util.*;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.core.type.TypeReference;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 菜单管理服务实现，支持菜单树构建和前端 Vben 路由菜单生成
@@ -34,8 +33,8 @@ import java.util.stream.Collectors;
 public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
         implements SysMenuService {
 
-    /** 角色管理服务 */
-    private final SysRoleService roleService;
+    /** 角色 API */
+    private final SysRoleApi roleApi;
 
     /** 对象转换器 */
     private final SysMenuConverter converter;
@@ -74,7 +73,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
         SysMenu menu = converter.toEntity(req);
         save(menu);
         // 通过角色服务自动分配给 admin 角色
-        roleService.assignMenuToAdminRoles(menu.getId());
+        roleApi.assignMenuToAdminRoles(menu.getId());
     }
 
     /** 更新菜单信息 */
@@ -105,7 +104,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
             throw new BizException(SystemErrorCode.SYSTEM_MENU_HAS_CHILDREN);
         }
         // 通过角色服务自动移除 admin 角色关联
-        roleService.removeMenuFromAdminRoles(id);
+        roleApi.removeMenuFromAdminRoles(id);
         removeById(id);
     }
 
@@ -186,7 +185,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
         }
 
         // 根据角色ID列表查询关联的菜单ID
-        List<Long> menuIds = roleService.getMenuIdsByRoleIds(roleIds);
+        List<Long> menuIds = roleApi.getMenuIdsByRoleIds(roleIds);
 
         if (menuIds.isEmpty()) {
             return Collections.emptyList();
@@ -354,11 +353,12 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
         if (menuIds == null || menuIds.isEmpty()) {
             return List.of();
         }
-        return list(new LambdaQueryWrapper<SysMenu>()
-                        .in(SysMenu::getId, menuIds)
-                        .isNotNull(SysMenu::getPerms)
-                        .ne(SysMenu::getPerms, "")
-                        .eq(SysMenu::getStatus, 1))
+        return list(
+                        new LambdaQueryWrapper<SysMenu>()
+                                .in(SysMenu::getId, menuIds)
+                                .isNotNull(SysMenu::getPerms)
+                                .ne(SysMenu::getPerms, "")
+                                .eq(SysMenu::getStatus, 1))
                 .stream()
                 .map(SysMenu::getPerms)
                 .distinct()

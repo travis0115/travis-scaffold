@@ -2,8 +2,8 @@ package com.travis.monolith.system.log.operationlog.internal.controller.admin;
 
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResult;
-import com.travis.monolith.system.log.operationlog.internal.model.entity.SysOperationLog;
-import com.travis.monolith.system.log.operationlog.api.SysOperationLogService;
+import com.travis.monolith.system.log.operationlog.internal.entity.SysOperationLog;
+import com.travis.monolith.system.log.operationlog.internal.service.SysOperationLogService;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

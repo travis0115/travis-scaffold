@@ -1,8 +1,8 @@
 package com.travis.monolith.system.dict.internal.converter;
 
 import com.travis.infrastructure.common.mapstruct.BaseMapperConfig;
-import com.travis.monolith.system.dict.internal.model.entity.SysDictItem;
-import com.travis.monolith.system.dict.api.model.SysDictItemResp;
+import com.travis.monolith.system.dict.api.response.SysDictItemResp;
+import com.travis.monolith.system.dict.internal.entity.SysDictItem;
 import java.util.List;
 import org.mapstruct.Mapper;
 

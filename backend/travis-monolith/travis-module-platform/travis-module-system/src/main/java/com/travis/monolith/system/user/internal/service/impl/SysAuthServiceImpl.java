@@ -1,30 +1,30 @@
 package com.travis.monolith.system.user.internal.service.impl;
 
 import cn.hutool.crypto.digest.BCrypt;
+import com.travis.infrastructure.common.event.MessagePublisher;
 import com.travis.infrastructure.common.web.enums.LoginType;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.util.IpUtil;
-import com.travis.monolith.system.file.api.SysFileService;
+import com.travis.monolith.system.common.api.SystemEvent;
+import com.travis.monolith.system.file.api.SysFileApi;
+import com.travis.monolith.system.menu.api.SysMenuApi;
+import com.travis.monolith.system.menu.api.response.VbenMenuResp;
+import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.api.event.UserLoginEvent;
-import com.travis.monolith.system.menu.api.SysMenuService;
-import com.travis.monolith.system.menu.api.model.VbenMenuResp;
-import com.travis.monolith.system.role.api.SysRoleService;
+import com.travis.monolith.system.user.api.request.SysUserLoginReq;
+import com.travis.monolith.system.user.api.response.SysUserLoginResp;
+import com.travis.monolith.system.user.api.response.UserInfoResp;
+import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.service.SysAuthService;
 import com.travis.monolith.system.user.internal.service.SysUserService;
-import com.travis.monolith.system.user.api.model.request.SysUserLoginReq;
-import com.travis.monolith.system.user.api.model.response.SysUserLoginResp;
-import com.travis.monolith.system.user.api.model.response.UserInfoResp;
-import com.travis.monolith.system.user.internal.entity.SysUser;
-import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
 
 /**
  * 后台认证服务实现，处理登录验证（BCrypt 密码校验）、用户信息获取及权限查询
@@ -35,20 +35,20 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SysAuthServiceImpl implements SysAuthService {
 
-    /** 文件服务 */
-    private final SysFileService fileService;
+    /** 文件 API */
+    private final SysFileApi fileApi;
 
     /** 用户管理服务 */
     private final SysUserService userService;
 
-    /** 角色管理服务 */
-    private final SysRoleService roleService;
+    /** 角色 API */
+    private final SysRoleApi roleApi;
 
-    /** 菜单管理服务 */
-    private final SysMenuService menuService;
+    /** 菜单 API */
+    private final SysMenuApi menuApi;
 
-    /** Spring 事件发布器 */
-    private final ApplicationEventPublisher eventPublisher;
+    /** 消息发布器 */
+    private final MessagePublisher messagePublisher;
 
     /** 管理员登录：校验用户名密码、账号状态，通过后使用 Sa-Token 签发令牌，并记录登录日志 */
     @Override
@@ -65,18 +65,21 @@ public class SysAuthServiceImpl implements SysAuthService {
                                 SysUser::getStatus)
                         .one();
         if (user == null) {
-            eventPublisher.publishEvent(new UserLoginEvent(req.getUsername(), 0, "用户不存在"));
+            messagePublisher.publish(
+                    SystemEvent.USER_LOGIN, new UserLoginEvent(req.getUsername(), 0, "用户不存在"));
             throw new BizException(CommonErrorCode.AUTH_LOGIN_BAD_CREDENTIALS);
         }
         // 检查账号是否被禁用
         if (user.getStatus() != null && user.getStatus() == 0) {
-            eventPublisher.publishEvent(new UserLoginEvent(req.getUsername(), 0, "账号已被禁用"));
+            messagePublisher.publish(
+                    SystemEvent.USER_LOGIN, new UserLoginEvent(req.getUsername(), 0, "账号已被禁用"));
             throw new BizException(CommonErrorCode.AUTH_LOGIN_USER_DISABLED);
         }
 
         // BCrypt 校验密码
         if (!BCrypt.checkpw(req.getPassword(), user.getPassword())) {
-            eventPublisher.publishEvent(new UserLoginEvent(req.getUsername(), 0, "密码错误"));
+            messagePublisher.publish(
+                    SystemEvent.USER_LOGIN, new UserLoginEvent(req.getUsername(), 0, "密码错误"));
             throw new BizException(CommonErrorCode.AUTH_LOGIN_BAD_CREDENTIALS);
         }
 
@@ -90,7 +93,8 @@ public class SysAuthServiceImpl implements SysAuthService {
         userService.updateById(user);
 
         // 记录登录成功日志
-        eventPublisher.publishEvent(new UserLoginEvent(req.getUsername(), 1, "登录成功"));
+        messagePublisher.publish(
+                SystemEvent.USER_LOGIN, new UserLoginEvent(req.getUsername(), 1, "登录成功"));
 
         return SysUserLoginResp.builder().accessToken(token).refreshToken(token).build();
     }
@@ -104,15 +108,15 @@ public class SysAuthServiceImpl implements SysAuthService {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
 
-        List<String> roleCodes = roleService.getRoleCodesByUserId(userId);
+        List<String> roleCodes = roleApi.getRoleCodesByUserId(userId);
         List<String> permissions = getPermissionsByUserId(userId);
-        List<String> roleNames = roleService.getRoleNamesByUserId(userId);
+        List<String> roleNames = roleApi.getRoleNamesByUserId(userId);
 
         return UserInfoResp.builder()
                 .id(user.getId())
                 .username(user.getUsername())
                 .nickname(user.getNickname())
-                .avatar(fileService.getFileUrl(user.getAvatar()))
+                .avatar(fileApi.getFileUrl(user.getAvatar()))
                 .email(user.getEmail())
                 .mobile(user.getMobile())
                 .roles(roleCodes)
@@ -130,8 +134,8 @@ public class SysAuthServiceImpl implements SysAuthService {
                     "T(com.travis.infrastructure.framework.satoken.core.StpKit).getLoginIdAsLong(T(com.travis.infrastructure.common.web.enums.LoginType).ADMIN)")
     public List<VbenMenuResp> getMenuList() {
         long userId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
-        List<Long> roleIds = roleService.getRoleIdsByUserId(userId);
-        return menuService.getVbenMenuTree(roleIds);
+        List<Long> roleIds = roleApi.getRoleIdsByUserId(userId);
+        return menuApi.getVbenMenuTree(roleIds);
     }
 
     /** 获取当前用户的权限标识列表（用于前端按钮级权限控制） */
@@ -154,18 +158,18 @@ public class SysAuthServiceImpl implements SysAuthService {
      * @return 权限标识列表（去重）
      */
     private List<String> getPermissionsByUserId(Long userId) {
-        List<Long> roleIds = roleService.getRoleIdsByUserId(userId);
+        List<Long> roleIds = roleApi.getRoleIdsByUserId(userId);
         if (roleIds.isEmpty()) {
             return Collections.emptyList();
         }
 
-        // 通过角色服务查询关联的菜单ID
-        List<Long> menuIds = roleService.getMenuIdsByRoleIds(roleIds);
+        // 通过角色 API 查询关联的菜单ID
+        List<Long> menuIds = roleApi.getMenuIdsByRoleIds(roleIds);
         if (menuIds.isEmpty()) {
             return Collections.emptyList();
         }
 
-        // 通过菜单服务查询权限标识
-        return menuService.getPermissionsByMenuIds(menuIds);
+        // 通过菜单 API 查询权限标识
+        return menuApi.getPermissionsByMenuIds(menuIds);
     }
 }

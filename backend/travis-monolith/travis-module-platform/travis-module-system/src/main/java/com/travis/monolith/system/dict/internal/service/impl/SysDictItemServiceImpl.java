@@ -3,13 +3,13 @@ package com.travis.monolith.system.dict.internal.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResult;
+import com.travis.infrastructure.framework.web.core.exception.BizException;
+import com.travis.monolith.system.dict.internal.entity.SysDictItem;
 import com.travis.monolith.system.dict.internal.mapper.SysDictItemMapper;
-import com.travis.monolith.system.dict.internal.model.entity.SysDictItem;
-import com.travis.monolith.system.dict.internal.model.request.SysDictItemReq;
-import com.travis.monolith.system.dict.api.SysDictItemService;
+import com.travis.monolith.system.dict.internal.request.SysDictItemReq;
+import com.travis.monolith.system.dict.internal.service.SysDictItemService;
 import org.springframework.stereotype.Service;
 
 /**

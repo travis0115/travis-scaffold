@@ -1,7 +1,7 @@
 package com.travis.monolith.system.config.internal.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.travis.monolith.system.config.internal.model.entity.SysConfig;
+import com.travis.monolith.system.config.internal.entity.SysConfig;
 import org.apache.ibatis.annotations.Mapper;
 
 /**

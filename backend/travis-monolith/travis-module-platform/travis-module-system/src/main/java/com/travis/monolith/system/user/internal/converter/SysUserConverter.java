@@ -1,9 +1,9 @@
 package com.travis.monolith.system.user.internal.converter;
 
 import com.travis.infrastructure.common.mapstruct.BaseMapperConfig;
+import com.travis.monolith.system.user.api.request.SysUserReq;
+import com.travis.monolith.system.user.api.response.SysUserResp;
 import com.travis.monolith.system.user.internal.entity.SysUser;
-import com.travis.monolith.system.user.api.model.request.SysUserReq;
-import com.travis.monolith.system.user.api.model.response.SysUserResp;
 import java.util.List;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;

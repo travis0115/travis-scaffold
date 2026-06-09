@@ -7,8 +7,7 @@ import lombok.Getter;
 /**
  * System 模块事件定义
  *
- * <p>每个枚举值代表一个具体的业务事件。业务层通过
- * {@code messagePublisher.publish(SystemEvent.USER_LOGIN, payload)} 发布事件，
+ * <p>每个枚举值代表一个具体的业务事件。业务层通过 {@code messagePublisher.publish(SystemEvent.USER_LOGIN, payload)} 发布事件，
  * 无需关心底层 MQ 的 Topic/Tag 细节。
  *
  * <p>如需 FIFO 顺序或延迟投递，在发布时传入 {@link com.travis.infrastructure.common.event.PublishOptions}：

@@ -2,9 +2,9 @@ package com.travis.monolith.system.log.updatelog.internal.controller.admin;
 
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResult;
-import com.travis.monolith.system.log.updatelog.api.model.SysUpdateLogReq;
-import com.travis.monolith.system.log.updatelog.api.model.SysUpdateLogResp;
-import com.travis.monolith.system.log.updatelog.api.SysUpdateLogService;
+import com.travis.monolith.system.log.updatelog.api.request.SysUpdateLogReq;
+import com.travis.monolith.system.log.updatelog.api.response.SysUpdateLogResp;
+import com.travis.monolith.system.log.updatelog.internal.service.SysUpdateLogService;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

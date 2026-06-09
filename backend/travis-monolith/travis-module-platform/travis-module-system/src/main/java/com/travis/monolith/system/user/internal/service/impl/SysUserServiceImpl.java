@@ -11,27 +11,24 @@ import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.util.Ip2RegionUtil;
 import com.travis.monolith.system.common.api.exception.SystemErrorCode;
-import com.travis.monolith.system.dept.api.SysDeptService;
-import com.travis.monolith.system.dept.api.event.DeptDeletedEvent;
-import com.travis.monolith.system.file.api.SysFileService;
-import com.travis.monolith.system.role.api.SysRoleService;
-import com.travis.monolith.system.user.internal.service.SysUserService;
-import com.travis.monolith.system.user.api.model.request.*;
-import com.travis.monolith.system.user.api.model.response.SysUserResp;
+import com.travis.monolith.system.dept.api.SysDeptApi;
+import com.travis.monolith.system.file.api.SysFileApi;
+import com.travis.monolith.system.role.api.SysRoleApi;
+import com.travis.monolith.system.user.api.request.*;
+import com.travis.monolith.system.user.api.response.SysUserResp;
 import com.travis.monolith.system.user.internal.converter.SysUserConverter;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.mapper.SysUserMapper;
-import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import com.travis.monolith.system.user.internal.service.SysUserService;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 用户管理服务实现，包含密码加密（BCrypt）、角色分配及部门名称关联查询
@@ -43,14 +40,14 @@ import java.util.stream.Collectors;
 public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
         implements SysUserService {
 
-    /** 部门服务（用于关联查询部门名称） */
-    private final SysDeptService deptService;
+    /** 部门 API（用于关联查询部门名称） */
+    private final SysDeptApi deptApi;
 
-    /** 角色管理服务 */
-    private final SysRoleService roleService;
+    /** 角色 API */
+    private final SysRoleApi roleApi;
 
-    /** 文件服务 */
-    private final SysFileService fileService;
+    /** 文件 API */
+    private final SysFileApi fileApi;
 
     /** 对象转换器 */
     private final SysUserConverter converter;
@@ -89,9 +86,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
         SysUserResp vo = toVO(user);
-        List<Long> roleIds = roleService.getRoleIdsByUserId(id);
+        List<Long> roleIds = roleApi.getRoleIdsByUserId(id);
         vo.setRoleIds(roleIds);
-        List<String> roleNames = roleService.getRoleNamesByUserId(id);
+        List<String> roleNames = roleApi.getRoleNamesByUserId(id);
         vo.setRoleNames(roleNames);
         return vo;
     }
@@ -143,7 +140,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
     @Transactional
     public void deleteUser(Long id) {
         // 通过角色服务删除用户-角色关联
-        roleService.deleteUserRolesByUserId(id);
+        roleApi.deleteUserRolesByUserId(id);
         removeById(id);
         // 使用户会话失效
         StpKit.of(LoginType.ADMIN).logout(id);
@@ -154,7 +151,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
     @Transactional
     @CacheEvict(value = "menus:vben", allEntries = true)
     public void assignRoles(SysUserRoleReq req) {
-        roleService.assignUserRoles(req.getUserId(), req.getRoleIds());
+        roleApi.assignUserRoles(req.getUserId(), req.getRoleIds());
     }
 
     /** 根据用户名查询用户（限制返回1条） */
@@ -272,15 +269,15 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
      */
     private SysUserResp toVO(SysUser user) {
         SysUserResp resp = converter.toResp(user);
-        resp.setAvatar(fileService.getFileUrl(user.getAvatar()));
+        resp.setAvatar(fileApi.getFileUrl(user.getAvatar()));
         if (user.getDeptId() != null) {
-            Map<Long, String> deptMap = deptService.getDeptNameMapByIds(List.of(user.getDeptId()));
+            Map<Long, String> deptMap = deptApi.getDeptNameMapByIds(List.of(user.getDeptId()));
             String deptName = deptMap.get(user.getDeptId());
             if (deptName != null) {
                 resp.setDeptName(deptName);
             }
         }
-        resp.setRoleNames(roleService.getRoleNamesByUserId(user.getId()));
+        resp.setRoleNames(roleApi.getRoleNamesByUserId(user.getId()));
         if (user.getLastLoginIp() != null && !user.getLastLoginIp().isEmpty()) {
             resp.setLastLoginLocation(Ip2RegionUtil.getRegionByIP(user.getLastLoginIp()));
         }
@@ -304,18 +301,18 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
                         .map(SysUser::getDeptId)
                         .filter(java.util.Objects::nonNull)
                         .collect(Collectors.toSet());
-        Map<Long, String> deptNameMap = deptService.getDeptNameMapByIds(deptIds);
+        Map<Long, String> deptNameMap = deptApi.getDeptNameMapByIds(deptIds);
 
         // 批量查询所有关联的角色名称（按用户分组）
         List<Long> userIds = users.stream().map(SysUser::getId).collect(Collectors.toList());
-        Map<Long, List<String>> userRoleNamesMap = roleService.batchGetRoleNamesByUserIds(userIds);
+        Map<Long, List<String>> userRoleNamesMap = roleApi.batchGetRoleNamesByUserIds(userIds);
 
         return users.stream()
                 .map(
                         user -> {
                             SysUserResp resp = converter.toResp(user);
                             // 头像路径拼接完整URL
-                            resp.setAvatar(fileService.getFileUrl(user.getAvatar()));
+                            resp.setAvatar(fileApi.getFileUrl(user.getAvatar()));
                             // 设置部门名称
                             if (user.getDeptId() != null) {
                                 resp.setDeptName(deptNameMap.get(user.getDeptId()));
@@ -331,24 +328,5 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
                             return resp;
                         })
                 .collect(Collectors.toList());
-    }
-
-    /**
-     * 监听部门删除事件，将关联用户的部门ID重置为 null
-     *
-     * @param event 部门删除事件
-     */
-    @EventListener
-    @Transactional
-    public void onDeptDeleted(DeptDeletedEvent event) {
-        List<Long> deptIds = event.getDeptIds();
-        for (Long deptId : deptIds) {
-            List<SysUser> users =
-                    list(new LambdaQueryWrapper<SysUser>().eq(SysUser::getDeptId, deptId));
-            for (SysUser user : users) {
-                user.setDeptId(null);
-                updateById(user);
-            }
-        }
     }
 }

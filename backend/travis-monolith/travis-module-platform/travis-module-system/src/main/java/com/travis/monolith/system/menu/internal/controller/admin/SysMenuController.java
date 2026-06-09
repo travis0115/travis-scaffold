@@ -1,9 +1,9 @@
 package com.travis.monolith.system.menu.internal.controller.admin;
 
 import com.travis.infrastructure.common.web.model.ApiResponse;
-import com.travis.monolith.system.menu.internal.model.request.SysMenuReq;
-import com.travis.monolith.system.menu.api.model.SysMenuResp;
-import com.travis.monolith.system.menu.api.SysMenuService;
+import com.travis.monolith.system.menu.api.response.SysMenuResp;
+import com.travis.monolith.system.menu.internal.request.SysMenuReq;
+import com.travis.monolith.system.menu.internal.service.SysMenuService;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

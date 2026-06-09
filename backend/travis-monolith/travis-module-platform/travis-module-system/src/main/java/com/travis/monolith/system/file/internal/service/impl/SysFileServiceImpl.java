@@ -1,7 +1,7 @@
 package com.travis.monolith.system.file.internal.service.impl;
 
-import com.travis.monolith.system.file.api.SysFileService;
-import com.travis.monolith.system.file.api.FileStorageStrategy;
+import com.travis.monolith.system.file.internal.service.FileStorageStrategy;
+import com.travis.monolith.system.file.internal.service.SysFileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

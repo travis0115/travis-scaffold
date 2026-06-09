@@ -1,14 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "WebSearch",
-      "Bash(python3 *)",
-      "Bash(mvn compile *)",
-      "Bash(grep -E \"\\\\.\\(sql|yml|yaml\\)$\")",
-      "Bash(xargs ls -la)",
-      "Bash(grep -E \"\\\\.\\(sql|ddl|schema\\)$\")",
-      "Bash(mvn clean *)",
-      "Bash(mvn spotless:apply)"
+      "Bash(find ~/.m2/repository/org/apache/rocketmq/rocketmq-v5-client-spring-boot-starter -name \"*.jar\" -not -name \"*sources*\" -not -name \"*javadoc*\" 2>/dev/null | sort -V | tail -1)",
+      "Read(//Users/travis/.m2/repository/org/apache/rocketmq/rocketmq-v5-client-spring-boot-starter/**)",
+      "Bash(jar tf *)",
+      "Bash(# v5 starter 可能是个空壳，实际类在别的 jar 里。查看所有依赖 *)",
+      "Read(//Users/travis/.m2/repository/org/apache/rocketmq/**)"
     ]
   }
 }

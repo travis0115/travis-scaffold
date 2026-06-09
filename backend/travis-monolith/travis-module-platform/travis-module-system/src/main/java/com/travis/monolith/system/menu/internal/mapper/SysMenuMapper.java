@@ -1,7 +1,7 @@
 package com.travis.monolith.system.menu.internal.mapper;
 
 import com.travis.infrastructure.framework.mybatis.core.BaseMapperX;
-import com.travis.monolith.system.menu.internal.model.entity.SysMenu;
+import com.travis.monolith.system.menu.internal.entity.SysMenu;
 import org.apache.ibatis.annotations.Mapper;
 
 /**

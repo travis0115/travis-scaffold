@@ -2,10 +2,10 @@ package com.travis.monolith.system.config.internal.controller.admin;
 
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResult;
-import com.travis.monolith.system.config.internal.model.request.SysConfigPageReq;
-import com.travis.monolith.system.config.internal.model.request.SysConfigReq;
-import com.travis.monolith.system.config.api.model.SysConfigResp;
-import com.travis.monolith.system.config.api.SysConfigService;
+import com.travis.monolith.system.config.api.response.SysConfigResp;
+import com.travis.monolith.system.config.internal.request.SysConfigPageReq;
+import com.travis.monolith.system.config.internal.request.SysConfigReq;
+import com.travis.monolith.system.config.internal.service.SysConfigService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;

@@ -2,8 +2,8 @@ package com.travis.monolith.system.user.internal.auth;
 
 import cn.dev33.satoken.stp.StpInterface;
 import com.travis.infrastructure.common.web.enums.LoginType;
+import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.internal.service.SysAuthService;
-import com.travis.monolith.system.role.api.SysRoleService;
 import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class StpInterfaceImpl implements StpInterface {
 
-    private final SysRoleService roleService;
+    private final SysRoleApi roleApi;
     private final SysAuthService sysAuthService;
 
     /**
@@ -51,7 +51,7 @@ public class StpInterfaceImpl implements StpInterface {
     public List<String> getRoleList(Object loginId, String loginType) {
         try {
             if (LoginType.ADMIN.getCode().equals(loginType)) {
-                return roleService.getRoleCodesByUserId(Long.parseLong(loginId.toString()));
+                return roleApi.getRoleCodesByUserId(Long.parseLong(loginId.toString()));
             }
             return Collections.emptyList();
         } catch (Exception e) {

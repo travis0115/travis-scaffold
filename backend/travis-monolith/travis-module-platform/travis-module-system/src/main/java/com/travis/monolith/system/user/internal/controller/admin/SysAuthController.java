@@ -1,12 +1,12 @@
 package com.travis.monolith.system.user.internal.controller.admin;
 
 import com.travis.infrastructure.common.web.enums.LoginType;
-import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.common.web.model.ApiResponse;
-import com.travis.monolith.system.user.api.model.request.SysUserLoginReq;
-import com.travis.monolith.system.menu.api.model.VbenMenuResp;
-import com.travis.monolith.system.user.api.model.response.SysUserLoginResp;
-import com.travis.monolith.system.user.api.model.response.UserInfoResp;
+import com.travis.infrastructure.framework.satoken.core.StpKit;
+import com.travis.monolith.system.menu.api.response.VbenMenuResp;
+import com.travis.monolith.system.user.api.request.SysUserLoginReq;
+import com.travis.monolith.system.user.api.response.SysUserLoginResp;
+import com.travis.monolith.system.user.api.response.UserInfoResp;
 import com.travis.monolith.system.user.internal.service.SysAuthService;
 import jakarta.validation.Valid;
 import java.util.List;

@@ -1,7 +1,7 @@
 package com.travis.monolith.system.log.updatelog.internal.mapper;
 
 import com.travis.infrastructure.framework.mybatis.core.BaseMapperX;
-import com.travis.monolith.system.log.updatelog.internal.model.entity.SysUpdateLog;
+import com.travis.monolith.system.log.updatelog.internal.entity.SysUpdateLog;
 import org.apache.ibatis.annotations.Mapper;
 
 /**

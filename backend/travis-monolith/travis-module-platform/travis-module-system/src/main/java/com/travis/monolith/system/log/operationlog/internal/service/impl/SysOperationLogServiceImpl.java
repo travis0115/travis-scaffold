@@ -4,9 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.web.model.PageResult;
+import com.travis.monolith.system.log.operationlog.internal.entity.SysOperationLog;
 import com.travis.monolith.system.log.operationlog.internal.mapper.SysOperationLogMapper;
-import com.travis.monolith.system.log.operationlog.internal.model.entity.SysOperationLog;
-import com.travis.monolith.system.log.operationlog.api.SysOperationLogService;
+import com.travis.monolith.system.log.operationlog.internal.service.SysOperationLogService;
 import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
 

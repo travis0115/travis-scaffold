@@ -2,15 +2,17 @@ package com.travis.monolith.system.dept.internal.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.travis.infrastructure.framework.web.core.exception.BizException;
+import com.travis.infrastructure.common.event.MessagePublisher;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
+import com.travis.infrastructure.framework.web.core.exception.BizException;
+import com.travis.monolith.system.common.api.SystemEvent;
 import com.travis.monolith.system.dept.api.event.DeptDeletedEvent;
+import com.travis.monolith.system.dept.api.response.SysDeptResp;
 import com.travis.monolith.system.dept.internal.converter.SysDeptConverter;
+import com.travis.monolith.system.dept.internal.entity.SysDept;
 import com.travis.monolith.system.dept.internal.mapper.SysDeptMapper;
-import com.travis.monolith.system.dept.internal.model.entity.SysDept;
-import com.travis.monolith.system.dept.internal.model.request.SysDeptReq;
-import com.travis.monolith.system.dept.api.model.SysDeptResp;
-import com.travis.monolith.system.dept.api.SysDeptService;
+import com.travis.monolith.system.dept.internal.request.SysDeptReq;
+import com.travis.monolith.system.dept.internal.service.SysDeptService;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -19,7 +21,6 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,8 +37,8 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
     /** 对象转换器 */
     private final SysDeptConverter converter;
 
-    /** Spring 事件发布器（用于发布部门删除事件） */
-    private final ApplicationEventPublisher eventPublisher;
+    /** 消息发布器（用于发布部门删除事件） */
+    private final MessagePublisher messagePublisher;
 
     /** 获取部门树形列表 */
     @Override
@@ -122,8 +123,8 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
         List<Long> ids = new ArrayList<>();
         collectAllDescendantIds(id, ids);
         ids.add(id);
-        // 通过事件通知用户模块清除关联用户的部门归属
-        eventPublisher.publishEvent(new DeptDeletedEvent(ids));
+        // 通过 RocketMQ 通知用户模块清除关联用户的部门归属
+        messagePublisher.publish(SystemEvent.DEPT_DELETED, new DeptDeletedEvent(ids));
         removeBatchByIds(ids);
     }
 

@@ -1,9 +1,9 @@
 package com.travis.monolith.system.log.updatelog.internal.converter;
 
 import com.travis.infrastructure.common.mapstruct.BaseMapperConfig;
-import com.travis.monolith.system.log.updatelog.internal.model.entity.SysUpdateLog;
-import com.travis.monolith.system.log.updatelog.api.model.SysUpdateLogReq;
-import com.travis.monolith.system.log.updatelog.api.model.SysUpdateLogResp;
+import com.travis.monolith.system.log.updatelog.api.request.SysUpdateLogReq;
+import com.travis.monolith.system.log.updatelog.api.response.SysUpdateLogResp;
+import com.travis.monolith.system.log.updatelog.internal.entity.SysUpdateLog;
 import java.util.List;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;

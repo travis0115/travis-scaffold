@@ -1,0 +1,37 @@
+package com.travis.monolith.system.dept.api;
+
+import com.travis.monolith.system.dept.api.response.SysDeptResp;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 部门模块对外 API，供跨模块调用，只暴露 DTO，不暴露 entity
+ *
+ * @author travis
+ */
+public interface SysDeptApi {
+
+    /**
+     * 获取部门树形列表
+     *
+     * @return 部门树
+     */
+    List<SysDeptResp> getDeptTree();
+
+    /**
+     * 根据部门ID列表批量获取部门名称映射
+     *
+     * @param ids 部门ID集合
+     * @return 部门ID -> 部门名称的映射
+     */
+    Map<Long, String> getDeptNameMapByIds(Collection<Long> ids);
+
+    /**
+     * 根据部门ID查询部门名称
+     *
+     * @param deptId 部门ID
+     * @return 部门名称，不存在返回 null
+     */
+    String getDeptNameById(Long deptId);
+}

@@ -2,11 +2,10 @@ package com.travis.monolith.system.user.internal.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.travis.infrastructure.framework.mybatis.core.BaseEntity;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
  * 管理员用户实体，对应 sys_user 表

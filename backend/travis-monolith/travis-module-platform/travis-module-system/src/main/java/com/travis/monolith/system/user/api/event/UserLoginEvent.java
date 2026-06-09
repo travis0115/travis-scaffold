@@ -1,5 +1,7 @@
 package com.travis.monolith.system.user.api.event;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 
 /**
@@ -19,7 +21,11 @@ public class UserLoginEvent {
     /** 提示信息 */
     private final String message;
 
-    public UserLoginEvent(String username, int status, String message) {
+    @JsonCreator
+    public UserLoginEvent(
+            @JsonProperty("username") String username,
+            @JsonProperty("status") int status,
+            @JsonProperty("message") String message) {
         this.username = username;
         this.status = status;
         this.message = message;

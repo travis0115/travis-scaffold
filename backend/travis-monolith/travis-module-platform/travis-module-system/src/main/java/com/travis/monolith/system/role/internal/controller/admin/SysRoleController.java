@@ -2,10 +2,10 @@ package com.travis.monolith.system.role.internal.controller.admin;
 
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResult;
-import com.travis.monolith.system.role.api.model.SysRoleMenuReq;
-import com.travis.monolith.system.role.internal.model.request.SysRoleReq;
-import com.travis.monolith.system.role.api.model.SysRoleResp;
-import com.travis.monolith.system.role.api.SysRoleService;
+import com.travis.monolith.system.role.api.request.SysRoleMenuReq;
+import com.travis.monolith.system.role.api.response.SysRoleResp;
+import com.travis.monolith.system.role.internal.request.SysRoleReq;
+import com.travis.monolith.system.role.internal.service.SysRoleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;

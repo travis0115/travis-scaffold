@@ -2,8 +2,8 @@ package com.travis.monolith.system.log.loginlog.internal.controller.admin;
 
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResult;
-import com.travis.monolith.system.log.loginlog.internal.model.entity.SysLoginLog;
-import com.travis.monolith.system.log.loginlog.api.SysLoginLogService;
+import com.travis.monolith.system.log.loginlog.internal.entity.SysLoginLog;
+import com.travis.monolith.system.log.loginlog.internal.service.SysLoginLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 

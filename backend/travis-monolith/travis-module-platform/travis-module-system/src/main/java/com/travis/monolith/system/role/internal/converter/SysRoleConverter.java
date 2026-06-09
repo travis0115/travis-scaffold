@@ -1,9 +1,9 @@
 package com.travis.monolith.system.role.internal.converter;
 
 import com.travis.infrastructure.common.mapstruct.BaseMapperConfig;
-import com.travis.monolith.system.role.internal.model.entity.SysRole;
-import com.travis.monolith.system.role.internal.model.request.SysRoleReq;
-import com.travis.monolith.system.role.api.model.SysRoleResp;
+import com.travis.monolith.system.role.api.response.SysRoleResp;
+import com.travis.monolith.system.role.internal.entity.SysRole;
+import com.travis.monolith.system.role.internal.request.SysRoleReq;
 import java.util.List;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;

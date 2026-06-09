@@ -3,22 +3,21 @@ package com.travis.monolith.system.role.internal.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResult;
-
-import com.travis.monolith.system.role.internal.converter.SysRoleConverter;
+import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.monolith.system.common.api.exception.SystemErrorCode;
+import com.travis.monolith.system.role.api.request.SysRoleMenuReq;
+import com.travis.monolith.system.role.api.response.SysRoleResp;
+import com.travis.monolith.system.role.internal.converter.SysRoleConverter;
+import com.travis.monolith.system.role.internal.entity.SysRole;
+import com.travis.monolith.system.role.internal.entity.SysRoleMenu;
+import com.travis.monolith.system.role.internal.entity.SysUserRole;
 import com.travis.monolith.system.role.internal.mapper.SysRoleMapper;
 import com.travis.monolith.system.role.internal.mapper.SysRoleMenuMapper;
 import com.travis.monolith.system.role.internal.mapper.SysUserRoleMapper;
-import com.travis.monolith.system.role.internal.model.entity.SysRole;
-import com.travis.monolith.system.role.internal.model.entity.SysRoleMenu;
-import com.travis.monolith.system.role.internal.model.entity.SysUserRole;
-import com.travis.monolith.system.role.api.model.SysRoleMenuReq;
-import com.travis.monolith.system.role.internal.model.request.SysRoleReq;
-import com.travis.monolith.system.role.api.model.SysRoleResp;
-import com.travis.monolith.system.role.api.SysRoleService;
+import com.travis.monolith.system.role.internal.request.SysRoleReq;
+import com.travis.monolith.system.role.internal.service.SysRoleService;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,7 +42,6 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
 
     /** 用户-角色关联 Mapper */
     private final SysUserRoleMapper userRoleMapper;
-
 
     /** 对象转换器 */
     private final SysRoleConverter converter;
@@ -197,8 +195,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
         }
         return roleMenuMapper
                 .selectList(
-                        new LambdaQueryWrapper<SysRoleMenu>()
-                                .in(SysRoleMenu::getRoleId, roleIds))
+                        new LambdaQueryWrapper<SysRoleMenu>().in(SysRoleMenu::getRoleId, roleIds))
                 .stream()
                 .map(SysRoleMenu::getMenuId)
                 .distinct()
@@ -210,9 +207,10 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     @Transactional
     public void assignMenuToAdminRoles(Long menuId) {
         List<SysRole> adminRoles =
-                list(new LambdaQueryWrapper<SysRole>()
-                        .eq(SysRole::getRoleCode, "admin")
-                        .eq(SysRole::getStatus, 1));
+                list(
+                        new LambdaQueryWrapper<SysRole>()
+                                .eq(SysRole::getRoleCode, "admin")
+                                .eq(SysRole::getStatus, 1));
         for (SysRole role : adminRoles) {
             long count =
                     roleMenuMapper.selectCount(
@@ -233,8 +231,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     @Transactional
     public void removeMenuFromAdminRoles(Long menuId) {
         List<Long> adminRoleIds =
-                list(new LambdaQueryWrapper<SysRole>().eq(SysRole::getRoleCode, "admin"))
-                        .stream()
+                list(new LambdaQueryWrapper<SysRole>().eq(SysRole::getRoleCode, "admin")).stream()
                         .map(SysRole::getId)
                         .toList();
         if (!adminRoleIds.isEmpty()) {
@@ -290,23 +287,26 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     @Override
     @Transactional
     public void deleteUserRolesByUserId(Long userId) {
-        userRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getUserId, userId));
+        userRoleMapper.delete(
+                new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getUserId, userId));
     }
 
     /** 为指定用户分配角色 */
     @Override
     @Transactional
     public void assignUserRoles(Long userId, List<Long> roleIds) {
-        userRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getUserId, userId));
+        userRoleMapper.delete(
+                new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getUserId, userId));
         if (roleIds != null && !roleIds.isEmpty()) {
             List<SysUserRole> list =
                     roleIds.stream()
-                            .map(roleId -> {
-                                SysUserRole ur = new SysUserRole();
-                                ur.setUserId(userId);
-                                ur.setRoleId(roleId);
-                                return ur;
-                            })
+                            .map(
+                                    roleId -> {
+                                        SysUserRole ur = new SysUserRole();
+                                        ur.setUserId(userId);
+                                        ur.setRoleId(roleId);
+                                        return ur;
+                                    })
                             .collect(Collectors.toList());
             list.forEach(userRoleMapper::insert);
         }
@@ -324,7 +324,8 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
         if (userRoles.isEmpty()) {
             return Map.of();
         }
-        Set<Long> roleIds = userRoles.stream().map(SysUserRole::getRoleId).collect(Collectors.toSet());
+        Set<Long> roleIds =
+                userRoles.stream().map(SysUserRole::getRoleId).collect(Collectors.toSet());
         Map<Long, String> roleNameMap = getRoleNameMapByIds(roleIds);
         return userRoles.stream()
                 .collect(

@@ -43,14 +43,16 @@
             <artifactId>mapstruct</artifactId>
         </dependency>
 
+        <!-- RocketMQ -->
+        <dependency>
+            <groupId>com.travis</groupId>
+            <artifactId>travis-spring-boot-starter-rocketmq</artifactId>
+        </dependency>
+
         <!-- spring-modulith -->
         <dependency>
             <groupId>org.springframework.modulith</groupId>
             <artifactId>spring-modulith-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.modulith</groupId>
-            <artifactId>spring-modulith-starter-jdbc</artifactId>
         </dependency>
 
 

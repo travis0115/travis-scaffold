@@ -1,7 +1,7 @@
 package com.travis.monolith.system.dict.internal.mapper;
 
 import com.travis.infrastructure.framework.mybatis.core.BaseMapperX;
-import com.travis.monolith.system.dict.internal.model.entity.SysDict;
+import com.travis.monolith.system.dict.internal.entity.SysDict;
 import org.apache.ibatis.annotations.Mapper;
 
 /**

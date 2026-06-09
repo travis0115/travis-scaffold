@@ -1,8 +1,8 @@
 package com.travis.monolith.system.file.internal.service.file;
 
-import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
-import com.travis.monolith.system.file.api.FileStorageStrategy;
+import com.travis.infrastructure.framework.web.core.exception.BizException;
+import com.travis.monolith.system.file.internal.service.FileStorageStrategy;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;

@@ -1,9 +1,9 @@
 package com.travis.monolith.system.dept.internal.controller.admin;
 
 import com.travis.infrastructure.common.web.model.ApiResponse;
-import com.travis.monolith.system.dept.internal.model.request.SysDeptReq;
-import com.travis.monolith.system.dept.api.model.SysDeptResp;
-import com.travis.monolith.system.dept.api.SysDeptService;
+import com.travis.monolith.system.dept.api.response.SysDeptResp;
+import com.travis.monolith.system.dept.internal.request.SysDeptReq;
+import com.travis.monolith.system.dept.internal.service.SysDeptService;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
