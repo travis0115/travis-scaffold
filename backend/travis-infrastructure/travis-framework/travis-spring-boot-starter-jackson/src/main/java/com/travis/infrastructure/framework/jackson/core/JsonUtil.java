@@ -3,7 +3,6 @@ package com.travis.infrastructure.framework.jackson.core;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;

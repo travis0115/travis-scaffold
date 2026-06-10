@@ -1,5 +1,7 @@
 import type { Recordable } from '@vben/types';
 
+import type { PageResp } from '#/api/types';
+
 import { requestClient } from '#/api/request';
 
 export namespace SystemUserApi {
@@ -24,7 +26,7 @@ export namespace SystemUserApi {
  * 分页查询用户列表
  */
 async function getUserPage(params: Recordable<any>) {
-  return requestClient.get<{ records: SystemUserApi.SysUser[]; total: number }>(
+  return requestClient.get<PageResp<SystemUserApi.SysUser>>(
     '/system/user/page',
     { params },
   );

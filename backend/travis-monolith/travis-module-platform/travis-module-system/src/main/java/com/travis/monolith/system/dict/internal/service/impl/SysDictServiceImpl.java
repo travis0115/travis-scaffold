@@ -1,10 +1,11 @@
 package com.travis.monolith.system.dict.internal.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
-import com.travis.infrastructure.common.web.model.PageResult;
+import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.monolith.system.common.api.SystemErrorCode;
 import com.travis.monolith.system.dict.api.response.SysDictItemResp;
@@ -52,7 +53,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
         List<Long> dictIds = dictList.stream().map(SysDict::getId).toList();
         List<SysDictItem> allItems =
                 dictItemService.list(
-                        new LambdaQueryWrapper<SysDictItem>()
+                        new LambdaQueryWrapperX<SysDictItem>()
                                 .in(SysDictItem::getDictId, dictIds)
                                 .orderByAsc(SysDictItem::getSort));
         // 按 dictId 分组
@@ -71,16 +72,16 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
 
     /** 分页查询字典类型列表，支持按名称、类型编码、状态筛选 */
     @Override
-    public PageResult<SysDict> page(
+    public PageResp<SysDict> page(
             String dictName, String dictType, Integer status, Integer pageNum, Integer pageSize) {
-        LambdaQueryWrapper<SysDict> wrapper =
-                new LambdaQueryWrapper<SysDict>()
-                        .like(dictName != null, SysDict::getDictName, dictName)
-                        .like(dictType != null, SysDict::getDictType, dictType)
-                        .eq(status != null, SysDict::getStatus, status)
+        LambdaQueryWrapperX<SysDict> wrapper =
+                new LambdaQueryWrapperX<SysDict>()
+                        .likeIfPresent(SysDict::getDictName, dictName)
+                        .likeIfPresent(SysDict::getDictType, dictType)
+                        .eqIfPresent(SysDict::getStatus, status)
                         .orderByDesc(SysDict::getCreateTime);
         Page<SysDict> page = page(new Page<>(pageNum, pageSize), wrapper);
-        return toPageResult(page);
+        return PageConverter.toResp(page);
     }
 
     /** 获取字典类型详情 */
@@ -100,7 +101,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
         // 检查字典类型编码唯一性
         long count =
                 count(
-                        new LambdaQueryWrapper<SysDict>()
+                        new LambdaQueryWrapperX<SysDict>()
                                 .eq(SysDict::getDictType, req.getDictType()));
         if (count > 0) {
             throw new BizException(SystemErrorCode.SYSTEM_DICT_TYPE_EXISTS);
@@ -124,7 +125,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
         // 检查字典类型编码唯一性（排除自身）
         long count =
                 count(
-                        new LambdaQueryWrapper<SysDict>()
+                        new LambdaQueryWrapperX<SysDict>()
                                 .eq(SysDict::getDictType, req.getDictType())
                                 .ne(SysDict::getId, id));
         if (count > 0) {
@@ -144,7 +145,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
     public void deleteById(Long id) {
         // 删除字典下的所有数据项
         dictItemService.remove(
-                new LambdaQueryWrapper<SysDictItem>().eq(SysDictItem::getDictId, id));
+                new LambdaQueryWrapperX<SysDictItem>().eq(SysDictItem::getDictId, id));
         removeById(id);
     }
 
@@ -153,7 +154,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
     public List<SysDictItemResp> listItems(Long dictId) {
         List<SysDictItem> items =
                 dictItemService.list(
-                        new LambdaQueryWrapper<SysDictItem>()
+                        new LambdaQueryWrapperX<SysDictItem>()
                                 .eq(SysDictItem::getDictId, dictId)
                                 .orderByAsc(SysDictItem::getSort));
         return converter.toRespList(items);
@@ -178,21 +179,5 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
     @CacheEvict(value = "system:dict:items", allEntries = true)
     public void deleteItemById(Long id) {
         dictItemService.deleteById(id);
-    }
-
-    /**
-     * MyBatis-Plus 分页对象转统一的分页结果
-     *
-     * @param page 分页对象
-     * @param <T> 数据类型
-     * @return 分页结果
-     */
-    private <T> PageResult<T> toPageResult(Page<T> page) {
-        return new PageResult<>(
-                page.getRecords(),
-                page.getTotal(),
-                page.getCurrent(),
-                page.getSize(),
-                page.getPages());
     }
 }

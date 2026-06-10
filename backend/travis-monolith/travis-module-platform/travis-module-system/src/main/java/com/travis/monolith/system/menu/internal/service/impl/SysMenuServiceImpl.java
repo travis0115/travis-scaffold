@@ -1,9 +1,9 @@
 package com.travis.monolith.system.menu.internal.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
+import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.monolith.system.common.api.SystemErrorCode;
 import com.travis.monolith.system.menu.api.response.SysMenuResp;
@@ -44,7 +44,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     @Cacheable(value = "system:menu:tree", key = "'all'")
     public List<SysMenuResp> listTree() {
         List<SysMenu> allMenus =
-                list(new LambdaQueryWrapper<SysMenu>().orderByAsc(SysMenu::getSort));
+                list(new LambdaQueryWrapperX<SysMenu>().orderByAsc(SysMenu::getSort));
         List<SysMenuResp> voList = converter.toRespList(allMenus);
         voList.forEach(v -> v.setChildren(new ArrayList<>()));
         return buildTree(voList);
@@ -99,7 +99,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
             key = "'all'",
             allEntries = true)
     public void deleteById(Long id) {
-        long childCount = count(new LambdaQueryWrapper<SysMenu>().eq(SysMenu::getParentId, id));
+        long childCount = count(new LambdaQueryWrapperX<SysMenu>().eq(SysMenu::getParentId, id));
         if (childCount > 0) {
             throw new BizException(SystemErrorCode.SYSTEM_MENU_HAS_CHILDREN);
         }
@@ -123,7 +123,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
         // 查询同级所有菜单，按排序号升序
         List<SysMenu> siblings =
                 list(
-                        new LambdaQueryWrapper<SysMenu>()
+                        new LambdaQueryWrapperX<SysMenu>()
                                 .eq(SysMenu::getParentId, current.getParentId())
                                 .orderByAsc(SysMenu::getSort));
         int index = findIndex(siblings, id);
@@ -148,7 +148,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
         // 查询同级所有菜单，按排序号升序
         List<SysMenu> siblings =
                 list(
-                        new LambdaQueryWrapper<SysMenu>()
+                        new LambdaQueryWrapperX<SysMenu>()
                                 .eq(SysMenu::getParentId, current.getParentId())
                                 .orderByAsc(SysMenu::getSort));
         int index = findIndex(siblings, id);
@@ -194,7 +194,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
         // 只取目录（0）和菜单（1），不取按钮（2）
         List<SysMenu> menus =
                 list(
-                        new LambdaQueryWrapper<SysMenu>()
+                        new LambdaQueryWrapperX<SysMenu>()
                                 .in(SysMenu::getId, menuIds)
                                 .in(SysMenu::getMenuType, 0, 1)
                                 .eq(SysMenu::getStatus, 1)
@@ -210,7 +210,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
         while (!needParentIds.isEmpty()) {
             List<SysMenu> parents =
                     list(
-                            new LambdaQueryWrapper<SysMenu>()
+                            new LambdaQueryWrapperX<SysMenu>()
                                     .in(SysMenu::getId, needParentIds)
                                     .eq(SysMenu::getStatus, 1));
             menus.addAll(parents);
@@ -354,7 +354,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
             return List.of();
         }
         return list(
-                        new LambdaQueryWrapper<SysMenu>()
+                        new LambdaQueryWrapperX<SysMenu>()
                                 .in(SysMenu::getId, menuIds)
                                 .isNotNull(SysMenu::getPerms)
                                 .ne(SysMenu::getPerms, "")

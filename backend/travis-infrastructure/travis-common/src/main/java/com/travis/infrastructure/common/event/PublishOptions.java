@@ -1,9 +1,8 @@
 package com.travis.infrastructure.common.event;
 
+import java.time.Duration;
 import lombok.Builder;
 import lombok.Getter;
-
-import java.time.Duration;
 
 /**
  * 事件发布选项，携带消息投递所需的运行时参数。作为 {@link MessagePublisher} 的运行时入参使用。

@@ -1,6 +1,6 @@
 package com.travis.monolith.system.config.internal.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.travis.infrastructure.framework.mybatis.core.BaseMapperX;
 import com.travis.monolith.system.config.internal.entity.SysConfig;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -10,4 +10,4 @@ import org.apache.ibatis.annotations.Mapper;
  * @author travis
  */
 @Mapper
-public interface SysConfigMapper extends BaseMapper<SysConfig> {}
+public interface SysConfigMapper extends BaseMapperX<SysConfig> {}

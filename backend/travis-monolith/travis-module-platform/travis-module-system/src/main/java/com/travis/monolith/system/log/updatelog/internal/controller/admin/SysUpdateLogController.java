@@ -1,7 +1,7 @@
 package com.travis.monolith.system.log.updatelog.internal.controller.admin;
 
 import com.travis.infrastructure.common.web.model.ApiResponse;
-import com.travis.infrastructure.common.web.model.PageResult;
+import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.log.updatelog.api.request.SysUpdateLogReq;
 import com.travis.monolith.system.log.updatelog.api.response.SysUpdateLogResp;
 import com.travis.monolith.system.log.updatelog.internal.service.SysUpdateLogService;
@@ -26,7 +26,7 @@ public class SysUpdateLogController {
 
     /** 分页查询更新日志 */
     @GetMapping("/page")
-    public ApiResponse<PageResult<SysUpdateLogResp>> page(
+    public ApiResponse<PageResp<SysUpdateLogResp>> page(
             @RequestParam(required = false) String version,
             @RequestParam(required = false) String title,
             @RequestParam(required = false) Integer status,

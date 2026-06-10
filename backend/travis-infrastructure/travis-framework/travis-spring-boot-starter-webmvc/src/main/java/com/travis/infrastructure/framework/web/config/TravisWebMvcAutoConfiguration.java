@@ -98,7 +98,6 @@ public class TravisWebMvcAutoConfiguration implements WebMvcConfigurer {
         return new BizExceptionHandler();
     }
 
-
     /** 配置全局服务端异常处理器 */
     @Bean
     @ConditionalOnMissingBean
@@ -124,8 +123,7 @@ public class TravisWebMvcAutoConfiguration implements WebMvcConfigurer {
     /** 配置MDC过滤器 */
     @Bean
     public FilterRegistrationBean<MdcFilter> requestIdFilter() {
-        return createFilterBean(
-                new MdcFilter(handlerExceptionResolver), WebFilterOrder.MDC_FILTER);
+        return createFilterBean(new MdcFilter(handlerExceptionResolver), WebFilterOrder.MDC_FILTER);
     }
 
     /** 创建Filter Bean */

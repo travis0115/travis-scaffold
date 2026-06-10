@@ -1,8 +1,8 @@
 package com.travis.infrastructure.common.web.constant;
 
-import org.springframework.core.Ordered;
-
 import static org.springframework.core.Ordered.HIGHEST_PRECEDENCE;
+
+import org.springframework.core.Ordered;
 
 /**
  * 异常处理器顺序的常量，保证异常处理器按照符合预期 考虑到多个 starter 都需要用到该工具类，所以放到 common 模块

@@ -1,11 +1,12 @@
 package com.travis.monolith.system.config.internal.service.impl;
 
-import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
-import com.travis.infrastructure.common.web.model.PageResult;
+import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.monolith.system.config.api.request.SysConfigPageReq;
 import com.travis.monolith.system.config.api.request.SysConfigReq;
@@ -18,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
+
 /**
  * 系统配置服务实现
  *
@@ -28,28 +31,30 @@ import org.springframework.transaction.annotation.Transactional;
 public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig>
         implements SysConfigService {
 
+    private static final Map<String, SFunction<SysConfig, ?>> SORT_COLUMNS =
+            Map.of(
+                    "configGroup", SysConfig::getConfigGroup,
+                    "configKey", SysConfig::getConfigKey,
+                    "createTime", SysConfig::getCreateTime,
+                    "updateTime", SysConfig::getUpdateTime);
+
     private final SysConfigConverter converter;
 
     @Override
-    public PageResult<SysConfigResp> page(SysConfigPageReq req) {
+    public PageResp<SysConfigResp> page(SysConfigPageReq req) {
         var wrapper =
-                new LambdaQueryWrapper<SysConfig>()
-                        .like(
-                                StrUtil.isNotBlank(req.getConfigGroup()),
+                new LambdaQueryWrapperX<SysConfig>()
+                        .likeIfPresent(SysConfig::getConfigGroup, req.getConfigGroup())
+                        .likeIfPresent(SysConfig::getConfigKey, req.getConfigKey())
+                        .orderByAllowed(
+                                req.getOrderBy(),
+                                req.getAsc(),
+                                SORT_COLUMNS,
+                                true,
                                 SysConfig::getConfigGroup,
-                                req.getConfigGroup())
-                        .like(
-                                StrUtil.isNotBlank(req.getConfigKey()),
-                                SysConfig::getConfigKey,
-                                req.getConfigKey())
-                        .orderByAsc(SysConfig::getConfigGroup, SysConfig::getConfigKey);
+                                SysConfig::getConfigKey);
         Page<SysConfig> page = page(new Page<>(req.getPageNum(), req.getPageSize()), wrapper);
-        return new PageResult<>(
-                converter.toRespList(page.getRecords()),
-                page.getTotal(),
-                page.getCurrent(),
-                page.getSize(),
-                page.getPages());
+        return PageConverter.toResp(page.convert(converter::toResp));
     }
 
     @Override
@@ -64,7 +69,7 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
     @Override
     public String getValue(String configKey) {
         SysConfig config =
-                getOne(new LambdaQueryWrapper<SysConfig>().eq(SysConfig::getConfigKey, configKey));
+                getOne(new LambdaQueryWrapperX<SysConfig>().eq(SysConfig::getConfigKey, configKey));
         return config != null ? config.getConfigValue() : null;
     }
 

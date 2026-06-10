@@ -99,6 +99,16 @@
                         <removeUnusedImports/>
                     </java>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>auto-format</id>
+                        <!-- 绑定到 compile 阶段，这意味着执行 compile, install 时会自动触发 spotless:apply -->
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>apply</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

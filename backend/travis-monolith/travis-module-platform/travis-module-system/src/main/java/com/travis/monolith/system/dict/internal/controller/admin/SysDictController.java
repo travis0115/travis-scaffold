@@ -1,7 +1,7 @@
 package com.travis.monolith.system.dict.internal.controller.admin;
 
 import com.travis.infrastructure.common.web.model.ApiResponse;
-import com.travis.infrastructure.common.web.model.PageResult;
+import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.dict.api.response.SysDictItemResp;
 import com.travis.monolith.system.dict.internal.entity.SysDict;
 import com.travis.monolith.system.dict.internal.request.SysDictItemReq;
@@ -35,7 +35,7 @@ public class SysDictController {
 
     /** 分页查询字典类型列表 */
     @GetMapping("/page")
-    public ApiResponse<PageResult<SysDict>> page(
+    public ApiResponse<PageResp<SysDict>> page(
             @RequestParam(required = false) String dictName,
             @RequestParam(required = false) String dictType,
             @RequestParam(required = false) Integer status,

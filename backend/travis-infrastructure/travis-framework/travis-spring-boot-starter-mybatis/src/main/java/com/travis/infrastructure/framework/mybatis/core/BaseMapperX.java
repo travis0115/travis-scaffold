@@ -1,7 +1,5 @@
 package com.travis.infrastructure.framework.mybatis.core;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -25,7 +23,7 @@ public interface BaseMapperX<T> extends BaseMapper<T> {
      * @return 匹配的单条记录，若无则返回 null
      */
     default T selectOne(SFunction<T, ?> field, Object value) {
-        return selectOne(new LambdaQueryWrapper<T>().eq(field, value).last("LIMIT 1"));
+        return selectOne(new LambdaQueryWrapperX<T>().eq(field, value).last("LIMIT 1"));
     }
 
     /**
@@ -36,7 +34,7 @@ public interface BaseMapperX<T> extends BaseMapper<T> {
      * @return 匹配的记录列表
      */
     default List<T> selectList(SFunction<T, ?> field, Object value) {
-        return selectList(new LambdaQueryWrapper<T>().eq(field, value));
+        return selectList(new LambdaQueryWrapperX<T>().eq(field, value));
     }
 
     /**
@@ -45,7 +43,7 @@ public interface BaseMapperX<T> extends BaseMapper<T> {
      * @return 记录总数
      */
     default Long selectCount() {
-        return selectCount(new QueryWrapper<>());
+        return selectCount(new QueryWrapperX<>());
     }
 
     /**
@@ -54,7 +52,7 @@ public interface BaseMapperX<T> extends BaseMapper<T> {
      * @return 全部记录列表
      */
     default List<T> selectList() {
-        return selectList(new QueryWrapper<>());
+        return selectList(new QueryWrapperX<>());
     }
 
     /**
@@ -65,7 +63,7 @@ public interface BaseMapperX<T> extends BaseMapper<T> {
      * @param wrapper 查询条件
      * @return 分页结果
      */
-    default Page<T> selectPage(int pageNum, int pageSize, LambdaQueryWrapper<T> wrapper) {
+    default Page<T> selectPage(int pageNum, int pageSize, LambdaQueryWrapperX<T> wrapper) {
         return selectPage(new Page<>(pageNum, pageSize), wrapper);
     }
 
@@ -77,6 +75,6 @@ public interface BaseMapperX<T> extends BaseMapper<T> {
      * @return 分页结果
      */
     default Page<T> selectPage(int pageNum, int pageSize) {
-        return selectPage(new Page<>(pageNum, pageSize), new QueryWrapper<>());
+        return selectPage(new Page<>(pageNum, pageSize), new QueryWrapperX<>());
     }
 }

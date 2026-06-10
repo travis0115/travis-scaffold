@@ -1,5 +1,7 @@
 import type { Recordable } from '@vben/types';
 
+import type { PageResp } from '#/api/types';
+
 import { requestClient } from '#/api/request';
 
 export namespace SystemRoleApi {
@@ -20,7 +22,7 @@ export namespace SystemRoleApi {
  * 分页查询角色列表
  */
 async function getRolePage(params: Recordable<any>) {
-  return requestClient.get<{ records: SystemRoleApi.SysRole[]; total: number }>(
+  return requestClient.get<PageResp<SystemRoleApi.SysRole>>(
     '/system/role/page',
     { params },
   );

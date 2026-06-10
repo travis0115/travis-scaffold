@@ -1,15 +1,17 @@
 package com.travis.monolith.system.dict.internal.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
-import com.travis.infrastructure.common.web.model.PageResult;
+import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.monolith.system.dict.internal.entity.SysDictItem;
 import com.travis.monolith.system.dict.internal.mapper.SysDictItemMapper;
 import com.travis.monolith.system.dict.internal.request.SysDictItemReq;
 import com.travis.monolith.system.dict.internal.service.SysDictItemService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 /**
@@ -18,23 +20,19 @@ import org.springframework.stereotype.Service;
  * @author travis
  */
 @Service
+@RequiredArgsConstructor
 public class SysDictItemServiceImpl extends ServiceImpl<SysDictItemMapper, SysDictItem>
         implements SysDictItemService {
 
     /** 分页查询字典数据项，按排序号升序 */
     @Override
-    public PageResult<SysDictItem> page(Long dictId, Integer pageNum, Integer pageSize) {
-        LambdaQueryWrapper<SysDictItem> wrapper =
-                new LambdaQueryWrapper<SysDictItem>()
+    public PageResp<SysDictItem> page(Long dictId, Integer pageNum, Integer pageSize) {
+        LambdaQueryWrapperX<SysDictItem> wrapper =
+                new LambdaQueryWrapperX<SysDictItem>()
                         .eq(dictId != null, SysDictItem::getDictId, dictId)
                         .orderByAsc(SysDictItem::getSort);
         Page<SysDictItem> page = page(new Page<>(pageNum, pageSize), wrapper);
-        return new PageResult<>(
-                page.getRecords(),
-                page.getTotal(),
-                page.getCurrent(),
-                page.getSize(),
-                page.getPages());
+        return PageConverter.toResp(page);
     }
 
     /** 新增字典数据项 */

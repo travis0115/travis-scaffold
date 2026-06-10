@@ -2,6 +2,7 @@ package com.travis.monolith.system.dept.internal.controller.admin;
 
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.monolith.system.dept.api.response.SysDeptResp;
+import com.travis.monolith.system.dept.internal.request.SysDeptPageReq;
 import com.travis.monolith.system.dept.internal.request.SysDeptReq;
 import com.travis.monolith.system.dept.internal.service.SysDeptService;
 import jakarta.validation.Valid;
@@ -27,11 +28,12 @@ public class SysDeptController {
     /**
      * 获取部门树形列表
      *
+     * @param req 列表查询参数
      * @return 部门树
      */
     @GetMapping("/list")
-    public ApiResponse<List<SysDeptResp>> list() {
-        return ApiResponse.success(deptService.listTree());
+    public ApiResponse<List<SysDeptResp>> list(@Valid SysDeptPageReq req) {
+        return ApiResponse.success(deptService.listTree(req));
     }
 
     /**

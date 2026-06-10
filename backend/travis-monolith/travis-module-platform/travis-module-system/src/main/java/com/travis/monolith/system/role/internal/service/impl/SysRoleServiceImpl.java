@@ -1,10 +1,12 @@
 package com.travis.monolith.system.role.internal.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
-import com.travis.infrastructure.common.web.model.PageResult;
+import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.monolith.system.common.api.SystemErrorCode;
 import com.travis.monolith.system.role.api.request.SysRoleMenuReq;
@@ -16,6 +18,7 @@ import com.travis.monolith.system.role.internal.entity.SysUserRole;
 import com.travis.monolith.system.role.internal.mapper.SysRoleMapper;
 import com.travis.monolith.system.role.internal.mapper.SysRoleMenuMapper;
 import com.travis.monolith.system.role.internal.mapper.SysUserRoleMapper;
+import com.travis.monolith.system.role.internal.request.SysRolePageReq;
 import com.travis.monolith.system.role.internal.request.SysRoleReq;
 import com.travis.monolith.system.role.internal.service.SysRoleService;
 import java.util.List;
@@ -37,6 +40,15 @@ import org.springframework.transaction.annotation.Transactional;
 public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
         implements SysRoleService {
 
+    private static final Map<String, SFunction<SysRole, ?>> SORT_COLUMNS =
+            Map.of(
+                    "id", SysRole::getId,
+                    "roleName", SysRole::getRoleName,
+                    "roleCode", SysRole::getRoleCode,
+                    "status", SysRole::getStatus,
+                    "createTime", SysRole::getCreateTime,
+                    "updateTime", SysRole::getUpdateTime);
+
     /** 角色-菜单关联 Mapper */
     private final SysRoleMenuMapper roleMenuMapper;
 
@@ -48,22 +60,20 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
 
     /** 分页查询角色列表，支持按角色名称、编码、状态筛选 */
     @Override
-    public PageResult<SysRoleResp> page(
-            String roleName, String roleCode, Integer status, Integer pageNum, Integer pageSize) {
-        LambdaQueryWrapper<SysRole> wrapper =
-                new LambdaQueryWrapper<SysRole>()
-                        .like(roleName != null, SysRole::getRoleName, roleName)
-                        .like(roleCode != null, SysRole::getRoleCode, roleCode)
-                        .eq(status != null, SysRole::getStatus, status)
-                        .orderByDesc(SysRole::getCreateTime);
-        Page<SysRole> page = page(new Page<>(pageNum, pageSize), wrapper);
-        List<SysRoleResp> voList = converter.toRespList(page.getRecords());
-        return new PageResult<>(
-                voList,
-                page.getTotal(),
-                page.getCurrent(),
-                page.getSize(),
-                page.getPages());
+    public PageResp<SysRoleResp> page(SysRolePageReq req) {
+        LambdaQueryWrapperX<SysRole> wrapper =
+                new LambdaQueryWrapperX<SysRole>()
+                        .likeIfPresent(SysRole::getRoleName, req.getRoleName())
+                        .likeIfPresent(SysRole::getRoleCode, req.getRoleCode())
+                        .eqIfPresent(SysRole::getStatus, req.getStatus())
+                        .orderByAllowed(
+                                req.getOrderBy(),
+                                req.getAsc(),
+                                SORT_COLUMNS,
+                                false,
+                                SysRole::getCreateTime);
+        Page<SysRole> page = page(new Page<>(req.getPageNum(), req.getPageSize()), wrapper);
+        return PageConverter.toResp(page.convert(converter::toResp));
     }
 
     /** 获取角色详情，同时查询角色关联的菜单ID列表 */
@@ -77,7 +87,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
         List<Long> menuIds =
                 roleMenuMapper
                         .selectList(
-                                new LambdaQueryWrapper<SysRoleMenu>()
+                                new LambdaQueryWrapperX<SysRoleMenu>()
                                         .eq(SysRoleMenu::getRoleId, id))
                         .stream()
                         .map(SysRoleMenu::getMenuId)
@@ -93,7 +103,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
         // 检查角色编码唯一性
         long count =
                 count(
-                        new LambdaQueryWrapper<SysRole>()
+                        new LambdaQueryWrapperX<SysRole>()
                                 .eq(SysRole::getRoleCode, req.getRoleCode()));
         if (count > 0) {
             throw new BizException(SystemErrorCode.SYSTEM_ROLE_CODE_EXISTS);
@@ -115,7 +125,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
         if (req.getRoleCode() != null) {
             long count =
                     count(
-                            new LambdaQueryWrapper<SysRole>()
+                            new LambdaQueryWrapperX<SysRole>()
                                     .eq(SysRole::getRoleCode, req.getRoleCode())
                                     .ne(SysRole::getId, id));
             if (count > 0) {
@@ -131,9 +141,11 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     @Transactional
     public void deleteById(Long id) {
         // 删除角色-菜单关联
-        roleMenuMapper.delete(new LambdaQueryWrapper<SysRoleMenu>().eq(SysRoleMenu::getRoleId, id));
+        roleMenuMapper.delete(
+                new LambdaQueryWrapperX<SysRoleMenu>().eq(SysRoleMenu::getRoleId, id));
         // 删除用户-角色关联
-        userRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getRoleId, id));
+        userRoleMapper.delete(
+                new LambdaQueryWrapperX<SysUserRole>().eq(SysUserRole::getRoleId, id));
         removeById(id);
     }
 
@@ -143,7 +155,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     @CacheEvict(value = "menus:vben", allEntries = true)
     public void assignMenus(SysRoleMenuReq req) {
         roleMenuMapper.delete(
-                new LambdaQueryWrapper<SysRoleMenu>().eq(SysRoleMenu::getRoleId, req.getRoleId()));
+                new LambdaQueryWrapperX<SysRoleMenu>().eq(SysRoleMenu::getRoleId, req.getRoleId()));
         if (req.getMenuIds() != null && !req.getMenuIds().isEmpty()) {
             List<SysRoleMenu> list =
                     req.getMenuIds().stream()
@@ -195,7 +207,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
         }
         return roleMenuMapper
                 .selectList(
-                        new LambdaQueryWrapper<SysRoleMenu>().in(SysRoleMenu::getRoleId, roleIds))
+                        new LambdaQueryWrapperX<SysRoleMenu>().in(SysRoleMenu::getRoleId, roleIds))
                 .stream()
                 .map(SysRoleMenu::getMenuId)
                 .distinct()
@@ -208,13 +220,13 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     public void assignMenuToAdminRoles(Long menuId) {
         List<SysRole> adminRoles =
                 list(
-                        new LambdaQueryWrapper<SysRole>()
+                        new LambdaQueryWrapperX<SysRole>()
                                 .eq(SysRole::getRoleCode, "admin")
                                 .eq(SysRole::getStatus, 1));
         for (SysRole role : adminRoles) {
             long count =
                     roleMenuMapper.selectCount(
-                            new LambdaQueryWrapper<SysRoleMenu>()
+                            new LambdaQueryWrapperX<SysRoleMenu>()
                                     .eq(SysRoleMenu::getRoleId, role.getId())
                                     .eq(SysRoleMenu::getMenuId, menuId));
             if (count == 0) {
@@ -231,12 +243,12 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     @Transactional
     public void removeMenuFromAdminRoles(Long menuId) {
         List<Long> adminRoleIds =
-                list(new LambdaQueryWrapper<SysRole>().eq(SysRole::getRoleCode, "admin")).stream()
+                list(new LambdaQueryWrapperX<SysRole>().eq(SysRole::getRoleCode, "admin")).stream()
                         .map(SysRole::getId)
                         .toList();
         if (!adminRoleIds.isEmpty()) {
             roleMenuMapper.delete(
-                    new LambdaQueryWrapper<SysRoleMenu>()
+                    new LambdaQueryWrapperX<SysRoleMenu>()
                             .in(SysRoleMenu::getRoleId, adminRoleIds)
                             .eq(SysRoleMenu::getMenuId, menuId));
         }
@@ -247,7 +259,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     public List<SysRoleResp> listEnabled() {
         return converter.toRespList(
                 list(
-                        new LambdaQueryWrapper<SysRole>()
+                        new LambdaQueryWrapperX<SysRole>()
                                 .eq(SysRole::getStatus, 1)
                                 .orderByAsc(SysRole::getCreateTime)));
     }
@@ -257,7 +269,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     public List<Long> getRoleIdsByUserId(Long userId) {
         return userRoleMapper
                 .selectList(
-                        new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getUserId, userId))
+                        new LambdaQueryWrapperX<SysUserRole>().eq(SysUserRole::getUserId, userId))
                 .stream()
                 .map(SysUserRole::getRoleId)
                 .collect(Collectors.toList());
@@ -288,7 +300,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     @Transactional
     public void deleteUserRolesByUserId(Long userId) {
         userRoleMapper.delete(
-                new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getUserId, userId));
+                new LambdaQueryWrapperX<SysUserRole>().eq(SysUserRole::getUserId, userId));
     }
 
     /** 为指定用户分配角色 */
@@ -296,7 +308,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     @Transactional
     public void assignUserRoles(Long userId, List<Long> roleIds) {
         userRoleMapper.delete(
-                new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getUserId, userId));
+                new LambdaQueryWrapperX<SysUserRole>().eq(SysUserRole::getUserId, userId));
         if (roleIds != null && !roleIds.isEmpty()) {
             List<SysUserRole> list =
                     roleIds.stream()
@@ -320,7 +332,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
         }
         List<SysUserRole> userRoles =
                 userRoleMapper.selectList(
-                        new LambdaQueryWrapper<SysUserRole>().in(SysUserRole::getUserId, userIds));
+                        new LambdaQueryWrapperX<SysUserRole>().in(SysUserRole::getUserId, userIds));
         if (userRoles.isEmpty()) {
             return Map.of();
         }

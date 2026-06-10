@@ -5,9 +5,8 @@ import java.util.concurrent.CompletableFuture;
 /**
  * 消息发布器接口，定义与底层消息中间件无关的事件发布契约。
  *
- * <p>业务模块通过 {@link Event} 枚举定义事件，然后通过此接口发布。
- * 切换底层实现（RocketMQ / Kafka / Spring Event / Spring Modulith）只需更换实现类，
- * 业务枚举和调用代码无需任何变动。
+ * <p>业务模块通过 {@link Event} 枚举定义事件，然后通过此接口发布。 切换底层实现（RocketMQ / Kafka / Spring Event / Spring
+ * Modulith）只需更换实现类， 业务枚举和调用代码无需任何变动。
  *
  * <p>消息类型由 {@link Event#getTopicType()} 决定：
  *
@@ -76,8 +75,7 @@ public interface MessagePublisher {
     /**
      * 异步发布事件（普通模式，带回调）
      *
-     * <p>发送完成后调用 {@code callback}，成功时 {@code ex} 为 {@code null}，失败时携带异常。
-     * 回调参数携带完整的发布上下文，便于日志记录或重试。
+     * <p>发送完成后调用 {@code callback}，成功时 {@code ex} 为 {@code null}，失败时携带异常。 回调参数携带完整的发布上下文，便于日志记录或重试。
      *
      * @param event 事件枚举
      * @param payload 消息体
@@ -85,7 +83,8 @@ public interface MessagePublisher {
      * @return 异步结果
      * @see AsyncPublishCallback#onCompleted(Event, Object, PublishOptions, Throwable)
      */
-    CompletableFuture<Void> asyncPublish(Event event, Object payload, AsyncPublishCallback callback);
+    CompletableFuture<Void> asyncPublish(
+            Event event, Object payload, AsyncPublishCallback callback);
 
     /**
      * 异步发布事件（指定发布选项）
@@ -100,8 +99,7 @@ public interface MessagePublisher {
     /**
      * 异步发布事件（指定发布选项，带回调）
      *
-     * <p>发送完成后调用 {@code callback}，成功时 {@code ex} 为 {@code null}，失败时携带异常。
-     * 回调参数携带完整的发布上下文，便于日志记录或重试。
+     * <p>发送完成后调用 {@code callback}，成功时 {@code ex} 为 {@code null}，失败时携带异常。 回调参数携带完整的发布上下文，便于日志记录或重试。
      *
      * @param event 事件枚举
      * @param payload 消息体

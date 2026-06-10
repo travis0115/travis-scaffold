@@ -1,3 +1,5 @@
+import type { PageResp } from '#/api/types';
+
 import { requestClient } from '#/api/request';
 
 export namespace SystemUpdateLogApi {
@@ -24,9 +26,10 @@ async function getUpdateLogPage(params: {
   pageSize: number;
   status?: number;
 }) {
-  return requestClient.get<{ records: SystemUpdateLogApi.UpdateLog[]; total: number }>('/system/update-log/page', {
-    params,
-  });
+  return requestClient.get<PageResp<SystemUpdateLogApi.UpdateLog>>(
+    '/system/update-log/page',
+    { params },
+  );
 }
 
 /**

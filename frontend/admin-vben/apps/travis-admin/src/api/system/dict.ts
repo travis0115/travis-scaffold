@@ -1,3 +1,5 @@
+import type { PageResp } from '#/api/types';
+
 import { requestClient } from '#/api/request';
 
 export namespace SystemDictApi {
@@ -40,9 +42,10 @@ async function getDictPage(params: {
   pageSize: number;
   status?: number;
 }) {
-  return requestClient.get<{ records: SystemDictApi.SysDict[]; total: number }>('/system/dict/page', {
-    params,
-  });
+  return requestClient.get<PageResp<SystemDictApi.SysDict>>(
+    '/system/dict/page',
+    { params },
+  );
 }
 
 /**

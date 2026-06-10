@@ -1,9 +1,10 @@
 package com.travis.monolith.system.user.internal.controller.admin;
 
 import com.travis.infrastructure.common.web.model.ApiResponse;
-import com.travis.infrastructure.common.web.model.PageResult;
+import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.user.api.request.ChangePasswordReq;
 import com.travis.monolith.system.user.api.request.ResetPasswordReq;
+import com.travis.monolith.system.user.api.request.SysUserPageReq;
 import com.travis.monolith.system.user.api.request.SysUserReq;
 import com.travis.monolith.system.user.api.request.SysUserRoleReq;
 import com.travis.monolith.system.user.api.request.UpdateAvatarReq;
@@ -32,24 +33,12 @@ public class SysUserController {
     /**
      * 分页查询用户列表
      *
-     * @param username 用户名（模糊匹配）
-     * @param mobile 手机号（模糊匹配）
-     * @param status 状态
-     * @param deptId 所属部门ID
-     * @param pageNum 页码
-     * @param pageSize 每页条数
+     * @param req 分页查询参数
      * @return 分页结果
      */
     @GetMapping("/page")
-    public ApiResponse<PageResult<SysUserResp>> page(
-            @RequestParam(required = false) String username,
-            @RequestParam(required = false) String mobile,
-            @RequestParam(required = false) Integer status,
-            @RequestParam(required = false) Long deptId,
-            @RequestParam(defaultValue = "1") Integer pageNum,
-            @RequestParam(defaultValue = "10") Integer pageSize) {
-        return ApiResponse.success(
-                userService.page(username, mobile, status, deptId, pageNum, pageSize));
+    public ApiResponse<PageResp<SysUserResp>> page(@Valid SysUserPageReq req) {
+        return ApiResponse.success(userService.page(req));
     }
 
     /**

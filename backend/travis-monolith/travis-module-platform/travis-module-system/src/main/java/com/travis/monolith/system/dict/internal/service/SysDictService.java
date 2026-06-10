@@ -1,7 +1,7 @@
 package com.travis.monolith.system.dict.internal.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.travis.infrastructure.common.web.model.PageResult;
+import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.dict.api.response.SysDictItemResp;
 import com.travis.monolith.system.dict.internal.entity.SysDict;
 import com.travis.monolith.system.dict.internal.request.SysDictItemReq;
@@ -32,7 +32,7 @@ public interface SysDictService extends IService<SysDict> {
      * @param pageSize 每页条数
      * @return 分页结果
      */
-    PageResult<SysDict> page(
+    PageResp<SysDict> page(
             String dictName, String dictType, Integer status, Integer pageNum, Integer pageSize);
 
     /**

@@ -3,9 +3,8 @@ package com.travis.infrastructure.common.event;
 /**
  * 事件标记接口，定义与底层消息中间件无关的事件契约。
  *
- * <p>业务模块通过枚举实现此接口，每个枚举值代表一个具体的业务事件。
- * {@link #getTopic()} 和 {@link #getType()} 是事件的逻辑分类标识，
- * 具体如何映射到 MQ 的 Topic/Tag 由 {@link MessagePublisher} 的实现类决定。
+ * <p>业务模块通过枚举实现此接口，每个枚举值代表一个具体的业务事件。 {@link #getTopic()} 和 {@link #getType()} 是事件的逻辑分类标识， 具体如何映射到
+ * MQ 的 Topic/Tag 由 {@link MessagePublisher} 的实现类决定。
  *
  * <p>使用示例：
  *
@@ -68,8 +67,7 @@ public interface Event {
     /**
      * 获取 Topic 类型，用于 Topic 自动创建和消息发送方式选择。
      *
-     * <p>默认返回 {@link TopicType#NORMAL}。对于 FIFO 或延迟类型的 Topic，
-     * 枚举实现需覆盖此方法或通过构造函数指定。
+     * <p>默认返回 {@link TopicType#NORMAL}。对于 FIFO 或延迟类型的 Topic， 枚举实现需覆盖此方法或通过构造函数指定。
      *
      * @return Topic 类型
      * @see TopicType

@@ -1,7 +1,8 @@
 package com.travis.monolith.system.log.loginlog.internal.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.travis.infrastructure.common.web.model.PageResult;
+import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.monolith.system.log.loginlog.api.request.SysLoginLogPageReq;
 import com.travis.monolith.system.log.loginlog.internal.entity.SysLoginLog;
 
 /**
@@ -14,14 +15,10 @@ public interface SysLoginLogService extends IService<SysLoginLog> {
     /**
      * 分页查询登录日志
      *
-     * @param username 用户名（模糊匹配，可为空）
-     * @param status 登录状态（可为空）
-     * @param pageNum 页码
-     * @param pageSize 每页条数
+     * @param req 分页查询参数
      * @return 分页结果
      */
-    PageResult<SysLoginLog> page(
-            String username, Integer status, Integer pageNum, Integer pageSize);
+    PageResp<SysLoginLog> page(SysLoginLogPageReq req);
 
     /**
      * 记录登录日志（使用独立事务，不受外层事务回滚影响）

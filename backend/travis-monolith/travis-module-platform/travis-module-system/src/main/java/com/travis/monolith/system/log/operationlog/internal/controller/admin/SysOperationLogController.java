@@ -1,10 +1,11 @@
 package com.travis.monolith.system.log.operationlog.internal.controller.admin;
 
 import com.travis.infrastructure.common.web.model.ApiResponse;
-import com.travis.infrastructure.common.web.model.PageResult;
+import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.monolith.system.log.operationlog.api.request.SysOperationLogPageReq;
 import com.travis.monolith.system.log.operationlog.internal.entity.SysOperationLog;
 import com.travis.monolith.system.log.operationlog.internal.service.SysOperationLogService;
-import java.time.LocalDateTime;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,26 +25,11 @@ public class SysOperationLogController {
     /**
      * 分页查询操作日志
      *
-     * @param username 操作用户名（模糊匹配）
-     * @param module 操作模块（模糊匹配）
-     * @param status 操作状态
-     * @param startTime 操作开始时间
-     * @param endTime 操作结束时间
-     * @param pageNum 页码
-     * @param pageSize 每页条数
+     * @param req 分页查询参数
      * @return 分页结果
      */
     @GetMapping("/page")
-    public ApiResponse<PageResult<SysOperationLog>> page(
-            @RequestParam(required = false) String username,
-            @RequestParam(required = false) String module,
-            @RequestParam(required = false) Integer status,
-            @RequestParam(required = false) LocalDateTime startTime,
-            @RequestParam(required = false) LocalDateTime endTime,
-            @RequestParam(defaultValue = "1") Integer pageNum,
-            @RequestParam(defaultValue = "10") Integer pageSize) {
-        return ApiResponse.success(
-                operationLogService.page(
-                        username, module, status, startTime, endTime, pageNum, pageSize));
+    public ApiResponse<PageResp<SysOperationLog>> page(@Valid SysOperationLogPageReq req) {
+        return ApiResponse.success(operationLogService.page(req));
     }
 }

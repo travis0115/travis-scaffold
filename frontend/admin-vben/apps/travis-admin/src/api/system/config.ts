@@ -1,5 +1,7 @@
 import type { Recordable } from '@vben/types';
 
+import type { PageResp } from '#/api/types';
+
 import { requestClient } from '#/api/request';
 
 export namespace SystemConfigApi {
@@ -19,7 +21,10 @@ export namespace SystemConfigApi {
  * 获取系统配置分页列表
  */
 async function getConfigList(params: Recordable<any>) {
-  return requestClient.get('/system/config/page', { params });
+  return requestClient.get<PageResp<SystemConfigApi.SystemConfig>>(
+    '/system/config/page',
+    { params },
+  );
 }
 
 /**

@@ -1,9 +1,10 @@
 package com.travis.monolith.system.dept.internal.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.event.MessagePublisher;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
+import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.monolith.system.common.api.SystemEvent;
 import com.travis.monolith.system.dept.api.event.DeptDeletedPayload;
@@ -11,6 +12,7 @@ import com.travis.monolith.system.dept.api.response.SysDeptResp;
 import com.travis.monolith.system.dept.internal.converter.SysDeptConverter;
 import com.travis.monolith.system.dept.internal.entity.SysDept;
 import com.travis.monolith.system.dept.internal.mapper.SysDeptMapper;
+import com.travis.monolith.system.dept.internal.request.SysDeptPageReq;
 import com.travis.monolith.system.dept.internal.request.SysDeptReq;
 import com.travis.monolith.system.dept.internal.service.SysDeptService;
 import java.util.ArrayList;
@@ -38,6 +40,18 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
         implements SysDeptService {
 
+    private static final Map<String, SFunction<SysDept, ?>> SORT_COLUMNS =
+            Map.ofEntries(
+                    Map.entry("id", SysDept::getId),
+                    Map.entry("parentId", SysDept::getParentId),
+                    Map.entry("deptName", SysDept::getDeptName),
+                    Map.entry("sort", SysDept::getSort),
+                    Map.entry("leader", SysDept::getLeader),
+                    Map.entry("mobile", SysDept::getMobile),
+                    Map.entry("status", SysDept::getStatus),
+                    Map.entry("createTime", SysDept::getCreateTime),
+                    Map.entry("updateTime", SysDept::getUpdateTime));
+
     /** 对象转换器 */
     private final SysDeptConverter converter;
 
@@ -48,8 +62,23 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
     @Override
     @Cacheable(value = "system:dept:tree", key = "'all'")
     public List<SysDeptResp> listTree() {
+        return listTree(new SysDeptPageReq());
+    }
+
+    @Override
+    public List<SysDeptResp> listTree(SysDeptPageReq req) {
         // 查询全部部门，转为 VO 后构建树形结构
-        List<SysDept> allDepts = list();
+        List<SysDept> allDepts =
+                list(
+                        new LambdaQueryWrapperX<SysDept>()
+                                .likeIfPresent(SysDept::getDeptName, req.getDeptName())
+                                .eqIfPresent(SysDept::getStatus, req.getStatus())
+                                .orderByAllowed(
+                                        req.getOrderBy(),
+                                        req.getAsc(),
+                                        SORT_COLUMNS,
+                                        true,
+                                        SysDept::getSort));
         List<SysDeptResp> voList = converter.toRespList(allDepts);
         voList.forEach(v -> v.setChildren(new ArrayList<>()));
         return buildTree(voList);
@@ -161,7 +190,7 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
      */
     private void collectAllDescendantIds(Long parentId, List<Long> ids) {
         List<SysDept> children =
-                list(new LambdaQueryWrapper<SysDept>().eq(SysDept::getParentId, parentId));
+                list(new LambdaQueryWrapperX<SysDept>().eq(SysDept::getParentId, parentId));
         for (SysDept child : children) {
             ids.add(child.getId());
             collectAllDescendantIds(child.getId(), ids);

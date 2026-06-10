@@ -1,10 +1,11 @@
 package com.travis.monolith.system.log.updatelog.internal.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
-import com.travis.infrastructure.common.web.model.PageResult;
+import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.monolith.system.log.updatelog.api.request.SysUpdateLogReq;
 import com.travis.monolith.system.log.updatelog.api.response.SysUpdateLogResp;
@@ -30,22 +31,16 @@ public class SysUpdateLogServiceImpl extends ServiceImpl<SysUpdateLogMapper, Sys
     private final SysUpdateLogConverter converter;
 
     @Override
-    public PageResult<SysUpdateLogResp> page(
+    public PageResp<SysUpdateLogResp> page(
             String version, String title, Integer status, Integer pageNum, Integer pageSize) {
-        LambdaQueryWrapper<SysUpdateLog> wrapper =
-                new LambdaQueryWrapper<SysUpdateLog>()
-                        .like(version != null, SysUpdateLog::getVersion, version)
-                        .like(title != null, SysUpdateLog::getTitle, title)
-                        .eq(status != null, SysUpdateLog::getStatus, status)
+        LambdaQueryWrapperX<SysUpdateLog> wrapper =
+                new LambdaQueryWrapperX<SysUpdateLog>()
+                        .likeIfPresent(SysUpdateLog::getVersion, version)
+                        .likeIfPresent(SysUpdateLog::getTitle, title)
+                        .eqIfPresent(SysUpdateLog::getStatus, status)
                         .orderByDesc(SysUpdateLog::getCreateTime);
         Page<SysUpdateLog> page = page(new Page<>(pageNum, pageSize), wrapper);
-        List<SysUpdateLogResp> records = converter.toRespList(page.getRecords());
-        return new PageResult<>(
-                records,
-                page.getTotal(),
-                page.getCurrent(),
-                page.getSize(),
-                page.getPages());
+        return PageConverter.toResp(page.convert(converter::toResp));
     }
 
     @Override
@@ -86,8 +81,8 @@ public class SysUpdateLogServiceImpl extends ServiceImpl<SysUpdateLogMapper, Sys
         if (limit == null || limit <= 0) {
             limit = 10;
         }
-        LambdaQueryWrapper<SysUpdateLog> wrapper =
-                new LambdaQueryWrapper<SysUpdateLog>()
+        LambdaQueryWrapperX<SysUpdateLog> wrapper =
+                new LambdaQueryWrapperX<SysUpdateLog>()
                         .eq(SysUpdateLog::getStatus, 1)
                         .orderByDesc(SysUpdateLog::getPublishTime);
         Page<SysUpdateLog> page = page(new Page<>(1, limit), wrapper);

@@ -1,10 +1,11 @@
 package com.travis.monolith.system.role.internal.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.travis.infrastructure.common.web.model.PageResult;
+import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.role.api.request.SysRoleMenuReq;
 import com.travis.monolith.system.role.api.response.SysRoleResp;
 import com.travis.monolith.system.role.internal.entity.SysRole;
+import com.travis.monolith.system.role.internal.request.SysRolePageReq;
 import com.travis.monolith.system.role.internal.request.SysRoleReq;
 import java.util.List;
 import java.util.Map;
@@ -20,15 +21,10 @@ public interface SysRoleService extends IService<SysRole> {
     /**
      * 分页查询角色列表
      *
-     * @param roleName 角色名称（模糊匹配，可为空）
-     * @param roleCode 角色编码（模糊匹配，可为空）
-     * @param status 状态（可为空）
-     * @param pageNum 页码
-     * @param pageSize 每页条数
+     * @param req 分页查询参数
      * @return 分页结果
      */
-    PageResult<SysRoleResp> page(
-            String roleName, String roleCode, Integer status, Integer pageNum, Integer pageSize);
+    PageResp<SysRoleResp> page(SysRolePageReq req);
 
     /**
      * 获取角色详情，包含已分配的菜单ID列表

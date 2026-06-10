@@ -12,6 +12,11 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class SysLoginLogPageReq extends PageRequest {
+
+    public SysLoginLogPageReq() {
+        setPageSize(20);
+    }
+
     /** 用户名（模糊匹配） */
     private String username;
 

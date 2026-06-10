@@ -1,6 +1,10 @@
 package com.travis.infrastructure.framework.rocketmq.core;
 
 import com.travis.infrastructure.common.event.TopicType;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.common.MixAll;
@@ -11,11 +15,6 @@ import org.apache.rocketmq.tools.admin.DefaultMQAdminExt;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.SmartLifecycle;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * RocketMQ 自动初始化器，在 Push Consumer 启动之前确保所有需要的 Topic 和消费者分组已存在。
@@ -183,7 +182,8 @@ public class RocketMQInitializer implements SmartLifecycle {
         createOrUpdateTopic(admin, topic, targetType);
     }
 
-    private void createOrUpdateTopic(DefaultMQAdminExt admin, String topic, TopicMessageType targetType) {
+    private void createOrUpdateTopic(
+            DefaultMQAdminExt admin, String topic, TopicMessageType targetType) {
         try {
             var clusterInfo = admin.examineBrokerClusterInfo();
             var brokerAddrTable = clusterInfo.getBrokerAddrTable();
@@ -235,10 +235,7 @@ public class RocketMQInitializer implements SmartLifecycle {
             }
             return true;
         } catch (Exception e) {
-            log.debug(
-                    "[RocketMQ] Failed to check consumer group '{}': {}",
-                    group,
-                    e.getMessage());
+            log.debug("[RocketMQ] Failed to check consumer group '{}': {}", group, e.getMessage());
             return false;
         }
     }

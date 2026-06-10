@@ -16,7 +16,7 @@ public class SysUserPageReq extends PageRequest {
     private String username;
 
     /** 手机号（模糊匹配） */
-    private String phone;
+    private String mobile;
 
     /** 状态（0-禁用 1-启用） */
     private Integer status;

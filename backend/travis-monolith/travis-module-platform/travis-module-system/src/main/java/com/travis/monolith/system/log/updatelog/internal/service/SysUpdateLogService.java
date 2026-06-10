@@ -1,7 +1,7 @@
 package com.travis.monolith.system.log.updatelog.internal.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.travis.infrastructure.common.web.model.PageResult;
+import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.log.updatelog.api.request.SysUpdateLogReq;
 import com.travis.monolith.system.log.updatelog.api.response.SysUpdateLogResp;
 import com.travis.monolith.system.log.updatelog.internal.entity.SysUpdateLog;
@@ -24,7 +24,7 @@ public interface SysUpdateLogService extends IService<SysUpdateLog> {
      * @param pageSize 每页条数
      * @return 分页结果
      */
-    PageResult<SysUpdateLogResp> page(
+    PageResp<SysUpdateLogResp> page(
             String version, String title, Integer status, Integer pageNum, Integer pageSize);
 
     /**

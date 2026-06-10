@@ -1,7 +1,7 @@
 package com.travis.monolith.system.config.internal.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.travis.infrastructure.common.web.model.PageResult;
+import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.config.api.request.SysConfigPageReq;
 import com.travis.monolith.system.config.api.request.SysConfigReq;
 import com.travis.monolith.system.config.api.response.SysConfigResp;
@@ -15,7 +15,7 @@ import com.travis.monolith.system.config.internal.entity.SysConfig;
 public interface SysConfigService extends IService<SysConfig> {
 
     /** 分页查询系统配置 */
-    PageResult<SysConfigResp> page(SysConfigPageReq req);
+    PageResp<SysConfigResp> page(SysConfigPageReq req);
 
     /** 获取配置详情 */
     SysConfigResp getById(Long id);

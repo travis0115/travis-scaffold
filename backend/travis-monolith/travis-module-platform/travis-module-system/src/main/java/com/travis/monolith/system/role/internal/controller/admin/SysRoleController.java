@@ -1,9 +1,10 @@
 package com.travis.monolith.system.role.internal.controller.admin;
 
 import com.travis.infrastructure.common.web.model.ApiResponse;
-import com.travis.infrastructure.common.web.model.PageResult;
+import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.role.api.request.SysRoleMenuReq;
 import com.travis.monolith.system.role.api.response.SysRoleResp;
+import com.travis.monolith.system.role.internal.request.SysRolePageReq;
 import com.travis.monolith.system.role.internal.request.SysRoleReq;
 import com.travis.monolith.system.role.internal.service.SysRoleService;
 import jakarta.validation.Valid;
@@ -27,13 +28,8 @@ public class SysRoleController {
 
     /** 分页查询角色列表 */
     @GetMapping("/page")
-    public ApiResponse<PageResult<SysRoleResp>> page(
-            @RequestParam(required = false) String roleName,
-            @RequestParam(required = false) String roleCode,
-            @RequestParam(required = false) Integer status,
-            @RequestParam(defaultValue = "1") Integer pageNum,
-            @RequestParam(defaultValue = "10") Integer pageSize) {
-        return ApiResponse.success(roleService.page(roleName, roleCode, status, pageNum, pageSize));
+    public ApiResponse<PageResp<SysRoleResp>> page(@Valid SysRolePageReq req) {
+        return ApiResponse.success(roleService.page(req));
     }
 
     /**

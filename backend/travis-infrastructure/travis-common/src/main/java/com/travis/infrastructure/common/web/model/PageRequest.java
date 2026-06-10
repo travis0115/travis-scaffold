@@ -3,12 +3,11 @@ package com.travis.infrastructure.common.web.model;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import java.io.Serial;
+import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.io.Serial;
-import java.io.Serializable;
 
 /**
  * 统一分页请求
@@ -20,8 +19,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class PageRequest implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     /** 当前页码，从1开始 */
     @NotNull(message = "页码不能为空")
@@ -39,5 +37,4 @@ public class PageRequest implements Serializable {
 
     /** 是否升序，默认true */
     private Boolean asc = true;
-
 }

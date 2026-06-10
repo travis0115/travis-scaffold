@@ -1,8 +1,9 @@
 package com.travis.monolith.system.user.internal.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.travis.infrastructure.common.web.model.PageResult;
+import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.user.api.request.ChangePasswordReq;
+import com.travis.monolith.system.user.api.request.SysUserPageReq;
 import com.travis.monolith.system.user.api.request.SysUserReq;
 import com.travis.monolith.system.user.api.request.SysUserRoleReq;
 import com.travis.monolith.system.user.api.request.UpdateAvatarReq;
@@ -20,21 +21,10 @@ public interface SysUserService extends IService<SysUser> {
     /**
      * 分页查询用户列表
      *
-     * @param username 用户名（模糊匹配，可为空）
-     * @param phone 手机号（模糊匹配，可为空）
-     * @param status 状态（可为空）
-     * @param deptId 所属部门ID（可为空）
-     * @param pageNum 页码
-     * @param pageSize 每页条数
+     * @param req 分页查询参数
      * @return 分页结果
      */
-    PageResult<SysUserResp> page(
-            String username,
-            String phone,
-            Integer status,
-            Long deptId,
-            Integer pageNum,
-            Integer pageSize);
+    PageResp<SysUserResp> page(SysUserPageReq req);
 
     /**
      * 获取用户详情，包含关联的角色信息

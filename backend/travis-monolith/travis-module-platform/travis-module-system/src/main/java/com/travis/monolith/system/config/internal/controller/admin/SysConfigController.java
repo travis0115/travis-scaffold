@@ -1,7 +1,7 @@
 package com.travis.monolith.system.config.internal.controller.admin;
 
 import com.travis.infrastructure.common.web.model.ApiResponse;
-import com.travis.infrastructure.common.web.model.PageResult;
+import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.config.api.request.SysConfigPageReq;
 import com.travis.monolith.system.config.api.request.SysConfigReq;
 import com.travis.monolith.system.config.api.response.SysConfigResp;
@@ -26,7 +26,7 @@ public class SysConfigController {
 
     /** 分页查询系统配置 */
     @GetMapping("/page")
-    public ApiResponse<PageResult<SysConfigResp>> page(SysConfigPageReq req) {
+    public ApiResponse<PageResp<SysConfigResp>> page(SysConfigPageReq req) {
         return ApiResponse.success(sysConfigService.page(req));
     }
 

@@ -1,12 +1,14 @@
 package com.travis.monolith.system.user.internal.service.impl;
 
 import cn.hutool.crypto.digest.BCrypt;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.enums.LoginType;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
-import com.travis.infrastructure.common.web.model.PageResult;
+import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.util.Ip2RegionUtil;
@@ -20,16 +22,15 @@ import com.travis.monolith.system.user.internal.converter.SysUserConverter;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.mapper.SysUserMapper;
 import com.travis.monolith.system.user.internal.service.SysUserService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 用户管理服务实现，包含密码加密（BCrypt）、角色分配及部门名称关联查询
@@ -40,6 +41,19 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
         implements SysUserService {
+
+    private static final Map<String, SFunction<SysUser, ?>> SORT_COLUMNS =
+            Map.ofEntries(
+                    Map.entry("id", SysUser::getId),
+                    Map.entry("username", SysUser::getUsername),
+                    Map.entry("nickname", SysUser::getNickname),
+                    Map.entry("email", SysUser::getEmail),
+                    Map.entry("mobile", SysUser::getMobile),
+                    Map.entry("deptId", SysUser::getDeptId),
+                    Map.entry("status", SysUser::getStatus),
+                    Map.entry("lastLoginTime", SysUser::getLastLoginTime),
+                    Map.entry("createTime", SysUser::getCreateTime),
+                    Map.entry("updateTime", SysUser::getUpdateTime));
 
     /** 部门 API（用于关联查询部门名称） */
     private final SysDeptApi deptApi;
@@ -55,24 +69,21 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
 
     /** 分页查询用户列表，支持按用户名、手机号、状态、部门筛选 */
     @Override
-    public PageResult<SysUserResp> page(
-            String username,
-            String mobile,
-            Integer status,
-            Long deptId,
-            Integer pageNum,
-            Integer pageSize) {
-        LambdaQueryWrapper<SysUser> wrapper =
-                new LambdaQueryWrapper<SysUser>()
-                        .like(username != null, SysUser::getUsername, username)
-                        .like(mobile != null, SysUser::getMobile, mobile)
-                        .eq(status != null, SysUser::getStatus, status)
-                        .eq(deptId != null, SysUser::getDeptId, deptId)
-                        .orderByDesc(SysUser::getCreateTime);
-        Page<SysUser> page = page(new Page<>(pageNum, pageSize), wrapper);
-        List<SysUserResp> voList = toVOList(page.getRecords());
-        return new PageResult<>(
-                voList, page.getTotal(), page.getCurrent(), page.getSize(), page.getPages());
+    public PageResp<SysUserResp> page(SysUserPageReq req) {
+        LambdaQueryWrapperX<SysUser> wrapper =
+                new LambdaQueryWrapperX<SysUser>()
+                        .likeIfPresent(SysUser::getUsername, req.getUsername())
+                        .likeIfPresent(SysUser::getMobile, req.getMobile())
+                        .eqIfPresent(SysUser::getStatus, req.getStatus())
+                        .eqIfPresent(SysUser::getDeptId, req.getDeptId())
+                        .orderByAllowed(
+                                req.getOrderBy(),
+                                req.getAsc(),
+                                SORT_COLUMNS,
+                                false,
+                                SysUser::getCreateTime);
+        Page<SysUser> page = page(new Page<>(req.getPageNum(), req.getPageSize()), wrapper);
+        return PageConverter.toResp(page.convert(this::toVO));
     }
 
     /** 获取用户详情，同时关联查询角色ID和角色名称 */
@@ -97,7 +108,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
         // 检查用户名唯一性
         long count =
                 count(
-                        new LambdaQueryWrapper<SysUser>()
+                        new LambdaQueryWrapperX<SysUser>()
                                 .eq(SysUser::getUsername, req.getUsername()));
         if (count > 0) {
             throw new BizException(SystemErrorCode.SYSTEM_USER_USERNAME_EXISTS);
@@ -119,7 +130,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
         // 检查用户名唯一性（排除自身）
         long count =
                 count(
-                        new LambdaQueryWrapper<SysUser>()
+                        new LambdaQueryWrapperX<SysUser>()
                                 .eq(SysUser::getUsername, req.getUsername())
                                 .ne(SysUser::getId, id));
         if (count > 0) {
@@ -155,7 +166,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
     @Override
     public SysUser getUserByUsername(String username) {
         return getOne(
-                new LambdaQueryWrapper<SysUser>()
+                new LambdaQueryWrapperX<SysUser>()
                         .eq(SysUser::getUsername, username)
                         .last("LIMIT 1"));
     }

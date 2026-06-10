@@ -1,6 +1,6 @@
 package com.travis.monolith.system.user.internal.event;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.rocketmq.core.AbstractEventListener;
 import com.travis.monolith.system.common.api.SystemEventConstant;
 import com.travis.monolith.system.dept.api.SysDeptApi;
@@ -37,7 +37,7 @@ public class DeptDeletedEventListener extends AbstractEventListener<DeptDeletedP
         for (Long deptId : payload.getDeptIds()) {
             List<SysUser> users =
                     sysUserService.list(
-                            new LambdaQueryWrapper<SysUser>().eq(SysUser::getDeptId, deptId));
+                            new LambdaQueryWrapperX<SysUser>().eq(SysUser::getDeptId, deptId));
             for (SysUser user : users) {
                 user.setDeptId(null);
                 sysUserService.updateById(user);

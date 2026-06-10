@@ -3,6 +3,7 @@ package com.travis.monolith.system.dept.internal.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.monolith.system.dept.api.response.SysDeptResp;
 import com.travis.monolith.system.dept.internal.entity.SysDept;
+import com.travis.monolith.system.dept.internal.request.SysDeptPageReq;
 import com.travis.monolith.system.dept.internal.request.SysDeptReq;
 import java.util.Collection;
 import java.util.List;
@@ -21,6 +22,14 @@ public interface SysDeptService extends IService<SysDept> {
      * @return 部门树
      */
     List<SysDeptResp> listTree();
+
+    /**
+     * 根据查询条件获取部门树形列表
+     *
+     * @param req 列表查询参数
+     * @return 部门树
+     */
+    List<SysDeptResp> listTree(SysDeptPageReq req);
 
     /**
      * 根据部门ID列表批量获取部门名称映射

@@ -1,7 +1,7 @@
 package com.travis.monolith.system.dict.internal.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.travis.infrastructure.common.web.model.PageResult;
+import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.dict.internal.entity.SysDictItem;
 import com.travis.monolith.system.dict.internal.request.SysDictItemReq;
 
@@ -20,7 +20,7 @@ public interface SysDictItemService extends IService<SysDictItem> {
      * @param pageSize 每页条数
      * @return 分页结果
      */
-    PageResult<SysDictItem> page(Long dictId, Integer pageNum, Integer pageSize);
+    PageResp<SysDictItem> page(Long dictId, Integer pageNum, Integer pageSize);
 
     /**
      * 新增字典数据项
