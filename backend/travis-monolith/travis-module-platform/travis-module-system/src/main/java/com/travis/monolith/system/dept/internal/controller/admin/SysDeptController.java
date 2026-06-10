@@ -31,7 +31,7 @@ public class SysDeptController {
      */
     @GetMapping("/list")
     public ApiResponse<List<SysDeptResp>> list() {
-        return ApiResponse.success(deptService.getDeptTree());
+        return ApiResponse.success(deptService.listTree());
     }
 
     /**
@@ -42,7 +42,7 @@ public class SysDeptController {
      */
     @GetMapping("/{id}")
     public ApiResponse<SysDeptResp> getDetail(@PathVariable Long id) {
-        return ApiResponse.success(deptService.getDeptDetail(id));
+        return ApiResponse.success(deptService.getById(id));
     }
 
     /**
@@ -53,7 +53,7 @@ public class SysDeptController {
      */
     @PostMapping
     public ApiResponse<Void> add(@RequestBody @Valid SysDeptReq req) {
-        deptService.addDept(req);
+        deptService.create(req);
         return ApiResponse.success();
     }
 
@@ -66,7 +66,7 @@ public class SysDeptController {
      */
     @PutMapping("/{id}")
     public ApiResponse<Void> update(@PathVariable Long id, @RequestBody @Valid SysDeptReq req) {
-        deptService.updateDept(id, req);
+        deptService.update(id, req);
         return ApiResponse.success();
     }
 
@@ -78,7 +78,7 @@ public class SysDeptController {
      */
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
-        deptService.deleteDept(id);
+        deptService.deleteById(id);
         return ApiResponse.success();
     }
 }

@@ -7,7 +7,7 @@ import lombok.Getter;
 /**
  * System 模块事件定义
  *
- * <p>每个枚举值代表一个具体的业务事件。业务层通过 {@code messagePublisher.publish(SystemEvent.USER_LOGIN, payload)} 发布事件，
+ * <p>每个枚举值代表一个具体的业务事件。业务层通过 {@code messagePublisher.publish(SystemEventConstant.USER_LOGIN, payload)} 发布事件，
  * 无需关心底层 MQ 的 Topic/Tag 细节。
  *
  * <p>消费端通过 {@link #SystemEvent}、各 {@code *_TAG} 和 {@code *_GROUP} 常量配置
@@ -30,10 +30,10 @@ import lombok.Getter;
 public enum SystemEvent implements Event {
 
     /** 用户登录事件 */
-    USER_LOGIN(SystemEventConstant.NORMAL_TOPIC, SystemEventConstant.USER_LOGIN_TAG),
+    USER_LOGIN(SystemEventConstant.NORMAL_EVENT, SystemEventConstant.USER_LOGIN),
 
     /** 部门删除事件 */
-    DEPT_DELETED(SystemEventConstant.NORMAL_TOPIC, SystemEventConstant.DEPT_DELETED_TAG);
+    DEPT_DELETED(SystemEventConstant.NORMAL_EVENT, SystemEventConstant.DEPT_DELETED);
 
     private final String topic;
     private final String type;

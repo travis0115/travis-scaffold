@@ -16,6 +16,7 @@ import com.travis.monolith.system.menu.api.response.VbenMenuResp;
 import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.api.event.UserLoginPayload;
 import com.travis.monolith.system.user.api.request.SysUserLoginReq;
+import com.travis.monolith.system.user.api.response.SysUserResp;
 import com.travis.monolith.system.user.api.response.SysUserLoginResp;
 import com.travis.monolith.system.user.api.response.UserInfoResp;
 import com.travis.monolith.system.user.internal.entity.SysUser;
@@ -122,7 +123,7 @@ public class SysAuthServiceImpl implements SysAuthService {
     @Override
     public UserInfoResp getUserInfo() {
         long userId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
-        SysUser user = userService.getById(userId);
+        SysUserResp user = userService.getById(userId);
         if (user == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
@@ -151,7 +152,7 @@ public class SysAuthServiceImpl implements SysAuthService {
             value = "menus:vben",
             key =
                     "T(com.travis.infrastructure.framework.satoken.core.StpKit).getLoginIdAsLong(T(com.travis.infrastructure.common.web.enums.LoginType).ADMIN)")
-    public List<VbenMenuResp> getMenuList() {
+    public List<VbenMenuResp> listMenus() {
         long userId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
         List<Long> roleIds = roleApi.getRoleIdsByUserId(userId);
         return menuApi.getVbenMenuTree(roleIds);

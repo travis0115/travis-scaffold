@@ -20,7 +20,7 @@ public interface SysLoginLogService extends IService<SysLoginLog> {
      * @param pageSize 每页条数
      * @return 分页结果
      */
-    PageResult<SysLoginLog> getLoginLogPage(
+    PageResult<SysLoginLog> page(
             String username, Integer status, Integer pageNum, Integer pageSize);
 
     /**

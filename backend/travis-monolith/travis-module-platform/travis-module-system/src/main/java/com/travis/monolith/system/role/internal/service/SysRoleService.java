@@ -27,7 +27,7 @@ public interface SysRoleService extends IService<SysRole> {
      * @param pageSize 每页条数
      * @return 分页结果
      */
-    PageResult<SysRoleResp> getRolePage(
+    PageResult<SysRoleResp> page(
             String roleName, String roleCode, Integer status, Integer pageNum, Integer pageSize);
 
     /**
@@ -36,14 +36,14 @@ public interface SysRoleService extends IService<SysRole> {
      * @param id 角色ID
      * @return 角色详情视图
      */
-    SysRoleResp getRoleDetail(Long id);
+    SysRoleResp getById(Long id);
 
     /**
      * 新增角色
      *
      * @param req 角色信息请求参数
      */
-    void addRole(SysRoleReq req);
+    void create(SysRoleReq req);
 
     /**
      * 更新角色信息
@@ -51,14 +51,14 @@ public interface SysRoleService extends IService<SysRole> {
      * @param id 角色ID
      * @param req 角色信息请求参数
      */
-    void updateRole(Long id, SysRoleReq req);
+    void update(Long id, SysRoleReq req);
 
     /**
      * 删除角色
      *
      * @param id 角色ID
      */
-    void deleteRole(Long id);
+    void deleteById(Long id);
 
     /**
      * 为角色分配菜单权限（先清除原有关联再批量插入）
@@ -118,7 +118,7 @@ public interface SysRoleService extends IService<SysRole> {
      *
      * @return 角色列表
      */
-    List<SysRoleResp> getEnabledRoleList();
+    List<SysRoleResp> listEnabled();
 
     /**
      * 根据用户ID查询其角色ID列表

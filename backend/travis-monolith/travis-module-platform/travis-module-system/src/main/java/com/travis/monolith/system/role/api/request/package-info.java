@@ -1,2 +1,2 @@
-@org.springframework.modulith.NamedInterface("api")
+@org.springframework.modulith.NamedInterface("request")
 package com.travis.monolith.system.role.api.request;

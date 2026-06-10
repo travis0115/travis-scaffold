@@ -36,6 +36,6 @@ public class SysLoginLogController {
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "20") Integer pageSize) {
         return ApiResponse.success(
-                loginLogService.getLoginLogPage(username, status, pageNum, pageSize));
+                loginLogService.page(username, status, pageNum, pageSize));
     }
 }

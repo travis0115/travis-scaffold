@@ -24,7 +24,7 @@ public interface SysOperationLogService extends IService<SysOperationLog> {
      * @param pageSize 每页条数
      * @return 分页结果
      */
-    PageResult<SysOperationLog> getOperationLogPage(
+    PageResult<SysOperationLog> page(
             String username,
             String module,
             Integer status,

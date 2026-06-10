@@ -17,7 +17,7 @@ public interface SysDeptApi {
      *
      * @return 部门树
      */
-    List<SysDeptResp> getDeptTree();
+    List<SysDeptResp> listTree();
 
     /**
      * 根据部门ID列表批量获取部门名称映射

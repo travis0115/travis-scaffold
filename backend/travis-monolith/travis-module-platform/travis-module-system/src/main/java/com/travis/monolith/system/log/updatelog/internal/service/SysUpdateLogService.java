@@ -24,7 +24,7 @@ public interface SysUpdateLogService extends IService<SysUpdateLog> {
      * @param pageSize 每页条数
      * @return 分页结果
      */
-    PageResult<SysUpdateLogResp> getUpdateLogPage(
+    PageResult<SysUpdateLogResp> page(
             String version, String title, Integer status, Integer pageNum, Integer pageSize);
 
     /**
@@ -33,14 +33,14 @@ public interface SysUpdateLogService extends IService<SysUpdateLog> {
      * @param id 日志ID
      * @return 更新日志详情
      */
-    SysUpdateLogResp getUpdateLogDetail(Long id);
+    SysUpdateLogResp getById(Long id);
 
     /**
      * 新增更新日志
      *
      * @param req 请求参数
      */
-    void addUpdateLog(SysUpdateLogReq req);
+    void create(SysUpdateLogReq req);
 
     /**
      * 更新更新日志
@@ -48,14 +48,14 @@ public interface SysUpdateLogService extends IService<SysUpdateLog> {
      * @param id 日志ID
      * @param req 请求参数
      */
-    void updateUpdateLog(Long id, SysUpdateLogReq req);
+    void update(Long id, SysUpdateLogReq req);
 
     /**
      * 删除更新日志
      *
      * @param id 日志ID
      */
-    void deleteUpdateLog(Long id);
+    void deleteById(Long id);
 
     /**
      * 获取已发布的更新日志列表（供前端用户查看）
@@ -63,5 +63,5 @@ public interface SysUpdateLogService extends IService<SysUpdateLog> {
      * @param limit 返回条数
      * @return 更新日志列表
      */
-    List<SysUpdateLogResp> getPublishedLogs(Integer limit);
+    List<SysUpdateLogResp> listPublished(Integer limit);
 }

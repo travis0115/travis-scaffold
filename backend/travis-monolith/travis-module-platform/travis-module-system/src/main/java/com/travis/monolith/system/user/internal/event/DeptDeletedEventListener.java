@@ -7,10 +7,11 @@ import com.travis.monolith.system.dept.api.SysDeptApi;
 import com.travis.monolith.system.dept.api.event.DeptDeletedPayload;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.service.SysUserService;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.rocketmq.client.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 /**
  * 部门删除事件消费者，处理部门删除时清除关联用户的部门归属。 通过 RocketMQ 消费 {@code system-normal-event:dept-deleted}
@@ -20,8 +21,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RocketMQMessageListener(
-        topic = SystemEventConstant.NORMAL_TOPIC,
-        tag = SystemEventConstant.DEPT_DELETED_TAG,
+        topic = SystemEventConstant.NORMAL_EVENT,
+        tag = SystemEventConstant.DEPT_DELETED,
         consumerGroup = EventConsumerGroup.DEPT_DELETED_CONSUMER_GROUP)
 @RequiredArgsConstructor
 public class DeptDeletedEventListener extends AbstractEventListener<DeptDeletedPayload> {

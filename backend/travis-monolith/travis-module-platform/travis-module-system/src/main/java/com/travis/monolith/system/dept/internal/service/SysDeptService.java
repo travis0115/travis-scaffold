@@ -20,7 +20,7 @@ public interface SysDeptService extends IService<SysDept> {
      *
      * @return 部门树
      */
-    List<SysDeptResp> getDeptTree();
+    List<SysDeptResp> listTree();
 
     /**
      * 根据部门ID列表批量获取部门名称映射
@@ -36,14 +36,14 @@ public interface SysDeptService extends IService<SysDept> {
      * @param id 部门ID
      * @return 部门详情视图
      */
-    SysDeptResp getDeptDetail(Long id);
+    SysDeptResp getById(Long id);
 
     /**
      * 新增部门
      *
      * @param req 部门信息请求参数
      */
-    void addDept(SysDeptReq req);
+    void create(SysDeptReq req);
 
     /**
      * 更新部门信息
@@ -51,14 +51,14 @@ public interface SysDeptService extends IService<SysDept> {
      * @param id 部门ID
      * @param req 部门信息请求参数
      */
-    void updateDept(Long id, SysDeptReq req);
+    void update(Long id, SysDeptReq req);
 
     /**
      * 删除部门（存在子部门时禁止删除）
      *
      * @param id 部门ID
      */
-    void deleteDept(Long id);
+    void deleteById(Long id);
 
     /**
      * 根据部门ID查询部门名称

@@ -48,7 +48,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
 
     /** 分页查询角色列表，支持按角色名称、编码、状态筛选 */
     @Override
-    public PageResult<SysRoleResp> getRolePage(
+    public PageResult<SysRoleResp> page(
             String roleName, String roleCode, Integer status, Integer pageNum, Integer pageSize) {
         LambdaQueryWrapper<SysRole> wrapper =
                 new LambdaQueryWrapper<SysRole>()
@@ -68,8 +68,8 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
 
     /** 获取角色详情，同时查询角色关联的菜单ID列表 */
     @Override
-    public SysRoleResp getRoleDetail(Long id) {
-        SysRole role = getById(id);
+    public SysRoleResp getById(Long id) {
+        SysRole role = super.getById(id);
         if (role == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
@@ -89,7 +89,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     /** 新增角色 */
     @Override
     @Transactional
-    public void addRole(SysRoleReq req) {
+    public void create(SysRoleReq req) {
         // 检查角色编码唯一性
         long count =
                 count(
@@ -106,8 +106,8 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     @Override
     @Transactional
     @CacheEvict(value = "menus:vben", allEntries = true)
-    public void updateRole(Long id, SysRoleReq req) {
-        SysRole role = getById(id);
+    public void update(Long id, SysRoleReq req) {
+        SysRole role = super.getById(id);
         if (role == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
@@ -129,7 +129,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     /** 删除角色，同时清除角色-菜单和用户-角色关联 */
     @Override
     @Transactional
-    public void deleteRole(Long id) {
+    public void deleteById(Long id) {
         // 删除角色-菜单关联
         roleMenuMapper.delete(new LambdaQueryWrapper<SysRoleMenu>().eq(SysRoleMenu::getRoleId, id));
         // 删除用户-角色关联
@@ -244,7 +244,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
 
     /** 获取所有启用角色列表（不分页） */
     @Override
-    public List<SysRoleResp> getEnabledRoleList() {
+    public List<SysRoleResp> listEnabled() {
         return converter.toRespList(
                 list(
                         new LambdaQueryWrapper<SysRole>()

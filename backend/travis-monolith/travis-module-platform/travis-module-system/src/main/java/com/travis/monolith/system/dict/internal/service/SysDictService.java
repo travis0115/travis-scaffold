@@ -20,7 +20,7 @@ public interface SysDictService extends IService<SysDict> {
      *
      * @return 字典树形列表
      */
-    List<SysDict> getDictTree();
+    List<SysDict> listTree();
 
     /**
      * 分页查询字典类型列表
@@ -32,7 +32,7 @@ public interface SysDictService extends IService<SysDict> {
      * @param pageSize 每页条数
      * @return 分页结果
      */
-    PageResult<SysDict> getDictPage(
+    PageResult<SysDict> page(
             String dictName, String dictType, Integer status, Integer pageNum, Integer pageSize);
 
     /**
@@ -41,14 +41,14 @@ public interface SysDictService extends IService<SysDict> {
      * @param id 字典ID
      * @return 字典实体
      */
-    SysDict getDictDetail(Long id);
+    SysDict getById(Long id);
 
     /**
      * 新增字典类型
      *
      * @param req 字典信息请求参数
      */
-    void addDict(SysDictReq req);
+    void create(SysDictReq req);
 
     /**
      * 更新字典类型
@@ -56,14 +56,14 @@ public interface SysDictService extends IService<SysDict> {
      * @param id 字典ID
      * @param req 字典信息请求参数
      */
-    void updateDict(Long id, SysDictReq req);
+    void update(Long id, SysDictReq req);
 
     /**
      * 删除字典类型
      *
      * @param id 字典ID
      */
-    void deleteDict(Long id);
+    void deleteById(Long id);
 
     /**
      * 查询指定字典类型下的所有数据项
@@ -71,14 +71,14 @@ public interface SysDictService extends IService<SysDict> {
      * @param dictId 字典类型ID
      * @return 字典数据项视图列表
      */
-    List<SysDictItemResp> getDictItems(Long dictId);
+    List<SysDictItemResp> listItems(Long dictId);
 
     /**
      * 新增字典数据项
      *
      * @param req 字典数据项请求参数
      */
-    void addDictItem(SysDictItemReq req);
+    void createItem(SysDictItemReq req);
 
     /**
      * 更新字典数据项
@@ -86,12 +86,12 @@ public interface SysDictService extends IService<SysDict> {
      * @param id 数据项ID
      * @param req 字典数据项请求参数
      */
-    void updateDictItem(Long id, SysDictItemReq req);
+    void updateItem(Long id, SysDictItemReq req);
 
     /**
      * 删除字典数据项
      *
      * @param id 数据项ID
      */
-    void deleteDictItem(Long id);
+    void deleteItemById(Long id);
 }

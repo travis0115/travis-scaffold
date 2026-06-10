@@ -16,8 +16,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RocketMQMessageListener(
-        topic = SystemEventConstant.NORMAL_TOPIC,
-        tag = SystemEventConstant.USER_LOGIN_TAG,
+        topic = SystemEventConstant.NORMAL_EVENT,
+        tag = SystemEventConstant.USER_LOGIN,
         consumerGroup = EventConsumerGroup.USER_LOGIN_CONSUMER_GROUP)
 @RequiredArgsConstructor
 public class LoginLogEventListener extends AbstractEventListener<UserLoginPayload> {

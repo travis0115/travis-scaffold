@@ -22,8 +22,8 @@ public class SysDeptApiImpl implements SysDeptApi {
     private final SysDeptService deptService;
 
     @Override
-    public List<SysDeptResp> getDeptTree() {
-        return deptService.getDeptTree();
+    public List<SysDeptResp> listTree() {
+        return deptService.listTree();
     }
 
     @Override

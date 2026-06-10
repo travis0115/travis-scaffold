@@ -42,7 +42,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
 
     /** 获取字典树形数据（每个字典包含其下的数据项作为 children） */
     @Override
-    public List<SysDict> getDictTree() {
+    public List<SysDict> listTree() {
         // 查询所有字典类型
         List<SysDict> dictList = list();
         if (dictList.isEmpty()) {
@@ -71,7 +71,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
 
     /** 分页查询字典类型列表，支持按名称、类型编码、状态筛选 */
     @Override
-    public PageResult<SysDict> getDictPage(
+    public PageResult<SysDict> page(
             String dictName, String dictType, Integer status, Integer pageNum, Integer pageSize) {
         LambdaQueryWrapper<SysDict> wrapper =
                 new LambdaQueryWrapper<SysDict>()
@@ -85,8 +85,8 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
 
     /** 获取字典类型详情 */
     @Override
-    public SysDict getDictDetail(Long id) {
-        SysDict dict = getById(id);
+    public SysDict getById(Long id) {
+        SysDict dict = super.getById(id);
         if (dict == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
@@ -96,7 +96,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
     /** 新增字典类型 */
     @Override
     @Transactional
-    public void addDict(SysDictReq req) {
+    public void create(SysDictReq req) {
         // 检查字典类型编码唯一性
         long count =
                 count(
@@ -116,8 +116,8 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
     /** 更新字典类型 */
     @Override
     @Transactional
-    public void updateDict(Long id, SysDictReq req) {
-        SysDict dict = getById(id);
+    public void update(Long id, SysDictReq req) {
+        SysDict dict = super.getById(id);
         if (dict == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
@@ -141,7 +141,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
     @Override
     @Transactional
     @CacheEvict(value = "system:dict:items", key = "#id")
-    public void deleteDict(Long id) {
+    public void deleteById(Long id) {
         // 删除字典下的所有数据项
         dictItemService.remove(
                 new LambdaQueryWrapper<SysDictItem>().eq(SysDictItem::getDictId, id));
@@ -150,7 +150,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
 
     /** 查询指定字典类型下的所有数据项，按排序号升序 */
     @Override
-    public List<SysDictItemResp> getDictItems(Long dictId) {
+    public List<SysDictItemResp> listItems(Long dictId) {
         List<SysDictItem> items =
                 dictItemService.list(
                         new LambdaQueryWrapper<SysDictItem>()
@@ -162,22 +162,22 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
     /** 新增字典数据项（委托给 {@link SysDictItemService}） */
     @Override
     @CacheEvict(value = "system:dict:items", key = "#req.dictId")
-    public void addDictItem(SysDictItemReq req) {
-        dictItemService.addDictItem(req);
+    public void createItem(SysDictItemReq req) {
+        dictItemService.create(req);
     }
 
     /** 更新字典数据项（委托给 {@link SysDictItemService}） */
     @Override
     @CacheEvict(value = "system:dict:items", key = "#req.dictId")
-    public void updateDictItem(Long id, SysDictItemReq req) {
-        dictItemService.updateDictItem(id, req);
+    public void updateItem(Long id, SysDictItemReq req) {
+        dictItemService.update(id, req);
     }
 
     /** 删除字典数据项（委托给 {@link SysDictItemService}） */
     @Override
     @CacheEvict(value = "system:dict:items", allEntries = true)
-    public void deleteDictItem(Long id) {
-        dictItemService.deleteDictItem(id);
+    public void deleteItemById(Long id) {
+        dictItemService.deleteById(id);
     }
 
     /**

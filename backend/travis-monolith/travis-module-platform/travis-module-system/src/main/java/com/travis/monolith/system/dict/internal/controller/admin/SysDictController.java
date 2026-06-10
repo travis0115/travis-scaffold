@@ -30,7 +30,7 @@ public class SysDictController {
     /** 获取字典树形数据（每个字典包含其下的数据项作为 children） */
     @GetMapping("/tree")
     public ApiResponse<List<SysDict>> getTree() {
-        return ApiResponse.success(dictService.getDictTree());
+        return ApiResponse.success(dictService.listTree());
     }
 
     /** 分页查询字典类型列表 */
@@ -42,7 +42,7 @@ public class SysDictController {
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize) {
         return ApiResponse.success(
-                dictService.getDictPage(dictName, dictType, status, pageNum, pageSize));
+                dictService.page(dictName, dictType, status, pageNum, pageSize));
     }
 
     /**
@@ -53,7 +53,7 @@ public class SysDictController {
      */
     @GetMapping("/{id}")
     public ApiResponse<SysDict> getDetail(@PathVariable Long id) {
-        return ApiResponse.success(dictService.getDictDetail(id));
+        return ApiResponse.success(dictService.getById(id));
     }
 
     /**
@@ -64,7 +64,7 @@ public class SysDictController {
      */
     @PostMapping
     public ApiResponse<Void> add(@RequestBody @Valid SysDictReq req) {
-        dictService.addDict(req);
+        dictService.create(req);
         return ApiResponse.success();
     }
 
@@ -77,7 +77,7 @@ public class SysDictController {
      */
     @PutMapping("/{id}")
     public ApiResponse<Void> update(@PathVariable Long id, @RequestBody @Valid SysDictReq req) {
-        dictService.updateDict(id, req);
+        dictService.update(id, req);
         return ApiResponse.success();
     }
 
@@ -89,7 +89,7 @@ public class SysDictController {
      */
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
-        dictService.deleteDict(id);
+        dictService.deleteById(id);
         return ApiResponse.success();
     }
 
@@ -100,8 +100,8 @@ public class SysDictController {
      * @return 字典数据项列表
      */
     @GetMapping("/items/{dictId}")
-    public ApiResponse<List<SysDictItemResp>> getDictItems(@PathVariable Long dictId) {
-        return ApiResponse.success(dictService.getDictItems(dictId));
+    public ApiResponse<List<SysDictItemResp>> listItems(@PathVariable Long dictId) {
+        return ApiResponse.success(dictService.listItems(dictId));
     }
 
     /**
@@ -111,8 +111,8 @@ public class SysDictController {
      * @return 空响应
      */
     @PostMapping("/item")
-    public ApiResponse<Void> addDictItem(@RequestBody @Valid SysDictItemReq req) {
-        dictService.addDictItem(req);
+    public ApiResponse<Void> createItem(@RequestBody @Valid SysDictItemReq req) {
+        dictService.createItem(req);
         return ApiResponse.success();
     }
 
@@ -124,9 +124,9 @@ public class SysDictController {
      * @return 空响应
      */
     @PutMapping("/item/{id}")
-    public ApiResponse<Void> updateDictItem(
+    public ApiResponse<Void> updateItem(
             @PathVariable Long id, @RequestBody @Valid SysDictItemReq req) {
-        dictService.updateDictItem(id, req);
+        dictService.updateItem(id, req);
         return ApiResponse.success();
     }
 
@@ -137,8 +137,8 @@ public class SysDictController {
      * @return 空响应
      */
     @DeleteMapping("/item/{id}")
-    public ApiResponse<Void> deleteDictItem(@PathVariable Long id) {
-        dictService.deleteDictItem(id);
+    public ApiResponse<Void> deleteItemById(@PathVariable Long id) {
+        dictService.deleteItemById(id);
         return ApiResponse.success();
     }
 }

@@ -33,19 +33,19 @@ public class SysUpdateLogController {
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize) {
         return ApiResponse.success(
-                updateLogService.getUpdateLogPage(version, title, status, pageNum, pageSize));
+                updateLogService.page(version, title, status, pageNum, pageSize));
     }
 
     /** 获取更新日志详情 */
     @GetMapping("/{id}")
     public ApiResponse<SysUpdateLogResp> getDetail(@PathVariable Long id) {
-        return ApiResponse.success(updateLogService.getUpdateLogDetail(id));
+        return ApiResponse.success(updateLogService.getById(id));
     }
 
     /** 新增更新日志 */
     @PostMapping
     public ApiResponse<Void> add(@RequestBody @Valid SysUpdateLogReq req) {
-        updateLogService.addUpdateLog(req);
+        updateLogService.create(req);
         return ApiResponse.success();
     }
 
@@ -53,21 +53,21 @@ public class SysUpdateLogController {
     @PutMapping("/{id}")
     public ApiResponse<Void> update(
             @PathVariable Long id, @RequestBody @Valid SysUpdateLogReq req) {
-        updateLogService.updateUpdateLog(id, req);
+        updateLogService.update(id, req);
         return ApiResponse.success();
     }
 
     /** 删除更新日志 */
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
-        updateLogService.deleteUpdateLog(id);
+        updateLogService.deleteById(id);
         return ApiResponse.success();
     }
 
     /** 获取已发布的更新日志列表（供前端用户查看） */
     @GetMapping("/published")
-    public ApiResponse<List<SysUpdateLogResp>> getPublishedLogs(
+    public ApiResponse<List<SysUpdateLogResp>> listPublished(
             @RequestParam(defaultValue = "10") Integer limit) {
-        return ApiResponse.success(updateLogService.getPublishedLogs(limit));
+        return ApiResponse.success(updateLogService.listPublished(limit));
     }
 }

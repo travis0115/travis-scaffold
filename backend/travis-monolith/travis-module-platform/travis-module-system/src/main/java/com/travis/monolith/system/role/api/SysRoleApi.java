@@ -110,5 +110,5 @@ public interface SysRoleApi {
      *
      * @return 角色列表
      */
-    List<SysRoleResp> getEnabledRoleList();
+    List<SysRoleResp> listEnabled();
 }

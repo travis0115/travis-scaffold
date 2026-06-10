@@ -29,7 +29,7 @@ public class SysLoginLogServiceImpl extends ServiceImpl<SysLoginLogMapper, SysLo
 
     /** 分页查询登录日志，支持按用户名、状态筛选，按登录时间倒序排列 */
     @Override
-    public PageResult<SysLoginLog> getLoginLogPage(
+    public PageResult<SysLoginLog> page(
             String username, Integer status, Integer pageNum, Integer pageSize) {
         LambdaQueryWrapper<SysLoginLog> wrapper =
                 new LambdaQueryWrapper<SysLoginLog>()

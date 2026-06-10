@@ -7,11 +7,11 @@ package com.travis.monolith.system.common.api;
  */
 public class SystemEventConstant {
     /** 系统普通消息 Topic */
-    public static final String NORMAL_TOPIC = "system-normal-event";
+    public static final String NORMAL_EVENT = "system-normal-event";
 
     /** 用户登录事件 Tag */
-    public static final String USER_LOGIN_TAG = "user-login";
+    public static final String USER_LOGIN = "user-login";
 
     /** 部门删除事件 Tag */
-    public static final String DEPT_DELETED_TAG = "dept-deleted";
+    public static final String DEPT_DELETED = "dept-deleted";
 }

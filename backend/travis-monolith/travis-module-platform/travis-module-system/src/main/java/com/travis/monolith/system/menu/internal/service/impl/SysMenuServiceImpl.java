@@ -42,7 +42,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     /** 获取菜单树形列表（管理后台使用），按排序号升序排列 */
     @Override
     @Cacheable(value = "system:menu:tree", key = "'all'")
-    public List<SysMenuResp> getMenuTree() {
+    public List<SysMenuResp> listTree() {
         List<SysMenu> allMenus =
                 list(new LambdaQueryWrapper<SysMenu>().orderByAsc(SysMenu::getSort));
         List<SysMenuResp> voList = converter.toRespList(allMenus);
@@ -52,8 +52,8 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
 
     /** 获取菜单详情 */
     @Override
-    public SysMenuResp getMenuDetail(Long id) {
-        SysMenu menu = getById(id);
+    public SysMenuResp getById(Long id) {
+        SysMenu menu = super.getById(id);
         if (menu == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
@@ -69,7 +69,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
             value = {"system:menu:tree", "menus:vben"},
             key = "'all'",
             allEntries = true)
-    public void addMenu(SysMenuReq req) {
+    public void create(SysMenuReq req) {
         SysMenu menu = converter.toEntity(req);
         save(menu);
         // 通过角色服务自动分配给 admin 角色
@@ -82,8 +82,8 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
             value = {"system:menu:tree", "menus:vben"},
             key = "'all'",
             allEntries = true)
-    public void updateMenu(Long id, SysMenuReq req) {
-        SysMenu menu = getById(id);
+    public void update(Long id, SysMenuReq req) {
+        SysMenu menu = super.getById(id);
         if (menu == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
@@ -98,7 +98,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
             value = {"system:menu:tree", "menus:vben"},
             key = "'all'",
             allEntries = true)
-    public void deleteMenu(Long id) {
+    public void deleteById(Long id) {
         long childCount = count(new LambdaQueryWrapper<SysMenu>().eq(SysMenu::getParentId, id));
         if (childCount > 0) {
             throw new BizException(SystemErrorCode.SYSTEM_MENU_HAS_CHILDREN);
@@ -116,7 +116,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
             key = "'all'",
             allEntries = true)
     public void moveUp(Long id) {
-        SysMenu current = getById(id);
+        SysMenu current = super.getById(id);
         if (current == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
@@ -141,7 +141,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
             key = "'all'",
             allEntries = true)
     public void moveDown(Long id) {
-        SysMenu current = getById(id);
+        SysMenu current = super.getById(id);
         if (current == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }

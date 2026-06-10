@@ -68,8 +68,8 @@ public class SysAuthController {
      * @return Vben Admin 格式的菜单树
      */
     @GetMapping("/menus")
-    public ApiResponse<List<VbenMenuResp>> getMenuList() {
-        return ApiResponse.success(sysAuthService.getMenuList());
+    public ApiResponse<List<VbenMenuResp>> listMenus() {
+        return ApiResponse.success(sysAuthService.listMenus());
     }
 
     /**

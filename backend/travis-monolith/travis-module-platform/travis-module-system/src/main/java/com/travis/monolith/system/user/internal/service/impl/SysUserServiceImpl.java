@@ -54,7 +54,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
 
     /** 分页查询用户列表，支持按用户名、手机号、状态、部门筛选 */
     @Override
-    public PageResult<SysUserResp> getUserPage(
+    public PageResult<SysUserResp> page(
             String username,
             String mobile,
             Integer status,
@@ -80,8 +80,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
 
     /** 获取用户详情，同时关联查询角色ID和角色名称 */
     @Override
-    public SysUserResp getUserDetail(Long id) {
-        SysUser user = getById(id);
+    public SysUserResp getById(Long id) {
+        SysUser user = super.getById(id);
         if (user == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
@@ -96,7 +96,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
     /** 新增用户，密码使用 BCrypt 加密存储 */
     @Override
     @Transactional
-    public Long addUser(SysUserReq req) {
+    public Long create(SysUserReq req) {
         // 检查用户名唯一性
         long count =
                 count(
@@ -114,8 +114,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
     /** 更新用户信息，密码为空时保持原密码不变 */
     @Override
     @Transactional
-    public void updateUser(Long id, SysUserReq req) {
-        SysUser user = getById(id);
+    public void update(Long id, SysUserReq req) {
+        SysUser user = super.getById(id);
         if (user == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
@@ -138,7 +138,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
     /** 删除用户，同时清除用户-角色关联并使其会话失效 */
     @Override
     @Transactional
-    public void deleteUser(Long id) {
+    public void deleteById(Long id) {
         // 通过角色服务删除用户-角色关联
         roleApi.deleteUserRolesByUserId(id);
         removeById(id);
@@ -167,7 +167,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
     @Override
     public void updateProfile(UserProfileReq req) {
         long userId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
-        SysUser user = getById(userId);
+        SysUser user = super.getById(userId);
         if (user == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
@@ -181,7 +181,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
     @Override
     public void updateAvatar(UpdateAvatarReq req) {
         long userId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
-        SysUser user = getById(userId);
+        SysUser user = super.getById(userId);
         if (user == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
@@ -223,7 +223,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
     @Override
     @Transactional
     public String resetPassword(Long id, String newPassword) {
-        SysUser user = getById(id);
+        SysUser user = super.getById(id);
         if (user == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }

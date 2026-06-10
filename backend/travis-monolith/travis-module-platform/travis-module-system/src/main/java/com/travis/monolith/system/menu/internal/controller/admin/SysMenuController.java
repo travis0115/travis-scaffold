@@ -31,7 +31,7 @@ public class SysMenuController {
      */
     @GetMapping("/list")
     public ApiResponse<List<SysMenuResp>> list() {
-        return ApiResponse.success(menuService.getMenuTree());
+        return ApiResponse.success(menuService.listTree());
     }
 
     /**
@@ -42,7 +42,7 @@ public class SysMenuController {
      */
     @GetMapping("/{id}")
     public ApiResponse<SysMenuResp> getDetail(@PathVariable Long id) {
-        return ApiResponse.success(menuService.getMenuDetail(id));
+        return ApiResponse.success(menuService.getById(id));
     }
 
     /**
@@ -53,7 +53,7 @@ public class SysMenuController {
      */
     @PostMapping
     public ApiResponse<Void> add(@RequestBody @Valid SysMenuReq req) {
-        menuService.addMenu(req);
+        menuService.create(req);
         return ApiResponse.success();
     }
 
@@ -66,7 +66,7 @@ public class SysMenuController {
      */
     @PutMapping("/{id}")
     public ApiResponse<Void> update(@PathVariable Long id, @RequestBody @Valid SysMenuReq req) {
-        menuService.updateMenu(id, req);
+        menuService.update(id, req);
         return ApiResponse.success();
     }
 
@@ -78,7 +78,7 @@ public class SysMenuController {
      */
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
-        menuService.deleteMenu(id);
+        menuService.deleteById(id);
         return ApiResponse.success();
     }
 

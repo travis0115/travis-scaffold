@@ -1,2 +1,2 @@
-@org.springframework.modulith.NamedInterface("api")
+@org.springframework.modulith.NamedInterface("response")
 package com.travis.monolith.system.menu.api.response;

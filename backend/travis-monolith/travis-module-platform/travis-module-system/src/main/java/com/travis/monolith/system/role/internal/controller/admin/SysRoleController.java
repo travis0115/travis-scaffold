@@ -34,7 +34,7 @@ public class SysRoleController {
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize) {
         return ApiResponse.success(
-                roleService.getRolePage(roleName, roleCode, status, pageNum, pageSize));
+                roleService.page(roleName, roleCode, status, pageNum, pageSize));
     }
 
     /**
@@ -45,7 +45,7 @@ public class SysRoleController {
      */
     @GetMapping("/{id}")
     public ApiResponse<SysRoleResp> getDetail(@PathVariable Long id) {
-        return ApiResponse.success(roleService.getRoleDetail(id));
+        return ApiResponse.success(roleService.getById(id));
     }
 
     /**
@@ -56,7 +56,7 @@ public class SysRoleController {
      */
     @PostMapping
     public ApiResponse<Void> add(@RequestBody @Valid SysRoleReq req) {
-        roleService.addRole(req);
+        roleService.create(req);
         return ApiResponse.success();
     }
 
@@ -69,7 +69,7 @@ public class SysRoleController {
      */
     @PutMapping("/{id}")
     public ApiResponse<Void> update(@PathVariable Long id, @RequestBody @Valid SysRoleReq req) {
-        roleService.updateRole(id, req);
+        roleService.update(id, req);
         return ApiResponse.success();
     }
 
@@ -81,7 +81,7 @@ public class SysRoleController {
      */
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
-        roleService.deleteRole(id);
+        roleService.deleteById(id);
         return ApiResponse.success();
     }
 
@@ -100,6 +100,6 @@ public class SysRoleController {
     /** 获取所有启用角色列表（不分页） */
     @GetMapping("/list")
     public ApiResponse<java.util.List<SysRoleResp>> list() {
-        return ApiResponse.success(roleService.getEnabledRoleList());
+        return ApiResponse.success(roleService.listEnabled());
     }
 }

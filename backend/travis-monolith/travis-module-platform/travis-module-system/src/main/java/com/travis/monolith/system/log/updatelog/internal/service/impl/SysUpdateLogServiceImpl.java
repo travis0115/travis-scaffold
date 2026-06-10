@@ -30,7 +30,7 @@ public class SysUpdateLogServiceImpl extends ServiceImpl<SysUpdateLogMapper, Sys
     private final SysUpdateLogConverter converter;
 
     @Override
-    public PageResult<SysUpdateLogResp> getUpdateLogPage(
+    public PageResult<SysUpdateLogResp> page(
             String version, String title, Integer status, Integer pageNum, Integer pageSize) {
         LambdaQueryWrapper<SysUpdateLog> wrapper =
                 new LambdaQueryWrapper<SysUpdateLog>()
@@ -49,8 +49,8 @@ public class SysUpdateLogServiceImpl extends ServiceImpl<SysUpdateLogMapper, Sys
     }
 
     @Override
-    public SysUpdateLogResp getUpdateLogDetail(Long id) {
-        SysUpdateLog updateLog = getById(id);
+    public SysUpdateLogResp getById(Long id) {
+        SysUpdateLog updateLog = super.getById(id);
         if (updateLog == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
@@ -59,15 +59,15 @@ public class SysUpdateLogServiceImpl extends ServiceImpl<SysUpdateLogMapper, Sys
 
     @Override
     @Transactional
-    public void addUpdateLog(SysUpdateLogReq req) {
+    public void create(SysUpdateLogReq req) {
         SysUpdateLog entity = converter.toEntity(req);
         save(entity);
     }
 
     @Override
     @Transactional
-    public void updateUpdateLog(Long id, SysUpdateLogReq req) {
-        SysUpdateLog entity = getById(id);
+    public void update(Long id, SysUpdateLogReq req) {
+        SysUpdateLog entity = super.getById(id);
         if (entity == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
@@ -77,12 +77,12 @@ public class SysUpdateLogServiceImpl extends ServiceImpl<SysUpdateLogMapper, Sys
 
     @Override
     @Transactional
-    public void deleteUpdateLog(Long id) {
+    public void deleteById(Long id) {
         removeById(id);
     }
 
     @Override
-    public List<SysUpdateLogResp> getPublishedLogs(Integer limit) {
+    public List<SysUpdateLogResp> listPublished(Integer limit) {
         if (limit == null || limit <= 0) {
             limit = 10;
         }

@@ -1,11 +1,12 @@
 package com.travis.infrastructure.framework.rocketmq.core;
 
 import com.travis.infrastructure.common.event.*;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.client.apis.producer.SendReceipt;
+
 import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.client.apis.producer.SendReceipt;
 
 /**
  * 基于 RocketMQ 的 {@link MessagePublisher} 实现。
@@ -36,16 +37,8 @@ public class RocketMQMessagePublisher implements MessagePublisher {
 
     @Override
     public void publish(Event event, Object payload) {
-        var destination = toDestination(event);
-        switch (event.getTopicType()) {
-            case FIFO ->
-                    throw new IllegalArgumentException(
-                            "FIFO event requires messageGroup, use publish(event, payload, PublishOptions.fifo(group))");
-            case DELAY ->
-                    throw new IllegalArgumentException(
-                            "DELAY event requires delayTime, use publish(event, payload, PublishOptions.delay(duration))");
-            default -> RocketMQProducerUtil.syncSendNormalMessage(destination, payload);
-        }
+        requireNormalEvent(event);
+        RocketMQProducerUtil.syncSendNormalMessage(toDestination(event), payload);
     }
 
     @Override
@@ -68,7 +61,7 @@ public class RocketMQMessagePublisher implements MessagePublisher {
     public CompletableFuture<Void> asyncPublish(Event event, Object payload) {
         requireNormalEvent(event);
         return RocketMQProducerUtil.asyncSendNormalMessage(toDestination(event), payload)
-                .thenAccept(receipt -> {});
+                .thenAccept(_ -> {});
     }
 
     @Override

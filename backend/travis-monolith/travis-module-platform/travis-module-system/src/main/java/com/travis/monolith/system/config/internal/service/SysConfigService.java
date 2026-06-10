@@ -4,8 +4,8 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.infrastructure.common.web.model.PageResult;
 import com.travis.monolith.system.config.api.response.SysConfigResp;
 import com.travis.monolith.system.config.internal.entity.SysConfig;
-import com.travis.monolith.system.config.internal.request.SysConfigPageReq;
-import com.travis.monolith.system.config.internal.request.SysConfigReq;
+import com.travis.monolith.system.config.api.request.SysConfigPageReq;
+import com.travis.monolith.system.config.api.request.SysConfigReq;
 
 /**
  * 系统配置服务接口
@@ -15,20 +15,20 @@ import com.travis.monolith.system.config.internal.request.SysConfigReq;
 public interface SysConfigService extends IService<SysConfig> {
 
     /** 分页查询系统配置 */
-    PageResult<SysConfigResp> getConfigPage(SysConfigPageReq req);
+    PageResult<SysConfigResp> page(SysConfigPageReq req);
 
     /** 获取配置详情 */
-    SysConfigResp getConfigDetail(Long id);
+    SysConfigResp getById(Long id);
 
     /** 根据配置键获取配置值 */
-    String getConfigValue(String configKey);
+    String getValue(String configKey);
 
     /** 新增配置 */
-    void addConfig(SysConfigReq req);
+    void create(SysConfigReq req);
 
     /** 更新配置 */
-    void updateConfig(Long id, SysConfigReq req);
+    void update(Long id, SysConfigReq req);
 
     /** 删除配置 */
-    void deleteConfig(Long id);
+    void deleteById(Long id);
 }

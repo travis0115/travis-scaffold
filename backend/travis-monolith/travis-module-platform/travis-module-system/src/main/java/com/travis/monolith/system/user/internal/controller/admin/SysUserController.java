@@ -49,7 +49,7 @@ public class SysUserController {
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize) {
         return ApiResponse.success(
-                userService.getUserPage(username, mobile, status, deptId, pageNum, pageSize));
+                userService.page(username, mobile, status, deptId, pageNum, pageSize));
     }
 
     /**
@@ -60,7 +60,7 @@ public class SysUserController {
      */
     @GetMapping("/{id}")
     public ApiResponse<SysUserResp> getDetail(@PathVariable Long id) {
-        return ApiResponse.success(userService.getUserDetail(id));
+        return ApiResponse.success(userService.getById(id));
     }
 
     /**
@@ -71,7 +71,7 @@ public class SysUserController {
      */
     @PostMapping
     public ApiResponse<Long> add(@RequestBody @Valid SysUserReq req) {
-        return ApiResponse.success(userService.addUser(req));
+        return ApiResponse.success(userService.create(req));
     }
 
     /**
@@ -83,7 +83,7 @@ public class SysUserController {
      */
     @PutMapping("/{id}")
     public ApiResponse<Void> update(@PathVariable Long id, @RequestBody @Valid SysUserReq req) {
-        userService.updateUser(id, req);
+        userService.update(id, req);
         return ApiResponse.success();
     }
 
@@ -95,7 +95,7 @@ public class SysUserController {
      */
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
-        userService.deleteUser(id);
+        userService.deleteById(id);
         return ApiResponse.success();
     }
 

@@ -10,8 +10,8 @@ import com.travis.monolith.system.config.api.response.SysConfigResp;
 import com.travis.monolith.system.config.internal.converter.SysConfigConverter;
 import com.travis.monolith.system.config.internal.entity.SysConfig;
 import com.travis.monolith.system.config.internal.mapper.SysConfigMapper;
-import com.travis.monolith.system.config.internal.request.SysConfigPageReq;
-import com.travis.monolith.system.config.internal.request.SysConfigReq;
+import com.travis.monolith.system.config.api.request.SysConfigPageReq;
+import com.travis.monolith.system.config.api.request.SysConfigReq;
 import com.travis.monolith.system.config.internal.service.SysConfigService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,7 +30,7 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
     private final SysConfigConverter converter;
 
     @Override
-    public PageResult<SysConfigResp> getConfigPage(SysConfigPageReq req) {
+    public PageResult<SysConfigResp> page(SysConfigPageReq req) {
         LambdaQueryWrapper<SysConfig> wrapper =
                 new LambdaQueryWrapper<SysConfig>()
                         .like(
@@ -52,8 +52,8 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
     }
 
     @Override
-    public SysConfigResp getConfigDetail(Long id) {
-        SysConfig config = getById(id);
+    public SysConfigResp getById(Long id) {
+        SysConfig config = super.getById(id);
         if (config == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
@@ -61,7 +61,7 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
     }
 
     @Override
-    public String getConfigValue(String configKey) {
+    public String getValue(String configKey) {
         SysConfig config =
                 getOne(new LambdaQueryWrapper<SysConfig>().eq(SysConfig::getConfigKey, configKey));
         return config != null ? config.getConfigValue() : null;
@@ -69,15 +69,15 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
 
     @Override
     @Transactional
-    public void addConfig(SysConfigReq req) {
+    public void create(SysConfigReq req) {
         SysConfig entity = converter.toEntity(req);
         save(entity);
     }
 
     @Override
     @Transactional
-    public void updateConfig(Long id, SysConfigReq req) {
-        SysConfig entity = getById(id);
+    public void update(Long id, SysConfigReq req) {
+        SysConfig entity = super.getById(id);
         if (entity == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
@@ -87,7 +87,7 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
 
     @Override
     @Transactional
-    public void deleteConfig(Long id) {
+    public void deleteById(Long id) {
         removeById(id);
     }
 }

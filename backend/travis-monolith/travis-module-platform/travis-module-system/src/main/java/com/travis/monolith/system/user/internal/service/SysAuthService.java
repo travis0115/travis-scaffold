@@ -33,7 +33,7 @@ public interface SysAuthService {
      *
      * @return Vben Admin 格式的菜单树
      */
-    List<VbenMenuResp> getMenuList();
+    List<VbenMenuResp> listMenus();
 
     /**
      * 获取当前用户的权限标识列表（用于前端按钮级权限控制）

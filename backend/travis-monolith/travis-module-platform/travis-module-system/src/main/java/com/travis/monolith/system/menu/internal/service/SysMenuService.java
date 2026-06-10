@@ -19,7 +19,7 @@ public interface SysMenuService extends IService<SysMenu> {
      *
      * @return 菜单树
      */
-    List<SysMenuResp> getMenuTree();
+    List<SysMenuResp> listTree();
 
     /**
      * 获取菜单详情
@@ -27,14 +27,14 @@ public interface SysMenuService extends IService<SysMenu> {
      * @param id 菜单ID
      * @return 菜单详情视图
      */
-    SysMenuResp getMenuDetail(Long id);
+    SysMenuResp getById(Long id);
 
     /**
      * 新增菜单
      *
      * @param req 菜单信息请求参数
      */
-    void addMenu(SysMenuReq req);
+    void create(SysMenuReq req);
 
     /**
      * 更新菜单信息
@@ -42,14 +42,14 @@ public interface SysMenuService extends IService<SysMenu> {
      * @param id 菜单ID
      * @param req 菜单信息请求参数
      */
-    void updateMenu(Long id, SysMenuReq req);
+    void update(Long id, SysMenuReq req);
 
     /**
      * 删除菜单（存在子菜单时禁止删除）
      *
      * @param id 菜单ID
      */
-    void deleteMenu(Long id);
+    void deleteById(Long id);
 
     /**
      * 上移菜单（与同级上一个菜单交换排序号）

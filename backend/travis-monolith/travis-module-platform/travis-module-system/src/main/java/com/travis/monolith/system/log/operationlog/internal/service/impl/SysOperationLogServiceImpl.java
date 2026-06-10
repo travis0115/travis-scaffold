@@ -21,7 +21,7 @@ public class SysOperationLogServiceImpl extends ServiceImpl<SysOperationLogMappe
 
     /** 分页查询操作日志，支持多条件筛选，按创建时间倒序排列 */
     @Override
-    public PageResult<SysOperationLog> getOperationLogPage(
+    public PageResult<SysOperationLog> page(
             String username,
             String module,
             Integer status,

@@ -20,14 +20,14 @@ public interface SysDictItemService extends IService<SysDictItem> {
      * @param pageSize 每页条数
      * @return 分页结果
      */
-    PageResult<SysDictItem> getDictItemPage(Long dictId, Integer pageNum, Integer pageSize);
+    PageResult<SysDictItem> page(Long dictId, Integer pageNum, Integer pageSize);
 
     /**
      * 新增字典数据项
      *
      * @param req 字典数据项请求参数
      */
-    void addDictItem(SysDictItemReq req);
+    void create(SysDictItemReq req);
 
     /**
      * 更新字典数据项
@@ -35,12 +35,12 @@ public interface SysDictItemService extends IService<SysDictItem> {
      * @param id 数据项ID
      * @param req 字典数据项请求参数
      */
-    void updateDictItem(Long id, SysDictItemReq req);
+    void update(Long id, SysDictItemReq req);
 
     /**
      * 删除字典数据项
      *
      * @param id 数据项ID
      */
-    void deleteDictItem(Long id);
+    void deleteById(Long id);
 }

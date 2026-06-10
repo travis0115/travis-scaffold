@@ -81,7 +81,7 @@ public class SysRoleApiImpl implements SysRoleApi {
     }
 
     @Override
-    public List<SysRoleResp> getEnabledRoleList() {
-        return roleService.getEnabledRoleList();
+    public List<SysRoleResp> listEnabled() {
+        return roleService.listEnabled();
     }
 }

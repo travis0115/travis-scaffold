@@ -43,7 +43,7 @@ public class SysOperationLogController {
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize) {
         return ApiResponse.success(
-                operationLogService.getOperationLogPage(
+                operationLogService.page(
                         username, module, status, startTime, endTime, pageNum, pageSize));
     }
 }

@@ -28,7 +28,7 @@ public interface SysUserService extends IService<SysUser> {
      * @param pageSize 每页条数
      * @return 分页结果
      */
-    PageResult<SysUserResp> getUserPage(
+    PageResult<SysUserResp> page(
             String username,
             String phone,
             Integer status,
@@ -42,7 +42,7 @@ public interface SysUserService extends IService<SysUser> {
      * @param id 用户ID
      * @return 用户详情视图
      */
-    SysUserResp getUserDetail(Long id);
+    SysUserResp getById(Long id);
 
     /**
      * 新增用户
@@ -50,7 +50,7 @@ public interface SysUserService extends IService<SysUser> {
      * @param req 用户信息请求参数
      * @return 新建用户ID
      */
-    Long addUser(SysUserReq req);
+    Long create(SysUserReq req);
 
     /**
      * 更新用户信息
@@ -58,14 +58,14 @@ public interface SysUserService extends IService<SysUser> {
      * @param id 用户ID
      * @param req 用户信息请求参数
      */
-    void updateUser(Long id, SysUserReq req);
+    void update(Long id, SysUserReq req);
 
     /**
      * 删除用户
      *
      * @param id 用户ID
      */
-    void deleteUser(Long id);
+    void deleteById(Long id);
 
     /**
      * 为用户分配角色（先清除原有关联再批量插入）

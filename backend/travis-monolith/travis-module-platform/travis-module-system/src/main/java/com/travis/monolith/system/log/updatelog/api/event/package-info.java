@@ -1,2 +1,2 @@
-@org.springframework.modulith.NamedInterface("api")
+@org.springframework.modulith.NamedInterface("event")
 package com.travis.monolith.system.log.updatelog.api.event;

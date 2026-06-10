@@ -47,7 +47,7 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
     /** 获取部门树形列表 */
     @Override
     @Cacheable(value = "system:dept:tree", key = "'all'")
-    public List<SysDeptResp> getDeptTree() {
+    public List<SysDeptResp> listTree() {
         // 查询全部部门，转为 VO 后构建树形结构
         List<SysDept> allDepts = list();
         List<SysDeptResp> voList = converter.toRespList(allDepts);
@@ -67,8 +67,8 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
 
     /** 获取部门详情 */
     @Override
-    public SysDeptResp getDeptDetail(Long id) {
-        SysDept dept = getById(id);
+    public SysDeptResp getById(Long id) {
+        SysDept dept = super.getById(id);
         if (dept == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
@@ -83,7 +83,7 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
         if (deptId == null) {
             return null;
         }
-        SysDept dept = getById(deptId);
+        SysDept dept = super.getById(deptId);
         return dept != null ? dept.getDeptName() : null;
     }
 
@@ -91,7 +91,7 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
     @Override
     @Transactional
     @CacheEvict(value = "system:dept:tree", key = "'all'")
-    public void addDept(SysDeptReq req) {
+    public void create(SysDeptReq req) {
         SysDept dept = new SysDept();
         dept.setParentId(req.getParentId() == null ? 0L : req.getParentId());
         dept.setDeptName(req.getDeptName());
@@ -105,8 +105,8 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
     /** 更新部门信息 */
     @Override
     @CacheEvict(value = "system:dept:tree", key = "'all'")
-    public void updateDept(Long id, SysDeptReq req) {
-        SysDept dept = getById(id);
+    public void update(Long id, SysDeptReq req) {
+        SysDept dept = super.getById(id);
         if (dept == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
@@ -123,7 +123,7 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
     @Override
     @Transactional
     @CacheEvict(value = "system:dept:tree", key = "'all'")
-    public void deleteDept(Long id) {
+    public void deleteById(Long id) {
         List<Long> ids = new ArrayList<>();
         collectAllDescendantIds(id, ids);
         ids.add(id);

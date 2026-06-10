@@ -23,7 +23,7 @@ public class SysDictItemServiceImpl extends ServiceImpl<SysDictItemMapper, SysDi
 
     /** 分页查询字典数据项，按排序号升序 */
     @Override
-    public PageResult<SysDictItem> getDictItemPage(Long dictId, Integer pageNum, Integer pageSize) {
+    public PageResult<SysDictItem> page(Long dictId, Integer pageNum, Integer pageSize) {
         LambdaQueryWrapper<SysDictItem> wrapper =
                 new LambdaQueryWrapper<SysDictItem>()
                         .eq(dictId != null, SysDictItem::getDictId, dictId)
@@ -39,7 +39,7 @@ public class SysDictItemServiceImpl extends ServiceImpl<SysDictItemMapper, SysDi
 
     /** 新增字典数据项 */
     @Override
-    public void addDictItem(SysDictItemReq req) {
+    public void create(SysDictItemReq req) {
         SysDictItem item = new SysDictItem();
         item.setDictId(req.getDictId());
         item.setLabel(req.getLabel());
@@ -52,8 +52,8 @@ public class SysDictItemServiceImpl extends ServiceImpl<SysDictItemMapper, SysDi
 
     /** 更新字典数据项 */
     @Override
-    public void updateDictItem(Long id, SysDictItemReq req) {
-        SysDictItem item = getById(id);
+    public void update(Long id, SysDictItemReq req) {
+        SysDictItem item = super.getById(id);
         if (item == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
@@ -68,7 +68,7 @@ public class SysDictItemServiceImpl extends ServiceImpl<SysDictItemMapper, SysDi
 
     /** 删除字典数据项 */
     @Override
-    public void deleteDictItem(Long id) {
+    public void deleteById(Long id) {
         removeById(id);
     }
 }
