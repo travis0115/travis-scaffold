@@ -42,7 +42,7 @@ import java.nio.ByteBuffer;
  * @see RocketMQListener
  */
 @Slf4j
-public abstract class AbstractEventConsumer<T> implements RocketMQListener {
+public abstract class AbstractEventListener<T> implements RocketMQListener {
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -52,7 +52,7 @@ public abstract class AbstractEventConsumer<T> implements RocketMQListener {
 
     /** 自动解析泛型参数，子类直接继承即可，无需手动指定消息体类型 */
     @SuppressWarnings("unchecked")
-    protected AbstractEventConsumer() {
+    protected AbstractEventListener() {
         Type superclass = getClass().getGenericSuperclass();
         if (superclass instanceof ParameterizedType pt) {
             this.payloadType = (Class<T>) pt.getActualTypeArguments()[0];
@@ -73,15 +73,20 @@ public abstract class AbstractEventConsumer<T> implements RocketMQListener {
     @Override
     @Transactional
     public ConsumeResult consume(MessageView messageView) {
+        String messageId = String.valueOf(messageView.getMessageId());
+        long start = System.currentTimeMillis();
         try {
             ByteBuffer buf = messageView.getBody();
             byte[] body = new byte[buf.remaining()];
             buf.get(body);
             T payload = objectMapper.readValue(body, payloadType);
             onEvent(payload);
+            log.info("消费成功 | messageId={} | type={} | cost={}ms",
+                    messageId, payloadType.getSimpleName(), System.currentTimeMillis() - start);
             return ConsumeResult.SUCCESS;
         } catch (Exception e) {
-            log.error("消费事件失败", e);
+            log.error("消费失败 | messageId={} | type={} | cost={}ms",
+                    messageId, payloadType.getSimpleName(), System.currentTimeMillis() - start, e);
             return ConsumeResult.FAILURE;
         }
     }

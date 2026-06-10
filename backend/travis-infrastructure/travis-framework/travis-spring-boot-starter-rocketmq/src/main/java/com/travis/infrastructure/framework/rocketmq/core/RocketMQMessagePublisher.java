@@ -1,9 +1,6 @@
 package com.travis.infrastructure.framework.rocketmq.core;
 
-import com.travis.infrastructure.common.event.AsyncPublishCallback;
-import com.travis.infrastructure.common.event.Event;
-import com.travis.infrastructure.common.event.MessagePublisher;
-import com.travis.infrastructure.common.event.PublishOptions;
+import com.travis.infrastructure.common.event.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.apis.producer.SendReceipt;
 
@@ -13,12 +10,12 @@ import java.util.concurrent.CompletableFuture;
  * 基于 RocketMQ 的 {@link MessagePublisher} 实现。
  *
  * <p>将 {@link Event} 的 {@code topic} 映射为 Topic，{@code type} 映射为 Tag，
- * 并根据 {@link PublishOptions} 自动选择投递方式：
+ * 并根据 {@link Event#getTopicType()} 自动选择投递方式：
  *
  * <ul>
- *   <li>{@link PublishOptions.Mode#FIFO} — 顺序消息
- *   <li>{@link PublishOptions.Mode#DELAY} — 延迟消息
- *   <li>其他 — 普通消息
+ *   <li>{@link TopicType#NORMAL} — 普通消息
+ *   <li>{@link TopicType#FIFO} — 顺序消息，需通过 {@link PublishOptions#fifo(String)} 提供 messageGroup
+ *   <li>{@link TopicType#DELAY} — 延迟消息，需通过 {@link PublishOptions#delay(java.time.Duration)} 提供 delayTime
  * </ul>
  *
  * @author travis
@@ -37,19 +34,24 @@ public class RocketMQMessagePublisher implements MessagePublisher {
 
     @Override
     public void publish(Event event, Object payload) {
-        RocketMQProducerUtil.syncSendNormalMessage(toDestination(event), payload);
+        var destination = toDestination(event);
+        switch (event.getTopicType()) {
+            case FIFO -> throw new IllegalArgumentException(
+                    "FIFO event requires messageGroup, use publish(event, payload, PublishOptions.fifo(group))");
+            case DELAY -> throw new IllegalArgumentException(
+                    "DELAY event requires delayTime, use publish(event, payload, PublishOptions.delay(duration))");
+            default -> RocketMQProducerUtil.syncSendNormalMessage(destination, payload);
+        }
     }
 
     @Override
     public void publish(Event event, Object payload, PublishOptions options) {
         var destination = toDestination(event);
-        switch (options.getMode()) {
-            case FIFO ->
-                    RocketMQProducerUtil.syncSendFifoMessage(
-                            destination, payload, options.getMessageGroup());
-            case DELAY ->
-                    RocketMQProducerUtil.syncSendDelayMessage(
-                            destination, payload, options.getDelayTime());
+        switch (event.getTopicType()) {
+            case FIFO -> RocketMQProducerUtil.syncSendFifoMessage(
+                    destination, payload, options.getMessageGroup());
+            case DELAY -> RocketMQProducerUtil.syncSendDelayMessage(
+                    destination, payload, options.getDelayTime());
             default -> RocketMQProducerUtil.syncSendNormalMessage(destination, payload);
         }
     }
@@ -78,13 +80,11 @@ public class RocketMQMessagePublisher implements MessagePublisher {
     public CompletableFuture<Void> asyncPublish(
             Event event, Object payload, PublishOptions options) {
         var destination = toDestination(event);
-        CompletableFuture<SendReceipt> future = switch (options.getMode()) {
-            case FIFO ->
-                    RocketMQProducerUtil.asyncSendFifoMessage(
-                            destination, payload, options.getMessageGroup());
-            case DELAY ->
-                    RocketMQProducerUtil.asyncSendDelayMessage(
-                            destination, payload, options.getDelayTime());
+        CompletableFuture<SendReceipt> future = switch (event.getTopicType()) {
+            case FIFO -> RocketMQProducerUtil.asyncSendFifoMessage(
+                    destination, payload, options.getMessageGroup());
+            case DELAY -> RocketMQProducerUtil.asyncSendDelayMessage(
+                    destination, payload, options.getDelayTime());
             default -> RocketMQProducerUtil.asyncSendNormalMessage(destination, payload);
         };
         return future.thenAccept(receipt -> {});
@@ -97,13 +97,11 @@ public class RocketMQMessagePublisher implements MessagePublisher {
             PublishOptions options,
             AsyncPublishCallback callback) {
         var destination = toDestination(event);
-        CompletableFuture<SendReceipt> future = switch (options.getMode()) {
-            case FIFO ->
-                    RocketMQProducerUtil.asyncSendFifoMessage(
-                            destination, payload, options.getMessageGroup());
-            case DELAY ->
-                    RocketMQProducerUtil.asyncSendDelayMessage(
-                            destination, payload, options.getDelayTime());
+        CompletableFuture<SendReceipt> future = switch (event.getTopicType()) {
+            case FIFO -> RocketMQProducerUtil.asyncSendFifoMessage(
+                    destination, payload, options.getMessageGroup());
+            case DELAY -> RocketMQProducerUtil.asyncSendDelayMessage(
+                    destination, payload, options.getDelayTime());
             default -> RocketMQProducerUtil.asyncSendNormalMessage(destination, payload);
         };
         return future.handle((receipt, ex) -> {

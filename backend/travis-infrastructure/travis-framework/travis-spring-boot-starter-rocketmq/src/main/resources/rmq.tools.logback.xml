@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  覆盖 rocketmq-tools 内置的 rmq.tools.logback.xml，
+  将日志路径统一到 rocketmq.log.root 系统属性指定的目录下。
+  默认值为 ${user.home}/data/logs/rocketmq（由 MonolithServerApplication.main 设置）。
+-->
+<configuration>
+    <appender name="DefaultAppender"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${rocketmq.log.root:-${user.home}/data/logs/rocketmq}/tools_default.log</file>
+        <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <fileNamePattern>${rocketmq.log.root:-${user.home}/data/logs/rocketmq}/otherdays/tools_default.%i.log.gz</fileNamePattern>
+            <minIndex>1</minIndex>
+            <maxIndex>5</maxIndex>
+        </rollingPolicy>
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <maxFileSize>100MB</maxFileSize>
+        </triggeringPolicy>
+        <encoder>
+            <pattern>%d{yyy-MM-dd HH:mm:ss,GMT+8} %p %t - %m%n</pattern>
+            <charset class="java.nio.charset.Charset">UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="RocketmqToolsAppender_inner"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${rocketmq.log.root:-${user.home}/data/logs/rocketmq}/tools.log</file>
+        <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <fileNamePattern>${rocketmq.log.root:-${user.home}/data/logs/rocketmq}/otherdays/tools.%i.log.gz</fileNamePattern>
+            <minIndex>1</minIndex>
+            <maxIndex>5</maxIndex>
+        </rollingPolicy>
+        <triggeringPolicy
+            class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <maxFileSize>100MB</maxFileSize>
+        </triggeringPolicy>
+        <encoder>
+            <pattern>%d{yyy-MM-dd HH:mm:ss,GMT+8} %p %t - %m%n</pattern>
+            <charset class="java.nio.charset.Charset">UTF-8</charset>
+        </encoder>
+    </appender>
+    <appender name="RocketmqToolsAppender" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="RocketmqToolsAppender_inner"/>
+    </appender>
+
+    <logger name="RocketmqTools" additivity="false" level="INFO">
+        <appender-ref ref="RocketmqToolsAppender"/>
+    </logger>
+
+    <root level="INFO">
+        <appender-ref ref="DefaultAppender"/>
+    </root>
+</configuration>

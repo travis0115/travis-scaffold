@@ -28,29 +28,29 @@ management:
 # RocketMQ配置
 rocketmq:
   # 消费者配置(全局默认配置)
-  consumer:
+  push-consumer:
     # 访问密钥(如果启用ACL)
-    access-key: ${ROCKETMQ_CONSUMER_ACCESS_KEY}
+    access-key: ${ROCKETMQ_CONSUMER_ACCESS_KEY:}
     # 密钥(如果启用ACL)
-    secret-key: ${ROCKETMQ_CONSUMER_SECRET_KEY}
+    secret-key: ${ROCKETMQ_CONSUMER_SECRET_KEY:}
     # 是否启用消息轨迹，本地开发可以关闭消息轨迹
     enable-msg-trace: false
     # Proxy 模式访问，端口为 Docker 映射的 8081
-    endpoints: 127.0.0.1:8081
+    endpoints: ${ROCKETMQ_CONSUMER_ENDPOINTS:127.0.0.1:8081}
   # 生产者配置
   producer:
     # 访问密钥(如果启用ACL)
-    access-key: ${ROCKETMQ_PRODUCER_ACCESS_KEY}
+    access-key: ${ROCKETMQ_PRODUCER_ACCESS_KEY:}
     # 密钥(如果启用ACL)
-    secret-key: ${ROCKETMQ_PRODUCER_SECRET_KEY}
+    secret-key: ${ROCKETMQ_PRODUCER_SECRET_KEY:}
     # 是否启用消息轨迹，本地开发可以关闭消息轨迹
     enable-msg-trace: false
     # Proxy 模式访问，端口为 Docker 映射的 8081
-    endpoints: 127.0.0.1:8081
+    endpoints: ${ROCKETMQ_PRODUCER_ENDPOINTS:127.0.0.1:8081}
 
 spring:
   datasource:
-    url: ${MYSQL_URL:jdbc:mysql://127.0.0.1:3306/travis_monolith?serverTimezone=${travis.web.time-zone:UTC}&useSSL=false&allowPublicKeyRetrieval=true}
+    url: jdbc:mysql://127.0.0.1:3306/travis_monolith?serverTimezone=${travis.web.time-zone:UTC}&useSSL=false&allowPublicKeyRetrieval=true
     username: ${MYSQL_USERNAME}
     password: ${MYSQL_PASSWORD}
   modulith:
@@ -58,5 +58,12 @@ spring:
       verification-enabled: true  #是否启用运行时验证，true/false
 
 travis:
+  rocketmq:
+    # RocketMQ 客户端日志路径（v5 gRPC 客户端 + tools），受 rocketmq.log.root 系统属性控制
+    client:
+      log-path: ${user.home}/data/logs/rocketmq
+    auto-initialize:
+      enabled: true  # 启动时自动初始化不存在的 Topic 和消费者分组
+      namesrv-addr: ${ROCKETMQ_NAMESRV_ADDR:127.0.0.1:9876}  # NameServer 地址（注意：不是 Proxy gRPC 端口），启用 auto-initialize 时必填
   web:
     domain: http://127.0.0.1

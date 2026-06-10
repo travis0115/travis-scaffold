@@ -1,0 +1,2 @@
+org.springframework.boot.EnvironmentPostProcessor=\
+com.travis.infrastructure.framework.rocketmq.core.RocketMQLogPathEnvironmentPostProcessor

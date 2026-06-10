@@ -6,7 +6,9 @@ import com.travis.infrastructure.common.web.enums.LoginType;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
+import com.travis.infrastructure.framework.web.core.model.UserAgentInfo;
 import com.travis.infrastructure.framework.web.core.util.IpUtil;
+import com.travis.infrastructure.framework.web.core.util.UserAgentUtil;
 import com.travis.monolith.system.common.api.SystemEvent;
 import com.travis.monolith.system.file.api.SysFileApi;
 import com.travis.monolith.system.menu.api.SysMenuApi;
@@ -53,6 +55,10 @@ public class SysAuthServiceImpl implements SysAuthService {
     /** 管理员登录：校验用户名密码、账号状态，通过后使用 Sa-Token 签发令牌，并记录登录日志 */
     @Override
     public SysUserLoginResp login(SysUserLoginReq req) {
+        // 在 Web 线程中提前捕获请求上下文信息
+        String clientIp = IpUtil.getClientIp();
+        UserAgentInfo uaInfo = UserAgentUtil.getCurrentUserAgentInfo();
+
         // 显式查询密码字段（实体中 password 标记了 select=false，默认不返回）
         var user =
                 userService
@@ -66,20 +72,20 @@ public class SysAuthServiceImpl implements SysAuthService {
                         .one();
         if (user == null) {
             messagePublisher.publish(
-                    SystemEvent.USER_LOGIN, new UserLoginPayload(req.getUsername(), 0, "用户不存在"));
+                    SystemEvent.USER_LOGIN, buildLoginPayload(req.getUsername(), 0, "用户不存在", clientIp, uaInfo));
             throw new BizException(CommonErrorCode.AUTH_LOGIN_BAD_CREDENTIALS);
         }
         // 检查账号是否被禁用
         if (user.getStatus() != null && user.getStatus() == 0) {
             messagePublisher.publish(
-                    SystemEvent.USER_LOGIN, new UserLoginPayload(req.getUsername(), 0, "账号已被禁用"));
+                    SystemEvent.USER_LOGIN, buildLoginPayload(req.getUsername(), 0, "账号已被禁用", clientIp, uaInfo));
             throw new BizException(CommonErrorCode.AUTH_LOGIN_USER_DISABLED);
         }
 
         // BCrypt 校验密码
         if (!BCrypt.checkpw(req.getPassword(), user.getPassword())) {
             messagePublisher.publish(
-                    SystemEvent.USER_LOGIN, new UserLoginPayload(req.getUsername(), 0, "密码错误"));
+                    SystemEvent.USER_LOGIN, buildLoginPayload(req.getUsername(), 0, "密码错误", clientIp, uaInfo));
             throw new BizException(CommonErrorCode.AUTH_LOGIN_BAD_CREDENTIALS);
         }
 
@@ -89,12 +95,12 @@ public class SysAuthServiceImpl implements SysAuthService {
 
         // 更新最后登录时间和IP
         user.setLastLoginTime(LocalDateTime.now());
-        user.setLastLoginIp(IpUtil.getClientIp());
+        user.setLastLoginIp(clientIp);
         userService.updateById(user);
 
         // 记录登录成功日志
         messagePublisher.publish(
-                SystemEvent.USER_LOGIN, new UserLoginPayload(req.getUsername(), 1, "登录成功"));
+                SystemEvent.USER_LOGIN, buildLoginPayload(req.getUsername(), 1, "登录成功", clientIp, uaInfo));
 
         return SysUserLoginResp.builder().accessToken(token).refreshToken(token).build();
     }
@@ -149,6 +155,18 @@ public class SysAuthServiceImpl implements SysAuthService {
     @Override
     public List<String> getAccessCodes(Long userId) {
         return getPermissionsByUserId(userId);
+    }
+
+    private static UserLoginPayload buildLoginPayload(
+            String username, int status, String message, String ip, UserAgentInfo uaInfo) {
+        return UserLoginPayload.builder()
+                .username(username)
+                .status(status)
+                .message(message)
+                .ip(ip)
+                .browser(uaInfo.getBrowser())
+                .os(uaInfo.getOs())
+                .build();
     }
 
     /**

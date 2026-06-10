@@ -30,6 +30,7 @@
 
         <!-- 消息队列 -->
         <rocketmq.version>2.3.6</rocketmq.version>
+        <rocketmq-tools.version>5.5.0</rocketmq-tools.version>
 
         <!-- 日志 -->
         <logstash-logback-encoder.version>9.0</logstash-logback-encoder.version>
@@ -167,6 +168,11 @@
                 <groupId>org.apache.rocketmq</groupId>
                 <artifactId>rocketmq-v5-client-spring-boot-starter</artifactId>
                 <version>${rocketmq.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-tools</artifactId>
+                <version>${rocketmq-tools.version}</version>
             </dependency>
 
             <!-- sa-token -->

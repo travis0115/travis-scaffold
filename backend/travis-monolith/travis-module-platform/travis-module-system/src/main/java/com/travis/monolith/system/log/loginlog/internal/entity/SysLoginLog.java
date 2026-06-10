@@ -2,10 +2,12 @@ package com.travis.monolith.system.log.loginlog.internal.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+import lombok.Builder;
+import lombok.Data;
+
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import lombok.Data;
 
 /**
  * 登录日志实体，对应 sys_login_log 表，记录每次登录的详细信息
@@ -13,6 +15,7 @@ import lombok.Data;
  * @author travis
  */
 @Data
+@Builder
 public class SysLoginLog implements Serializable {
     @Serial private static final long serialVersionUID = 1L;
 

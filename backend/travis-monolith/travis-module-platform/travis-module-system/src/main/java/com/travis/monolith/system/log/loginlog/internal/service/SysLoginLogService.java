@@ -29,6 +29,9 @@ public interface SysLoginLogService extends IService<SysLoginLog> {
      * @param username 登录用户名
      * @param status 登录状态（0-失败 1-成功）
      * @param message 提示信息
+     * @param ip 客户端IP
+     * @param browser 浏览器
+     * @param os 操作系统
      */
-    void recordLoginLog(String username, int status, String message);
+    void recordLoginLog(String username, int status, String message, String ip, String browser, String os);
 }

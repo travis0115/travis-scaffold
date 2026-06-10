@@ -31,6 +31,7 @@ public enum SystemEvent implements Event {
 
     /** 用户登录事件 */
     USER_LOGIN(SystemEventConstant.TOPIC, SystemEventConstant.USER_LOGIN_TAG),
+
     /** 部门删除事件 */
     DEPT_DELETED(SystemEventConstant.TOPIC, SystemEventConstant.DEPT_DELETED_TAG);
 

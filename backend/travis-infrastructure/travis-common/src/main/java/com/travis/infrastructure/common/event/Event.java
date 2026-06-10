@@ -14,10 +14,16 @@ package com.travis.infrastructure.common.event;
  * @AllArgsConstructor
  * public enum SystemEvent implements Event {
  *     USER_LOGIN("system-event", "user-login"),
- *     DEPT_DELETED("system-event", "dept-deleted");
+ *     DEPT_DELETED("system-event", "dept-deleted", TopicType.FIFO);
  *
  *     private final String topic;
  *     private final String type;
+ *     private final TopicType topicType;
+ *
+ *     // 对于 NORMAL 类型的枚举值，可省略 topicType（默认 NORMAL）
+ *     SystemEvent(String topic, String type) {
+ *         this(topic, type, TopicType.NORMAL);
+ *     }
  * }
  * }</pre>
  *
@@ -27,16 +33,17 @@ package com.travis.infrastructure.common.event;
  * // 普通发布
  * messagePublisher.publish(SystemEvent.USER_LOGIN, payload);
  *
- * // FIFO 顺序发布（messageGroup 运行时动态传入）
+ * // FIFO 顺序发布（TopicType.FIFO 的事件需提供 messageGroup）
  * messagePublisher.publish(SystemEvent.DEPT_DELETED, payload, PublishOptions.fifo("dept-" + deptId));
  *
- * // 延迟发布
+ * // 延迟发布（TopicType.DELAY 的事件需提供 delayTime）
  * messagePublisher.publish(SystemEvent.USER_LOGIN, payload, PublishOptions.delay(Duration.ofMinutes(30)));
  * }</pre>
  *
  * @author travis
  * @see MessagePublisher
  * @see PublishOptions
+ * @see TopicType
  */
 public interface Event {
 
@@ -57,4 +64,17 @@ public interface Event {
      * @return 事件类型标识
      */
     String getType();
+
+    /**
+     * 获取 Topic 类型，用于 Topic 自动创建和消息发送方式选择。
+     *
+     * <p>默认返回 {@link TopicType#NORMAL}。对于 FIFO 或延迟类型的 Topic，
+     * 枚举实现需覆盖此方法或通过构造函数指定。
+     *
+     * @return Topic 类型
+     * @see TopicType
+     */
+    default TopicType getTopicType() {
+        return TopicType.NORMAL;
+    }
 }

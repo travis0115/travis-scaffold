@@ -112,14 +112,6 @@ mybatis-plus:
     log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
   mapper-locations: classpath*:mapper/*.xml # XML映射文件位置(可选,如果只用BaseMapper可以不配置)
 
-# RocketMQ配置
-rocketmq:
-  # 生产者配置
-  producer:
-    # 生产者组名: 用于标识一组生产者
-    group: ${spring.application.name}
-    # 发送消息超时时间(毫秒)
-    send-message-timeout: 3000
 
 # Sa-Token 配置
 sa-token:
@@ -144,6 +136,13 @@ sa-token:
 travis:
   info:
     base-package: com.travis.monolith
+  rocketmq:
+    # RocketMQ 客户端日志路径（v5 gRPC 客户端 + tools），受 rocketmq.log.root 系统属性控制
+    client:
+      log-path: ${user.home}/data/logs/rocketmq
+    auto-initialize:
+      enabled: true  # 启动时自动初始化不存在的 Topic 和消费者分组
+      namesrv-addr: ${ROCKETMQ_NAMESRV_ADDR:127.0.0.1:9876}  # NameServer 地址（注意：不是 Proxy gRPC 端口），启用 auto-initialize 时必填
   web:
     # Web路径前缀配置
     apis:

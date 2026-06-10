@@ -25,3 +25,18 @@ rocketmq:
     group: ${spring.application.name}
     # 发送消息超时时间(毫秒)
     send-message-timeout: 3000
+
+# travis 自定义配置
+travis:
+  rocketmq:
+    # RocketMQ 客户端日志路径（v5 gRPC 客户端 + tools），写入 rocketmq-client.log / tools.log / tools_default.log
+    # 可通过环境变量 ROCKETMQ_LOG_ROOT 覆盖此配置
+    client:
+      log-path: ${user.home}/data/logs/rocketmq
+    auto-initialize:
+      # 启动时自动初始化不存在的 Topic 和消费者分组（通过 DefaultMQAdminExt 连接 NameServer 创建）
+      # 默认 false，需显式开启
+      enabled: false
+      # NameServer 地址（注意：不是 Proxy gRPC 端口 8081，而是 NameServer 端口 9876）
+      # 启用 auto-initialize 时必填
+      namesrv-addr: ${ROCKETMQ_NAMESRV_ADDR:127.0.0.1:9876}

@@ -5,8 +5,7 @@ logging:
     root: info  #全局日志级别
   output: file  #日志输出方式 file/stdout
   file:
-#    path: /data/logs/${spring.application.name}/${HOSTNAME:local}
-    path: ${user.home}/data/logs/${spring.application.name}
+    path: /data/logs/${spring.application.name}/${HOSTNAME:local}
     name: application #不加.log后缀
     async:
       discarding-threshold: 0 #队列丢弃日志的阈值，使用率超过阈值，开始丢低优先级日志，WARN/ERROR不丢弃，设置为0表示队列满开始丢弃
@@ -31,7 +30,7 @@ management:
 
 rocketmq:
   # 消费者配置(全局默认配置)
-  consumer:
+  push-consumer:
     # 访问密钥(如果启用ACL)
     access-key: ${ROCKETMQ_CONSUMER_ACCESS_KEY}
     # 密钥(如果启用ACL)
@@ -39,7 +38,7 @@ rocketmq:
     # 是否启用消息轨迹，本地开发可以关闭消息轨迹
     enable-msg-trace: true
     # Proxy 模式访问，端口为 Docker 映射的 8081
-    endpoints: 127.0.0.1:8081
+    endpoints: ${ROCKETMQ_CONSUMER_ENDPOINTS:127.0.0.1:8081}
 
   # 生产者配置
   producer:
@@ -50,7 +49,7 @@ rocketmq:
     # 是否启用消息轨迹，本地开发可以关闭消息轨迹
     enable-msg-trace: true
     # Proxy 模式访问，端口为 Docker 映射的 8081
-    endpoints: 127.0.0.1:8081
+    endpoints: ${ROCKETMQ_PRODUCER_ENDPOINTS:127.0.0.1:8081}
 
 spring:
   datasource:

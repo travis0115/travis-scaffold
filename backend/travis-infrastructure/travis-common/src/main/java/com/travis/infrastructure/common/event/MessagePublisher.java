@@ -9,20 +9,25 @@ import java.util.concurrent.CompletableFuture;
  * 切换底层实现（RocketMQ / Kafka / Spring Event / Spring Modulith）只需更换实现类，
  * 业务枚举和调用代码无需任何变动。
  *
+ * <p>消息类型由 {@link Event#getTopicType()} 决定：
+ *
+ * <ul>
+ *   <li>{@link TopicType#NORMAL} — 普通消息，直接调用 {@link #publish(Event, Object)}
+ *   <li>{@link TopicType#FIFO} — 顺序消息，需提供 {@link PublishOptions#fifo(String)}
+ *   <li>{@link TopicType#DELAY} — 延迟消息，需提供 {@link PublishOptions#delay(Duration)}
+ * </ul>
+ *
  * <p>使用示例：
  *
  * <pre>{@code
  * // 普通发布
  * messagePublisher.publish(SystemEvent.USER_LOGIN, payload);
  *
- * // FIFO 顺序发布（messageGroup 运行时动态传入）
+ * // FIFO 顺序发布（TopicType.FIFO 的事件需提供 messageGroup）
  * messagePublisher.publish(SystemEvent.DEPT_DELETED, payload, PublishOptions.fifo("dept-" + deptId));
  *
- * // 延迟发布
+ * // 延迟发布（TopicType.DELAY 的事件需提供 delayTime）
  * messagePublisher.publish(SystemEvent.USER_LOGIN, payload, PublishOptions.delay(Duration.ofMinutes(30)));
- *
- * // 异步发布（无回调）
- * messagePublisher.asyncPublish(SystemEvent.USER_LOGIN, payload);
  *
  * // 异步发布（带回调感知发送结果）
  * messagePublisher.asyncPublish(SystemEvent.USER_LOGIN, payload,
@@ -38,6 +43,7 @@ import java.util.concurrent.CompletableFuture;
  * @author travis
  * @see Event
  * @see PublishOptions
+ * @see TopicType
  */
 public interface MessagePublisher {
 

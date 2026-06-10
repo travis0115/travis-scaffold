@@ -5,17 +5,16 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.web.model.PageResult;
 import com.travis.infrastructure.framework.web.core.util.Ip2RegionUtil;
-import com.travis.infrastructure.framework.web.core.util.IpUtil;
-import com.travis.infrastructure.framework.web.core.util.UserAgentUtil;
 import com.travis.monolith.system.log.loginlog.internal.entity.SysLoginLog;
 import com.travis.monolith.system.log.loginlog.internal.mapper.SysLoginLogMapper;
 import com.travis.monolith.system.log.loginlog.internal.service.SysLoginLogService;
-import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 /**
  * 登录日志服务实现，按登录时间倒序分页查询，记录登录日志
@@ -49,18 +48,20 @@ public class SysLoginLogServiceImpl extends ServiceImpl<SysLoginLogMapper, SysLo
     /** 记录登录日志，使用 REQUIRES_NEW 独立事务，确保日志不受外层事务回滚影响 */
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void recordLoginLog(String username, int status, String message) {
+    public void recordLoginLog(
+            String username, int status, String message, String ip, String browser, String os) {
         try {
-            var ua = UserAgentUtil.getCurrentUserAgentInfo();
-            SysLoginLog loginLog = new SysLoginLog();
-            loginLog.setUsername(username);
-            loginLog.setIp(IpUtil.getClientIp());
-            loginLog.setLocation(Ip2RegionUtil.getRegionByIP(loginLog.getIp()));
-            loginLog.setBrowser(ua.getBrowser());
-            loginLog.setOs(ua.getOs());
-            loginLog.setStatus(status);
-            loginLog.setMessage(message);
-            loginLog.setLoginTime(LocalDateTime.now());
+            SysLoginLog loginLog =
+                    SysLoginLog.builder()
+                            .username(username)
+                            .ip(ip)
+                            .location(Ip2RegionUtil.getRegionByIP(ip))
+                            .browser(browser)
+                            .os(os)
+                            .status(status)
+                            .message(message)
+                            .loginTime(LocalDateTime.now())
+                            .build();
             save(loginLog);
         } catch (Exception e) {
             // 日志记录失败不影响登录流程
