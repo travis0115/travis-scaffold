@@ -33,8 +33,7 @@ public class SysRoleController {
             @RequestParam(required = false) Integer status,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize) {
-        return ApiResponse.success(
-                roleService.page(roleName, roleCode, status, pageNum, pageSize));
+        return ApiResponse.success(roleService.page(roleName, roleCode, status, pageNum, pageSize));
     }
 
     /**

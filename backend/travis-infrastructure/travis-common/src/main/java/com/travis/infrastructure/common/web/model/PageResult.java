@@ -1,10 +1,11 @@
 package com.travis.infrastructure.common.web.model;
 
-import java.io.Serializable;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
+import java.util.List;
 
 /**
  * 统一分页响应
@@ -23,11 +24,11 @@ public class PageResult<T> implements Serializable {
     private Long total;
 
     /** 当前页码 */
-    private Integer pageNum;
+    private Long pageNum;
 
     /** 每页记录数 */
-    private Integer pageSize;
+    private Long pageSize;
 
     /** 总页数 */
-    private Integer totalPages;
+    private Long totalPages;
 }

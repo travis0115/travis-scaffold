@@ -41,8 +41,8 @@ public class SysOperationLogServiceImpl extends ServiceImpl<SysOperationLogMappe
         return new PageResult<>(
                 page.getRecords(),
                 page.getTotal(),
-                (int) page.getCurrent(),
-                (int) page.getSize(),
-                (int) page.getPages());
+                page.getCurrent(),
+                page.getSize(),
+                page.getPages());
     }
 }

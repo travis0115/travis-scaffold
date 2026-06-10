@@ -32,9 +32,9 @@ public class SysDictItemServiceImpl extends ServiceImpl<SysDictItemMapper, SysDi
         return new PageResult<>(
                 page.getRecords(),
                 page.getTotal(),
-                (int) page.getCurrent(),
-                (int) page.getSize(),
-                (int) page.getPages());
+                page.getCurrent(),
+                page.getSize(),
+                page.getPages());
     }
 
     /** 新增字典数据项 */

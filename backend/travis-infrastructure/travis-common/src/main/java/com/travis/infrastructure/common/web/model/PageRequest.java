@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -18,6 +19,9 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PageRequest implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     /** 当前页码，从1开始 */
     @NotNull(message = "页码不能为空")

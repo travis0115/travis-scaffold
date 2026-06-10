@@ -43,9 +43,9 @@ public class SysUpdateLogServiceImpl extends ServiceImpl<SysUpdateLogMapper, Sys
         return new PageResult<>(
                 records,
                 page.getTotal(),
-                (int) page.getCurrent(),
-                (int) page.getSize(),
-                (int) page.getPages());
+                page.getCurrent(),
+                page.getSize(),
+                page.getPages());
     }
 
     @Override

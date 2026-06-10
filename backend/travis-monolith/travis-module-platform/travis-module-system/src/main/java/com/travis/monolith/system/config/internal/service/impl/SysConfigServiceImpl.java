@@ -1,17 +1,18 @@
 package com.travis.monolith.system.config.internal.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResult;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
+import com.travis.monolith.system.config.api.request.SysConfigPageReq;
+import com.travis.monolith.system.config.api.request.SysConfigReq;
 import com.travis.monolith.system.config.api.response.SysConfigResp;
 import com.travis.monolith.system.config.internal.converter.SysConfigConverter;
 import com.travis.monolith.system.config.internal.entity.SysConfig;
 import com.travis.monolith.system.config.internal.mapper.SysConfigMapper;
-import com.travis.monolith.system.config.api.request.SysConfigPageReq;
-import com.travis.monolith.system.config.api.request.SysConfigReq;
 import com.travis.monolith.system.config.internal.service.SysConfigService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,14 +32,14 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
 
     @Override
     public PageResult<SysConfigResp> page(SysConfigPageReq req) {
-        LambdaQueryWrapper<SysConfig> wrapper =
+        var wrapper =
                 new LambdaQueryWrapper<SysConfig>()
                         .like(
-                                req.getConfigGroup() != null,
+                                StrUtil.isNotBlank(req.getConfigGroup()),
                                 SysConfig::getConfigGroup,
                                 req.getConfigGroup())
                         .like(
-                                req.getConfigKey() != null,
+                                StrUtil.isNotBlank(req.getConfigKey()),
                                 SysConfig::getConfigKey,
                                 req.getConfigKey())
                         .orderByAsc(SysConfig::getConfigGroup, SysConfig::getConfigKey);
@@ -46,9 +47,9 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
         return new PageResult<>(
                 converter.toRespList(page.getRecords()),
                 page.getTotal(),
-                (int) page.getCurrent(),
-                (int) page.getSize(),
-                (int) page.getPages());
+                page.getCurrent(),
+                page.getSize(),
+                page.getPages());
     }
 
     @Override

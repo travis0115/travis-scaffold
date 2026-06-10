@@ -141,6 +141,7 @@
                     <java>
                         <googleJavaFormat>
                             <style>AOSP</style>
+                            <formatJavadoc>false</formatJavadoc>
                         </googleJavaFormat>
                         <removeUnusedImports/>
                     </java>

@@ -8,13 +8,12 @@ import com.travis.infrastructure.framework.web.core.util.Ip2RegionUtil;
 import com.travis.monolith.system.log.loginlog.internal.entity.SysLoginLog;
 import com.travis.monolith.system.log.loginlog.internal.mapper.SysLoginLogMapper;
 import com.travis.monolith.system.log.loginlog.internal.service.SysLoginLogService;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
 
 /**
  * 登录日志服务实现，按登录时间倒序分页查询，记录登录日志
@@ -40,9 +39,9 @@ public class SysLoginLogServiceImpl extends ServiceImpl<SysLoginLogMapper, SysLo
         return new PageResult<>(
                 page.getRecords(),
                 page.getTotal(),
-                (int) page.getCurrent(),
-                (int) page.getSize(),
-                (int) page.getPages());
+                page.getCurrent(),
+                page.getSize(),
+                page.getPages());
     }
 
     /** 记录登录日志，使用 REQUIRES_NEW 独立事务，确保日志不受外层事务回滚影响 */

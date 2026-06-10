@@ -7,8 +7,8 @@ import lombok.Getter;
 /**
  * System 模块事件定义
  *
- * <p>每个枚举值代表一个具体的业务事件。业务层通过 {@code messagePublisher.publish(SystemEventConstant.USER_LOGIN, payload)} 发布事件，
- * 无需关心底层 MQ 的 Topic/Tag 细节。
+ * <p>每个枚举值代表一个具体的业务事件。业务层通过 {@code messagePublisher.publish(SystemEventConstant.USER_LOGIN,
+ * payload)} 发布事件， 无需关心底层 MQ 的 Topic/Tag 细节。
  *
  * <p>消费端通过 {@link #SystemEvent}、各 {@code *_TAG} 和 {@code *_GROUP} 常量配置
  * {@code @RocketMQMessageListener} 注解， 确保发布端与消费端引用同一来源，避免魔法值。

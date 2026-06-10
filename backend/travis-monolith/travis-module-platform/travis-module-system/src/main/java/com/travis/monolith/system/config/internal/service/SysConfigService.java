@@ -2,10 +2,10 @@ package com.travis.monolith.system.config.internal.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.infrastructure.common.web.model.PageResult;
-import com.travis.monolith.system.config.api.response.SysConfigResp;
-import com.travis.monolith.system.config.internal.entity.SysConfig;
 import com.travis.monolith.system.config.api.request.SysConfigPageReq;
 import com.travis.monolith.system.config.api.request.SysConfigReq;
+import com.travis.monolith.system.config.api.response.SysConfigResp;
+import com.travis.monolith.system.config.internal.entity.SysConfig;
 
 /**
  * 系统配置服务接口

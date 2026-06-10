@@ -61,9 +61,9 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
         return new PageResult<>(
                 voList,
                 page.getTotal(),
-                (int) page.getCurrent(),
-                (int) page.getSize(),
-                (int) page.getPages());
+                page.getCurrent(),
+                page.getSize(),
+                page.getPages());
     }
 
     /** 获取角色详情，同时查询角色关联的菜单ID列表 */

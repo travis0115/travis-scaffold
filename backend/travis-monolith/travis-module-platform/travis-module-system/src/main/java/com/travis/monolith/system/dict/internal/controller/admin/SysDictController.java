@@ -41,8 +41,7 @@ public class SysDictController {
             @RequestParam(required = false) Integer status,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize) {
-        return ApiResponse.success(
-                dictService.page(dictName, dictType, status, pageNum, pageSize));
+        return ApiResponse.success(dictService.page(dictName, dictType, status, pageNum, pageSize));
     }
 
     /**

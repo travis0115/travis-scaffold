@@ -20,15 +20,16 @@ import com.travis.monolith.system.user.internal.converter.SysUserConverter;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.mapper.SysUserMapper;
 import com.travis.monolith.system.user.internal.service.SysUserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 用户管理服务实现，包含密码加密（BCrypt）、角色分配及部门名称关联查询
@@ -71,11 +72,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
         Page<SysUser> page = page(new Page<>(pageNum, pageSize), wrapper);
         List<SysUserResp> voList = toVOList(page.getRecords());
         return new PageResult<>(
-                voList,
-                page.getTotal(),
-                (int) page.getCurrent(),
-                (int) page.getSize(),
-                (int) page.getPages());
+                voList, page.getTotal(), page.getCurrent(), page.getSize(), page.getPages());
     }
 
     /** 获取用户详情，同时关联查询角色ID和角色名称 */
