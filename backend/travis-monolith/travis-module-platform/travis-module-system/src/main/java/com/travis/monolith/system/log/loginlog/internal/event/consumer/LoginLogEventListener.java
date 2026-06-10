@@ -12,12 +12,11 @@ import org.springframework.stereotype.Component;
 /**
  * 登录日志事件消费者，通过 RocketMQ 接收 {@link UserLoginPayload} 并调用登录日志服务进行持久化。
  *
- *
  * @author travis
  */
 @Component
 @RocketMQMessageListener(
-        topic = SystemEventConstant.TOPIC,
+        topic = SystemEventConstant.NORMAL_TOPIC,
         tag = SystemEventConstant.USER_LOGIN_TAG,
         consumerGroup = EventConsumerGroup.USER_LOGIN_CONSUMER_GROUP)
 @RequiredArgsConstructor
@@ -28,7 +27,11 @@ public class LoginLogEventListener extends AbstractEventListener<UserLoginPayloa
     @Override
     protected void onEvent(UserLoginPayload payload) {
         loginLogService.recordLoginLog(
-                payload.username(), payload.status(), payload.message(),
-                payload.ip(), payload.browser(), payload.os());
+                payload.username(),
+                payload.status(),
+                payload.message(),
+                payload.ip(),
+                payload.browser(),
+                payload.os());
     }
 }

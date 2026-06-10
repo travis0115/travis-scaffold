@@ -6,7 +6,7 @@ import lombok.AllArgsConstructor;
 /**
  * 业务状态码枚举
  *
- * <p>模块前缀 + 模块内唯一 例如：USER_0001
+ * <p>模块前缀 + 模块内唯一 例如：SYS_001
  */
 @AllArgsConstructor
 public enum SystemErrorCode implements ErrorCode {

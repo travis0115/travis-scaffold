@@ -6,8 +6,8 @@ package com.travis.monolith.system.common.api;
  * @author travis
  */
 public class SystemEventConstant {
-    /** 统一 Topic，所有系统事件共用 */
-    public static final String TOPIC = "system-event";
+    /** 系统普通消息 Topic */
+    public static final String NORMAL_TOPIC = "system-normal-event";
 
     /** 用户登录事件 Tag */
     public static final String USER_LOGIN_TAG = "user-login";

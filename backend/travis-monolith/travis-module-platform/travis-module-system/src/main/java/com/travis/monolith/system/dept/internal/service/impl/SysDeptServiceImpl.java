@@ -19,10 +19,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * 部门管理服务实现，支持树形部门结构的构建
@@ -31,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
         implements SysDeptService {
 
@@ -123,9 +127,30 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
         List<Long> ids = new ArrayList<>();
         collectAllDescendantIds(id, ids);
         ids.add(id);
-        // 通过 RocketMQ 通知用户模块清除关联用户的部门归属
-        messagePublisher.publish(SystemEvent.DEPT_DELETED, new DeptDeletedPayload(ids));
         removeBatchByIds(ids);
+        DeptDeletedPayload payload = new DeptDeletedPayload(ids);
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        publishDeptDeletedEvent(payload);
+                    }
+                });
+    }
+
+    private void publishDeptDeletedEvent(DeptDeletedPayload payload) {
+        try {
+            messagePublisher.asyncPublish(
+                    SystemEvent.DEPT_DELETED,
+                    payload,
+                    (event, body, options, ex) -> {
+                        if (ex != null) {
+                            log.error("部门删除事件发送失败, deptIds={}", payload.getDeptIds(), ex);
+                        }
+                    });
+        } catch (RuntimeException e) {
+            log.error("部门删除事件发送失败, deptIds={}", payload.getDeptIds(), e);
+        }
     }
 
     /**

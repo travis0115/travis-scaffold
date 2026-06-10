@@ -34,4 +34,12 @@ public interface SysDeptApi {
      * @return 部门名称，不存在返回 null
      */
     String getDeptNameById(Long deptId);
+
+    /**
+     * 判断指定部门中是否仍有任意一个存在
+     *
+     * @param deptIds 部门ID集合
+     * @return 任意部门存在时返回 true
+     */
+    boolean existsAnyByIds(Collection<Long> deptIds);
 }

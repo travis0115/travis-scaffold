@@ -1,13 +1,12 @@
 package com.travis.infrastructure.framework.rocketmq.core;
 
+import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.apis.producer.SendReceipt;
 import org.apache.rocketmq.client.core.RocketMQClientTemplate;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessagingException;
-
-import java.time.Duration;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * 基于 {@link RocketMQClientTemplate} (v5 gRPC) 的消息发送工具类，提供静态方法封装常用操作。
@@ -151,8 +150,10 @@ public class RocketMQProducerUtil {
     public static CompletableFuture<SendReceipt> asyncSendNormalMessage(
             String destination, Object payload) {
         try {
-            return rocketMQClientTemplate.asyncSendNormalMessage(
-                    destination, payload, new CompletableFuture<>());
+            return validateAsyncSendReceipt(
+                    destination,
+                    rocketMQClientTemplate.asyncSendNormalMessage(
+                            destination, payload, new CompletableFuture<>()));
         } catch (MessagingException e) {
             log.warn("rocketmq asyncSendNormalMessage failed, destination={}", destination, e);
             throw new IllegalStateException(
@@ -171,8 +172,10 @@ public class RocketMQProducerUtil {
     public static CompletableFuture<SendReceipt> asyncSendFifoMessage(
             String destination, Object payload, String messageGroup) {
         try {
-            return rocketMQClientTemplate.asyncSendFifoMessage(
-                    destination, payload, messageGroup, new CompletableFuture<>());
+            return validateAsyncSendReceipt(
+                    destination,
+                    rocketMQClientTemplate.asyncSendFifoMessage(
+                            destination, payload, messageGroup, new CompletableFuture<>()));
         } catch (MessagingException e) {
             log.warn(
                     "rocketmq asyncSendFifoMessage failed, destination={}, messageGroup={}",
@@ -195,8 +198,10 @@ public class RocketMQProducerUtil {
     public static CompletableFuture<SendReceipt> asyncSendDelayMessage(
             String destination, Object payload, Duration delayTime) {
         try {
-            return rocketMQClientTemplate.asyncSendDelayMessage(
-                    destination, payload, delayTime, new CompletableFuture<>());
+            return validateAsyncSendReceipt(
+                    destination,
+                    rocketMQClientTemplate.asyncSendDelayMessage(
+                            destination, payload, delayTime, new CompletableFuture<>()));
         } catch (MessagingException e) {
             log.warn(
                     "rocketmq asyncSendDelayMessage failed, destination={}, delayTime={}",
@@ -221,5 +226,14 @@ public class RocketMQProducerUtil {
             throw new IllegalStateException(
                     "rocketmq send failed (sendReceipt is null): " + destination);
         }
+    }
+
+    private static CompletableFuture<SendReceipt> validateAsyncSendReceipt(
+            String destination, CompletableFuture<SendReceipt> future) {
+        return future.thenApply(
+                sendReceipt -> {
+                    validateSendReceipt(destination, sendReceipt);
+                    return sendReceipt;
+                });
     }
 }

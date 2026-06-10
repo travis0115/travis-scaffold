@@ -6,6 +6,8 @@ import com.travis.infrastructure.common.event.TopicType;
 import com.travis.infrastructure.framework.rocketmq.core.RocketMQInitializer;
 import com.travis.infrastructure.framework.rocketmq.core.RocketMQMessagePublisher;
 import com.travis.infrastructure.framework.rocketmq.core.RocketMQProducerUtil;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.core.RocketMQClientTemplate;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,9 +22,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * RocketMQ 自动配置类，基于 rocketmq-spring-boot-starter 进行封装
  *
@@ -31,7 +30,8 @@ import java.util.Map;
  * <ul>
  *   <li>注入 {@link RocketMQProducerUtil}，提供底层静态方法封装（内部使用）
  *   <li>注入 {@link MessagePublisher}，基于 {@link Event} 事件枚举提供类型安全的事件发布能力（推荐业务层使用）
- *   <li>注入 {@link RocketMQInitializer}，在 Push Consumer 启动前自动确保 Topic 和消费者分组已存在，并根据 Event 的 {@link TopicType} 创建对应类型的 Topic
+ *   <li>注入 {@link RocketMQInitializer}，在 Push Consumer 启动前自动确保 Topic 和消费者分组已存在，并根据 Event 的 {@link
+ *       TopicType} 创建对应类型的 Topic
  * </ul>
  *
  * <p>使用方式：在 pom.xml 中引入本 starter 后，注入 {@code MessagePublisher}， 通过 {@code
@@ -46,8 +46,8 @@ import java.util.Map;
 public class TravisRocketMQAutoConfiguration {
 
     /**
-     * 注册 RocketMQ 自动初始化器，在 Push Consumer 启动前通过 Admin API 确保所有 Topic 和消费者分组已存在。
-     * 仅当显式开启且 NameServer 地址已配置时才激活。
+     * 注册 RocketMQ 自动初始化器，在 Push Consumer 启动前通过 Admin API 确保所有 Topic 和消费者分组已存在。 仅当显式开启且 NameServer
+     * 地址已配置时才激活。
      *
      * @param applicationContext Spring 应用上下文
      * @param enabled 是否启用自动初始化
@@ -67,8 +67,8 @@ public class TravisRocketMQAutoConfiguration {
     /**
      * 扫描 classpath 下所有实现 {@link Event} 接口的枚举类，收集 Topic → TopicType 映射。
      *
-     * <p>按 {@code *Event.class} 命名约定扫描，提取每个枚举值的 {@link Event#getTopic()} 和 {@link Event#getTopicType()}。
-     * 同一 Topic 的多个 Event 值应保持 TopicType 一致，否则先扫描到的值优先生效。
+     * <p>按 {@code *Event.class} 命名约定扫描，提取每个枚举值的 {@link Event#getTopic()} 和 {@link
+     * Event#getTopicType()}。 同一 Topic 的多个 Event 值必须保持 TopicType 一致，否则应用启动失败。
      *
      * @param ctx Spring 应用上下文
      * @return topic → TopicType 映射
@@ -87,9 +87,21 @@ public class TravisRocketMQAutoConfiguration {
                     if (clazz.isEnum() && Event.class.isAssignableFrom(clazz)) {
                         for (Object constant : clazz.getEnumConstants()) {
                             Event event = (Event) constant;
-                            result.putIfAbsent(event.getTopic(), event.getTopicType());
+                            TopicType existingType =
+                                    result.putIfAbsent(event.getTopic(), event.getTopicType());
+                            if (existingType != null && existingType != event.getTopicType()) {
+                                throw new IllegalStateException(
+                                        "RocketMQ topic '"
+                                                + event.getTopic()
+                                                + "' is used with multiple message types: "
+                                                + existingType
+                                                + " and "
+                                                + event.getTopicType());
+                            }
                         }
                     }
+                } catch (IllegalStateException e) {
+                    throw e;
                 } catch (Throwable ignored) {
                     // 跳过无法加载的类（如第三方依赖中的 Event 类）
                 }
@@ -97,6 +109,8 @@ public class TravisRocketMQAutoConfiguration {
             if (!result.isEmpty()) {
                 log.debug("[RocketMQ] Discovered topic types from Event enums: {}", result);
             }
+        } catch (IllegalStateException e) {
+            throw e;
         } catch (Exception e) {
             log.debug("[RocketMQ] Failed to scan Event topic types, defaulting to NORMAL", e);
         }

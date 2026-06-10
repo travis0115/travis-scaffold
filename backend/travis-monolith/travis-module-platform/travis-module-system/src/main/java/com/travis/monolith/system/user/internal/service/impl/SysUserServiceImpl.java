@@ -189,7 +189,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
         updateById(user);
     }
 
-    /** 当前登录用户修改密码：校验旧密码，加密新密码后更新 */
+    /** 当前登录用户修改密码：校验原密码，加密新密码后更新 */
     @Override
     public void changePassword(ChangePasswordReq req) {
         long userId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
@@ -202,7 +202,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
         if (user == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
-        // BCrypt 校验旧密码
+        // BCrypt 校验原密码
         if (!BCrypt.checkpw(req.getOldPassword(), user.getPassword())) {
             throw new BizException(SystemErrorCode.SYSTEM_USER_OLD_PASSWORD_ERROR);
         }

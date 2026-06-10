@@ -25,6 +25,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +36,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SysAuthServiceImpl implements SysAuthService {
 
     /** 文件 API */
@@ -71,21 +73,18 @@ public class SysAuthServiceImpl implements SysAuthService {
                                 SysUser::getStatus)
                         .one();
         if (user == null) {
-            messagePublisher.publish(
-                    SystemEvent.USER_LOGIN, buildLoginPayload(req.getUsername(), 0, "用户不存在", clientIp, uaInfo));
+            publishLoginEvent(buildLoginPayload(req.getUsername(), 0, "用户不存在", clientIp, uaInfo));
             throw new BizException(CommonErrorCode.AUTH_LOGIN_BAD_CREDENTIALS);
         }
         // 检查账号是否被禁用
         if (user.getStatus() != null && user.getStatus() == 0) {
-            messagePublisher.publish(
-                    SystemEvent.USER_LOGIN, buildLoginPayload(req.getUsername(), 0, "账号已被禁用", clientIp, uaInfo));
+            publishLoginEvent(buildLoginPayload(req.getUsername(), 0, "账号已被禁用", clientIp, uaInfo));
             throw new BizException(CommonErrorCode.AUTH_LOGIN_USER_DISABLED);
         }
 
         // BCrypt 校验密码
         if (!BCrypt.checkpw(req.getPassword(), user.getPassword())) {
-            messagePublisher.publish(
-                    SystemEvent.USER_LOGIN, buildLoginPayload(req.getUsername(), 0, "密码错误", clientIp, uaInfo));
+            publishLoginEvent(buildLoginPayload(req.getUsername(), 0, "密码错误", clientIp, uaInfo));
             throw new BizException(CommonErrorCode.AUTH_LOGIN_BAD_CREDENTIALS);
         }
 
@@ -99,10 +98,24 @@ public class SysAuthServiceImpl implements SysAuthService {
         userService.updateById(user);
 
         // 记录登录成功日志
-        messagePublisher.publish(
-                SystemEvent.USER_LOGIN, buildLoginPayload(req.getUsername(), 1, "登录成功", clientIp, uaInfo));
+        publishLoginEvent(buildLoginPayload(req.getUsername(), 1, "登录成功", clientIp, uaInfo));
 
         return SysUserLoginResp.builder().accessToken(token).refreshToken(token).build();
+    }
+
+    private void publishLoginEvent(UserLoginPayload payload) {
+        try {
+            messagePublisher.asyncPublish(
+                    SystemEvent.USER_LOGIN,
+                    payload,
+                    (event, body, options, ex) -> {
+                        if (ex != null) {
+                            log.error("登录日志事件发送失败, username={}", payload.username(), ex);
+                        }
+                    });
+        } catch (RuntimeException e) {
+            log.error("登录日志事件发送失败, username={}", payload.username(), e);
+        }
     }
 
     /** 获取当前登录用户信息，包含角色编码和权限列表 */

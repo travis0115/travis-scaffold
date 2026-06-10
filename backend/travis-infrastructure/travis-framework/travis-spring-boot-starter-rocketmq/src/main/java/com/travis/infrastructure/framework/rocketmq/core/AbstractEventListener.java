@@ -1,5 +1,8 @@
 package com.travis.infrastructure.framework.rocketmq.core;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.apis.consumer.ConsumeResult;
 import org.apache.rocketmq.client.apis.message.MessageView;
@@ -7,10 +10,6 @@ import org.apache.rocketmq.client.core.RocketMQListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
-
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.nio.ByteBuffer;
 
 /**
  * RocketMQ 事件消费者抽象基类，封装消息体读取、JSON 反序列化和异常处理的通用模板。
@@ -22,7 +21,7 @@ import java.nio.ByteBuffer;
  * <pre>{@code
  * @Component
  * @RocketMQMessageListener(
- *         topic = "system-event",
+ *         topic = "system-normal-event",
  *         tag = "user-login",
  *         consumerGroup = "system-user-login-consumer")
  * @RequiredArgsConstructor
@@ -44,8 +43,7 @@ import java.nio.ByteBuffer;
 @Slf4j
 public abstract class AbstractEventListener<T> implements RocketMQListener {
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    @Autowired private ObjectMapper objectMapper;
 
     /** 从子类泛型签名中解析出消息体类型 Class，用于 JSON 反序列化 */
     private final Class<T> payloadType;
@@ -68,7 +66,7 @@ public abstract class AbstractEventListener<T> implements RocketMQListener {
      * <p>默认开启事务，确保 {@link #onEvent(Object)} 中的数据库操作在同一事务中执行。
      *
      * @param messageView RocketMQ 消息视图
-     * @return 消费结果
+     * @return 消费成功时返回成功结果；处理失败时抛出异常，由 RocketMQ 触发重试
      */
     @Override
     @Transactional
@@ -81,20 +79,28 @@ public abstract class AbstractEventListener<T> implements RocketMQListener {
             buf.get(body);
             T payload = objectMapper.readValue(body, payloadType);
             onEvent(payload);
-            log.info("消费成功 | messageId={} | type={} | cost={}ms",
-                    messageId, payloadType.getSimpleName(), System.currentTimeMillis() - start);
+            log.info(
+                    "消费成功 | messageId={} | type={} | cost={}ms",
+                    messageId,
+                    payloadType.getSimpleName(),
+                    System.currentTimeMillis() - start);
             return ConsumeResult.SUCCESS;
         } catch (Exception e) {
-            log.error("消费失败 | messageId={} | type={} | cost={}ms",
-                    messageId, payloadType.getSimpleName(), System.currentTimeMillis() - start, e);
-            return ConsumeResult.FAILURE;
+            log.error(
+                    "消费失败 | messageId={} | type={} | cost={}ms",
+                    messageId,
+                    payloadType.getSimpleName(),
+                    System.currentTimeMillis() - start,
+                    e);
+            throw new IllegalStateException("RocketMQ 消息消费失败: " + messageId, e);
         }
     }
 
     /**
      * 处理已反序列化的消息体。子类实现此方法编写具体的业务逻辑。
      *
-     * @param payload 反序列化后的消息体对象，即发送端调用 {@code messagePublisher.publish(event, payload)} 时传入的 payload
+     * @param payload 反序列化后的消息体对象，即发送端调用 {@code messagePublisher.publish(event, payload)} 时传入的
+     *     payload
      * @throws Exception 业务处理异常
      */
     protected abstract void onEvent(T payload) throws Exception;

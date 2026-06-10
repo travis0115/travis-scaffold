@@ -2,6 +2,7 @@ package com.travis.monolith.system.dept.internal.api;
 
 import com.travis.monolith.system.dept.api.SysDeptApi;
 import com.travis.monolith.system.dept.api.response.SysDeptResp;
+import com.travis.monolith.system.dept.internal.entity.SysDept;
 import com.travis.monolith.system.dept.internal.service.SysDeptService;
 import java.util.Collection;
 import java.util.List;
@@ -33,5 +34,12 @@ public class SysDeptApiImpl implements SysDeptApi {
     @Override
     public String getDeptNameById(Long deptId) {
         return deptService.getDeptNameById(deptId);
+    }
+
+    @Override
+    public boolean existsAnyByIds(Collection<Long> deptIds) {
+        return deptIds != null
+                && !deptIds.isEmpty()
+                && deptService.lambdaQuery().in(SysDept::getId, deptIds).exists();
     }
 }
