@@ -46,6 +46,7 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
    * 重新认证逻辑（带防重入锁，避免多个并发 401 重复触发登出）
    */
   let isReAuthenticating = false;
+  let isErrorModalOpen = false;
 
   async function doReAuthenticate() {
     if (isReAuthenticating) return;
@@ -190,11 +191,18 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
       }
 
       // 默认使用 Modal 弹窗
+      if (isErrorModalOpen) {
+        return;
+      }
+      isErrorModalOpen = true;
       Modal.error({
-          title: '操作失败',
-          content: finalMessage,
-          okText: $t('common.gotIt'),
-        });
+        title: '操作失败',
+        content: finalMessage,
+        okText: $t('common.gotIt'),
+        afterClose() {
+          isErrorModalOpen = false;
+        },
+      });
     }),
   );
 
