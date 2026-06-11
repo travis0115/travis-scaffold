@@ -1,7 +1,10 @@
 package com.travis.monolith.system.file.internal.controller.admin;
 
 import com.travis.infrastructure.common.web.model.ApiResponse;
+import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.monolith.system.file.api.request.SysFilePageReq;
 import com.travis.monolith.system.file.api.response.FileUploadResp;
+import com.travis.monolith.system.file.internal.entity.SysFile;
 import com.travis.monolith.system.file.internal.service.SysFileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -26,9 +29,20 @@ public class SysFileController {
      * @return 文件上传响应（path用于存储，url用于展示）
      */
     @PostMapping("/upload")
-    public ApiResponse<FileUploadResp> upload(@RequestParam("file") MultipartFile file) {
-        String path = fileService.upload(file);
-        String url = fileService.getFileUrl(path);
-        return ApiResponse.success(new FileUploadResp(path, url));
+    public ApiResponse<FileUploadResp> upload(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(required = false) Long folderId) {
+        return ApiResponse.success(fileService.upload(file, folderId));
+    }
+
+    @GetMapping("/page")
+    public ApiResponse<PageResp<SysFile>> page(SysFilePageReq req) {
+        return ApiResponse.success(fileService.page(req));
+    }
+
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> delete(@PathVariable Long id) {
+        fileService.removeById(id);
+        return ApiResponse.success();
     }
 }

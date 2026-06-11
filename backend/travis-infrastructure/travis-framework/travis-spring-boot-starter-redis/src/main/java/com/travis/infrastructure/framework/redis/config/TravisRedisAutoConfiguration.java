@@ -3,6 +3,8 @@ package com.travis.infrastructure.framework.redis.config;
 import com.travis.infrastructure.framework.jackson.config.TravisJacksonAutoConfiguration;
 import com.travis.infrastructure.framework.jackson.core.LaissezFaireSubTypeValidator;
 import com.travis.infrastructure.framework.redis.core.RedisUtil;
+import com.travis.infrastructure.framework.redis.core.aop.DistributedLockAspect;
+import org.redisson.api.RedissonClient;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
@@ -73,5 +75,11 @@ public class TravisRedisAutoConfiguration {
         var util = new RedisUtil();
         util.setRedisTemplate(redisTemplate);
         return util;
+    }
+
+    /** 注册基于 Redisson 的分布式锁切面。 */
+    @Bean
+    public DistributedLockAspect distributedLockAspect(RedissonClient redissonClient) {
+        return new DistributedLockAspect(redissonClient);
     }
 }

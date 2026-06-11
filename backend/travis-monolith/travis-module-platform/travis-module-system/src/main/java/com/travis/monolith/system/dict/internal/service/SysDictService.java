@@ -2,10 +2,10 @@ package com.travis.monolith.system.dict.internal.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.monolith.system.dict.api.request.SysDictItemReq;
+import com.travis.monolith.system.dict.api.request.SysDictReq;
 import com.travis.monolith.system.dict.api.response.SysDictItemResp;
 import com.travis.monolith.system.dict.internal.entity.SysDict;
-import com.travis.monolith.system.dict.internal.request.SysDictItemReq;
-import com.travis.monolith.system.dict.internal.request.SysDictReq;
 import java.util.List;
 
 /**

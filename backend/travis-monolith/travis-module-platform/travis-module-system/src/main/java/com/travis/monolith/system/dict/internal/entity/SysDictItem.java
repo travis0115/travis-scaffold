@@ -21,6 +21,9 @@ public class SysDictItem extends BaseEntity {
     /** 字典项值（实际存储值） */
     private String value;
 
+    /** 展示样式（default/success/warning/danger/info/primary） */
+    private String tagStyle;
+
     /** 排序号（升序） */
     private Integer sort;
 

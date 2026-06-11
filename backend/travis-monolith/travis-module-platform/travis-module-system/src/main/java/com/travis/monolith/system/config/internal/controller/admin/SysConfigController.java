@@ -1,7 +1,11 @@
 package com.travis.monolith.system.config.internal.controller.admin;
 
+import com.travis.infrastructure.common.logging.annotation.OperationLog;
+import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
+import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmitNamespace;
 import com.travis.monolith.system.config.api.request.SysConfigPageReq;
 import com.travis.monolith.system.config.api.request.SysConfigReq;
 import com.travis.monolith.system.config.api.response.SysConfigResp;
@@ -20,6 +24,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/system/config")
 @RequiredArgsConstructor
 @Validated
+@OperationLogModule("系统配置")
+@NoRepeatSubmitNamespace("system:config")
 public class SysConfigController {
 
     private final SysConfigService sysConfigService;
@@ -43,6 +49,8 @@ public class SysConfigController {
     }
 
     /** 新增配置 */
+    @OperationLog(action = "新增配置")
+    @NoRepeatSubmit
     @PostMapping
     public ApiResponse<Void> create(@RequestBody @Valid SysConfigReq req) {
         sysConfigService.create(req);
@@ -50,6 +58,8 @@ public class SysConfigController {
     }
 
     /** 更新配置 */
+    @OperationLog(action = "更新配置")
+    @NoRepeatSubmit
     @PutMapping("/{id}")
     public ApiResponse<Void> update(@PathVariable Long id, @RequestBody @Valid SysConfigReq req) {
         sysConfigService.update(id, req);
@@ -57,6 +67,8 @@ public class SysConfigController {
     }
 
     /** 删除配置 */
+    @OperationLog(action = "删除配置")
+    @NoRepeatSubmit
     @DeleteMapping("/{id}")
     public ApiResponse<Void> deleteById(@PathVariable Long id) {
         sysConfigService.deleteById(id);

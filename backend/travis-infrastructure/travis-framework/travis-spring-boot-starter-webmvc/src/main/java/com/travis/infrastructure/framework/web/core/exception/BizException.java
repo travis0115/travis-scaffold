@@ -1,24 +1,16 @@
 package com.travis.infrastructure.framework.web.core.exception;
 
 import com.travis.infrastructure.common.web.exception.ErrorCode;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import com.travis.infrastructure.common.web.exception.ErrorCodeException;
 
 /** 业务异常 */
-@Data
-@EqualsAndHashCode(callSuper = true)
-@AllArgsConstructor
-public final class BizException extends RuntimeException {
+public final class BizException extends ErrorCodeException {
 
     public BizException(ErrorCode errorCode) {
-        this.errorCode = errorCode;
-        this.args = null;
+        super(errorCode);
     }
 
-    /** 错误码 */
-    private final ErrorCode errorCode;
-
-    /** 错误参数 */
-    private final Object[] args;
+    public BizException(ErrorCode errorCode, Object... args) {
+        super(errorCode, args);
+    }
 }

@@ -1,10 +1,10 @@
 package com.travis.monolith.system.dept.internal.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.travis.monolith.system.dept.api.request.SysDeptPageReq;
+import com.travis.monolith.system.dept.api.request.SysDeptReq;
 import com.travis.monolith.system.dept.api.response.SysDeptResp;
 import com.travis.monolith.system.dept.internal.entity.SysDept;
-import com.travis.monolith.system.dept.internal.request.SysDeptPageReq;
-import com.travis.monolith.system.dept.internal.request.SysDeptReq;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;

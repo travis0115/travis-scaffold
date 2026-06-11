@@ -12,6 +12,8 @@ import com.travis.monolith.system.log.operationlog.internal.mapper.SysOperationL
 import com.travis.monolith.system.log.operationlog.internal.service.SysOperationLogService;
 import java.util.Map;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 操作日志服务实现，支持按用户名、模块、状态及时间范围分页查询
@@ -53,5 +55,11 @@ public class SysOperationLogServiceImpl extends ServiceImpl<SysOperationLogMappe
                                 SysOperationLog::getCreateTime);
         Page<SysOperationLog> page = page(new Page<>(req.getPageNum(), req.getPageSize()), wrapper);
         return PageConverter.toResp(page);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void saveOperation(SysOperationLog operationLog) {
+        save(operationLog);
     }
 }

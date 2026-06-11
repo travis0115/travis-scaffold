@@ -36,8 +36,7 @@ public class TravisWebMvcAutoConfiguration implements WebMvcConfigurer {
 
     private final WebProperties webProperties;
 
-    //    @Qualifier("handlerExceptionResolver")
-    private HandlerExceptionResolver handlerExceptionResolver;
+    private final HandlerExceptionResolver handlerExceptionResolver;
 
     /**
      * 根据Controller所在包名自动添加路径前缀： controller.admin 包 → /api/admin controller.app 包 → /api/app 其他包不加前缀
@@ -116,7 +115,8 @@ public class TravisWebMvcAutoConfiguration implements WebMvcConfigurer {
     @Bean("travisRequestContextFilter")
     public FilterRegistrationBean<RequestContextFilter> requestContextFilter() {
         return createFilterBean(
-                new RequestContextFilter(handlerExceptionResolver),
+                new RequestContextFilter(
+                        handlerExceptionResolver, webProperties.getRequestCacheLimit()),
                 WebFilterOrder.REQUEST_CONTEXT_FILTER);
     }
 

@@ -74,6 +74,7 @@ public enum CommonErrorCode implements ErrorCode {
     CACHE_SET_FAILED("2202", "缓存设置失败"),
     CACHE_DELETE_FAILED("2203", "缓存删除失败"),
     CACHE_SET_EXPIRE_FAILED("2204", "缓存设置过期失败"),
+    DISTRIBUTED_LOCK_FAILED("2205", "获取分布式锁失败，请稍后重试"),
 
     /** 授权 */
     AUTH_LOGIN_BAD_CREDENTIALS("3000", "用户名或密码错误"),

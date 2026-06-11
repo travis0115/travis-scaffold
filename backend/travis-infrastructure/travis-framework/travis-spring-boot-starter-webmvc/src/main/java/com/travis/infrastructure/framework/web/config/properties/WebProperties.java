@@ -17,6 +17,9 @@ public class WebProperties {
     /** API 路径前缀配置列表 */
     private List<ApiPrefix> apis = new ArrayList<>();
 
+    /** 请求体缓存上限（字节），0 或负数表示不限制，默认 256 KiB */
+    private int requestCacheLimit = 262144;
+
     /** API 路径前缀配置 */
     @Data
     public static class ApiPrefix {

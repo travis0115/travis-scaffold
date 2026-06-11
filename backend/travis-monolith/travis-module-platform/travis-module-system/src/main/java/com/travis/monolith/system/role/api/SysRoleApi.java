@@ -111,4 +111,7 @@ public interface SysRoleApi {
      * @return 角色列表
      */
     List<SysRoleResp> listEnabled();
+
+    /** 根据角色ID查询关联用户ID。 */
+    List<Long> getUserIdsByRoleIds(List<Long> roleIds);
 }

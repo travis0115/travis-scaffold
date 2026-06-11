@@ -1,11 +1,15 @@
 package com.travis.monolith.system.role.internal.controller.admin;
 
+import com.travis.infrastructure.common.logging.annotation.OperationLog;
+import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
+import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmitNamespace;
 import com.travis.monolith.system.role.api.request.SysRoleMenuReq;
+import com.travis.monolith.system.role.api.request.SysRolePageReq;
+import com.travis.monolith.system.role.api.request.SysRoleReq;
 import com.travis.monolith.system.role.api.response.SysRoleResp;
-import com.travis.monolith.system.role.internal.request.SysRolePageReq;
-import com.travis.monolith.system.role.internal.request.SysRoleReq;
 import com.travis.monolith.system.role.internal.service.SysRoleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +25,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/system/role")
 @RequiredArgsConstructor
 @Validated
+@OperationLogModule("角色管理")
+@NoRepeatSubmitNamespace("system:role")
 public class SysRoleController {
 
     /** 角色管理服务 */
@@ -49,6 +55,8 @@ public class SysRoleController {
      * @param req 角色信息
      * @return 空响应
      */
+    @OperationLog(action = "新增角色")
+    @NoRepeatSubmit
     @PostMapping
     public ApiResponse<Void> add(@RequestBody @Valid SysRoleReq req) {
         roleService.create(req);
@@ -62,6 +70,8 @@ public class SysRoleController {
      * @param req 角色信息
      * @return 空响应
      */
+    @OperationLog(action = "更新角色")
+    @NoRepeatSubmit
     @PutMapping("/{id}")
     public ApiResponse<Void> update(@PathVariable Long id, @RequestBody @Valid SysRoleReq req) {
         roleService.update(id, req);
@@ -74,6 +84,8 @@ public class SysRoleController {
      * @param id 角色ID
      * @return 空响应
      */
+    @OperationLog(action = "删除角色")
+    @NoRepeatSubmit
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         roleService.deleteById(id);
@@ -86,6 +98,8 @@ public class SysRoleController {
      * @param req 角色菜单分配请求
      * @return 空响应
      */
+    @OperationLog(action = "分配角色菜单")
+    @NoRepeatSubmit
     @PostMapping("/menus")
     public ApiResponse<Void> assignMenus(@RequestBody @Valid SysRoleMenuReq req) {
         roleService.assignMenus(req);

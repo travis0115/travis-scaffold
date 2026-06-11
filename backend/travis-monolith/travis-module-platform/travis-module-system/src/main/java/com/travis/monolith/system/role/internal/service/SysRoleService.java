@@ -3,10 +3,10 @@ package com.travis.monolith.system.role.internal.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.role.api.request.SysRoleMenuReq;
+import com.travis.monolith.system.role.api.request.SysRolePageReq;
+import com.travis.monolith.system.role.api.request.SysRoleReq;
 import com.travis.monolith.system.role.api.response.SysRoleResp;
 import com.travis.monolith.system.role.internal.entity.SysRole;
-import com.travis.monolith.system.role.internal.request.SysRolePageReq;
-import com.travis.monolith.system.role.internal.request.SysRoleReq;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -162,4 +162,6 @@ public interface SysRoleService extends IService<SysRole> {
      * @return userId -> roleNameList 映射
      */
     Map<Long, List<String>> batchGetRoleNamesByUserIds(List<Long> userIds);
+
+    List<Long> getUserIdsByRoleIds(List<Long> roleIds);
 }

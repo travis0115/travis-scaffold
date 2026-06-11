@@ -37,6 +37,22 @@ const [Form, formApi] = useVbenForm({
         .min(1, '请输入值'),
     },
     {
+      component: 'Select',
+      componentProps: {
+        options: [
+          { label: '默认', value: 'default' },
+          { label: '主要', value: 'primary' },
+          { label: '成功', value: 'success' },
+          { label: '警告', value: 'warning' },
+          { label: '危险', value: 'danger' },
+          { label: '信息', value: 'info' },
+        ],
+      },
+      defaultValue: 'default',
+      fieldName: 'tagStyle',
+      label: $t('system.dict.item.tagStyle'),
+    },
+    {
       component: 'InputNumber',
       fieldName: 'sort',
       label: $t('system.dict.item.sort'),
@@ -85,7 +101,7 @@ const [Modal, modalApi] = useVbenModal({
   },
   onOpenChange(isOpen) {
     if (isOpen) {
-      const data = modalApi.getData<{ dictId: number; dictName: string; itemId?: number; label?: string; remark?: string; sort?: number; status?: number; value?: string }>();
+      const data = modalApi.getData<{ dictId: number; dictName: string; itemId?: number; label?: string; remark?: string; sort?: number; status?: number; tagStyle?: string; value?: string }>();
       formApi.resetForm();
       if (data) {
         dictId.value = data.dictId;

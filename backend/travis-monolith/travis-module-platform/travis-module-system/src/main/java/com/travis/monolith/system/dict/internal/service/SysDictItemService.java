@@ -2,8 +2,8 @@ package com.travis.monolith.system.dict.internal.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.monolith.system.dict.api.request.SysDictItemReq;
 import com.travis.monolith.system.dict.internal.entity.SysDictItem;
-import com.travis.monolith.system.dict.internal.request.SysDictItemReq;
 
 /**
  * 字典数据项管理服务接口，提供字典子项的分页查询和增删改

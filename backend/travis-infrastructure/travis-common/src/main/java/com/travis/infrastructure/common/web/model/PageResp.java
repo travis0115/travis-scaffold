@@ -1,10 +1,9 @@
 package com.travis.infrastructure.common.web.model;
 
-import lombok.Builder;
-import lombok.Data;
-
 import java.io.Serializable;
 import java.util.List;
+import lombok.Builder;
+import lombok.Data;
 
 /**
  * 统一分页响应

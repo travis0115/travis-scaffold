@@ -109,6 +109,7 @@
     "item": {
       "label": "标签",
       "value": "值",
+      "tagStyle": "展示样式",
       "sort": "排序",
       "status": "状态",
       "remark": "备注",
@@ -145,10 +146,10 @@
     "success": "成功",
     "fail": "失败"
   },
-  "updateLog": {
-    "title": "更新日志管理",
-    "list": "更新日志列表",
-    "name": "更新日志",
+  "versionLog": {
+    "title": "版本日志管理",
+    "list": "版本日志列表",
+    "name": "版本日志",
     "version": "版本号",
     "titleField": "标题",
     "content": "更新内容",

@@ -1,3 +1,4 @@
 com.travis.infrastructure.framework.web.config.TravisWebMvcAutoConfiguration
 com.travis.infrastructure.framework.web.config.TravisI18nAutoConfiguration
 com.travis.infrastructure.framework.web.config.TravisLoggingAutoConfiguration
+com.travis.infrastructure.framework.web.config.TravisWebSecurityAutoConfiguration

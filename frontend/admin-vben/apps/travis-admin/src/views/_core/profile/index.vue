@@ -12,7 +12,7 @@ import { updateAvatarApi, uploadFileApi } from '#/api';
 import ProfileBase from './base-setting.vue';
 import ProfileLoginLog from './login-log.vue';
 import ProfilePasswordSetting from './password-setting.vue';
-import ProfileUpdateLog from './update-log.vue';
+import ProfileVersionLog from './version-log.vue';
 
 const userStore = useUserStore();
 
@@ -216,7 +216,7 @@ function onModalCancel() {
         <ProfileBase v-if="tabsValue === 'basic'" />
         <ProfilePasswordSetting v-if="tabsValue === 'password'" />
         <ProfileLoginLog v-if="tabsValue === 'loginLog'" />
-        <ProfileUpdateLog v-if="tabsValue === 'updateLog'" />
+        <ProfileVersionLog v-if="tabsValue === 'versionLog'" />
       </template>
     </Profile>
 

@@ -16,11 +16,14 @@ import com.travis.infrastructure.framework.logging.core.constant.LogKeys;
 import com.travis.infrastructure.framework.logging.core.enums.AccessLogger;
 import com.travis.infrastructure.framework.logging.core.enums.LogType;
 import com.travis.infrastructure.framework.logging.core.util.DevLoggerUtil;
+import com.travis.infrastructure.framework.web.core.event.DesensitizeFailureEvent;
 import com.travis.infrastructure.framework.web.core.util.ServletUtil;
 import com.travis.infrastructure.framework.web.core.util.UserAgentUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -45,6 +48,8 @@ import org.springframework.web.util.ContentCachingResponseWrapper;
 /** 访问日志过滤器 */
 @Slf4j
 public class AccessLogFilter extends OncePerRequestFilter {
+
+    private static final int MAX_STACK_TRACE_LENGTH = 16000;
 
     private final HandlerExceptionResolver handlerExceptionResolver;
     private final RequestMappingHandlerMapping requestMappingHandlerMapping;
@@ -103,7 +108,7 @@ public class AccessLogFilter extends OncePerRequestFilter {
             var userAgent = UserAgentUtil.getCurrentUserAgentInfo(request);
             var platfromType = userAgent.getOs();
             var browser = userAgent.getBrowser();
-            var apiCost = (System.currentTimeMillis() - beginTime) + " ms";
+            var apiCost = System.currentTimeMillis() - beginTime;
             var requestParams = desensitizeRequestParams(request, handlerMethod);
             var requestBody = desensitizeRequestBody(request, handlerMethod);
             var apiResult = desensitizeResponseBody(response);
@@ -186,11 +191,39 @@ public class AccessLogFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception e) {
-            log.warn("Access log body 脱敏失败", e);
+            // 脱敏失败：记录原始请求体，发布事件写入错误日志
+            log.warn("Access log body 脱敏失败, requestUrl={}", request.getRequestURI(), e);
+            publishDesensitizeFailureEvent(request, e);
         }
 
         // 没有 @RequestBody 或脱敏失败：原样记录 body（有数据就记，别吞掉）
         return rawBody;
+    }
+
+    /** 发布脱敏失败事件，由业务模块监听并写入错误日志 */
+    private void publishDesensitizeFailureEvent(HttpServletRequest request, Exception e) {
+        try {
+            var event =
+                    new DesensitizeFailureEvent(
+                            this,
+                            request.getRequestURI(),
+                            request.getMethod(),
+                            e.getMessage(),
+                            e.getClass().getName(),
+                            stackTrace(e));
+            SpringUtil.publishEvent(event);
+        } catch (Exception ex) {
+            log.error("发布脱敏失败事件异常", ex);
+        }
+    }
+
+    private String stackTrace(Throwable exception) {
+        var writer = new StringWriter();
+        exception.printStackTrace(new PrintWriter(writer));
+        var stackTrace = writer.toString();
+        return stackTrace.length() <= MAX_STACK_TRACE_LENGTH
+                ? stackTrace
+                : stackTrace.substring(0, MAX_STACK_TRACE_LENGTH);
     }
 
     /**
@@ -218,7 +251,8 @@ public class AccessLogFilter extends OncePerRequestFilter {
 
             return result;
         } catch (Exception e) {
-            log.warn("Access log params 脱敏失败", e);
+            log.warn("Access log params 脱敏失败, requestUrl={}", request.getRequestURI(), e);
+            publishDesensitizeFailureEvent(request, e);
             return rawParams;
         }
     }

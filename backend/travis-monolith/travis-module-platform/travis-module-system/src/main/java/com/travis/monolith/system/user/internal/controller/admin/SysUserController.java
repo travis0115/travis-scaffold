@@ -1,7 +1,11 @@
 package com.travis.monolith.system.user.internal.controller.admin;
 
+import com.travis.infrastructure.common.logging.annotation.OperationLog;
+import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
+import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmitNamespace;
 import com.travis.monolith.system.user.api.request.ChangePasswordReq;
 import com.travis.monolith.system.user.api.request.ResetPasswordReq;
 import com.travis.monolith.system.user.api.request.SysUserPageReq;
@@ -25,6 +29,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/system/user")
 @RequiredArgsConstructor
 @Validated
+@OperationLogModule("用户管理")
+@NoRepeatSubmitNamespace("system:user")
 public class SysUserController {
 
     /** 用户管理服务 */
@@ -58,6 +64,8 @@ public class SysUserController {
      * @param req 用户信息
      * @return 新建用户ID
      */
+    @OperationLog(action = "新增用户")
+    @NoRepeatSubmit
     @PostMapping
     public ApiResponse<Long> add(@RequestBody @Valid SysUserReq req) {
         return ApiResponse.success(userService.create(req));
@@ -70,6 +78,8 @@ public class SysUserController {
      * @param req 用户信息
      * @return 空响应
      */
+    @OperationLog(action = "更新用户")
+    @NoRepeatSubmit
     @PutMapping("/{id}")
     public ApiResponse<Void> update(@PathVariable Long id, @RequestBody @Valid SysUserReq req) {
         userService.update(id, req);
@@ -82,6 +92,8 @@ public class SysUserController {
      * @param id 用户ID
      * @return 空响应
      */
+    @OperationLog(action = "删除用户")
+    @NoRepeatSubmit
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         userService.deleteById(id);
@@ -94,6 +106,8 @@ public class SysUserController {
      * @param req 用户角色分配请求
      * @return 空响应
      */
+    @OperationLog(action = "分配用户角色")
+    @NoRepeatSubmit
     @PostMapping("/roles")
     public ApiResponse<Void> assignRoles(@RequestBody @Valid SysUserRoleReq req) {
         userService.assignRoles(req);
@@ -106,6 +120,8 @@ public class SysUserController {
      * @param req 个人资料请求
      * @return 空响应
      */
+    @OperationLog(action = "修改个人资料")
+    @NoRepeatSubmit
     @PutMapping("/profile")
     public ApiResponse<Void> updateProfile(@RequestBody @Valid UserProfileReq req) {
         userService.updateProfile(req);
@@ -118,6 +134,8 @@ public class SysUserController {
      * @param req 头像更新请求
      * @return 空响应
      */
+    @OperationLog(action = "修改头像")
+    @NoRepeatSubmit
     @PutMapping("/avatar")
     public ApiResponse<Void> updateAvatar(@RequestBody @Valid UpdateAvatarReq req) {
         userService.updateAvatar(req);
@@ -130,6 +148,8 @@ public class SysUserController {
      * @param req 修改密码请求
      * @return 空响应
      */
+    @OperationLog(action = "修改密码", recordRequest = false, recordResponse = false)
+    @NoRepeatSubmit
     @PutMapping("/change-password")
     public ApiResponse<Void> changePassword(@RequestBody @Valid ChangePasswordReq req) {
         userService.changePassword(req);
@@ -143,6 +163,8 @@ public class SysUserController {
      * @param req 重置密码请求（可选指定新密码，不指定则自动生成随机密码）
      * @return 最终使用的密码（明文，供管理员转达用户）
      */
+    @OperationLog(action = "重置用户密码", recordRequest = false, recordResponse = false)
+    @NoRepeatSubmit
     @PutMapping("/{id}/reset-password")
     public ApiResponse<String> resetPassword(
             @PathVariable Long id, @RequestBody(required = false) ResetPasswordReq req) {

@@ -10,6 +10,8 @@ import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.monolith.system.common.api.SystemErrorCode;
 import com.travis.monolith.system.role.api.request.SysRoleMenuReq;
+import com.travis.monolith.system.role.api.request.SysRolePageReq;
+import com.travis.monolith.system.role.api.request.SysRoleReq;
 import com.travis.monolith.system.role.api.response.SysRoleResp;
 import com.travis.monolith.system.role.internal.converter.SysRoleConverter;
 import com.travis.monolith.system.role.internal.entity.SysRole;
@@ -18,8 +20,6 @@ import com.travis.monolith.system.role.internal.entity.SysUserRole;
 import com.travis.monolith.system.role.internal.mapper.SysRoleMapper;
 import com.travis.monolith.system.role.internal.mapper.SysRoleMenuMapper;
 import com.travis.monolith.system.role.internal.mapper.SysUserRoleMapper;
-import com.travis.monolith.system.role.internal.request.SysRolePageReq;
-import com.travis.monolith.system.role.internal.request.SysRoleReq;
 import com.travis.monolith.system.role.internal.service.SysRoleService;
 import java.util.List;
 import java.util.Map;
@@ -273,6 +273,20 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
                 .stream()
                 .map(SysUserRole::getRoleId)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Long> getUserIdsByRoleIds(List<Long> roleIds) {
+        if (roleIds == null || roleIds.isEmpty()) {
+            return List.of();
+        }
+        return userRoleMapper
+                .selectList(
+                        new LambdaQueryWrapperX<SysUserRole>().in(SysUserRole::getRoleId, roleIds))
+                .stream()
+                .map(SysUserRole::getUserId)
+                .distinct()
+                .toList();
     }
 
     /** 根据用户ID查询角色编码列表 */

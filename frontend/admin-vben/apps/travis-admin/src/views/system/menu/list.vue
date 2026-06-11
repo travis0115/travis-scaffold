@@ -42,9 +42,8 @@ const [Grid, gridApi] = useVbenVxeGrid({
       ajax: {
         query: async () => {
           const result = await getMenuTree();
-          // 保存扁平化后的菜单数据，用于判断上移/下移按钮状态
-          const records = result.records || result;
-          gridData.value = Array.isArray(records) ? records : [];
+          // 保存菜单数据，用于判断上移/下移按钮状态
+          gridData.value = result;
           return result;
         },
       },

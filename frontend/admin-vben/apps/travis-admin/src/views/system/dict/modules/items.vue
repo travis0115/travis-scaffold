@@ -22,6 +22,7 @@ const dictName = ref('');
 const columns = [
   { title: $t('system.dict.item.label'), dataIndex: 'label', width: 150 },
   { title: $t('system.dict.item.value'), dataIndex: 'value', width: 120 },
+  { title: $t('system.dict.item.tagStyle'), dataIndex: 'tagStyle', width: 100 },
   { title: $t('system.dict.item.sort'), dataIndex: 'sort', width: 80 },
   { title: $t('system.dict.item.status'), dataIndex: 'status', width: 100 },
   { title: $t('system.dict.item.remark'), dataIndex: 'remark', ellipsis: true },

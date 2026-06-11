@@ -50,6 +50,8 @@
         <hutool.version>5.8.44</hutool.version>
         <ip2region.version>3.3.7</ip2region.version>
         <geoip2.version>5.1.0</geoip2.version>
+        <jsoup.version>1.21.2</jsoup.version>
+        <xxl-job.version>3.4.0</xxl-job.version>
 
     </properties>
 
@@ -128,6 +130,17 @@
                 <groupId>com.travis</groupId>
                 <artifactId>travis-spring-boot-starter-webmvc</artifactId>
                 <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.travis</groupId>
+                <artifactId>travis-spring-boot-starter-xxl-job</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.xuxueli</groupId>
+                <artifactId>xxl-job-core</artifactId>
+                <version>${xxl-job.version}</version>
             </dependency>
 
             <!-- spring-aop -->
@@ -231,6 +244,11 @@
                 <groupId>com.maxmind.geoip2</groupId>
                 <artifactId>geoip2</artifactId>
                 <version>${geoip2.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jsoup</groupId>
+                <artifactId>jsoup</artifactId>
+                <version>${jsoup.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

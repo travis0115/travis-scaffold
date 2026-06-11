@@ -19,4 +19,7 @@ public interface SysOperationLogService extends IService<SysOperationLog> {
      * @return 分页结果
      */
     PageResp<SysOperationLog> page(SysOperationLogPageReq req);
+
+    /** 使用独立事务保存操作日志。 */
+    void saveOperation(SysOperationLog operationLog);
 }

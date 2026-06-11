@@ -1,5 +1,6 @@
 package com.travis.monolith.system.file.internal.service;
 
+import com.travis.monolith.system.file.internal.entity.SysFileStorageConfig;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -15,5 +16,7 @@ public interface FileStorageStrategy {
      * @param file 文件
      * @return 文件相对路径，如 /files/2026-06-02/abc.jpg
      */
-    String upload(MultipartFile file);
+    String getStorageType();
+
+    StorageResult upload(MultipartFile file, SysFileStorageConfig config);
 }

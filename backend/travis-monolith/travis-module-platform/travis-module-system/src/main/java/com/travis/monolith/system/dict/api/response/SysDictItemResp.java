@@ -27,6 +27,9 @@ public class SysDictItemResp {
     /** 字典项值（实际存储值） */
     private String value;
 
+    /** 展示样式 */
+    private String tagStyle;
+
     /** 排序号 */
     private Integer sort;
 

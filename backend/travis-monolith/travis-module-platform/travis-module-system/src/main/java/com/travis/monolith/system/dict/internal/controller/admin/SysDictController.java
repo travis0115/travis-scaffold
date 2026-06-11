@@ -1,11 +1,15 @@
 package com.travis.monolith.system.dict.internal.controller.admin;
 
+import com.travis.infrastructure.common.logging.annotation.OperationLog;
+import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
+import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmitNamespace;
+import com.travis.monolith.system.dict.api.request.SysDictItemReq;
+import com.travis.monolith.system.dict.api.request.SysDictReq;
 import com.travis.monolith.system.dict.api.response.SysDictItemResp;
 import com.travis.monolith.system.dict.internal.entity.SysDict;
-import com.travis.monolith.system.dict.internal.request.SysDictItemReq;
-import com.travis.monolith.system.dict.internal.request.SysDictReq;
 import com.travis.monolith.system.dict.internal.service.SysDictService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -22,6 +26,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/system/dict")
 @RequiredArgsConstructor
 @Validated
+@OperationLogModule("字典管理")
+@NoRepeatSubmitNamespace("system:dict")
 public class SysDictController {
 
     /** 字典管理服务 */
@@ -61,6 +67,8 @@ public class SysDictController {
      * @param req 字典类型信息
      * @return 空响应
      */
+    @OperationLog(action = "新增字典")
+    @NoRepeatSubmit
     @PostMapping
     public ApiResponse<Void> add(@RequestBody @Valid SysDictReq req) {
         dictService.create(req);
@@ -74,6 +82,8 @@ public class SysDictController {
      * @param req 字典类型信息
      * @return 空响应
      */
+    @OperationLog(action = "更新字典")
+    @NoRepeatSubmit
     @PutMapping("/{id}")
     public ApiResponse<Void> update(@PathVariable Long id, @RequestBody @Valid SysDictReq req) {
         dictService.update(id, req);
@@ -86,6 +96,8 @@ public class SysDictController {
      * @param id 字典ID
      * @return 空响应
      */
+    @OperationLog(action = "删除字典")
+    @NoRepeatSubmit
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         dictService.deleteById(id);
@@ -109,6 +121,8 @@ public class SysDictController {
      * @param req 字典数据项信息
      * @return 空响应
      */
+    @OperationLog(action = "新增字典项")
+    @NoRepeatSubmit
     @PostMapping("/item")
     public ApiResponse<Void> createItem(@RequestBody @Valid SysDictItemReq req) {
         dictService.createItem(req);
@@ -122,6 +136,8 @@ public class SysDictController {
      * @param req 字典数据项信息
      * @return 空响应
      */
+    @OperationLog(action = "更新字典项")
+    @NoRepeatSubmit
     @PutMapping("/item/{id}")
     public ApiResponse<Void> updateItem(
             @PathVariable Long id, @RequestBody @Valid SysDictItemReq req) {
@@ -135,6 +151,8 @@ public class SysDictController {
      * @param id 数据项ID
      * @return 空响应
      */
+    @OperationLog(action = "删除字典项")
+    @NoRepeatSubmit
     @DeleteMapping("/item/{id}")
     public ApiResponse<Void> deleteItemById(@PathVariable Long id) {
         dictService.deleteItemById(id);

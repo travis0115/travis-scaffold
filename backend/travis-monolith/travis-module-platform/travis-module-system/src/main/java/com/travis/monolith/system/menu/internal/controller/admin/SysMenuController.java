@@ -1,8 +1,12 @@
 package com.travis.monolith.system.menu.internal.controller.admin;
 
+import com.travis.infrastructure.common.logging.annotation.OperationLog;
+import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
 import com.travis.infrastructure.common.web.model.ApiResponse;
+import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
+import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmitNamespace;
+import com.travis.monolith.system.menu.api.request.SysMenuReq;
 import com.travis.monolith.system.menu.api.response.SysMenuResp;
-import com.travis.monolith.system.menu.internal.request.SysMenuReq;
 import com.travis.monolith.system.menu.internal.service.SysMenuService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -19,6 +23,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/system/menu")
 @RequiredArgsConstructor
 @Validated
+@OperationLogModule("菜单管理")
+@NoRepeatSubmitNamespace("system:menu")
 public class SysMenuController {
 
     /** 菜单管理服务 */
@@ -51,6 +57,8 @@ public class SysMenuController {
      * @param req 菜单信息
      * @return 空响应
      */
+    @OperationLog(action = "新增菜单")
+    @NoRepeatSubmit
     @PostMapping
     public ApiResponse<Void> add(@RequestBody @Valid SysMenuReq req) {
         menuService.create(req);
@@ -64,6 +72,8 @@ public class SysMenuController {
      * @param req 菜单信息
      * @return 空响应
      */
+    @OperationLog(action = "更新菜单")
+    @NoRepeatSubmit
     @PutMapping("/{id}")
     public ApiResponse<Void> update(@PathVariable Long id, @RequestBody @Valid SysMenuReq req) {
         menuService.update(id, req);
@@ -76,6 +86,8 @@ public class SysMenuController {
      * @param id 菜单ID
      * @return 空响应
      */
+    @OperationLog(action = "删除菜单")
+    @NoRepeatSubmit
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         menuService.deleteById(id);
@@ -88,6 +100,8 @@ public class SysMenuController {
      * @param id 菜单ID
      * @return 空响应
      */
+    @OperationLog(action = "上移菜单")
+    @NoRepeatSubmit
     @PutMapping("/{id}/move-up")
     public ApiResponse<Void> moveUp(@PathVariable Long id) {
         menuService.moveUp(id);
@@ -100,6 +114,8 @@ public class SysMenuController {
      * @param id 菜单ID
      * @return 空响应
      */
+    @OperationLog(action = "下移菜单")
+    @NoRepeatSubmit
     @PutMapping("/{id}/move-down")
     public ApiResponse<Void> moveDown(@PathVariable Long id) {
         menuService.moveDown(id);

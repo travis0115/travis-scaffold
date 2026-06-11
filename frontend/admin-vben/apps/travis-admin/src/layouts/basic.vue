@@ -5,9 +5,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
 import { AuthenticationLoginExpiredModal } from '@vben/common-ui';
-import { VBEN_DOC_URL, VBEN_GITHUB_URL } from '@vben/constants';
 import { useWatermark } from '@vben/hooks';
-import { BookOpenText, CircleHelp, SvgGithubIcon } from '@vben/icons';
 import {
   BasicLayout,
   LockScreen,
@@ -16,64 +14,23 @@ import {
 } from '@vben/layouts';
 import { preferences, usePreferences } from '@vben/preferences';
 import { useAccessStore, useUserStore } from '@vben/stores';
-import { openWindow } from '@vben/utils';
+import { formatDateTime } from '@vben/utils';
 
+import {
+  clearMessages,
+  deleteMessage,
+  getRecentMessages,
+  getUnreadMessageCount,
+  markAllMessagesRead,
+  markMessageRead,
+} from '#/api';
 import { $t } from '#/locales';
 import { useAuthStore } from '#/store';
 import LoginForm from '#/views/_core/authentication/login.vue';
 
-const notifications = ref<NotificationItem[]>([
-  {
-    id: 1,
-    avatar: 'https://avatar.vercel.sh/vercel.svg?text=VB',
-    date: '3小时前',
-    isRead: true,
-    message: '描述信息描述信息描述信息',
-    title: '收到了 14 份新周报',
-  },
-  {
-    id: 2,
-    avatar: 'https://avatar.vercel.sh/1',
-    date: '刚刚',
-    isRead: false,
-    message: '描述信息描述信息描述信息',
-    title: '朱偏右 回复了你',
-  },
-  {
-    id: 3,
-    avatar: 'https://avatar.vercel.sh/1',
-    date: '2024-01-01',
-    isRead: false,
-    message: '描述信息描述信息描述信息',
-    title: '曲丽丽 评论了你',
-  },
-  {
-    id: 4,
-    avatar: 'https://avatar.vercel.sh/satori',
-    date: '1天前',
-    isRead: false,
-    message: '描述信息描述信息描述信息',
-    title: '代办提醒',
-  },
-  {
-    id: 5,
-    avatar: 'https://avatar.vercel.sh/satori',
-    date: '1天前',
-    isRead: false,
-    message: '描述信息描述信息描述信息',
-    title: '跳转Workspace示例',
-    link: '/workspace',
-  },
-  {
-    id: 6,
-    avatar: 'https://avatar.vercel.sh/satori',
-    date: '1天前',
-    isRead: false,
-    message: '描述信息描述信息描述信息',
-    title: '跳转外部链接示例',
-    link: 'https://doc.vben.pro',
-  },
-]);
+const notifications = ref<NotificationItem[]>([]);
+const unreadCount = ref(0);
+let notificationTimer: ReturnType<typeof setInterval> | undefined;
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -81,9 +38,7 @@ const authStore = useAuthStore();
 const accessStore = useAccessStore();
 const { destroyWatermark, updateWatermark } = useWatermark();
 const { isDark } = usePreferences();
-const showDot = computed(() =>
-  notifications.value.some((item) => !item.isRead),
-);
+const showDot = computed(() => unreadCount.value > 0);
 
 const menus = computed(() => [
   {
@@ -109,11 +64,13 @@ function handleClearPreferencesLogout() {
   handleLogout();
 }
 
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener(
     'vben:clear-preferences-and-logout',
     handleClearPreferencesLogout,
   );
+  await loadNotifications();
+  notificationTimer = setInterval(loadNotifications, 60_000);
 });
 
 onUnmounted(() => {
@@ -121,31 +78,50 @@ onUnmounted(() => {
     'vben:clear-preferences-and-logout',
     handleClearPreferencesLogout,
   );
+  if (notificationTimer) clearInterval(notificationTimer);
 });
 
-function handleNoticeClear() {
-  notifications.value = [];
+async function loadNotifications() {
+  const [messages, unread] = await Promise.all([
+    getRecentMessages(),
+    getUnreadMessageCount(),
+  ]);
+  notifications.value = messages.map((item) => ({
+    id: item.id,
+    avatar: preferences.app.defaultAvatar,
+    date: formatDateTime(item.publishTime || item.createTime),
+    isRead: item.readStatus === 1,
+    link: '/system/my-message',
+    message: item.content,
+    title: item.title,
+  }));
+  unreadCount.value = unread.count;
 }
 
-function markRead(id: number | string) {
-  const item = notifications.value.find((item) => item.id === id);
-  if (item) {
-    item.isRead = true;
-  }
+async function handleNoticeClear() {
+  await clearMessages();
+  await loadNotifications();
 }
 
-function remove(id: number | string) {
-  notifications.value = notifications.value.filter((item) => item.id !== id);
+async function markRead(id: number | string) {
+  await markMessageRead(id);
+  await loadNotifications();
 }
 
-function handleMakeAll() {
-  notifications.value.forEach((item) => (item.isRead = true));
+async function remove(id: number | string) {
+  await deleteMessage(id);
+  await loadNotifications();
 }
 
-const viewAll = () => {};
+async function handleMakeAll() {
+  await markAllMessagesRead();
+  await loadNotifications();
+}
 
-const handleClick = (item: NotificationItem) => {
-  // 如果通知项有链接，点击时跳转
+const viewAll = () => router.push('/system/my-message');
+
+const handleClick = async (item: NotificationItem) => {
+  if (item.id && !item.isRead) await markRead(item.id);
   if (item.link) {
     navigateTo(item.link, item.query, item.state);
   }

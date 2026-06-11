@@ -21,6 +21,10 @@
             <groupId>com.travis</groupId>
             <artifactId>travis-module-system</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.travis</groupId>
+            <artifactId>travis-module-ops</artifactId>
+        </dependency>
 
         <!-- 消息队列（提供 MessagePublisher 的 RocketMQ 实现） -->
         <dependency>

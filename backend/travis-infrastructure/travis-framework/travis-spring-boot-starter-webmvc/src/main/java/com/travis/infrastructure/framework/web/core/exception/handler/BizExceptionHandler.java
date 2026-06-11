@@ -2,8 +2,8 @@ package com.travis.infrastructure.framework.web.core.exception.handler;
 
 import com.travis.infrastructure.common.web.constant.ExceptionHandlerOrder;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
+import com.travis.infrastructure.common.web.exception.ErrorCodeException;
 import com.travis.infrastructure.common.web.model.ApiResponse;
-import com.travis.infrastructure.framework.web.core.exception.BizException;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
@@ -22,8 +22,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class BizExceptionHandler {
 
     /** 业务异常 */
-    @ExceptionHandler(BizException.class)
-    public ApiResponse<?> handleBizException(BizException ex) {
+    @ExceptionHandler(ErrorCodeException.class)
+    public ApiResponse<?> handleBizException(ErrorCodeException ex) {
         log.warn("业务异常: {}", ex.getErrorCode().getMsg(), ex);
         return ApiResponse.error(ex.getErrorCode(), ex.getArgs());
     }

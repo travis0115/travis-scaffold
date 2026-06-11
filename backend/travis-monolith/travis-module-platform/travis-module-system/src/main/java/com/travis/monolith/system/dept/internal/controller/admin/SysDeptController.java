@@ -1,9 +1,13 @@
 package com.travis.monolith.system.dept.internal.controller.admin;
 
+import com.travis.infrastructure.common.logging.annotation.OperationLog;
+import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
 import com.travis.infrastructure.common.web.model.ApiResponse;
+import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
+import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmitNamespace;
+import com.travis.monolith.system.dept.api.request.SysDeptPageReq;
+import com.travis.monolith.system.dept.api.request.SysDeptReq;
 import com.travis.monolith.system.dept.api.response.SysDeptResp;
-import com.travis.monolith.system.dept.internal.request.SysDeptPageReq;
-import com.travis.monolith.system.dept.internal.request.SysDeptReq;
 import com.travis.monolith.system.dept.internal.service.SysDeptService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -20,6 +24,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/system/dept")
 @RequiredArgsConstructor
 @Validated
+@OperationLogModule("部门管理")
+@NoRepeatSubmitNamespace("system:dept")
 public class SysDeptController {
 
     /** 部门管理服务 */
@@ -53,6 +59,8 @@ public class SysDeptController {
      * @param req 部门信息
      * @return 空响应
      */
+    @OperationLog(action = "新增部门")
+    @NoRepeatSubmit
     @PostMapping
     public ApiResponse<Void> add(@RequestBody @Valid SysDeptReq req) {
         deptService.create(req);
@@ -66,6 +74,8 @@ public class SysDeptController {
      * @param req 部门信息
      * @return 空响应
      */
+    @OperationLog(action = "更新部门")
+    @NoRepeatSubmit
     @PutMapping("/{id}")
     public ApiResponse<Void> update(@PathVariable Long id, @RequestBody @Valid SysDeptReq req) {
         deptService.update(id, req);
@@ -78,6 +88,8 @@ public class SysDeptController {
      * @param id 部门ID
      * @return 空响应
      */
+    @OperationLog(action = "删除部门")
+    @NoRepeatSubmit
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         deptService.deleteById(id);

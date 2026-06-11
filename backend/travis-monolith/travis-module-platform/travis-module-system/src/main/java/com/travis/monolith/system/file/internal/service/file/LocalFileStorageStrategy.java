@@ -2,7 +2,9 @@ package com.travis.monolith.system.file.internal.service.file;
 
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
+import com.travis.monolith.system.file.internal.entity.SysFileStorageConfig;
 import com.travis.monolith.system.file.internal.service.FileStorageStrategy;
+import com.travis.monolith.system.file.internal.service.StorageResult;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,8 +13,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,22 +24,23 @@ import org.springframework.web.multipart.MultipartFile;
  */
 @Slf4j
 @Component
-@ConditionalOnProperty(
-        name = "travis.web.file.storage-type",
-        havingValue = "local",
-        matchIfMissing = true)
 public class LocalFileStorageStrategy implements FileStorageStrategy {
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-    @Value("${travis.web.file.resource-location:${user.home}/data/uploads}")
-    private String resourceLocation;
+    private final Environment environment;
 
-    @Value("${travis.web.file.resource-handler:/files/**}")
-    private String resourceHandler;
+    public LocalFileStorageStrategy(Environment environment) {
+        this.environment = environment;
+    }
 
     @Override
-    public String upload(MultipartFile file) {
+    public String getStorageType() {
+        return "LOCAL";
+    }
+
+    @Override
+    public StorageResult upload(MultipartFile file, SysFileStorageConfig config) {
         if (file == null || file.isEmpty()) {
             throw new BizException(CommonErrorCode.BAD_REQUEST);
         }
@@ -55,7 +57,7 @@ public class LocalFileStorageStrategy implements FileStorageStrategy {
         String filename = UUID.randomUUID().toString().replace("-", "") + extension;
 
         // 创建目标目录
-        Path dirPath = Paths.get(resourceLocation, datePath);
+        Path dirPath = Paths.get(environment.resolvePlaceholders(config.getBasePath()), datePath);
         try {
             Files.createDirectories(dirPath);
         } catch (IOException e) {
@@ -73,10 +75,7 @@ public class LocalFileStorageStrategy implements FileStorageStrategy {
         }
 
         // 返回相对路径（去除resourceHandler中的/**通配符），调用方按需拼接域名
-        String basePath =
-                resourceHandler.endsWith("/**")
-                        ? resourceHandler.substring(0, resourceHandler.length() - 3)
-                        : resourceHandler;
-        return basePath + "/" + datePath + "/" + filename;
+        String accessPrefix = config.getAccessPrefix().replaceAll("/+$", "");
+        return new StorageResult(accessPrefix + "/" + datePath + "/" + filename, filename);
     }
 }
