@@ -119,6 +119,12 @@ function onCreate() {
   formDrawerApi.setData({}).open();
 }
 
+function onToggleMenu(row: SystemMenuApi.SysMenu) {
+  if (row.children?.length) {
+    gridApi.grid.toggleTreeExpand(row);
+  }
+}
+
 function onDelete(row: SystemMenuApi.SysMenu) {
   const hideLoading = message.loading({
     content: $t('ui.actionMessage.deleting', [row.menuName]),
@@ -140,20 +146,14 @@ function onDelete(row: SystemMenuApi.SysMenu) {
 
 function onMoveUp(row: SystemMenuApi.SysMenu) {
   moveUpMenu(row.id).then(() => {
-    message.success({
-      content: `「${row.menuName}」已上移`,
-      key: 'action_process_msg',
-    });
+    message.success(`「${row.menuName}」已上移`);
     onRefresh();
   });
 }
 
 function onMoveDown(row: SystemMenuApi.SysMenu) {
   moveDownMenu(row.id).then(() => {
-    message.success({
-      content: `「${row.menuName}」已下移`,
-      key: 'action_process_msg',
-    });
+    message.success(`「${row.menuName}」已下移`);
     onRefresh();
   });
 }
@@ -169,7 +169,13 @@ function onMoveDown(row: SystemMenuApi.SysMenu) {
         </Button>
       </template>
       <template #title="{ row }">
-        <div class="flex w-full items-center gap-1">
+        <component
+          :is="row.children?.length ? 'button' : 'div'"
+          class="flex w-full items-center gap-1 text-left"
+          :class="{ 'cursor-pointer': row.children?.length }"
+          type="button"
+          @click="onToggleMenu(row)"
+        >
           <div class="size-5 shrink-0">
             <IconifyIcon
               v-if="row.menuType === 2"
@@ -183,7 +189,7 @@ function onMoveDown(row: SystemMenuApi.SysMenu) {
             />
           </div>
           <span class="flex-auto">{{ row.menuName }}</span>
-        </div>
+        </component>
       </template>
     </Grid>
   </Page>

@@ -85,15 +85,9 @@ const schema: VbenFormSchema[] = [
   },
   {
     component: 'Input',
-    fieldName: 'menuTitle',
-    label: $t('system.menu.menuTitle'),
-    help: $t('system.menu.menuTitle'),
-  },
-  {
-    component: 'Input',
     dependencies: {
       show: (values) => {
-        return [0, 1, 3, 4].includes(values.menuType);
+        return [0, 1].includes(values.menuType);
       },
       triggerFields: ['menuType'],
     },
@@ -107,7 +101,7 @@ const schema: VbenFormSchema[] = [
     },
     dependencies: {
       show: (values) => {
-        return [0, 1, 3, 4].includes(values.menuType);
+        return [0, 1].includes(values.menuType);
       },
       triggerFields: ['menuType'],
     },
@@ -115,29 +109,63 @@ const schema: VbenFormSchema[] = [
     label: $t('system.menu.icon'),
   },
   {
-    component: 'Input',
+    component: 'RadioGroup',
+    componentProps: {
+      options: [
+        { label: '否', value: 0 },
+        { label: '是', value: 1 },
+      ],
+    },
+    defaultValue: 0,
     dependencies: {
-      rules: (values) => {
-        return values.menuType === 1 ? 'required' : null;
-      },
-      show: (values) => {
-        return values.menuType === 1;
-      },
+      show: (values) => values.menuType === 1,
       triggerFields: ['menuType'],
     },
-    fieldName: 'component',
-    label: $t('system.menu.component'),
+    fieldName: 'isExternal',
+    label: '是否外链',
   },
   {
     component: 'Input',
     dependencies: {
-      show: (values) => {
-        return [3, 4].includes(values.menuType);
-      },
-      triggerFields: ['menuType'],
+      rules: (values) =>
+        values.menuType === 1 && values.isExternal === 1 ? 'required' : null,
+      show: (values) => values.menuType === 1 && values.isExternal === 1,
+      triggerFields: ['menuType', 'isExternal'],
     },
     fieldName: 'linkSrc',
-    label: $t('system.menu.linkSrc'),
+    label: '外链地址',
+  },
+  {
+    component: 'RadioGroup',
+    componentProps: {
+      options: [
+        { label: '内嵌', value: 'iframe' },
+        { label: '新窗口', value: 'newWindow' },
+      ],
+    },
+    defaultValue: 'iframe',
+    dependencies: {
+      show: (values) => values.menuType === 1 && values.isExternal === 1,
+      triggerFields: ['menuType', 'isExternal'],
+    },
+    fieldName: 'externalOpenMode',
+    label: '打开方式',
+  },
+  {
+    component: 'Input',
+    dependencies: {
+      rules: (values) => {
+        return values.menuType === 1 && values.isExternal !== 1
+          ? 'required'
+          : null;
+      },
+      show: (values) => {
+        return values.menuType === 1 && values.isExternal !== 1;
+      },
+      triggerFields: ['menuType', 'isExternal'],
+    },
+    fieldName: 'component',
+    label: $t('system.menu.component'),
   },
   {
     component: 'Input',
@@ -154,6 +182,12 @@ const schema: VbenFormSchema[] = [
     label: $t('system.menu.perms'),
   },
   {
+    component: 'InputNumber',
+    defaultValue: 0,
+    fieldName: 'sort',
+    label: $t('system.menu.sort'),
+  },
+  {
     component: 'RadioGroup',
     componentProps: {
       buttonStyle: 'solid',
@@ -165,13 +199,8 @@ const schema: VbenFormSchema[] = [
     },
     defaultValue: 1,
     fieldName: 'status',
+    formItemClass: 'col-span-2 md:col-span-2',
     label: $t('system.menu.status'),
-  },
-  {
-    component: 'InputNumber',
-    defaultValue: 0,
-    fieldName: 'sort',
-    label: $t('system.menu.sort'),
   },
   {
     component: 'Divider',
@@ -209,7 +238,7 @@ const schema: VbenFormSchema[] = [
     component: 'Checkbox',
     dependencies: {
       show: (values) => {
-        return [1, 3].includes(values.menuType);
+        return values.menuType === 1;
       },
       triggerFields: ['menuType'],
     },
@@ -254,7 +283,7 @@ const schema: VbenFormSchema[] = [
     component: 'Checkbox',
     dependencies: {
       show: (values) => {
-        return ![2, 4].includes(values.menuType);
+        return values.menuType !== 2;
       },
       triggerFields: ['menuType'],
     },
@@ -269,7 +298,7 @@ const schema: VbenFormSchema[] = [
     component: 'Checkbox',
     dependencies: {
       show: (values) => {
-        return ![2, 4].includes(values.menuType);
+        return values.menuType !== 2;
       },
       triggerFields: ['menuType'],
     },
@@ -277,21 +306,6 @@ const schema: VbenFormSchema[] = [
     renderComponentContent() {
       return {
         default: () => $t('system.menu.hideInTab'),
-      };
-    },
-  },
-  {
-    component: 'Checkbox',
-    dependencies: {
-      show: (values) => {
-        return values.menuType === 4;
-      },
-      triggerFields: ['menuType'],
-    },
-    fieldName: '_openInNewWindow',
-    renderComponentContent() {
-      return {
-        default: () => '在新窗口打开',
       };
     },
   },
@@ -332,20 +346,15 @@ const [Drawer, drawerApi] = useVbenDrawer({
           _hideChildrenInMenu: metaObj.hideChildrenInMenu ?? false,
           _hideInBreadcrumb: metaObj.hideInBreadcrumb ?? false,
           _hideInTab: metaObj.hideInTab ?? false,
-          _openInNewWindow: metaObj.openInNewWindow ?? false,
+          externalOpenMode: metaObj.iframeSrc ? 'iframe' : 'newWindow',
+          isExternal: metaObj.iframeSrc || metaObj.link ? 1 : 0,
         };
 
-        // 从 meta 推断前端菜单类型
         if (metaObj.iframeSrc && detail.menuType === 1) {
-          formValues.menuType = 3; // 内嵌
           formValues.linkSrc = metaObj.iframeSrc;
         } else if (metaObj.link && detail.menuType === 1) {
-          formValues.menuType = 4; // 外链
           formValues.linkSrc = metaObj.link;
         }
-
-        // 回填 menuTitle
-        formValues.menuTitle = detail.menuName;
 
         formApi.setValues(formValues);
       } else {
@@ -368,9 +377,9 @@ async function onSubmit() {
           _hideInMenu?: boolean;
           _hideInTab?: boolean;
           _keepAlive?: boolean;
-          _openInNewWindow?: boolean;
+          externalOpenMode?: 'iframe' | 'newWindow';
+          isExternal?: number;
           linkSrc?: string;
-          menuTitle?: string;
         }
       >();
 
@@ -382,7 +391,6 @@ async function onSubmit() {
     if (values._hideChildrenInMenu) metaObj.hideChildrenInMenu = true;
     if (values._hideInBreadcrumb) metaObj.hideInBreadcrumb = true;
     if (values._hideInTab) metaObj.hideInTab = true;
-    if (values._openInNewWindow) metaObj.openInNewWindow = true;
 
     // 清理开关未勾选的字段
     if (!values._keepAlive) delete metaObj.keepAlive;
@@ -391,20 +399,16 @@ async function onSubmit() {
     if (!values._hideChildrenInMenu) delete metaObj.hideChildrenInMenu;
     if (!values._hideInBreadcrumb) delete metaObj.hideInBreadcrumb;
     if (!values._hideInTab) delete metaObj.hideInTab;
-    if (!values._openInNewWindow) delete metaObj.openInNewWindow;
+    delete metaObj.openInNewWindow;
 
-    // 处理内嵌/外链类型
-    let actualMenuType = values.menuType;
-    if (values.menuType === 3) {
-      // 内嵌类型 → 存储为 menuType=1 + meta.iframeSrc
-      actualMenuType = 1 as any;
-      if (values.linkSrc) metaObj.iframeSrc = values.linkSrc;
-      delete metaObj.link;
-    } else if (values.menuType === 4) {
-      // 外链类型 → 存储为 menuType=1 + meta.link
-      actualMenuType = 1 as any;
-      if (values.linkSrc) metaObj.link = values.linkSrc;
-      delete metaObj.iframeSrc;
+    if (values.menuType === 1 && values.isExternal === 1) {
+      if (values.externalOpenMode === 'iframe') {
+        metaObj.iframeSrc = values.linkSrc;
+        delete metaObj.link;
+      } else {
+        metaObj.link = values.linkSrc;
+        delete metaObj.iframeSrc;
+      }
     } else {
       delete metaObj.iframeSrc;
       delete metaObj.link;
@@ -413,9 +417,13 @@ async function onSubmit() {
     const data: Partial<SystemMenuApi.SysMenu> = {
       ...values,
       parentId: values.parentId ?? 0,
-      menuType: actualMenuType as any,
-      menuName: values.menuTitle || values.menuName,
-      meta: Object.keys(metaObj).length > 0 ? JSON.stringify(metaObj) : undefined,
+      component:
+        values.menuType === 1 && values.isExternal !== 1
+          ? values.component || ''
+          : '',
+      menuType: values.menuType,
+      menuName: values.menuName,
+      meta: Object.keys(metaObj).length > 0 ? JSON.stringify(metaObj) : '{}',
     };
     // 移除内部辅助字段
     delete (data as any)._keepAlive;
@@ -424,9 +432,9 @@ async function onSubmit() {
     delete (data as any)._hideChildrenInMenu;
     delete (data as any)._hideInBreadcrumb;
     delete (data as any)._hideInTab;
-    delete (data as any)._openInNewWindow;
+    delete (data as any).externalOpenMode;
+    delete (data as any).isExternal;
     delete (data as any).linkSrc;
-    delete (data as any).menuTitle;
 
     try {
       await (formData.value?.id

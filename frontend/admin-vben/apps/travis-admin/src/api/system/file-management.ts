@@ -8,12 +8,18 @@ export namespace SystemFileApi {
   export interface FileInfo {
     [key: string]: any;
     createTime: string;
+    createBy?: number;
+    creatorName?: string;
+    extension?: string;
     fileName: string;
     id: number;
     mimeType?: string;
     originalName: string;
     path: string;
     size: number;
+    storageConfigId: number;
+    storageConfigName?: string;
+    storageType?: string;
     url: string;
   }
 

@@ -7,6 +7,4 @@ import com.travis.monolith.system.log.errorlog.internal.entity.SysErrorLog;
 
 public interface SysErrorLogService extends IService<SysErrorLog> {
     PageResp<SysErrorLog> page(SysErrorLogPageReq req);
-
-    void saveError(SysErrorLog errorLog);
 }

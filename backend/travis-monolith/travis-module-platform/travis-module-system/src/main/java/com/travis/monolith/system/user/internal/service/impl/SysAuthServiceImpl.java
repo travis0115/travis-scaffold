@@ -10,7 +10,6 @@ import com.travis.infrastructure.framework.web.core.model.UserAgentInfo;
 import com.travis.infrastructure.framework.web.core.util.IpUtil;
 import com.travis.infrastructure.framework.web.core.util.UserAgentUtil;
 import com.travis.monolith.system.common.api.SystemEvent;
-import com.travis.monolith.system.file.api.SysFileApi;
 import com.travis.monolith.system.menu.api.SysMenuApi;
 import com.travis.monolith.system.menu.api.response.VbenMenuResp;
 import com.travis.monolith.system.role.api.SysRoleApi;
@@ -39,9 +38,6 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Slf4j
 public class SysAuthServiceImpl implements SysAuthService {
-
-    /** 文件 API */
-    private final SysFileApi fileApi;
 
     /** 用户管理服务 */
     private final SysUserService userService;
@@ -136,7 +132,7 @@ public class SysAuthServiceImpl implements SysAuthService {
                 .id(user.getId())
                 .username(user.getUsername())
                 .nickname(user.getNickname())
-                .avatar(fileApi.getFileUrl(user.getAvatar()))
+                .avatar(user.getAvatar())
                 .email(user.getEmail())
                 .mobile(user.getMobile())
                 .roles(roleCodes)

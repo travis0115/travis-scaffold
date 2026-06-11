@@ -6,7 +6,7 @@ import { onMounted, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 
-import { Button, Form, FormItem, Input, InputNumber, message, Modal, RadioGroup, Select, Upload } from 'antdv-next';
+import { Button, Form, FormItem, Image, Input, InputNumber, message, Modal, RadioGroup, Select, Upload } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
@@ -106,6 +106,18 @@ onMounted(loadOptions);
         <Upload :custom-request="customRequest" :show-upload-list="false">
           <Button type="primary">上传文件</Button>
         </Upload>
+      </template>
+      <template #preview="{ row }">
+        <Image
+          v-if="row.mimeType?.startsWith('image/')"
+          :src="row.url"
+          :width="48"
+          :height="48"
+          class="object-cover"
+        />
+        <Button v-else type="link" :href="row.url" target="_blank">
+          预览
+        </Button>
       </template>
     </Grid>
     <Modal v-model:open="folderModalOpen" title="新增文件夹" @ok="saveFolder">

@@ -6,7 +6,6 @@ import type {
 import type { SystemUserApi } from '#/api';
 
 import { z } from '#/adapter/form';
-
 import { getRoleList } from '#/api';
 import { isDeptEnabled } from '#/features';
 import { $t } from '#/locales';
@@ -211,19 +210,20 @@ export function useColumns<T = SystemUserApi.SysUser>(
       },
     },
     {
+      field: 'createTime',
+      title: $t('system.user.createTime'),
+      width: 180,
+      formatter: 'formatDateTime',
+    },
+    {
       cellRender: {
         attrs: { beforeChange: onStatusChange },
         name: onStatusChange ? 'CellSwitch' : 'CellTag',
       },
       field: 'status',
+      fixed: 'right',
       title: $t('system.user.status'),
       width: 100,
-    },
-    {
-      field: 'createTime',
-      title: $t('system.user.createTime'),
-      width: 180,
-      formatter: 'formatDateTime',
     },
     {
       align: 'center',

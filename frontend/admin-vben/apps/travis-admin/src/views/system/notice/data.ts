@@ -61,7 +61,15 @@ export const useFormSchema = (): VbenFormSchema[] => [
     fieldName: 'status',
     label: '状态',
   },
-  { component: 'DatePicker', fieldName: 'publishTime', label: '发布时间' },
+  {
+    component: 'DatePicker',
+    componentProps: {
+      showTime: true,
+      valueFormat: 'YYYY-MM-DD HH:mm:ss',
+    },
+    fieldName: 'publishTime',
+    label: '发布时间',
+  },
   { component: 'Textarea', fieldName: 'remark', label: '备注' },
 ];
 
@@ -85,8 +93,8 @@ export function useColumns<T>(onActionClick: OnActionClickFn<T>): VxeTableGridCo
       title: '接收范围',
       width: 110,
     },
-    { field: 'status', formatter: ({ cellValue }: any) => cellValue === 1 ? '已发布' : '草稿', title: '状态', width: 100 },
     { field: 'publishTime', formatter: 'formatDateTime', title: '发布时间', width: 180 },
+    { field: 'status', fixed: 'right', formatter: ({ cellValue }: any) => cellValue === 1 ? '已发布' : '草稿', title: '状态', width: 100 },
     {
       cellRender: { attrs: { nameField: 'title', onClick: onActionClick }, name: 'CellOperation' },
       field: 'operation',

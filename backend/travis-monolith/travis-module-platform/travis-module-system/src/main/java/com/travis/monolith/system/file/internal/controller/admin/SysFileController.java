@@ -4,7 +4,7 @@ import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.file.api.request.SysFilePageReq;
 import com.travis.monolith.system.file.api.response.FileUploadResp;
-import com.travis.monolith.system.file.internal.entity.SysFile;
+import com.travis.monolith.system.file.api.response.SysFileResp;
 import com.travis.monolith.system.file.internal.service.SysFileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -36,7 +36,7 @@ public class SysFileController {
     }
 
     @GetMapping("/page")
-    public ApiResponse<PageResp<SysFile>> page(SysFilePageReq req) {
+    public ApiResponse<PageResp<SysFileResp>> page(SysFilePageReq req) {
         return ApiResponse.success(fileService.page(req));
     }
 

@@ -13,6 +13,7 @@ import com.travis.infrastructure.framework.web.core.filter.RequestContextFilter;
 import jakarta.servlet.Filter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -35,8 +36,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class TravisWebMvcAutoConfiguration implements WebMvcConfigurer {
 
     private final WebProperties webProperties;
-
-    private final HandlerExceptionResolver handlerExceptionResolver;
 
     /**
      * 根据Controller所在包名自动添加路径前缀： controller.admin 包 → /api/admin controller.app 包 → /api/app 其他包不加前缀
@@ -113,7 +112,9 @@ public class TravisWebMvcAutoConfiguration implements WebMvcConfigurer {
 
     /** 配置请求上下文过滤器 */
     @Bean("travisRequestContextFilter")
-    public FilterRegistrationBean<RequestContextFilter> requestContextFilter() {
+    public FilterRegistrationBean<RequestContextFilter> requestContextFilter(
+            @Qualifier("handlerExceptionResolver")
+                    HandlerExceptionResolver handlerExceptionResolver) {
         return createFilterBean(
                 new RequestContextFilter(
                         handlerExceptionResolver, webProperties.getRequestCacheLimit()),
@@ -122,7 +123,9 @@ public class TravisWebMvcAutoConfiguration implements WebMvcConfigurer {
 
     /** 配置MDC过滤器 */
     @Bean
-    public FilterRegistrationBean<MdcFilter> requestIdFilter() {
+    public FilterRegistrationBean<MdcFilter> requestIdFilter(
+            @Qualifier("handlerExceptionResolver")
+                    HandlerExceptionResolver handlerExceptionResolver) {
         return createFilterBean(new MdcFilter(handlerExceptionResolver), WebFilterOrder.MDC_FILTER);
     }
 

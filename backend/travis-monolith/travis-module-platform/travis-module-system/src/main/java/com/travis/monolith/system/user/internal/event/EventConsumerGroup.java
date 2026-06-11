@@ -11,4 +11,8 @@ public class EventConsumerGroup {
 
     /** 用户登录事件消费者组 */
     public static final String USER_LOGIN_CONSUMER_GROUP = "user-login-consumer-group";
+
+    /** 用户 WebSocket 在线状态变更事件消费者组 */
+    public static final String USER_ONLINE_STATUS_CONSUMER_GROUP =
+            "user-online-status-consumer-group";
 }

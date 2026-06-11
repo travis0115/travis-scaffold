@@ -9,12 +9,17 @@ import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.monolith.system.file.api.request.SysFilePageReq;
 import com.travis.monolith.system.file.api.response.FileUploadResp;
+import com.travis.monolith.system.file.api.response.SysFileResp;
 import com.travis.monolith.system.file.internal.entity.SysFile;
 import com.travis.monolith.system.file.internal.entity.SysFileStorageConfig;
 import com.travis.monolith.system.file.internal.mapper.SysFileMapper;
 import com.travis.monolith.system.file.internal.mapper.SysFileStorageConfigMapper;
 import com.travis.monolith.system.file.internal.service.FileStorageStrategy;
 import com.travis.monolith.system.file.internal.service.SysFileService;
+import com.travis.monolith.system.user.api.SysUserApi;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,6 +36,7 @@ public class SysFileServiceImpl extends ServiceImpl<SysFileMapper, SysFile>
 
     private final java.util.List<FileStorageStrategy> storageStrategies;
     private final SysFileStorageConfigMapper storageConfigMapper;
+    private final SysUserApi userApi;
 
     @Override
     public FileUploadResp upload(MultipartFile file, Long folderId) {
@@ -69,7 +75,7 @@ public class SysFileServiceImpl extends ServiceImpl<SysFileMapper, SysFile>
     }
 
     @Override
-    public PageResp<SysFile> page(SysFilePageReq req) {
+    public PageResp<SysFileResp> page(SysFilePageReq req) {
         var wrapper =
                 new LambdaQueryWrapperX<SysFile>()
                         .eqIfPresent(SysFile::getFolderId, req.getFolderId())
@@ -77,7 +83,35 @@ public class SysFileServiceImpl extends ServiceImpl<SysFileMapper, SysFile>
                         .likeIfPresent(SysFile::getMimeType, req.getMimeType())
                         .eqIfPresent(SysFile::getStorageConfigId, req.getStorageConfigId())
                         .orderByDesc(SysFile::getCreateTime);
-        return PageConverter.toResp(page(new Page<>(req.getPageNum(), req.getPageSize()), wrapper));
+        Page<SysFile> page = page(new Page<>(req.getPageNum(), req.getPageSize()), wrapper);
+        if (page.getRecords().isEmpty()) {
+            return PageConverter.toResp(
+                    new Page<SysFileResp>(page.getCurrent(), page.getSize(), page.getTotal()));
+        }
+        Map<Long, SysFileStorageConfig> storageConfigMap =
+                storageConfigMapper
+                        .selectBatchIds(
+                                page.getRecords().stream()
+                                        .map(SysFile::getStorageConfigId)
+                                        .distinct()
+                                        .toList())
+                        .stream()
+                        .collect(
+                                Collectors.toMap(SysFileStorageConfig::getId, Function.identity()));
+        Map<Long, String> usernameMap =
+                userApi.getUsernameMapByIds(
+                        page.getRecords().stream()
+                                .map(SysFile::getCreateBy)
+                                .filter(java.util.Objects::nonNull)
+                                .distinct()
+                                .toList());
+        return PageConverter.toResp(
+                page.convert(
+                        file ->
+                                toResponse(
+                                        file,
+                                        storageConfigMap.get(file.getStorageConfigId()),
+                                        usernameMap.get(file.getCreateBy()))));
     }
 
     @Override
@@ -97,5 +131,28 @@ public class SysFileServiceImpl extends ServiceImpl<SysFileMapper, SysFile>
             return "";
         }
         return filename.substring(filename.lastIndexOf('.') + 1);
+    }
+
+    private SysFileResp toResponse(
+            SysFile file, SysFileStorageConfig storageConfig, String creatorName) {
+        var response = new SysFileResp();
+        response.setId(file.getId());
+        response.setFolderId(file.getFolderId());
+        response.setStorageConfigId(file.getStorageConfigId());
+        response.setFileName(file.getFileName());
+        response.setOriginalName(file.getOriginalName());
+        response.setPath(file.getPath());
+        response.setUrl(file.getUrl());
+        response.setExtension(file.getExtension());
+        response.setMimeType(file.getMimeType());
+        response.setSize(file.getSize());
+        response.setCreateBy(file.getCreateBy());
+        response.setCreatorName(creatorName);
+        response.setCreateTime(file.getCreateTime());
+        if (storageConfig != null) {
+            response.setStorageConfigName(storageConfig.getConfigName());
+            response.setStorageType(storageConfig.getStorageType());
+        }
+        return response;
     }
 }

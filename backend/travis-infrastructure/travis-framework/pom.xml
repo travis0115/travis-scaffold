@@ -30,6 +30,7 @@
         <module>travis-spring-boot-starter-rocketmq</module>
         <module>travis-spring-boot-starter-sa-token</module>
         <module>travis-spring-boot-starter-webmvc</module>
+        <module>travis-spring-boot-starter-websocket</module>
         <module>travis-spring-boot-starter-xxl-job</module>
     </modules>
 

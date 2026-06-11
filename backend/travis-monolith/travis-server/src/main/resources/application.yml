@@ -145,8 +145,8 @@ travis:
       namesrv-addr: ${ROCKETMQ_NAMESRV_ADDR:127.0.0.1:9876}  # NameServer 地址（注意：不是 Proxy gRPC 端口），启用 auto-initialize 时必填
   xxl-job:
     admin:
-      addresses: ${XXL_JOB_ADMIN_ADDRESSES:http://127.0.0.1:8080/xxl-job-admin}
-      web-url: ${XXL_JOB_ADMIN_WEB_URL:http://127.0.0.1:8080/xxl-job-admin}
+      addresses: ${XXL_JOB_ADMIN_ADDRESSES:http://127.0.0.1:7080/xxl-job-admin}
+      web-url: ${XXL_JOB_ADMIN_WEB_URL:http://127.0.0.1:7080/xxl-job-admin}
       access-token: ${XXL_JOB_ACCESS_TOKEN:}
       timeout: ${XXL_JOB_ADMIN_TIMEOUT:3}
     executor:

@@ -84,30 +84,26 @@ export function useColumns(
   return [
     {
       field: 'dictName',
+      minWidth: 140,
       title: $t('system.dict.dictName'),
-      width: 150,
     },
     {
       field: 'dictType',
+      minWidth: 160,
       title: $t('system.dict.dictType'),
-      width: 150,
     },
     {
       field: 'remark',
-      minWidth: 100,
+      formatter: 'emptyPlaceholder',
+      minWidth: 140,
       title: $t('system.dict.remark'),
     },
     {
       cellRender: { name: 'CellTag' },
       field: 'status',
+      fixed: 'right',
       title: $t('system.dict.status'),
       width: 100,
-    },
-    {
-      field: 'createTime',
-      title: $t('system.dict.createTime'),
-      width: 180,
-      formatter: 'formatDateTime',
     },
     {
       align: 'center',
@@ -118,19 +114,12 @@ export function useColumns(
           onClick: onActionClick,
         },
         name: 'CellOperation',
-        options: [
-          {
-            code: 'addItem',
-            text: '数据项',
-          },
-          'edit',
-          'delete',
-        ],
+        options: ['edit', 'delete'],
       },
       field: 'operation',
       fixed: 'right',
       title: $t('system.dict.operation'),
-      width: 200,
+      width: 140,
     },
   ];
 }

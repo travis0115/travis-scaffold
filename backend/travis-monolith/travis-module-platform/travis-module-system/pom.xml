@@ -41,6 +41,10 @@
             <groupId>com.travis</groupId>
             <artifactId>travis-spring-boot-starter-rocketmq</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.travis</groupId>
+            <artifactId>travis-spring-boot-starter-websocket</artifactId>
+        </dependency>
         <!-- mapstruct -->
         <dependency>
             <groupId>org.mapstruct</groupId>

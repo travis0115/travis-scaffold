@@ -5,7 +5,9 @@ import type {
 } from '#/adapter/vxe-table';
 import type { SystemDictApi } from '#/api';
 
-import { Page, useVbenDrawer } from '@vben/common-ui';
+import { nextTick, ref } from 'vue';
+
+import { ColPage, useVbenDrawer } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
 
 import { Button, message } from 'antdv-next';
@@ -16,22 +18,25 @@ import { $t } from '#/locales';
 
 import { useColumns, useGridFormSchema } from './data';
 import FormDrawerComponent from './modules/form.vue';
-import ItemsDrawerComponent from './modules/items.vue';
+import ItemsPanel from './modules/items.vue';
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   connectedComponent: FormDrawerComponent,
   destroyOnClose: true,
 });
 
-const [ItemsDrawer, itemsDrawerApi] = useVbenDrawer({
-  connectedComponent: ItemsDrawerComponent,
-  destroyOnClose: true,
-});
+const selectedDict = ref<SystemDictApi.SysDict>();
 
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
+    commonConfig: {
+      componentProps: {
+        class: 'w-full',
+      },
+    },
     schema: useGridFormSchema(),
     submitOnChange: false,
+    wrapperClass: 'grid-cols-2',
   },
   gridOptions: {
     columns: useColumns(onActionClick),
@@ -40,15 +45,24 @@ const [Grid, gridApi] = useVbenVxeGrid({
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
-          return await getDictPage({
+          const result = await getDictPage({
             pageNum: page.currentPage,
             pageSize: page.pageSize,
             ...formValues,
           });
+          const current = result.records.find(
+            (item) => item.id === selectedDict.value?.id,
+          );
+          selectedDict.value = current ?? result.records[0];
+          nextTick(() => {
+            if (selectedDict.value) gridApi.grid.setCurrentRow(selectedDict.value);
+          });
+          return result;
         },
       },
     },
     rowConfig: {
+      isCurrent: true,
       keyField: 'id',
     },
     toolbarConfig: {
@@ -59,6 +73,12 @@ const [Grid, gridApi] = useVbenVxeGrid({
       zoom: true,
     },
   } as VxeTableGridOptions<SystemDictApi.SysDict>,
+  gridEvents: {
+    cellClick: ({ row }: { row: SystemDictApi.SysDict }) => {
+      selectedDict.value = row;
+      gridApi.grid.setCurrentRow(row);
+    },
+  },
 });
 
 function onActionClick({
@@ -66,10 +86,6 @@ function onActionClick({
   row,
 }: OnActionClickParams<SystemDictApi.SysDict>) {
   switch (code) {
-    case 'addItem': {
-      onAddItem(row);
-      break;
-    }
     case 'delete': {
       onDelete(row);
       break;
@@ -101,6 +117,7 @@ function onDelete(row: SystemDictApi.SysDict) {
         content: $t('ui.actionMessage.deleteSuccess', [row.dictName]),
         key: 'action_process_msg',
       });
+      if (selectedDict.value?.id === row.id) selectedDict.value = undefined;
       onRefresh();
     })
     .catch(() => {
@@ -108,25 +125,31 @@ function onDelete(row: SystemDictApi.SysDict) {
     });
 }
 
-function onAddItem(row: SystemDictApi.SysDict) {
-  itemsDrawerApi.setData({ id: row.id, dictName: row.dictName }).open();
-}
-
 function onRefresh() {
   gridApi.query();
 }
 </script>
 <template>
-  <Page auto-content-height>
+  <ColPage
+    auto-content-height
+    :left-min-width="25"
+    :left-width="50"
+    :right-min-width="40"
+    :right-width="50"
+    split-handle
+    split-line
+  >
     <FormDrawer @success="onRefresh" />
-    <ItemsDrawer @success="onRefresh" />
-    <Grid :table-title="$t('system.dict.list')">
-      <template #toolbar-tools>
-        <Button type="primary" @click="onCreate">
-          <Plus class="size-5" />
-          {{ $t('ui.actionTitle.create', [$t('system.dict.name')]) }}
-        </Button>
-      </template>
-    </Grid>
-  </Page>
+    <template #left>
+      <Grid :table-title="$t('system.dict.list')">
+        <template #toolbar-tools>
+          <Button type="primary" @click="onCreate">
+            <Plus class="size-5" />
+            {{ $t('ui.actionTitle.create', [$t('system.dict.name')]) }}
+          </Button>
+        </template>
+      </Grid>
+    </template>
+    <ItemsPanel :dict="selectedDict" @success="onRefresh" />
+  </ColPage>
 </template>

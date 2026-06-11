@@ -86,7 +86,7 @@ public class OperationLogAspect {
                         moduleAnnotation != null
                                 ? moduleAnnotation.value()
                                 : joinPoint.getTarget().getClass().getSimpleName(),
-                        signature.toLongString(),
+                        signature.getDeclaringTypeName() + "#" + signature.getName(),
                         request.getRequestURI(),
                         request.getMethod(),
                         operationLog.recordRequest()

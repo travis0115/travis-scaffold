@@ -14,16 +14,16 @@ public final class ExceptionHandlerOrder {
     /** sa-token 异常处理器顺序 */
     public static final int SATOKEN_EXCEPTION_HANDLER = HIGHEST_PRECEDENCE;
 
-    /** server 异常处理器顺序 */
-    public static final int SERVER_EXCEPTION_HANDLER =
-            SATOKEN_EXCEPTION_HANDLER + CommonConstant.STEP;
-
     /** validation 异常处理器顺序 */
     public static final int VALIDATION_EXCEPTION_HANDLER =
-            SERVER_EXCEPTION_HANDLER + CommonConstant.STEP;
+            SATOKEN_EXCEPTION_HANDLER + CommonConstant.STEP;
 
-    /** 兜底异常处理器，放在最后 */
-    public static final int Biz_EXCEPTION_HANDLER = Ordered.LOWEST_PRECEDENCE;
+    /** 业务异常处理器顺序 */
+    public static final int Biz_EXCEPTION_HANDLER =
+            VALIDATION_EXCEPTION_HANDLER + CommonConstant.STEP;
+
+    /** 服务端异常处理器顺序，包含最终兜底，必须放在最后 */
+    public static final int SERVER_EXCEPTION_HANDLER = Ordered.LOWEST_PRECEDENCE;
 
     private ExceptionHandlerOrder() {}
 }

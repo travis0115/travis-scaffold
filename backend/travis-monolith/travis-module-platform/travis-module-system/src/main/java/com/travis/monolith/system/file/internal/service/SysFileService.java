@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.file.api.request.SysFilePageReq;
 import com.travis.monolith.system.file.api.response.FileUploadResp;
+import com.travis.monolith.system.file.api.response.SysFileResp;
 import com.travis.monolith.system.file.internal.entity.SysFile;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,7 +23,7 @@ public interface SysFileService extends IService<SysFile> {
      */
     FileUploadResp upload(MultipartFile file, Long folderId);
 
-    PageResp<SysFile> page(SysFilePageReq req);
+    PageResp<SysFileResp> page(SysFilePageReq req);
 
     /**
      * 根据相对路径拼接完整访问URL

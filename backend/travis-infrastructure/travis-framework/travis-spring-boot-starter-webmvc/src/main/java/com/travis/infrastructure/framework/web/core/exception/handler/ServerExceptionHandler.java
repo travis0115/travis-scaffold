@@ -3,7 +3,6 @@ package com.travis.infrastructure.framework.web.core.exception.handler;
 import com.travis.infrastructure.common.web.constant.ExceptionHandlerOrder;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.ApiResponse;
-import java.io.FileNotFoundException;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
@@ -15,6 +14,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+
+import java.io.FileNotFoundException;
 
 /**
  * Server 异常处理器
@@ -121,5 +122,12 @@ public class ServerExceptionHandler {
             log.warn("资源未找到：", ex);
         }
         return ApiResponse.error(CommonErrorCode.NOT_FOUND);
+    }
+
+    /** 兜底 */
+    @ExceptionHandler(Exception.class)
+    public ApiResponse<?> handleException(Exception ex) {
+        log.error("系统异常: ", ex);
+        return ApiResponse.error(CommonErrorCode.INTERNAL_SERVER_ERROR);
     }
 }

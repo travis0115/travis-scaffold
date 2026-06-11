@@ -45,8 +45,8 @@
   --vxe-ui-table-row-hover-checkbox-checked-background-color: hsl(
     var(--accent-hover)
   );
-  --vxe-ui-table-row-current-background-color: hsl(var(--accent));
-  --vxe-ui-table-row-hover-current-background-color: hsl(var(--accent-hover));
+  --vxe-ui-table-row-current-background-color: hsl(var(--primary) / 15%);
+  --vxe-ui-table-row-hover-current-background-color: hsl(var(--primary) / 20%);
   --vxe-ui-font-primary-tinge-color: hsl(var(--primary));
   --vxe-ui-font-primary-lighten-color: hsl(var(--primary) / 60%);
   --vxe-ui-font-primary-darken-color: hsl(var(--primary));

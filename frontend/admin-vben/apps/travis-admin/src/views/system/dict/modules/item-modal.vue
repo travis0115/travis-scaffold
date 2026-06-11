@@ -1,7 +1,9 @@
 <script lang="ts" setup>
-import { computed, ref } from 'vue';
+import { computed, h, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
+
+import { Tag } from 'antdv-next';
 
 import { useVbenForm, z } from '#/adapter/form';
 import { createDictItem, updateDictItem } from '#/api';
@@ -11,6 +13,14 @@ const emit = defineEmits(['success']);
 const formData = ref<Record<string, any>>({});
 const dictId = ref(0);
 const dictName = ref('');
+const tagStyleOptions = [
+  { color: 'default', label: '默认', value: 'default' },
+  { color: 'processing', label: '主要', value: 'primary' },
+  { color: 'success', label: '成功', value: 'success' },
+  { color: 'warning', label: '警告', value: 'warning' },
+  { color: 'error', label: '危险', value: 'danger' },
+  { color: 'blue', label: '信息', value: 'info' },
+];
 
 const getTitle = computed(() => {
   return formData.value?.itemId
@@ -39,14 +49,10 @@ const [Form, formApi] = useVbenForm({
     {
       component: 'Select',
       componentProps: {
-        options: [
-          { label: '默认', value: 'default' },
-          { label: '主要', value: 'primary' },
-          { label: '成功', value: 'success' },
-          { label: '警告', value: 'warning' },
-          { label: '危险', value: 'danger' },
-          { label: '信息', value: 'info' },
-        ],
+        options: tagStyleOptions.map((item) => ({
+          label: h(Tag, { color: item.color }, () => item.label),
+          value: item.value,
+        })),
       },
       defaultValue: 'default',
       fieldName: 'tagStyle',

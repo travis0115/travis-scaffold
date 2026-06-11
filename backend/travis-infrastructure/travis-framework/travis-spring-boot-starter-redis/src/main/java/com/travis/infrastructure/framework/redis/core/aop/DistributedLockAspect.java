@@ -1,7 +1,7 @@
 package com.travis.infrastructure.framework.redis.core.aop;
 
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
-import com.travis.infrastructure.common.web.exception.ErrorCodeException;
+import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
 import com.travis.infrastructure.framework.redis.core.annotation.DistributedLockNamespace;
 import java.lang.reflect.Method;
@@ -42,12 +42,12 @@ public class DistributedLockAspect {
         try {
             acquired = tryLock(lock, distributedLock);
             if (!acquired) {
-                throw new ErrorCodeException(CommonErrorCode.DISTRIBUTED_LOCK_FAILED);
+                throw new BizException(CommonErrorCode.DISTRIBUTED_LOCK_FAILED);
             }
             return joinPoint.proceed();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new ErrorCodeException(CommonErrorCode.INTERRUPTED, e);
+            throw new BizException(CommonErrorCode.INTERRUPTED, e);
         } finally {
             if (acquired && lock.isHeldByCurrentThread()) {
                 lock.unlock();

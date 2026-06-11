@@ -97,16 +97,17 @@ export function useColumns(
       width: 80,
     },
     {
-      cellRender: { name: 'CellTag' },
-      field: 'status',
-      title: $t('system.dept.status'),
-      width: 100,
-    },
-    {
       field: 'createTime',
       title: $t('system.dept.createTime'),
       width: 180,
       formatter: 'formatDateTime',
+    },
+    {
+      cellRender: { name: 'CellTag' },
+      field: 'status',
+      fixed: 'right',
+      title: $t('system.dept.status'),
+      width: 100,
     },
     {
       align: 'right',

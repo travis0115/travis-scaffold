@@ -1,4 +1,4 @@
-import { defineOverridesPreferences } from '@vben/preferences';
+import {defineOverridesPreferences} from '@vben/preferences';
 
 /**
  * @description 项目配置文件
@@ -12,7 +12,8 @@ export const overridesPreferences = defineOverridesPreferences({
     accessMode: 'backend',
     defaultAvatar: '/static/img/default-avatar.png',
     defaultHomePath: '/dashboard',
-    enablePreferences: false,
+    dynamicTitle: false,
+    enablePreferences: true,
   },
   breadcrumb: {
     enable: false,
@@ -32,7 +33,7 @@ export const overridesPreferences = defineOverridesPreferences({
     // sourceDark: 'https://unpkg.com/@vbenjs/static-source@0.1.7/source/logo-dark.webp', // 可选：暗色主题logo
   },
   navigation: {
-    accordion: false,
+    accordion: true,
   },
   shortcutKeys: {
     enable: false,
@@ -42,7 +43,7 @@ export const overridesPreferences = defineOverridesPreferences({
   },
   sidebar: {
     collapsedShowTitle: false,
-    fixedButton: false,
+    fixedButton: true,
   },
   tabbar: {
     persist: false,
@@ -56,7 +57,7 @@ export const overridesPreferences = defineOverridesPreferences({
     globalSearch: false,
     languageToggle: false,
     lockScreen: false,
-    notification: false,
+    notification: true,
     sidebarToggle: false,
     timezone: false,
   },

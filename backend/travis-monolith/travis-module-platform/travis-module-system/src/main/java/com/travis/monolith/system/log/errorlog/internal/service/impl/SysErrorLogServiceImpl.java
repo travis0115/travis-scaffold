@@ -10,8 +10,6 @@ import com.travis.monolith.system.log.errorlog.internal.entity.SysErrorLog;
 import com.travis.monolith.system.log.errorlog.internal.mapper.SysErrorLogMapper;
 import com.travis.monolith.system.log.errorlog.internal.service.SysErrorLogService;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class SysErrorLogServiceImpl extends ServiceImpl<SysErrorLogMapper, SysErrorLog>
@@ -26,11 +24,5 @@ public class SysErrorLogServiceImpl extends ServiceImpl<SysErrorLogMapper, SysEr
                         .leIfPresent(SysErrorLog::getCreateTime, req.getEndTime())
                         .orderByDesc(SysErrorLog::getCreateTime);
         return PageConverter.toResp(page(new Page<>(req.getPageNum(), req.getPageSize()), wrapper));
-    }
-
-    @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void saveError(SysErrorLog errorLog) {
-        save(errorLog);
     }
 }

@@ -14,7 +14,6 @@ import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.util.Ip2RegionUtil;
 import com.travis.monolith.system.common.api.SystemErrorCode;
 import com.travis.monolith.system.dept.api.SysDeptApi;
-import com.travis.monolith.system.file.api.SysFileApi;
 import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.api.request.*;
 import com.travis.monolith.system.user.api.response.SysUserResp;
@@ -60,9 +59,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
 
     /** 角色 API */
     private final SysRoleApi roleApi;
-
-    /** 文件 API */
-    private final SysFileApi fileApi;
 
     /** 对象转换器 */
     private final SysUserConverter converter;
@@ -277,7 +273,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
      */
     private SysUserResp toVO(SysUser user) {
         SysUserResp resp = converter.toResp(user);
-        resp.setAvatar(fileApi.getFileUrl(user.getAvatar()));
+        resp.setAvatar(user.getAvatar());
         if (user.getDeptId() != null) {
             Map<Long, String> deptMap = deptApi.getDeptNameMapByIds(List.of(user.getDeptId()));
             String deptName = deptMap.get(user.getDeptId());
@@ -319,8 +315,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
                 .map(
                         user -> {
                             SysUserResp resp = converter.toResp(user);
-                            // 头像路径拼接完整URL
-                            resp.setAvatar(fileApi.getFileUrl(user.getAvatar()));
+                            resp.setAvatar(user.getAvatar());
                             // 设置部门名称
                             if (user.getDeptId() != null) {
                                 resp.setDeptName(deptNameMap.get(user.getDeptId()));

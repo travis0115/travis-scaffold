@@ -42,6 +42,7 @@ public class SysDictItemServiceImpl extends ServiceImpl<SysDictItemMapper, SysDi
         item.setDictId(req.getDictId());
         item.setLabel(req.getLabel());
         item.setValue(req.getValue());
+        item.setTagStyle(req.getTagStyle());
         item.setSort(req.getSort());
         item.setStatus(req.getStatus());
         item.setRemark(req.getRemark());
@@ -58,6 +59,7 @@ public class SysDictItemServiceImpl extends ServiceImpl<SysDictItemMapper, SysDi
         item.setDictId(req.getDictId());
         item.setLabel(req.getLabel());
         item.setValue(req.getValue());
+        item.setTagStyle(req.getTagStyle());
         item.setSort(req.getSort());
         item.setStatus(req.getStatus());
         item.setRemark(req.getRemark());

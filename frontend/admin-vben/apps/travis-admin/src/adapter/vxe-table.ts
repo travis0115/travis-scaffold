@@ -45,6 +45,9 @@ setupVbenVxeTable({
           showActiveMsg: true,
           showResponseMsg: false,
         },
+        rowConfig: {
+          isHover: true,
+        },
         round: true,
         showOverflow: true,
         size: 'small',
@@ -205,6 +208,17 @@ setupVbenVxeTable({
             });
             return optBtn;
           })
+          .map((opt) => {
+            if (opt.code !== 'edit' && opt.code !== 'delete' && !opt.danger) {
+              opt.style = {
+                ...opt.style,
+                color: opt.disabled
+                  ? 'var(--ant-color-text-disabled, rgba(0, 0, 0, 0.25))'
+                  : 'hsl(181 84% 32%)',
+              };
+            }
+            return opt;
+          })
           .filter((opt) => opt.show !== false);
 
         function renderBtn(opt: Recordable<any>, listen = true) {
@@ -316,6 +330,13 @@ setupVbenVxeTable({
  */
 function processColumnsWithEmptyPlaceholder(columns: any[]): any[] {
   return columns.map((col: any) => {
+    if (col.cellRender?.name === 'CellOperation') {
+      return {
+        ...col,
+        align: 'center',
+        headerAlign: 'center',
+      };
+    }
     // 跳过没有 field 的列（如操作列）
     if (!col.field) return col;
     // 跳过有 cellRender 的列（如 CellSwitch、CellTag、CellOperation 等，它们自行处理渲染）

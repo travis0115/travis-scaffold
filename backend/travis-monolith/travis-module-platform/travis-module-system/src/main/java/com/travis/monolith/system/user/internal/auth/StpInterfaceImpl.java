@@ -11,8 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Sa-Token 权限/角色加载实现，从数据库查询当前用户的权限标识和角色编码。 注意：Sa-Token 的 StpInterface 接口方法签名带有 loginId 和 loginType
- * 参数， 但当前实现统一从 StpUtil 获取当前登录用户信息，忽略这些参数。
+ * Sa-Token 权限/角色加载实现，从数据库查询当前用户的权限标识和角色编码。
  */
 @Component
 @RequiredArgsConstructor

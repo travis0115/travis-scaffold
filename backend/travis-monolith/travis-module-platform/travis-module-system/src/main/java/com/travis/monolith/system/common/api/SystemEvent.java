@@ -33,7 +33,10 @@ public enum SystemEvent implements Event {
     USER_LOGIN(SystemEventConstant.NORMAL_EVENT, SystemEventConstant.USER_LOGIN),
 
     /** 部门删除事件 */
-    DEPT_DELETED(SystemEventConstant.NORMAL_EVENT, SystemEventConstant.DEPT_DELETED);
+    DEPT_DELETED(SystemEventConstant.NORMAL_EVENT, SystemEventConstant.DEPT_DELETED),
+
+    /** 用户 WebSocket 上线/下线状态变更事件 */
+    USER_ONLINE_STATUS(SystemEventConstant.NORMAL_EVENT, SystemEventConstant.USER_ONLINE_STATUS);
 
     private final String topic;
     private final String type;

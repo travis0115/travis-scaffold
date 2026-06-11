@@ -6,7 +6,6 @@ import type {
 import type { SystemRoleApi } from '#/api';
 
 import { z } from '#/adapter/form';
-
 import { $t } from '#/locales';
 
 export function useFormSchema(): VbenFormSchema[] {
@@ -103,19 +102,20 @@ export function useColumns<T = SystemRoleApi.SysRole>(
       title: $t('system.role.remark'),
     },
     {
+      field: 'createTime',
+      title: $t('system.role.createTime'),
+      width: 180,
+      formatter: 'formatDateTime',
+    },
+    {
       cellRender: {
         attrs: { beforeChange: onStatusChange },
         name: onStatusChange ? 'CellSwitch' : 'CellTag',
       },
       field: 'status',
+      fixed: 'right',
       title: $t('system.role.status'),
       width: 100,
-    },
-    {
-      field: 'createTime',
-      title: $t('system.role.createTime'),
-      width: 180,
-      formatter: 'formatDateTime',
     },
     {
       align: 'center',

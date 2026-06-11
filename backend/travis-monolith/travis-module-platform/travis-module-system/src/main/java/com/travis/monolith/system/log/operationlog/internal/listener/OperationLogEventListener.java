@@ -3,7 +3,7 @@ package com.travis.monolith.system.log.operationlog.internal.listener;
 import com.travis.monolith.system.log.operationlog.api.event.OperationLogEvent;
 import com.travis.monolith.system.log.operationlog.internal.entity.SysOperationLog;
 import com.travis.monolith.system.log.operationlog.internal.service.SysOperationLogService;
-import com.travis.monolith.system.user.internal.mapper.SysUserMapper;
+import com.travis.monolith.system.user.api.SysUserApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 public class OperationLogEventListener {
 
     private final SysOperationLogService operationLogService;
-    private final SysUserMapper userMapper;
+    private final SysUserApi userApi;
 
     @Async("operationLogTaskExecutor")
     @EventListener
@@ -26,9 +26,9 @@ public class OperationLogEventListener {
             var operationLog = new SysOperationLog();
             operationLog.setUserId(event.userId());
             if (event.userId() != null) {
-                var user = userMapper.selectById(event.userId());
-                if (user != null) {
-                    operationLog.setUsername(user.getUsername());
+                String username = userApi.getUsernameById(event.userId());
+                if (username != null) {
+                    operationLog.setUsername(username);
                 }
             }
             operationLog.setDescription(event.description());

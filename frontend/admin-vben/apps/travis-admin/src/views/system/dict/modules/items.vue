@@ -1,146 +1,181 @@
 <script lang="ts" setup>
+import type {
+  OnActionClickParams,
+  VxeTableGridColumns,
+  VxeTableGridOptions,
+} from '#/adapter/vxe-table';
 import type { SystemDictApi } from '#/api';
 
-import { ref } from 'vue';
+import { computed, nextTick, watch } from 'vue';
 
-import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
+import { useVbenModal } from '@vben/common-ui';
+import { Plus } from '@vben/icons';
 
-import { Button, message, Modal, Table, Tag } from 'antdv-next';
+import { Button, message } from 'antdv-next';
 
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteDictItem, getDictItems } from '#/api';
 import { $t } from '#/locales';
 
 import ItemModalComponent from './item-modal.vue';
 
+const props = defineProps<{
+  dict?: SystemDictApi.SysDict;
+}>();
 const emit = defineEmits(['success']);
 
-const items = ref<SystemDictApi.SysDictItem[]>([]);
-const loading = ref(false);
-const dictId = ref(0);
-const dictName = ref('');
-
-const columns = [
-  { title: $t('system.dict.item.label'), dataIndex: 'label', width: 150 },
-  { title: $t('system.dict.item.value'), dataIndex: 'value', width: 120 },
-  { title: $t('system.dict.item.tagStyle'), dataIndex: 'tagStyle', width: 100 },
-  { title: $t('system.dict.item.sort'), dataIndex: 'sort', width: 80 },
-  { title: $t('system.dict.item.status'), dataIndex: 'status', width: 100 },
-  { title: $t('system.dict.item.remark'), dataIndex: 'remark', ellipsis: true },
+const columns: VxeTableGridColumns<SystemDictApi.SysDictItem> = [
+  { field: 'label', minWidth: 120, title: $t('system.dict.item.label') },
+  { field: 'value', minWidth: 100, title: $t('system.dict.item.value') },
   {
+    cellRender: {
+      name: 'CellTag',
+      options: [
+        { color: 'default', label: '默认', value: 'default' },
+        { color: 'processing', label: '主要', value: 'primary' },
+        { color: 'success', label: '成功', value: 'success' },
+        { color: 'warning', label: '警告', value: 'warning' },
+        { color: 'error', label: '危险', value: 'danger' },
+        { color: 'blue', label: '信息', value: 'info' },
+      ],
+    },
+    field: 'tagStyle',
+    title: $t('system.dict.item.tagStyle'),
+    width: 90,
+  },
+  { field: 'sort', title: $t('system.dict.item.sort'), width: 70 },
+  {
+    field: 'remark',
+    formatter: 'emptyPlaceholder',
+    minWidth: 120,
+    title: $t('system.dict.item.remark'),
+  },
+  {
+    cellRender: { name: 'CellTag' },
+    field: 'status',
+    fixed: 'right',
+    title: $t('system.dict.item.status'),
+    width: 90,
+  },
+  {
+    align: 'center',
+    cellRender: {
+      attrs: {
+        nameField: 'label',
+        nameTitle: $t('system.dict.item.label'),
+        onClick: onActionClick,
+      },
+      name: 'CellOperation',
+      options: ['edit', 'delete'],
+    },
+    field: 'operation',
+    fixed: 'right',
     title: $t('system.dict.operation'),
-    dataIndex: 'operation',
-    width: 160,
-    align: 'center' as const,
+    width: 140,
   },
 ];
+
+const tableTitle = computed(() =>
+  props.dict ? `字典数据 - ${props.dict.dictName}` : '字典数据',
+);
+
+const [Grid, gridApi] = useVbenVxeGrid({
+  gridOptions: {
+    columns,
+    height: 'auto',
+    keepSource: true,
+    pagerConfig: {
+      enabled: false,
+    },
+    proxyConfig: {
+      ajax: {
+        query: async () => {
+          return props.dict?.id ? await getDictItems(props.dict.id) : [];
+        },
+      },
+    },
+    rowConfig: {
+      keyField: 'id',
+    },
+    toolbarConfig: {
+      custom: true,
+      export: false,
+      refresh: true,
+      zoom: true,
+    },
+  } as VxeTableGridOptions<SystemDictApi.SysDictItem>,
+});
 
 const [ItemModal, itemModalApi] = useVbenModal({
   connectedComponent: ItemModalComponent,
   destroyOnClose: true,
 });
 
-async function loadItems() {
-  loading.value = true;
-  try {
-    items.value = await getDictItems(dictId.value);
-  } finally {
-    loading.value = false;
-  }
+function onActionClick({
+  code,
+  row,
+}: OnActionClickParams<SystemDictApi.SysDictItem>) {
+  if (code === 'edit') onEditItem(row);
+  if (code === 'delete') onDeleteItem(row);
 }
 
 function onAddItem() {
-  itemModalApi.setData({ dictId: dictId.value, dictName: dictName.value }).open();
+  if (!props.dict) return;
+  itemModalApi
+    .setData({ dictId: props.dict.id, dictName: props.dict.dictName })
+    .open();
 }
 
 function onEditItem(record: SystemDictApi.SysDictItem) {
   itemModalApi.setData({
     itemId: record.id,
-    dictId: dictId.value,
-    dictName: dictName.value,
+    dictId: props.dict?.id,
+    dictName: props.dict?.dictName,
     label: record.label,
     value: record.value,
     sort: record.sort ?? 0,
     status: record.status,
     remark: record.remark,
+    tagStyle: record.tagStyle,
   }).open();
 }
 
-function onDeleteItem(record: SystemDictApi.SysDictItem) {
-  Modal.confirm({
-    title: '确认删除',
-    content: `确定要删除数据项「${record.label}」吗？`,
-    async onOk() {
-      await deleteDictItem(record.id);
-      message.success($t('ui.actionMessage.deleteSuccess', [record.label]));
-      await loadItems();
-      emit('success');
-    },
-  });
+async function onDeleteItem(record: SystemDictApi.SysDictItem) {
+  await deleteDictItem(record.id);
+  message.success($t('ui.actionMessage.deleteSuccess', [record.label]));
+  await gridApi.query();
+  emit('success');
+}
+
+async function refreshItems() {
+  await nextTick();
+  await gridApi.query();
 }
 
 function handleItemSuccess() {
   itemModalApi.close();
-  loadItems();
+  refreshItems();
   emit('success');
 }
 
-function getStatusColor(status: number) {
-  return status === 1 ? 'success' : 'error';
-}
-
-function getStatusText(status: number) {
-  return status === 1 ? $t('common.enabled') : $t('common.disabled');
-}
-
-const [ItemsDrawer, itemsDrawerApi] = useVbenDrawer({
-  class: 'w-180',
-  async onOpenChange(isOpen: boolean) {
-    if (isOpen) {
-      const data = itemsDrawerApi.getData<{ dictName: string; id: number }>();
-      if (data) {
-        dictId.value = data.id;
-        dictName.value = data.dictName;
-        await loadItems();
-      }
-    }
+watch(
+  () => props.dict?.id,
+  () => {
+    refreshItems();
   },
-});
+);
 </script>
 
 <template>
-  <ItemsDrawer :title="`${$t('system.dict.items')} - ${dictName}`">
+  <div class="h-full">
     <ItemModal @success="handleItemSuccess" />
-    <div class="mb-3 flex items-center justify-end">
-      <Button type="primary" @click="onAddItem">
-        {{ $t('system.dict.item.addItem') }}
-      </Button>
-    </div>
-    <Table
-      :columns="columns"
-      :data-source="items"
-      :loading="loading"
-      row-key="id"
-      size="small"
-      :pagination="false"
-    >
-      <template #bodyCell="{ column, record }">
-        <template v-if="column.dataIndex === 'status'">
-          <Tag :color="getStatusColor(record.status)">
-            {{ getStatusText(record.status) }}
-          </Tag>
-        </template>
-        <template v-else-if="column.dataIndex === 'remark'">
-          {{ record.remark || '-' }}
-        </template>
-        <template v-else-if="column.dataIndex === 'operation'">
-          <Button type="link" size="small" @click="onEditItem(record)">
-            {{ $t('common.edit') }}
-          </Button>
-          <Button type="link" danger size="small" @click="onDeleteItem(record)">
-            {{ $t('common.delete') }}
-          </Button>
-        </template>
+    <Grid :table-title="tableTitle">
+      <template #toolbar-tools>
+        <Button type="primary" :disabled="!props.dict" @click="onAddItem">
+          <Plus class="size-5" />
+          {{ $t('system.dict.item.addItem') }}
+        </Button>
       </template>
-    </Table>
-  </ItemsDrawer>
+    </Grid>
+  </div>
 </template>

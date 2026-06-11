@@ -106,12 +106,6 @@ export function useColumns(
       minWidth: 200,
     },
     {
-      cellRender: { name: 'CellTag' },
-      field: 'status',
-      title: $t('system.versionLog.status'),
-      width: 100,
-    },
-    {
       field: 'publishTime',
       title: $t('system.versionLog.publishTime'),
       width: 180,
@@ -122,6 +116,13 @@ export function useColumns(
       title: $t('system.versionLog.createTime'),
       width: 180,
       formatter: 'formatDateTime',
+    },
+    {
+      cellRender: { name: 'CellTag' },
+      field: 'status',
+      fixed: 'right',
+      title: $t('system.versionLog.status'),
+      width: 100,
     },
     {
       align: 'center',
