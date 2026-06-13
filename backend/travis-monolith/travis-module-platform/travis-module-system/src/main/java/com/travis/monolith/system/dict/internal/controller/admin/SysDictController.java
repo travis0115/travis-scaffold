@@ -5,9 +5,10 @@ import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
-import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmitNamespace;
-import com.travis.monolith.system.dict.api.request.SysDictItemReq;
-import com.travis.monolith.system.dict.api.request.SysDictReq;
+import com.travis.monolith.system.dict.api.request.SysDictCreateReq;
+import com.travis.monolith.system.dict.api.request.SysDictItemCreateReq;
+import com.travis.monolith.system.dict.api.request.SysDictItemUpdateReq;
+import com.travis.monolith.system.dict.api.request.SysDictUpdateReq;
 import com.travis.monolith.system.dict.api.response.SysDictItemResp;
 import com.travis.monolith.system.dict.internal.entity.SysDict;
 import com.travis.monolith.system.dict.internal.service.SysDictService;
@@ -27,7 +28,6 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Validated
 @OperationLogModule("字典管理")
-@NoRepeatSubmitNamespace("system:dict")
 public class SysDictController {
 
     /** 字典管理服务 */
@@ -70,7 +70,7 @@ public class SysDictController {
     @OperationLog(action = "新增字典")
     @NoRepeatSubmit
     @PostMapping
-    public ApiResponse<Void> add(@RequestBody @Valid SysDictReq req) {
+    public ApiResponse<Void> add(@RequestBody @Valid SysDictCreateReq req) {
         dictService.create(req);
         return ApiResponse.success();
     }
@@ -85,7 +85,8 @@ public class SysDictController {
     @OperationLog(action = "更新字典")
     @NoRepeatSubmit
     @PutMapping("/{id}")
-    public ApiResponse<Void> update(@PathVariable Long id, @RequestBody @Valid SysDictReq req) {
+    public ApiResponse<Void> update(
+            @PathVariable Long id, @RequestBody @Valid SysDictUpdateReq req) {
         dictService.update(id, req);
         return ApiResponse.success();
     }
@@ -124,7 +125,7 @@ public class SysDictController {
     @OperationLog(action = "新增字典项")
     @NoRepeatSubmit
     @PostMapping("/item")
-    public ApiResponse<Void> createItem(@RequestBody @Valid SysDictItemReq req) {
+    public ApiResponse<Void> createItem(@RequestBody @Valid SysDictItemCreateReq req) {
         dictService.createItem(req);
         return ApiResponse.success();
     }
@@ -140,7 +141,7 @@ public class SysDictController {
     @NoRepeatSubmit
     @PutMapping("/item/{id}")
     public ApiResponse<Void> updateItem(
-            @PathVariable Long id, @RequestBody @Valid SysDictItemReq req) {
+            @PathVariable Long id, @RequestBody @Valid SysDictItemUpdateReq req) {
         dictService.updateItem(id, req);
         return ApiResponse.success();
     }

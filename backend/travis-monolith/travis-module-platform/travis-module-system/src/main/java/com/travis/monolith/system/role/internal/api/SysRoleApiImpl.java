@@ -1,7 +1,7 @@
 package com.travis.monolith.system.role.internal.api;
 
 import com.travis.monolith.system.role.api.SysRoleApi;
-import com.travis.monolith.system.role.api.response.SysRoleResp;
+import com.travis.monolith.system.role.api.response.SysRoleListResp;
 import com.travis.monolith.system.role.internal.service.SysRoleService;
 import java.util.List;
 import java.util.Map;
@@ -76,12 +76,12 @@ public class SysRoleApiImpl implements SysRoleApi {
     }
 
     @Override
-    public void removeMenuFromAdminRoles(Long menuId) {
-        roleService.removeMenuFromAdminRoles(menuId);
+    public void removeMenuRelations(List<Long> menuIds) {
+        roleService.removeMenuRelations(menuIds);
     }
 
     @Override
-    public List<SysRoleResp> listEnabled() {
+    public List<SysRoleListResp> listEnabled() {
         return roleService.listEnabled();
     }
 

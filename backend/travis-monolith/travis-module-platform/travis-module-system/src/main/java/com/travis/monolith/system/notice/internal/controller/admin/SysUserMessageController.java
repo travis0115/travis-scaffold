@@ -5,7 +5,8 @@ import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.monolith.system.notice.api.request.SysUserMessagePageReq;
-import com.travis.monolith.system.notice.api.response.SysUserMessageResp;
+import com.travis.monolith.system.notice.api.response.SysUserMessagePageResp;
+import com.travis.monolith.system.notice.api.response.SysUserMessageRecentResp;
 import com.travis.monolith.system.notice.internal.service.SysUserMessageService;
 import java.util.List;
 import java.util.Map;
@@ -19,13 +20,13 @@ public class SysUserMessageController {
     private final SysUserMessageService messageService;
 
     @GetMapping("/recent")
-    public ApiResponse<List<SysUserMessageResp>> recent(
+    public ApiResponse<List<SysUserMessageRecentResp>> recent(
             @RequestParam(defaultValue = "10") Integer limit) {
         return ApiResponse.success(messageService.listRecent(currentUserId(), limit));
     }
 
     @GetMapping("/page")
-    public ApiResponse<PageResp<SysUserMessageResp>> page(SysUserMessagePageReq req) {
+    public ApiResponse<PageResp<SysUserMessagePageResp>> page(SysUserMessagePageReq req) {
         return ApiResponse.success(messageService.page(currentUserId(), req));
     }
 

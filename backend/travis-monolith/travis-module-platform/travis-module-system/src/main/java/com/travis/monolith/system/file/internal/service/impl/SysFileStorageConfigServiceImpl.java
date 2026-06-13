@@ -1,7 +1,8 @@
 package com.travis.monolith.system.file.internal.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.travis.monolith.system.file.api.request.SysFileStorageConfigReq;
+import com.travis.monolith.system.file.api.request.SysFileStorageConfigCreateReq;
+import com.travis.monolith.system.file.api.request.SysFileStorageConfigUpdateReq;
 import com.travis.monolith.system.file.internal.entity.SysFileStorageConfig;
 import com.travis.monolith.system.file.internal.mapper.SysFileStorageConfigMapper;
 import com.travis.monolith.system.file.internal.service.SysFileStorageConfigService;
@@ -15,7 +16,7 @@ public class SysFileStorageConfigServiceImpl
         implements SysFileStorageConfigService {
     @Override
     @Transactional
-    public void create(SysFileStorageConfigReq req) {
+    public void create(SysFileStorageConfigCreateReq req) {
         resetDefault(req.getIsDefault());
         var entity = new SysFileStorageConfig();
         BeanUtils.copyProperties(req, entity);
@@ -24,7 +25,7 @@ public class SysFileStorageConfigServiceImpl
 
     @Override
     @Transactional
-    public void update(Long id, SysFileStorageConfigReq req) {
+    public void update(Long id, SysFileStorageConfigUpdateReq req) {
         resetDefault(req.getIsDefault());
         var entity = new SysFileStorageConfig();
         BeanUtils.copyProperties(req, entity);

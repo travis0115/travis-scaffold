@@ -5,15 +5,16 @@ import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
-import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmitNamespace;
 import com.travis.monolith.system.user.api.request.ChangePasswordReq;
 import com.travis.monolith.system.user.api.request.ResetPasswordReq;
+import com.travis.monolith.system.user.api.request.SysUserCreateReq;
 import com.travis.monolith.system.user.api.request.SysUserPageReq;
-import com.travis.monolith.system.user.api.request.SysUserReq;
 import com.travis.monolith.system.user.api.request.SysUserRoleReq;
+import com.travis.monolith.system.user.api.request.SysUserUpdateReq;
 import com.travis.monolith.system.user.api.request.UpdateAvatarReq;
 import com.travis.monolith.system.user.api.request.UserProfileReq;
-import com.travis.monolith.system.user.api.response.SysUserResp;
+import com.travis.monolith.system.user.api.response.SysUserDetailResp;
+import com.travis.monolith.system.user.api.response.SysUserPageResp;
 import com.travis.monolith.system.user.internal.service.SysUserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +31,6 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Validated
 @OperationLogModule("用户管理")
-@NoRepeatSubmitNamespace("system:user")
 public class SysUserController {
 
     /** 用户管理服务 */
@@ -43,7 +43,7 @@ public class SysUserController {
      * @return 分页结果
      */
     @GetMapping("/page")
-    public ApiResponse<PageResp<SysUserResp>> page(@Valid SysUserPageReq req) {
+    public ApiResponse<PageResp<SysUserPageResp>> page(@Valid SysUserPageReq req) {
         return ApiResponse.success(userService.page(req));
     }
 
@@ -54,7 +54,7 @@ public class SysUserController {
      * @return 用户详情（含角色信息）
      */
     @GetMapping("/{id}")
-    public ApiResponse<SysUserResp> getDetail(@PathVariable Long id) {
+    public ApiResponse<SysUserDetailResp> getDetail(@PathVariable Long id) {
         return ApiResponse.success(userService.getById(id));
     }
 
@@ -67,7 +67,7 @@ public class SysUserController {
     @OperationLog(action = "新增用户")
     @NoRepeatSubmit
     @PostMapping
-    public ApiResponse<Long> add(@RequestBody @Valid SysUserReq req) {
+    public ApiResponse<Long> add(@RequestBody @Valid SysUserCreateReq req) {
         return ApiResponse.success(userService.create(req));
     }
 
@@ -81,7 +81,8 @@ public class SysUserController {
     @OperationLog(action = "更新用户")
     @NoRepeatSubmit
     @PutMapping("/{id}")
-    public ApiResponse<Void> update(@PathVariable Long id, @RequestBody @Valid SysUserReq req) {
+    public ApiResponse<Void> update(
+            @PathVariable Long id, @RequestBody @Valid SysUserUpdateReq req) {
         userService.update(id, req);
         return ApiResponse.success();
     }

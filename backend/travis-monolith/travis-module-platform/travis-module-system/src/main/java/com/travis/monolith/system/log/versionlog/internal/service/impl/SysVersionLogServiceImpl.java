@@ -6,9 +6,11 @@ import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
-import com.travis.infrastructure.framework.web.core.exception.BizException;
-import com.travis.monolith.system.log.versionlog.api.request.SysVersionLogReq;
-import com.travis.monolith.system.log.versionlog.api.response.SysVersionLogResp;
+import com.travis.monolith.system.log.versionlog.api.request.SysVersionLogCreateReq;
+import com.travis.monolith.system.log.versionlog.api.request.SysVersionLogUpdateReq;
+import com.travis.monolith.system.log.versionlog.api.response.SysVersionLogDetailResp;
+import com.travis.monolith.system.log.versionlog.api.response.SysVersionLogPageResp;
+import com.travis.monolith.system.log.versionlog.api.response.SysVersionLogPublishedResp;
 import com.travis.monolith.system.log.versionlog.internal.converter.SysVersionLogConverter;
 import com.travis.monolith.system.log.versionlog.internal.entity.SysVersionLog;
 import com.travis.monolith.system.log.versionlog.internal.mapper.SysVersionLogMapper;
@@ -31,7 +33,7 @@ public class SysVersionLogServiceImpl extends ServiceImpl<SysVersionLogMapper, S
     private final SysVersionLogConverter converter;
 
     @Override
-    public PageResp<SysVersionLogResp> page(
+    public PageResp<SysVersionLogPageResp> page(
             String version, String title, Integer status, Integer pageNum, Integer pageSize) {
         LambdaQueryWrapperX<SysVersionLog> wrapper =
                 new LambdaQueryWrapperX<SysVersionLog>()
@@ -44,24 +46,24 @@ public class SysVersionLogServiceImpl extends ServiceImpl<SysVersionLogMapper, S
     }
 
     @Override
-    public SysVersionLogResp getById(Long id) {
+    public SysVersionLogDetailResp getById(Long id) {
         SysVersionLog versionLog = super.getById(id);
         if (versionLog == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
-        return converter.toResp(versionLog);
+        return converter.toDetailResp(versionLog);
     }
 
     @Override
     @Transactional
-    public void create(SysVersionLogReq req) {
+    public void create(SysVersionLogCreateReq req) {
         SysVersionLog entity = converter.toEntity(req);
         save(entity);
     }
 
     @Override
     @Transactional
-    public void update(Long id, SysVersionLogReq req) {
+    public void update(Long id, SysVersionLogUpdateReq req) {
         SysVersionLog entity = super.getById(id);
         if (entity == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
@@ -77,7 +79,7 @@ public class SysVersionLogServiceImpl extends ServiceImpl<SysVersionLogMapper, S
     }
 
     @Override
-    public List<SysVersionLogResp> listPublished(Integer limit) {
+    public List<SysVersionLogPublishedResp> listPublished(Integer limit) {
         if (limit == null || limit <= 0) {
             limit = 10;
         }
@@ -86,6 +88,6 @@ public class SysVersionLogServiceImpl extends ServiceImpl<SysVersionLogMapper, S
                         .eq(SysVersionLog::getStatus, 1)
                         .orderByDesc(SysVersionLog::getPublishTime);
         Page<SysVersionLog> page = page(new Page<>(1, limit), wrapper);
-        return converter.toRespList(page.getRecords());
+        return converter.toPublishedRespList(page.getRecords());
     }
 }

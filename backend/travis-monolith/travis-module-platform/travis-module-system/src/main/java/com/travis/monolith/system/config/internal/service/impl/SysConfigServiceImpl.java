@@ -7,10 +7,11 @@ import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
-import com.travis.infrastructure.framework.web.core.exception.BizException;
+import com.travis.monolith.system.config.api.request.SysConfigCreateReq;
 import com.travis.monolith.system.config.api.request.SysConfigPageReq;
-import com.travis.monolith.system.config.api.request.SysConfigReq;
-import com.travis.monolith.system.config.api.response.SysConfigResp;
+import com.travis.monolith.system.config.api.request.SysConfigUpdateReq;
+import com.travis.monolith.system.config.api.response.SysConfigDetailResp;
+import com.travis.monolith.system.config.api.response.SysConfigPageResp;
 import com.travis.monolith.system.config.internal.converter.SysConfigConverter;
 import com.travis.monolith.system.config.internal.entity.SysConfig;
 import com.travis.monolith.system.config.internal.mapper.SysConfigMapper;
@@ -40,7 +41,7 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
     private final SysConfigConverter converter;
 
     @Override
-    public PageResp<SysConfigResp> page(SysConfigPageReq req) {
+    public PageResp<SysConfigPageResp> page(SysConfigPageReq req) {
         var wrapper =
                 new LambdaQueryWrapperX<SysConfig>()
                         .likeIfPresent(SysConfig::getConfigGroup, req.getConfigGroup())
@@ -57,12 +58,12 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
     }
 
     @Override
-    public SysConfigResp getById(Long id) {
+    public SysConfigDetailResp getById(Long id) {
         SysConfig config = super.getById(id);
         if (config == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
-        return converter.toResp(config);
+        return converter.toDetailResp(config);
     }
 
     @Override
@@ -74,14 +75,14 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
 
     @Override
     @Transactional
-    public void create(SysConfigReq req) {
+    public void create(SysConfigCreateReq req) {
         SysConfig entity = converter.toEntity(req);
         save(entity);
     }
 
     @Override
     @Transactional
-    public void update(Long id, SysConfigReq req) {
+    public void update(Long id, SysConfigUpdateReq req) {
         SysConfig entity = super.getById(id);
         if (entity == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);

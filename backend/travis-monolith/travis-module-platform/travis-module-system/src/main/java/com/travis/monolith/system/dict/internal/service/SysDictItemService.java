@@ -2,7 +2,8 @@ package com.travis.monolith.system.dict.internal.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.infrastructure.common.web.model.PageResp;
-import com.travis.monolith.system.dict.api.request.SysDictItemReq;
+import com.travis.monolith.system.dict.api.request.SysDictItemCreateReq;
+import com.travis.monolith.system.dict.api.request.SysDictItemUpdateReq;
 import com.travis.monolith.system.dict.internal.entity.SysDictItem;
 
 /**
@@ -27,7 +28,7 @@ public interface SysDictItemService extends IService<SysDictItem> {
      *
      * @param req 字典数据项请求参数
      */
-    void create(SysDictItemReq req);
+    void create(SysDictItemCreateReq req);
 
     /**
      * 更新字典数据项
@@ -35,7 +36,7 @@ public interface SysDictItemService extends IService<SysDictItem> {
      * @param id 数据项ID
      * @param req 字典数据项请求参数
      */
-    void update(Long id, SysDictItemReq req);
+    void update(Long id, SysDictItemUpdateReq req);
 
     /**
      * 删除字典数据项

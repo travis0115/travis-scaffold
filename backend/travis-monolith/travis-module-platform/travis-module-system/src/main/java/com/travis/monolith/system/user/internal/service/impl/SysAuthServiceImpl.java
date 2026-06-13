@@ -5,7 +5,6 @@ import com.travis.infrastructure.common.event.MessagePublisher;
 import com.travis.infrastructure.common.web.enums.LoginType;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
-import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.model.UserAgentInfo;
 import com.travis.infrastructure.framework.web.core.util.IpUtil;
 import com.travis.infrastructure.framework.web.core.util.UserAgentUtil;
@@ -15,8 +14,8 @@ import com.travis.monolith.system.menu.api.response.VbenMenuResp;
 import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.api.event.UserLoginPayload;
 import com.travis.monolith.system.user.api.request.SysUserLoginReq;
+import com.travis.monolith.system.user.api.response.SysUserDetailResp;
 import com.travis.monolith.system.user.api.response.SysUserLoginResp;
-import com.travis.monolith.system.user.api.response.SysUserResp;
 import com.travis.monolith.system.user.api.response.UserInfoResp;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.service.SysAuthService;
@@ -119,7 +118,7 @@ public class SysAuthServiceImpl implements SysAuthService {
     @Override
     public UserInfoResp getUserInfo() {
         long userId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
-        SysUserResp user = userService.getById(userId);
+        SysUserDetailResp user = userService.getById(userId);
         if (user == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }

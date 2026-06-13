@@ -1,8 +1,11 @@
 package com.travis.monolith.system.log.versionlog.internal.converter;
 
 import com.travis.infrastructure.common.mapstruct.BaseMapperConfig;
-import com.travis.monolith.system.log.versionlog.api.request.SysVersionLogReq;
-import com.travis.monolith.system.log.versionlog.api.response.SysVersionLogResp;
+import com.travis.monolith.system.log.versionlog.api.request.SysVersionLogCreateReq;
+import com.travis.monolith.system.log.versionlog.api.request.SysVersionLogUpdateReq;
+import com.travis.monolith.system.log.versionlog.api.response.SysVersionLogDetailResp;
+import com.travis.monolith.system.log.versionlog.api.response.SysVersionLogPageResp;
+import com.travis.monolith.system.log.versionlog.api.response.SysVersionLogPublishedResp;
 import com.travis.monolith.system.log.versionlog.internal.entity.SysVersionLog;
 import java.util.List;
 import org.mapstruct.Mapper;
@@ -16,11 +19,15 @@ import org.mapstruct.MappingTarget;
 @Mapper(config = BaseMapperConfig.class)
 public interface SysVersionLogConverter {
 
-    SysVersionLogResp toResp(SysVersionLog versionLog);
+    SysVersionLogPageResp toResp(SysVersionLog versionLog);
 
-    List<SysVersionLogResp> toRespList(List<SysVersionLog> versionLogs);
+    SysVersionLogDetailResp toDetailResp(SysVersionLog versionLog);
 
-    SysVersionLog toEntity(SysVersionLogReq req);
+    List<SysVersionLogPublishedResp> toPublishedRespList(List<SysVersionLog> versionLogs);
 
-    void update(SysVersionLogReq req, @MappingTarget SysVersionLog versionLog);
+    List<SysVersionLogPageResp> toRespList(List<SysVersionLog> versionLogs);
+
+    SysVersionLog toEntity(SysVersionLogCreateReq req);
+
+    void update(SysVersionLogUpdateReq req, @MappingTarget SysVersionLog versionLog);
 }

@@ -2,8 +2,11 @@ package com.travis.monolith.system.log.versionlog.internal.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.infrastructure.common.web.model.PageResp;
-import com.travis.monolith.system.log.versionlog.api.request.SysVersionLogReq;
-import com.travis.monolith.system.log.versionlog.api.response.SysVersionLogResp;
+import com.travis.monolith.system.log.versionlog.api.request.SysVersionLogCreateReq;
+import com.travis.monolith.system.log.versionlog.api.request.SysVersionLogUpdateReq;
+import com.travis.monolith.system.log.versionlog.api.response.SysVersionLogDetailResp;
+import com.travis.monolith.system.log.versionlog.api.response.SysVersionLogPageResp;
+import com.travis.monolith.system.log.versionlog.api.response.SysVersionLogPublishedResp;
 import com.travis.monolith.system.log.versionlog.internal.entity.SysVersionLog;
 import java.util.List;
 
@@ -24,7 +27,7 @@ public interface SysVersionLogService extends IService<SysVersionLog> {
      * @param pageSize 每页条数
      * @return 分页结果
      */
-    PageResp<SysVersionLogResp> page(
+    PageResp<SysVersionLogPageResp> page(
             String version, String title, Integer status, Integer pageNum, Integer pageSize);
 
     /**
@@ -33,14 +36,14 @@ public interface SysVersionLogService extends IService<SysVersionLog> {
      * @param id 日志ID
      * @return 版本日志详情
      */
-    SysVersionLogResp getById(Long id);
+    SysVersionLogDetailResp getById(Long id);
 
     /**
      * 新增版本日志
      *
      * @param req 请求参数
      */
-    void create(SysVersionLogReq req);
+    void create(SysVersionLogCreateReq req);
 
     /**
      * 更新版本日志
@@ -48,7 +51,7 @@ public interface SysVersionLogService extends IService<SysVersionLog> {
      * @param id 日志ID
      * @param req 请求参数
      */
-    void update(Long id, SysVersionLogReq req);
+    void update(Long id, SysVersionLogUpdateReq req);
 
     /**
      * 删除版本日志
@@ -63,5 +66,5 @@ public interface SysVersionLogService extends IService<SysVersionLog> {
      * @param limit 返回条数
      * @return 版本日志列表
      */
-    List<SysVersionLogResp> listPublished(Integer limit);
+    List<SysVersionLogPublishedResp> listPublished(Integer limit);
 }

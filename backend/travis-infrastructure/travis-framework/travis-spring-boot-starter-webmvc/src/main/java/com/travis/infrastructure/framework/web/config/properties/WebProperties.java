@@ -20,6 +20,9 @@ public class WebProperties {
     /** 请求体缓存上限（字节），0 或负数表示不限制，默认 256 KiB */
     private int requestCacheLimit = 262144;
 
+    /** 防重复提交配置 */
+    private NoRepeatSubmit noRepeatSubmit = new NoRepeatSubmit();
+
     /** API 路径前缀配置 */
     @Data
     public static class ApiPrefix {
@@ -32,5 +35,13 @@ public class WebProperties {
 
         /** 是否启用该前缀配置 */
         private boolean enabled = true;
+    }
+
+    /** 防重复提交配置 */
+    @Data
+    public static class NoRepeatSubmit {
+
+        /** Redis Key 前缀 */
+        private String keyPrefix = "repeat-submit:";
     }
 }

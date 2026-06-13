@@ -3,13 +3,15 @@ package com.travis.monolith.system.notice.internal.service.impl;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
+import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
-import com.travis.infrastructure.framework.web.core.exception.BizException;
+import com.travis.monolith.system.notice.api.request.SysNoticeCreateReq;
 import com.travis.monolith.system.notice.api.request.SysNoticePageReq;
-import com.travis.monolith.system.notice.api.request.SysNoticeReq;
-import com.travis.monolith.system.notice.api.response.SysNoticeResp;
+import com.travis.monolith.system.notice.api.request.SysNoticeUpdateReq;
+import com.travis.monolith.system.notice.api.response.SysNoticeDetailResp;
+import com.travis.monolith.system.notice.api.response.SysNoticePageResp;
 import com.travis.monolith.system.notice.internal.entity.SysNotice;
 import com.travis.monolith.system.notice.internal.entity.SysUserMessage;
 import com.travis.monolith.system.notice.internal.mapper.SysNoticeMapper;
@@ -17,16 +19,13 @@ import com.travis.monolith.system.notice.internal.mapper.SysUserMessageMapper;
 import com.travis.monolith.system.notice.internal.service.SysNoticeService;
 import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.api.SysUserApi;
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice>
@@ -48,7 +47,7 @@ public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice
     }
 
     @Override
-    public PageResp<SysNoticeResp> page(SysNoticePageReq req) {
+    public PageResp<SysNoticePageResp> page(SysNoticePageReq req) {
         var wrapper =
                 new LambdaQueryWrapperX<SysNotice>()
                         .likeIfPresent(SysNotice::getTitle, req.getTitle())
@@ -56,24 +55,24 @@ public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice
                         .eqIfPresent(SysNotice::getStatus, req.getStatus())
                         .orderByDesc(SysNotice::getCreateTime);
         Page<SysNotice> page = page(new Page<>(req.getPageNum(), req.getPageSize()), wrapper);
-        return PageConverter.toResp(page.convert(this::toResp));
+        return PageConverter.toResp(page.convert(this::toPageResp));
     }
 
     @Override
-    public SysNoticeResp getDetail(Long id) {
+    public SysNoticeDetailResp getDetail(Long id) {
         SysNotice notice = getById(id);
         if (notice == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
-        return toResp(notice);
+        return toDetailResp(notice);
     }
 
     @Override
     @Transactional
-    public void create(SysNoticeReq req) {
-        validateAudience(req);
+    public void create(SysNoticeCreateReq req) {
+        validateAudience(req.getAudienceType(), req.getTargetIds());
         var entity = new SysNotice();
-        copyRequest(req, entity);
+        copyRequest(req, req.getTargetIds(), entity);
         save(entity);
         if (Integer.valueOf(1).equals(entity.getStatus())) {
             publish(entity);
@@ -82,13 +81,13 @@ public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice
 
     @Override
     @Transactional
-    public void update(Long id, SysNoticeReq req) {
-        validateAudience(req);
+    public void update(Long id, SysNoticeUpdateReq req) {
+        validateAudience(req.getAudienceType(), req.getTargetIds());
         var entity = getById(id);
         if (entity == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
-        copyRequest(req, entity);
+        copyRequest(req, req.getTargetIds(), entity);
         updateById(entity);
         if (Integer.valueOf(1).equals(entity.getStatus())) {
             publish(entity);
@@ -144,24 +143,29 @@ public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice
         };
     }
 
-    private void validateAudience(SysNoticeReq req) {
-        Integer audienceType = req.getAudienceType();
+    private void validateAudience(Integer audienceType, List<Long> targetIds) {
         if (audienceType == null || audienceType < AUDIENCE_ALL || audienceType > AUDIENCE_DEPT) {
             throw new BizException(CommonErrorCode.BAD_REQUEST);
         }
-        if (audienceType != AUDIENCE_ALL
-                && (req.getTargetIds() == null || req.getTargetIds().isEmpty())) {
+        if (audienceType != AUDIENCE_ALL && (targetIds == null || targetIds.isEmpty())) {
             throw new BizException(CommonErrorCode.BAD_REQUEST);
         }
     }
 
-    private void copyRequest(SysNoticeReq req, SysNotice entity) {
+    private void copyRequest(Object req, List<Long> targetIds, SysNotice entity) {
         BeanUtils.copyProperties(req, entity, "targetIds");
-        entity.setTargetIds(serializeTargetIds(req.getTargetIds()));
+        entity.setTargetIds(serializeTargetIds(targetIds));
     }
 
-    private SysNoticeResp toResp(SysNotice notice) {
-        var response = new SysNoticeResp();
+    private SysNoticePageResp toPageResp(SysNotice notice) {
+        var response = new SysNoticePageResp();
+        BeanUtils.copyProperties(notice, response, "targetIds");
+        response.setTargetIds(parseTargetIds(notice.getTargetIds()));
+        return response;
+    }
+
+    private SysNoticeDetailResp toDetailResp(SysNotice notice) {
+        var response = new SysNoticeDetailResp();
         BeanUtils.copyProperties(notice, response, "targetIds");
         response.setTargetIds(parseTargetIds(notice.getTargetIds()));
         return response;

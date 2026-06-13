@@ -1,7 +1,8 @@
 package com.travis.monolith.system.file.internal.controller.admin;
 
 import com.travis.infrastructure.common.web.model.ApiResponse;
-import com.travis.monolith.system.file.api.request.SysFileFolderReq;
+import com.travis.monolith.system.file.api.request.SysFileFolderCreateReq;
+import com.travis.monolith.system.file.api.request.SysFileFolderUpdateReq;
 import com.travis.monolith.system.file.internal.entity.SysFileFolder;
 import com.travis.monolith.system.file.internal.service.SysFileFolderService;
 import jakarta.validation.Valid;
@@ -21,14 +22,14 @@ public class SysFileFolderController {
     }
 
     @PostMapping
-    public ApiResponse<Void> create(@RequestBody @Valid SysFileFolderReq req) {
+    public ApiResponse<Void> create(@RequestBody @Valid SysFileFolderCreateReq req) {
         folderService.create(req);
         return ApiResponse.success();
     }
 
     @PutMapping("/{id}")
     public ApiResponse<Void> update(
-            @PathVariable Long id, @RequestBody @Valid SysFileFolderReq req) {
+            @PathVariable Long id, @RequestBody @Valid SysFileFolderUpdateReq req) {
         folderService.update(id, req);
         return ApiResponse.success();
     }

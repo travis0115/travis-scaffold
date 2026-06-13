@@ -45,16 +45,18 @@ export function setupVbenForm<
 >(options: VbenFormAdapterOptions<T>) {
   const { config, defineRules } = options;
 
-  const {
-    disabledOnChangeListener = true,
-    disabledOnInputListener = true,
-    emptyStateValue = undefined,
-  } = (config || {}) as FormCommonConfig;
+  const commonConfig = { ...config } as FormCommonConfig & {
+    baseModelPropName?: string;
+    modelPropNameMap?: Partial<Record<T, string>>;
+  };
+  delete commonConfig.baseModelPropName;
+  delete commonConfig.modelPropNameMap;
 
   Object.assign(DEFAULT_FORM_COMMON_CONFIG, {
-    disabledOnChangeListener,
-    disabledOnInputListener,
-    emptyStateValue,
+    disabledOnChangeListener: true,
+    disabledOnInputListener: true,
+    emptyStateValue: undefined,
+    ...commonConfig,
   });
 
   if (defineRules) {

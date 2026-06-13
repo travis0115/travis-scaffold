@@ -3,23 +3,19 @@ package com.travis.monolith.system.dept.internal.service.impl;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.event.MessagePublisher;
+import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
-import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.monolith.system.common.api.SystemEvent;
 import com.travis.monolith.system.dept.api.event.DeptDeletedPayload;
+import com.travis.monolith.system.dept.api.request.SysDeptCreateReq;
 import com.travis.monolith.system.dept.api.request.SysDeptPageReq;
-import com.travis.monolith.system.dept.api.request.SysDeptReq;
+import com.travis.monolith.system.dept.api.request.SysDeptUpdateReq;
 import com.travis.monolith.system.dept.api.response.SysDeptResp;
 import com.travis.monolith.system.dept.internal.converter.SysDeptConverter;
 import com.travis.monolith.system.dept.internal.entity.SysDept;
 import com.travis.monolith.system.dept.internal.mapper.SysDeptMapper;
 import com.travis.monolith.system.dept.internal.service.SysDeptService;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -28,6 +24,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 部门管理服务实现，支持树形部门结构的构建
@@ -41,16 +40,7 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
         implements SysDeptService {
 
     private static final Map<String, SFunction<SysDept, ?>> SORT_COLUMNS =
-            Map.ofEntries(
-                    Map.entry("id", SysDept::getId),
-                    Map.entry("parentId", SysDept::getParentId),
-                    Map.entry("deptName", SysDept::getDeptName),
-                    Map.entry("sort", SysDept::getSort),
-                    Map.entry("leader", SysDept::getLeader),
-                    Map.entry("mobile", SysDept::getMobile),
-                    Map.entry("status", SysDept::getStatus),
-                    Map.entry("createTime", SysDept::getCreateTime),
-                    Map.entry("updateTime", SysDept::getUpdateTime));
+            Map.ofEntries(Map.entry("sort", SysDept::getSort));
 
     /** 对象转换器 */
     private final SysDeptConverter converter;
@@ -116,11 +106,41 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
         return dept != null ? dept.getDeptName() : null;
     }
 
+    @Override
+    public boolean existsAnyByIds(Collection<Long> deptIds) {
+        return deptIds != null
+                && !deptIds.isEmpty()
+                && this.lambdaQuery().in(SysDept::getId, deptIds).exists();
+    }
+
+    @Override
+    public List<Long> listSelfAndDescendantIds(Long deptId) {
+        if (deptId == null) {
+            return List.of();
+        }
+        List<SysDept> departments =
+                list(
+                        new LambdaQueryWrapperX<SysDept>()
+                                .select(SysDept::getId, SysDept::getParentId));
+        Set<Long> result = new HashSet<>();
+        result.add(deptId);
+        boolean changed;
+        do {
+            changed = false;
+            for (SysDept department : departments) {
+                if (result.contains(department.getParentId()) && result.add(department.getId())) {
+                    changed = true;
+                }
+            }
+        } while (changed);
+        return List.copyOf(result);
+    }
+
     /** 新增部门 */
     @Override
     @Transactional
     @CacheEvict(value = "system:dept:tree", key = "'all'")
-    public void create(SysDeptReq req) {
+    public void create(SysDeptCreateReq req) {
         SysDept dept = new SysDept();
         dept.setParentId(req.getParentId() == null ? 0L : req.getParentId());
         dept.setDeptName(req.getDeptName());
@@ -134,7 +154,7 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
     /** 更新部门信息 */
     @Override
     @CacheEvict(value = "system:dept:tree", key = "'all'")
-    public void update(Long id, SysDeptReq req) {
+    public void update(Long id, SysDeptUpdateReq req) {
         SysDept dept = super.getById(id);
         if (dept == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
@@ -174,11 +194,11 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
                     payload,
                     (event, body, options, ex) -> {
                         if (ex != null) {
-                            log.error("部门删除事件发送失败, deptIds={}", payload.getDeptIds(), ex);
+                            log.error("部门删除事件发送失败, deptIds={}", payload.deptIds(), ex);
                         }
                     });
         } catch (RuntimeException e) {
-            log.error("部门删除事件发送失败, deptIds={}", payload.getDeptIds(), e);
+            log.error("部门删除事件发送失败, deptIds={}", payload.deptIds(), e);
         }
     }
 

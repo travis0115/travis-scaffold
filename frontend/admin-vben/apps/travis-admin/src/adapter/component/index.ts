@@ -601,12 +601,14 @@ async function initComponentAdapter() {
       fieldNames: { label: 'label', value: 'value', children: 'children' },
       loadingSlot: 'suffixIcon',
       modelPropName: 'value',
+      style: { width: '100%' },
       visibleEvent: 'onVisibleChange',
     }),
     ApiSelect: withDefaultPlaceholder(ApiComponent, 'select', {
       component: Select,
       loadingSlot: 'suffixIcon',
       modelPropName: 'value',
+      style: { width: '100%' },
       visibleEvent: 'onVisibleChange',
     }),
     ApiTreeSelect: withDefaultPlaceholder(ApiComponent, 'select', {
@@ -615,13 +617,20 @@ async function initComponentAdapter() {
       loadingSlot: 'suffixIcon',
       modelPropName: 'value',
       optionsPropName: 'treeData',
+      style: { width: '100%' },
       visibleEvent: 'onVisibleChange',
     }),
-    AutoComplete,
-    Cascader,
+    AutoComplete: withDefaultPlaceholder(AutoComplete, 'input', {
+      style: { width: '100%' },
+    }),
+    Cascader: withDefaultPlaceholder(Cascader, 'select', {
+      style: { width: '100%' },
+    }),
     Checkbox,
     CheckboxGroup,
-    DatePicker,
+    DatePicker: withDefaultPlaceholder(DatePicker, 'select', {
+      style: { width: '100%' },
+    }),
     // 自定义默认按钮
     DefaultButton: (props, { attrs, slots }) => {
       return h(Button, { ...props, attrs, type: 'default' }, slots);
@@ -644,14 +653,22 @@ async function initComponentAdapter() {
     },
     Radio,
     RadioGroup,
-    RangePicker,
+    RangePicker: withDefaultPlaceholder(RangePicker, 'select', {
+      style: { width: '100%' },
+    }),
     Rate,
-    Select: withDefaultPlaceholder(Select, 'select'),
+    Select: withDefaultPlaceholder(Select, 'select', {
+      style: { width: '100%' },
+    }),
     Space,
     Switch,
     Textarea: withDefaultPlaceholder(Textarea, 'input'),
-    TimePicker,
-    TreeSelect: withDefaultPlaceholder(TreeSelect, 'select'),
+    TimePicker: withDefaultPlaceholder(TimePicker, 'select', {
+      style: { width: '100%' },
+    }),
+    TreeSelect: withDefaultPlaceholder(TreeSelect, 'select', {
+      style: { width: '100%' },
+    }),
     Upload: withPreviewUpload(),
   };
 

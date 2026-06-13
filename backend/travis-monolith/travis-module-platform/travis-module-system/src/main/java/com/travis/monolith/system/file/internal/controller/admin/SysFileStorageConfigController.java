@@ -1,7 +1,8 @@
 package com.travis.monolith.system.file.internal.controller.admin;
 
 import com.travis.infrastructure.common.web.model.ApiResponse;
-import com.travis.monolith.system.file.api.request.SysFileStorageConfigReq;
+import com.travis.monolith.system.file.api.request.SysFileStorageConfigCreateReq;
+import com.travis.monolith.system.file.api.request.SysFileStorageConfigUpdateReq;
 import com.travis.monolith.system.file.internal.entity.SysFileStorageConfig;
 import com.travis.monolith.system.file.internal.service.SysFileStorageConfigService;
 import jakarta.validation.Valid;
@@ -21,14 +22,14 @@ public class SysFileStorageConfigController {
     }
 
     @PostMapping
-    public ApiResponse<Void> create(@RequestBody @Valid SysFileStorageConfigReq req) {
+    public ApiResponse<Void> create(@RequestBody @Valid SysFileStorageConfigCreateReq req) {
         storageConfigService.create(req);
         return ApiResponse.success();
     }
 
     @PutMapping("/{id}")
     public ApiResponse<Void> update(
-            @PathVariable Long id, @RequestBody @Valid SysFileStorageConfigReq req) {
+            @PathVariable Long id, @RequestBody @Valid SysFileStorageConfigUpdateReq req) {
         storageConfigService.update(id, req);
         return ApiResponse.success();
     }

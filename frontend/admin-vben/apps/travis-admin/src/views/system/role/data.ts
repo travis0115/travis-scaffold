@@ -48,6 +48,13 @@ export function useFormSchema(): VbenFormSchema[] {
       fieldName: 'status',
       label: $t('system.role.status'),
     },
+    {
+      component: 'Input',
+      fieldName: 'menuIds',
+      formItemClass: 'items-start',
+      label: $t('system.role.assignMenus'),
+      modelPropName: 'modelValue',
+    },
   ];
 }
 

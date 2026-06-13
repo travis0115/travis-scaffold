@@ -31,7 +31,7 @@ public class StpInterfaceImpl implements StpInterface {
     public List<String> getPermissionList(Object loginId, String loginType) {
         try {
             if (LoginType.ADMIN.getCode().equals(loginType)) {
-                return sysAuthService.getAccessCodes((Long) loginId);
+                return sysAuthService.getAccessCodes(Long.parseLong(loginId.toString()));
             }
             return Collections.emptyList();
         } catch (Exception e) {

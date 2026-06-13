@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 import type { DataNode } from 'antdv-next/dist/tree';
 
+import type { Recordable } from '@vben/types';
+
 import type { SystemRoleApi } from '#/api';
 
 import { computed, nextTick, ref } from 'vue';
@@ -34,16 +36,15 @@ const [Drawer, drawerApi] = useVbenDrawer({
     const { valid } = await formApi.validate();
     if (!valid) return;
     const values = await formApi.getValues();
+    const { menuIds = [], ...roleValues } = values;
     drawerApi.lock();
 
     try {
       if (id.value) {
-        await updateRole(id.value, values);
-        // 更新角色菜单权限
-        const checkedKeys = menuCheckedKeys.value;
-        await assignRoleMenus({ roleId: id.value, menuIds: checkedKeys });
+        await updateRole(id.value, roleValues);
+        await assignRoleMenus({ roleId: id.value, menuIds });
       } else {
-        await createRole(values);
+        await createRole(roleValues);
       }
       emits('success');
       drawerApi.close();
@@ -73,15 +74,10 @@ const [Drawer, drawerApi] = useVbenDrawer({
         // 加载角色详情获取已分配菜单
         const detail = await getRoleDetail(data.id);
         formApi.setValues(detail);
-        menuCheckedKeys.value = detail.menuIds || [];
-      } else {
-        menuCheckedKeys.value = [];
       }
     }
   },
 });
-
-const menuCheckedKeys = ref<number[]>([]);
 
 async function loadMenuTree() {
   loadingMenuTree.value = true;
@@ -98,33 +94,34 @@ const getDrawerTitle = computed(() => {
     ? $t('ui.actionTitle.edit', [$t('system.role.name')])
     : $t('ui.actionTitle.create', [$t('system.role.name')]);
 });
+
+function getNodeClass(node: Recordable<any>) {
+  return node.value?.menuType === 2 ? 'inline-flex' : '';
+}
 </script>
 <template>
-  <Drawer :title="getDrawerTitle">
-    <Form />
-    <div class="mt-4">
-      <div class="mb-2 text-sm font-medium">
-        {{ $t('system.role.assignMenus') }}
-      </div>
-      <Spin :spinning="loadingMenuTree">
-        <Tree
-          v-model:checked-keys="menuCheckedKeys"
-          :tree-data="menuTree"
-          multiple
-          bordered
-          :default-expanded-level="2"
-          value-field="id"
-          label-field="menuName"
-          icon-field="icon"
-          checkable
-          check-strictly
-        >
-          <template #node="{ value }">
-            <IconifyIcon v-if="value.icon" :icon="value.icon" />
-            {{ value.menuName }}
-          </template>
-        </Tree>
-      </Spin>
-    </div>
+  <Drawer class="w-full max-w-200" :title="getDrawerTitle">
+    <Form>
+      <template #menuIds="slotProps">
+        <Spin :spinning="loadingMenuTree" :classes="{ root: 'w-full' }">
+          <Tree
+            :tree-data="menuTree"
+            multiple
+            bordered
+            :default-expanded-level="2"
+            :get-node-class="getNodeClass"
+            v-bind="slotProps"
+            value-field="id"
+            label-field="menuName"
+            icon-field="icon"
+          >
+            <template #node="{ value }">
+              <IconifyIcon v-if="value.icon" :icon="value.icon" />
+              {{ value.menuName }}
+            </template>
+          </Tree>
+        </Spin>
+      </template>
+    </Form>
   </Drawer>
 </template>

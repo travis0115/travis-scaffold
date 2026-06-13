@@ -4,16 +4,17 @@ import com.travis.infrastructure.common.logging.annotation.OperationLog;
 import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
-import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmitNamespace;
+import com.travis.monolith.system.dept.api.request.SysDeptCreateReq;
 import com.travis.monolith.system.dept.api.request.SysDeptPageReq;
-import com.travis.monolith.system.dept.api.request.SysDeptReq;
+import com.travis.monolith.system.dept.api.request.SysDeptUpdateReq;
 import com.travis.monolith.system.dept.api.response.SysDeptResp;
 import com.travis.monolith.system.dept.internal.service.SysDeptService;
 import jakarta.validation.Valid;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 部门管理控制器，提供部门树的增删改查接口
@@ -25,7 +26,6 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Validated
 @OperationLogModule("部门管理")
-@NoRepeatSubmitNamespace("system:dept")
 public class SysDeptController {
 
     /** 部门管理服务 */
@@ -62,7 +62,7 @@ public class SysDeptController {
     @OperationLog(action = "新增部门")
     @NoRepeatSubmit
     @PostMapping
-    public ApiResponse<Void> add(@RequestBody @Valid SysDeptReq req) {
+    public ApiResponse<Void> add(@RequestBody @Valid SysDeptCreateReq req) {
         deptService.create(req);
         return ApiResponse.success();
     }
@@ -77,7 +77,8 @@ public class SysDeptController {
     @OperationLog(action = "更新部门")
     @NoRepeatSubmit
     @PutMapping("/{id}")
-    public ApiResponse<Void> update(@PathVariable Long id, @RequestBody @Valid SysDeptReq req) {
+    public ApiResponse<Void> update(
+            @PathVariable Long id, @RequestBody @Valid SysDeptUpdateReq req) {
         deptService.update(id, req);
         return ApiResponse.success();
     }

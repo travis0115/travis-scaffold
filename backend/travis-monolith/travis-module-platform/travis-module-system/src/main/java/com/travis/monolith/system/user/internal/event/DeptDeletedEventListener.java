@@ -31,10 +31,10 @@ public class DeptDeletedEventListener extends AbstractEventListener<DeptDeletedP
 
     @Override
     protected void onEvent(DeptDeletedPayload payload) {
-        if (sysDeptApi.existsAnyByIds(payload.getDeptIds())) {
+        if (sysDeptApi.existsAnyByIds(payload.deptIds())) {
             return;
         }
-        for (Long deptId : payload.getDeptIds()) {
+        for (Long deptId : payload.deptIds()) {
             List<SysUser> users =
                     sysUserService.list(
                             new LambdaQueryWrapperX<SysUser>().eq(SysUser::getDeptId, deptId));

@@ -3,8 +3,9 @@ package com.travis.monolith.system.dept.internal.converter;
 import com.travis.infrastructure.common.mapstruct.BaseMapperConfig;
 import com.travis.monolith.system.dept.api.response.SysDeptResp;
 import com.travis.monolith.system.dept.internal.entity.SysDept;
-import java.util.List;
 import org.mapstruct.Mapper;
+
+import java.util.List;
 
 /**
  * 部门对象转换器

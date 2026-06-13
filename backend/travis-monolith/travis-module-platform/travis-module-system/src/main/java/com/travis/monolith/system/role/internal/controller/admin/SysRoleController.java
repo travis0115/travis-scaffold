@@ -5,11 +5,13 @@ import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
-import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmitNamespace;
+import com.travis.monolith.system.role.api.request.SysRoleCreateReq;
 import com.travis.monolith.system.role.api.request.SysRoleMenuReq;
 import com.travis.monolith.system.role.api.request.SysRolePageReq;
-import com.travis.monolith.system.role.api.request.SysRoleReq;
-import com.travis.monolith.system.role.api.response.SysRoleResp;
+import com.travis.monolith.system.role.api.request.SysRoleUpdateReq;
+import com.travis.monolith.system.role.api.response.SysRoleDetailResp;
+import com.travis.monolith.system.role.api.response.SysRoleListResp;
+import com.travis.monolith.system.role.api.response.SysRolePageResp;
 import com.travis.monolith.system.role.internal.service.SysRoleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +28,6 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Validated
 @OperationLogModule("角色管理")
-@NoRepeatSubmitNamespace("system:role")
 public class SysRoleController {
 
     /** 角色管理服务 */
@@ -34,7 +35,7 @@ public class SysRoleController {
 
     /** 分页查询角色列表 */
     @GetMapping("/page")
-    public ApiResponse<PageResp<SysRoleResp>> page(@Valid SysRolePageReq req) {
+    public ApiResponse<PageResp<SysRolePageResp>> page(@Valid SysRolePageReq req) {
         return ApiResponse.success(roleService.page(req));
     }
 
@@ -45,7 +46,7 @@ public class SysRoleController {
      * @return 角色详情（含已分配菜单）
      */
     @GetMapping("/{id}")
-    public ApiResponse<SysRoleResp> getDetail(@PathVariable Long id) {
+    public ApiResponse<SysRoleDetailResp> getDetail(@PathVariable Long id) {
         return ApiResponse.success(roleService.getById(id));
     }
 
@@ -58,7 +59,7 @@ public class SysRoleController {
     @OperationLog(action = "新增角色")
     @NoRepeatSubmit
     @PostMapping
-    public ApiResponse<Void> add(@RequestBody @Valid SysRoleReq req) {
+    public ApiResponse<Void> add(@RequestBody @Valid SysRoleCreateReq req) {
         roleService.create(req);
         return ApiResponse.success();
     }
@@ -73,7 +74,8 @@ public class SysRoleController {
     @OperationLog(action = "更新角色")
     @NoRepeatSubmit
     @PutMapping("/{id}")
-    public ApiResponse<Void> update(@PathVariable Long id, @RequestBody @Valid SysRoleReq req) {
+    public ApiResponse<Void> update(
+            @PathVariable Long id, @RequestBody @Valid SysRoleUpdateReq req) {
         roleService.update(id, req);
         return ApiResponse.success();
     }
@@ -108,7 +110,7 @@ public class SysRoleController {
 
     /** 获取所有启用角色列表（不分页） */
     @GetMapping("/list")
-    public ApiResponse<java.util.List<SysRoleResp>> list() {
+    public ApiResponse<java.util.List<SysRoleListResp>> list() {
         return ApiResponse.success(roleService.listEnabled());
     }
 }

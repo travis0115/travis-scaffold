@@ -3,14 +3,15 @@ package com.travis.monolith.system.notice.internal.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.notice.api.request.SysUserMessagePageReq;
-import com.travis.monolith.system.notice.api.response.SysUserMessageResp;
+import com.travis.monolith.system.notice.api.response.SysUserMessagePageResp;
+import com.travis.monolith.system.notice.api.response.SysUserMessageRecentResp;
 import com.travis.monolith.system.notice.internal.entity.SysUserMessage;
 import java.util.List;
 
 public interface SysUserMessageService extends IService<SysUserMessage> {
-    List<SysUserMessageResp> listRecent(Long userId, Integer limit);
+    List<SysUserMessageRecentResp> listRecent(Long userId, Integer limit);
 
-    PageResp<SysUserMessageResp> page(Long userId, SysUserMessagePageReq req);
+    PageResp<SysUserMessagePageResp> page(Long userId, SysUserMessagePageReq req);
 
     long countUnread(Long userId);
 

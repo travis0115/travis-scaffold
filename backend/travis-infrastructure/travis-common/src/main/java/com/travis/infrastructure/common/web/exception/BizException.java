@@ -2,7 +2,7 @@ package com.travis.infrastructure.common.web.exception;
 
 import lombok.Getter;
 
-/** 携带统一错误码的运行时异常，供基础设施组件抛出可识别的业务错误。 */
+/** 携带统一错误码的运行时异常，供基础设施组件抛出可识别的业务错误 */
 @Getter
 public class BizException extends RuntimeException {
 

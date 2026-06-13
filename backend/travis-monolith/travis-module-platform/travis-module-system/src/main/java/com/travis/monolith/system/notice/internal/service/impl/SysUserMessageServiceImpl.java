@@ -6,9 +6,10 @@ import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
-import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.monolith.system.notice.api.request.SysUserMessagePageReq;
-import com.travis.monolith.system.notice.api.response.SysUserMessageResp;
+import com.travis.monolith.system.notice.api.response.SysUserMessageBaseResp;
+import com.travis.monolith.system.notice.api.response.SysUserMessagePageResp;
+import com.travis.monolith.system.notice.api.response.SysUserMessageRecentResp;
 import com.travis.monolith.system.notice.internal.entity.SysNotice;
 import com.travis.monolith.system.notice.internal.entity.SysUserMessage;
 import com.travis.monolith.system.notice.internal.mapper.SysNoticeMapper;
@@ -19,6 +20,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,17 +35,17 @@ public class SysUserMessageServiceImpl extends ServiceImpl<SysUserMessageMapper,
     }
 
     @Override
-    public List<SysUserMessageResp> listRecent(Long userId, Integer limit) {
+    public List<SysUserMessageRecentResp> listRecent(Long userId, Integer limit) {
         int actualLimit = limit == null || limit <= 0 ? 10 : Math.min(limit, 50);
         Page<SysUserMessage> page =
                 page(
                         new Page<>(1, actualLimit),
                         baseWrapper(userId).orderByDesc(SysUserMessage::getCreateTime));
-        return toResponses(page.getRecords());
+        return toResponses(page.getRecords(), SysUserMessageRecentResp::new);
     }
 
     @Override
-    public PageResp<SysUserMessageResp> page(Long userId, SysUserMessagePageReq req) {
+    public PageResp<SysUserMessagePageResp> page(Long userId, SysUserMessagePageReq req) {
         var wrapper =
                 baseWrapper(userId).eqIfPresent(SysUserMessage::getReadStatus, req.getReadStatus());
         if (req.getTitle() != null && !req.getTitle().isBlank()) {
@@ -57,7 +59,7 @@ public class SysUserMessageServiceImpl extends ServiceImpl<SysUserMessageMapper,
                             .toList();
             if (noticeIds.isEmpty()) {
                 return PageConverter.toResp(
-                        new Page<SysUserMessageResp>(req.getPageNum(), req.getPageSize(), 0));
+                        new Page<SysUserMessagePageResp>(req.getPageNum(), req.getPageSize(), 0));
             }
             wrapper.in(SysUserMessage::getNoticeId, noticeIds);
         }
@@ -65,9 +67,9 @@ public class SysUserMessageServiceImpl extends ServiceImpl<SysUserMessageMapper,
                 page(
                         new Page<>(req.getPageNum(), req.getPageSize()),
                         wrapper.orderByDesc(SysUserMessage::getCreateTime));
-        Page<SysUserMessageResp> responsePage =
+        Page<SysUserMessagePageResp> responsePage =
                 new Page<>(page.getCurrent(), page.getSize(), page.getTotal());
-        responsePage.setRecords(toResponses(page.getRecords()));
+        responsePage.setRecords(toResponses(page.getRecords(), SysUserMessagePageResp::new));
         return PageConverter.toResp(responsePage);
     }
 
@@ -126,7 +128,8 @@ public class SysUserMessageServiceImpl extends ServiceImpl<SysUserMessageMapper,
         return new LambdaQueryWrapperX<SysUserMessage>().eq(SysUserMessage::getUserId, userId);
     }
 
-    private List<SysUserMessageResp> toResponses(List<SysUserMessage> messages) {
+    private <T extends SysUserMessageBaseResp> List<T> toResponses(
+            List<SysUserMessage> messages, Supplier<T> responseFactory) {
         if (messages.isEmpty()) {
             return List.of();
         }
@@ -137,12 +140,17 @@ public class SysUserMessageServiceImpl extends ServiceImpl<SysUserMessageMapper,
                         .collect(Collectors.toMap(SysNotice::getId, Function.identity()));
         return messages.stream()
                 .filter(message -> noticeMap.containsKey(message.getNoticeId()))
-                .map(message -> toResponse(message, noticeMap.get(message.getNoticeId())))
+                .map(
+                        message ->
+                                toResponse(
+                                        message,
+                                        noticeMap.get(message.getNoticeId()),
+                                        responseFactory.get()))
                 .toList();
     }
 
-    private SysUserMessageResp toResponse(SysUserMessage message, SysNotice notice) {
-        var response = new SysUserMessageResp();
+    private <T extends SysUserMessageBaseResp> T toResponse(
+            SysUserMessage message, SysNotice notice, T response) {
         response.setId(message.getId());
         response.setNoticeId(notice.getId());
         response.setTitle(notice.getTitle());

@@ -12,7 +12,7 @@ import { Page, useVbenDrawer } from '@vben/common-ui';
 import { IconifyIcon, Plus } from '@vben/icons';
 import { useAccessStore, useUserStore } from '@vben/stores';
 
-import { Button, message } from 'antdv-next';
+import { Button, message, Modal } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteMenu, getMenuTree, moveDownMenu, moveUpMenu } from '#/api';
@@ -126,22 +126,31 @@ function onToggleMenu(row: SystemMenuApi.SysMenu) {
 }
 
 function onDelete(row: SystemMenuApi.SysMenu) {
-  const hideLoading = message.loading({
-    content: $t('ui.actionMessage.deleting', [row.menuName]),
-    duration: 0,
-    key: 'action_process_msg',
-  });
-  deleteMenu(row.id)
-    .then(() => {
-      message.success({
-        content: $t('ui.actionMessage.deleteSuccess', [row.menuName]),
+  const hasChildren = Boolean(row.children?.length);
+  Modal.confirm({
+    content: hasChildren
+      ? '该菜单下存在子菜单，删除后将同时删除所有子菜单，是否继续？'
+      : `确定删除菜单「${row.menuName}」吗？`,
+    onOk: async () => {
+      const hideLoading = message.loading({
+        content: $t('ui.actionMessage.deleting', [row.menuName]),
+        duration: 0,
         key: 'action_process_msg',
       });
-      onRefresh();
-    })
-    .catch(() => {
-      hideLoading();
-    });
+      try {
+        await deleteMenu(row.id);
+        message.success({
+          content: $t('ui.actionMessage.deleteSuccess', [row.menuName]),
+          key: 'action_process_msg',
+        });
+        await onRefresh();
+      } catch (error) {
+        hideLoading();
+        throw error;
+      }
+    },
+    title: `删除菜单「${row.menuName}」`,
+  });
 }
 
 function onMoveUp(row: SystemMenuApi.SysMenu) {

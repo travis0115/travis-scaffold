@@ -6,10 +6,11 @@ import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
-import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.monolith.system.common.api.SystemErrorCode;
-import com.travis.monolith.system.dict.api.request.SysDictItemReq;
-import com.travis.monolith.system.dict.api.request.SysDictReq;
+import com.travis.monolith.system.dict.api.request.SysDictCreateReq;
+import com.travis.monolith.system.dict.api.request.SysDictItemCreateReq;
+import com.travis.monolith.system.dict.api.request.SysDictItemUpdateReq;
+import com.travis.monolith.system.dict.api.request.SysDictUpdateReq;
 import com.travis.monolith.system.dict.api.response.SysDictItemResp;
 import com.travis.monolith.system.dict.internal.converter.SysDictItemConverter;
 import com.travis.monolith.system.dict.internal.entity.SysDict;
@@ -97,7 +98,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
     /** 新增字典类型 */
     @Override
     @Transactional
-    public void create(SysDictReq req) {
+    public void create(SysDictCreateReq req) {
         // 检查字典类型编码唯一性
         long count =
                 count(
@@ -117,7 +118,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
     /** 更新字典类型 */
     @Override
     @Transactional
-    public void update(Long id, SysDictReq req) {
+    public void update(Long id, SysDictUpdateReq req) {
         SysDict dict = super.getById(id);
         if (dict == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
@@ -163,14 +164,14 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
     /** 新增字典数据项（委托给 {@link SysDictItemService}） */
     @Override
     @CacheEvict(value = "system:dict:items", key = "#req.dictId")
-    public void createItem(SysDictItemReq req) {
+    public void createItem(SysDictItemCreateReq req) {
         dictItemService.create(req);
     }
 
     /** 更新字典数据项（委托给 {@link SysDictItemService}） */
     @Override
     @CacheEvict(value = "system:dict:items", key = "#req.dictId")
-    public void updateItem(Long id, SysDictItemReq req) {
+    public void updateItem(Long id, SysDictItemUpdateReq req) {
         dictItemService.update(id, req);
     }
 

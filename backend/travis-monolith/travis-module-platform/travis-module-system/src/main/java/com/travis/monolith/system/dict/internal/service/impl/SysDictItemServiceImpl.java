@@ -6,8 +6,8 @@ import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
-import com.travis.infrastructure.framework.web.core.exception.BizException;
-import com.travis.monolith.system.dict.api.request.SysDictItemReq;
+import com.travis.monolith.system.dict.api.request.SysDictItemCreateReq;
+import com.travis.monolith.system.dict.api.request.SysDictItemUpdateReq;
 import com.travis.monolith.system.dict.internal.entity.SysDictItem;
 import com.travis.monolith.system.dict.internal.mapper.SysDictItemMapper;
 import com.travis.monolith.system.dict.internal.service.SysDictItemService;
@@ -37,7 +37,7 @@ public class SysDictItemServiceImpl extends ServiceImpl<SysDictItemMapper, SysDi
 
     /** 新增字典数据项 */
     @Override
-    public void create(SysDictItemReq req) {
+    public void create(SysDictItemCreateReq req) {
         SysDictItem item = new SysDictItem();
         item.setDictId(req.getDictId());
         item.setLabel(req.getLabel());
@@ -51,7 +51,7 @@ public class SysDictItemServiceImpl extends ServiceImpl<SysDictItemMapper, SysDi
 
     /** 更新字典数据项 */
     @Override
-    public void update(Long id, SysDictItemReq req) {
+    public void update(Long id, SysDictItemUpdateReq req) {
         SysDictItem item = super.getById(id);
         if (item == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);

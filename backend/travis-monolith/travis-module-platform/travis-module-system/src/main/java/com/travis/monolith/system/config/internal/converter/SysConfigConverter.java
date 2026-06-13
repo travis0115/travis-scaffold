@@ -1,8 +1,10 @@
 package com.travis.monolith.system.config.internal.converter;
 
 import com.travis.infrastructure.common.mapstruct.BaseMapperConfig;
-import com.travis.monolith.system.config.api.request.SysConfigReq;
-import com.travis.monolith.system.config.api.response.SysConfigResp;
+import com.travis.monolith.system.config.api.request.SysConfigCreateReq;
+import com.travis.monolith.system.config.api.request.SysConfigUpdateReq;
+import com.travis.monolith.system.config.api.response.SysConfigDetailResp;
+import com.travis.monolith.system.config.api.response.SysConfigPageResp;
 import com.travis.monolith.system.config.internal.entity.SysConfig;
 import java.util.List;
 import org.mapstruct.Mapper;
@@ -16,11 +18,13 @@ import org.mapstruct.MappingTarget;
 @Mapper(config = BaseMapperConfig.class)
 public interface SysConfigConverter {
 
-    SysConfigResp toResp(SysConfig config);
+    SysConfigPageResp toResp(SysConfig config);
 
-    List<SysConfigResp> toRespList(List<SysConfig> configs);
+    SysConfigDetailResp toDetailResp(SysConfig config);
 
-    SysConfig toEntity(SysConfigReq req);
+    List<SysConfigPageResp> toRespList(List<SysConfig> configs);
 
-    void update(SysConfigReq req, @MappingTarget SysConfig config);
+    SysConfig toEntity(SysConfigCreateReq req);
+
+    void update(SysConfigUpdateReq req, @MappingTarget SysConfig config);
 }

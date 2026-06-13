@@ -2,13 +2,13 @@ package com.travis.monolith.system.dept.internal.api;
 
 import com.travis.monolith.system.dept.api.SysDeptApi;
 import com.travis.monolith.system.dept.api.response.SysDeptResp;
-import com.travis.monolith.system.dept.internal.entity.SysDept;
 import com.travis.monolith.system.dept.internal.service.SysDeptService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 /**
  * 部门模块对外 API 实现，委托调用内部 Service
@@ -38,8 +38,11 @@ public class SysDeptApiImpl implements SysDeptApi {
 
     @Override
     public boolean existsAnyByIds(Collection<Long> deptIds) {
-        return deptIds != null
-                && !deptIds.isEmpty()
-                && deptService.lambdaQuery().in(SysDept::getId, deptIds).exists();
+        return deptService.existsAnyByIds(deptIds);
+    }
+
+    @Override
+    public List<Long> listSelfAndDescendantIds(Long deptId) {
+        return deptService.listSelfAndDescendantIds(deptId);
     }
 }

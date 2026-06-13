@@ -1,12 +1,13 @@
 package com.travis.monolith.system.dept.api;
 
 import com.travis.monolith.system.dept.api.response.SysDeptResp;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 /**
- * 部门模块对外 API，供跨模块调用，只暴露 DTO，不暴露 entity
+ * 部门模块对外 API，供跨模块调用
  *
  * @author travis
  */
@@ -42,4 +43,12 @@ public interface SysDeptApi {
      * @return 任意部门存在时返回 true
      */
     boolean existsAnyByIds(Collection<Long> deptIds);
+
+    /**
+     * 获取指定部门及全部下级部门ID。
+     *
+     * @param deptId 部门ID
+     * @return 部门ID集合
+     */
+    List<Long> listSelfAndDescendantIds(Long deptId);
 }

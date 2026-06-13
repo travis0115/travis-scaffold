@@ -17,7 +17,6 @@ public enum SystemErrorCode implements ErrorCode {
     SYSTEM_ROLE_CODE_EXISTS("SYS_003", "角色编码已存在"),
     SYSTEM_DICT_TYPE_EXISTS("SYS_004", "字典类型编码已存在"),
     SYSTEM_DEPT_HAS_USERS("SYS_005", "部门下存在关联用户，无法删除"),
-    SYSTEM_MENU_HAS_CHILDREN("SYS_006", "存在子菜单，无法删除"),
     ;
 
     private final String code;

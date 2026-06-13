@@ -4,9 +4,10 @@ import com.travis.infrastructure.common.logging.annotation.OperationLog;
 import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
-import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmitNamespace;
-import com.travis.monolith.system.menu.api.request.SysMenuReq;
-import com.travis.monolith.system.menu.api.response.SysMenuResp;
+import com.travis.monolith.system.menu.api.request.SysMenuCreateReq;
+import com.travis.monolith.system.menu.api.request.SysMenuUpdateReq;
+import com.travis.monolith.system.menu.api.response.SysMenuDetailResp;
+import com.travis.monolith.system.menu.api.response.SysMenuListResp;
 import com.travis.monolith.system.menu.internal.service.SysMenuService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -24,7 +25,6 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Validated
 @OperationLogModule("菜单管理")
-@NoRepeatSubmitNamespace("system:menu")
 public class SysMenuController {
 
     /** 菜单管理服务 */
@@ -36,7 +36,7 @@ public class SysMenuController {
      * @return 菜单树
      */
     @GetMapping("/list")
-    public ApiResponse<List<SysMenuResp>> list() {
+    public ApiResponse<List<SysMenuListResp>> list() {
         return ApiResponse.success(menuService.listTree());
     }
 
@@ -47,7 +47,7 @@ public class SysMenuController {
      * @return 菜单详情
      */
     @GetMapping("/{id}")
-    public ApiResponse<SysMenuResp> getDetail(@PathVariable Long id) {
+    public ApiResponse<SysMenuDetailResp> getDetail(@PathVariable Long id) {
         return ApiResponse.success(menuService.getById(id));
     }
 
@@ -60,7 +60,7 @@ public class SysMenuController {
     @OperationLog(action = "新增菜单")
     @NoRepeatSubmit
     @PostMapping
-    public ApiResponse<Void> add(@RequestBody @Valid SysMenuReq req) {
+    public ApiResponse<Void> add(@RequestBody @Valid SysMenuCreateReq req) {
         menuService.create(req);
         return ApiResponse.success();
     }
@@ -75,13 +75,14 @@ public class SysMenuController {
     @OperationLog(action = "更新菜单")
     @NoRepeatSubmit
     @PutMapping("/{id}")
-    public ApiResponse<Void> update(@PathVariable Long id, @RequestBody @Valid SysMenuReq req) {
+    public ApiResponse<Void> update(
+            @PathVariable Long id, @RequestBody @Valid SysMenuUpdateReq req) {
         menuService.update(id, req);
         return ApiResponse.success();
     }
 
     /**
-     * 删除菜单（存在子菜单时禁止删除）
+     * 删除菜单及其所有子菜单
      *
      * @param id 菜单ID
      * @return 空响应

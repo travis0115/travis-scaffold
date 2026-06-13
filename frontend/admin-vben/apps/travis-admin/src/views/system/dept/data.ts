@@ -79,7 +79,7 @@ export function useColumns(
       fixed: 'left',
       title: $t('system.dept.deptName'),
       treeNode: true,
-      width: 200,
+      minWidth: 200,
     },
     {
       field: 'leader',

@@ -3,12 +3,14 @@ package com.travis.monolith.system.user.internal.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.user.api.request.ChangePasswordReq;
+import com.travis.monolith.system.user.api.request.SysUserCreateReq;
 import com.travis.monolith.system.user.api.request.SysUserPageReq;
-import com.travis.monolith.system.user.api.request.SysUserReq;
 import com.travis.monolith.system.user.api.request.SysUserRoleReq;
+import com.travis.monolith.system.user.api.request.SysUserUpdateReq;
 import com.travis.monolith.system.user.api.request.UpdateAvatarReq;
 import com.travis.monolith.system.user.api.request.UserProfileReq;
-import com.travis.monolith.system.user.api.response.SysUserResp;
+import com.travis.monolith.system.user.api.response.SysUserDetailResp;
+import com.travis.monolith.system.user.api.response.SysUserPageResp;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 
 /**
@@ -24,7 +26,7 @@ public interface SysUserService extends IService<SysUser> {
      * @param req 分页查询参数
      * @return 分页结果
      */
-    PageResp<SysUserResp> page(SysUserPageReq req);
+    PageResp<SysUserPageResp> page(SysUserPageReq req);
 
     /**
      * 获取用户详情，包含关联的角色信息
@@ -32,7 +34,7 @@ public interface SysUserService extends IService<SysUser> {
      * @param id 用户ID
      * @return 用户详情视图
      */
-    SysUserResp getById(Long id);
+    SysUserDetailResp getById(Long id);
 
     /**
      * 新增用户
@@ -40,7 +42,7 @@ public interface SysUserService extends IService<SysUser> {
      * @param req 用户信息请求参数
      * @return 新建用户ID
      */
-    Long create(SysUserReq req);
+    Long create(SysUserCreateReq req);
 
     /**
      * 更新用户信息
@@ -48,7 +50,7 @@ public interface SysUserService extends IService<SysUser> {
      * @param id 用户ID
      * @param req 用户信息请求参数
      */
-    void update(Long id, SysUserReq req);
+    void update(Long id, SysUserUpdateReq req);
 
     /**
      * 删除用户

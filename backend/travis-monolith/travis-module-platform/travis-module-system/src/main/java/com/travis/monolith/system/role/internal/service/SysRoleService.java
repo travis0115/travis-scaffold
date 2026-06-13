@@ -2,10 +2,13 @@ package com.travis.monolith.system.role.internal.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.monolith.system.role.api.request.SysRoleCreateReq;
 import com.travis.monolith.system.role.api.request.SysRoleMenuReq;
 import com.travis.monolith.system.role.api.request.SysRolePageReq;
-import com.travis.monolith.system.role.api.request.SysRoleReq;
-import com.travis.monolith.system.role.api.response.SysRoleResp;
+import com.travis.monolith.system.role.api.request.SysRoleUpdateReq;
+import com.travis.monolith.system.role.api.response.SysRoleDetailResp;
+import com.travis.monolith.system.role.api.response.SysRoleListResp;
+import com.travis.monolith.system.role.api.response.SysRolePageResp;
 import com.travis.monolith.system.role.internal.entity.SysRole;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +27,7 @@ public interface SysRoleService extends IService<SysRole> {
      * @param req 分页查询参数
      * @return 分页结果
      */
-    PageResp<SysRoleResp> page(SysRolePageReq req);
+    PageResp<SysRolePageResp> page(SysRolePageReq req);
 
     /**
      * 获取角色详情，包含已分配的菜单ID列表
@@ -32,14 +35,14 @@ public interface SysRoleService extends IService<SysRole> {
      * @param id 角色ID
      * @return 角色详情视图
      */
-    SysRoleResp getById(Long id);
+    SysRoleDetailResp getById(Long id);
 
     /**
      * 新增角色
      *
      * @param req 角色信息请求参数
      */
-    void create(SysRoleReq req);
+    void create(SysRoleCreateReq req);
 
     /**
      * 更新角色信息
@@ -47,7 +50,7 @@ public interface SysRoleService extends IService<SysRole> {
      * @param id 角色ID
      * @param req 角色信息请求参数
      */
-    void update(Long id, SysRoleReq req);
+    void update(Long id, SysRoleUpdateReq req);
 
     /**
      * 删除角色
@@ -103,18 +106,18 @@ public interface SysRoleService extends IService<SysRole> {
     void assignMenuToAdminRoles(Long menuId);
 
     /**
-     * 将指定菜单从所有 admin 角色中移除
+     * 删除指定菜单的所有角色关联
      *
-     * @param menuId 菜单ID
+     * @param menuIds 菜单ID列表
      */
-    void removeMenuFromAdminRoles(Long menuId);
+    void removeMenuRelations(List<Long> menuIds);
 
     /**
      * 获取所有启用角色列表（不分页）
      *
      * @return 角色列表
      */
-    List<SysRoleResp> listEnabled();
+    List<SysRoleListResp> listEnabled();
 
     /**
      * 根据用户ID查询其角色ID列表

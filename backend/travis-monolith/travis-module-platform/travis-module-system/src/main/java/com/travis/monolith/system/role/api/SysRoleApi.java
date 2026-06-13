@@ -1,6 +1,6 @@
 package com.travis.monolith.system.role.api;
 
-import com.travis.monolith.system.role.api.response.SysRoleResp;
+import com.travis.monolith.system.role.api.response.SysRoleListResp;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -99,18 +99,18 @@ public interface SysRoleApi {
     void assignMenuToAdminRoles(Long menuId);
 
     /**
-     * 将指定菜单从所有 admin 角色中移除
+     * 删除指定菜单的所有角色关联
      *
-     * @param menuId 菜单ID
+     * @param menuIds 菜单ID列表
      */
-    void removeMenuFromAdminRoles(Long menuId);
+    void removeMenuRelations(List<Long> menuIds);
 
     /**
      * 获取所有启用角色列表
      *
      * @return 角色列表
      */
-    List<SysRoleResp> listEnabled();
+    List<SysRoleListResp> listEnabled();
 
     /** 根据角色ID查询关联用户ID。 */
     List<Long> getUserIdsByRoleIds(List<Long> roleIds);

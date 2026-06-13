@@ -1,8 +1,10 @@
 package com.travis.monolith.system.menu.internal.converter;
 
 import com.travis.infrastructure.common.mapstruct.BaseMapperConfig;
-import com.travis.monolith.system.menu.api.request.SysMenuReq;
-import com.travis.monolith.system.menu.api.response.SysMenuResp;
+import com.travis.monolith.system.menu.api.request.SysMenuCreateReq;
+import com.travis.monolith.system.menu.api.request.SysMenuUpdateReq;
+import com.travis.monolith.system.menu.api.response.SysMenuDetailResp;
+import com.travis.monolith.system.menu.api.response.SysMenuListResp;
 import com.travis.monolith.system.menu.internal.entity.SysMenu;
 import java.util.List;
 import org.mapstruct.Mapper;
@@ -16,12 +18,14 @@ import org.mapstruct.MappingTarget;
 @Mapper(config = BaseMapperConfig.class)
 public interface SysMenuConverter {
 
-    /** SysMenu → SysMenuResp（基础字段映射） children 需在Service层手动设置 */
-    SysMenuResp toResp(SysMenu menu);
+    /** SysMenu → SysMenuListResp（基础字段映射） children 需在Service层手动设置 */
+    SysMenuListResp toResp(SysMenu menu);
 
-    List<SysMenuResp> toRespList(List<SysMenu> menus);
+    SysMenuDetailResp toDetailResp(SysMenu menu);
 
-    SysMenu toEntity(SysMenuReq req);
+    List<SysMenuListResp> toRespList(List<SysMenu> menus);
 
-    void update(SysMenuReq req, @MappingTarget SysMenu menu);
+    SysMenu toEntity(SysMenuCreateReq req);
+
+    void update(SysMenuUpdateReq req, @MappingTarget SysMenu menu);
 }

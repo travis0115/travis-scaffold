@@ -6,30 +6,32 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.enums.LoginType;
+import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
-import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.util.Ip2RegionUtil;
 import com.travis.monolith.system.common.api.SystemErrorCode;
 import com.travis.monolith.system.dept.api.SysDeptApi;
 import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.api.request.*;
-import com.travis.monolith.system.user.api.response.SysUserResp;
+import com.travis.monolith.system.user.api.response.SysUserDetailResp;
+import com.travis.monolith.system.user.api.response.SysUserPageResp;
 import com.travis.monolith.system.user.internal.converter.SysUserConverter;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.mapper.SysUserMapper;
 import com.travis.monolith.system.user.internal.service.SysUserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 用户管理服务实现，包含密码加密（BCrypt）、角色分配及部门名称关联查询
@@ -65,7 +67,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
 
     /** 分页查询用户列表，支持按用户名、手机号、状态、部门筛选 */
     @Override
-    public PageResp<SysUserResp> page(SysUserPageReq req) {
+    public PageResp<SysUserPageResp> page(SysUserPageReq req) {
         LambdaQueryWrapperX<SysUser> wrapper =
                 new LambdaQueryWrapperX<SysUser>()
                         .likeIfPresent(SysUser::getUsername, req.getUsername())
@@ -84,12 +86,12 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
 
     /** 获取用户详情，同时关联查询角色ID和角色名称 */
     @Override
-    public SysUserResp getById(Long id) {
+    public SysUserDetailResp getById(Long id) {
         SysUser user = super.getById(id);
         if (user == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
-        SysUserResp vo = toVO(user);
+        SysUserDetailResp vo = toDetailVO(user);
         List<Long> roleIds = roleApi.getRoleIdsByUserId(id);
         vo.setRoleIds(roleIds);
         List<String> roleNames = roleApi.getRoleNamesByUserId(id);
@@ -100,7 +102,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
     /** 新增用户，密码使用 BCrypt 加密存储 */
     @Override
     @Transactional
-    public Long create(SysUserReq req) {
+    public Long create(SysUserCreateReq req) {
         // 检查用户名唯一性
         long count =
                 count(
@@ -118,7 +120,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
     /** 更新用户信息，密码为空时保持原密码不变 */
     @Override
     @Transactional
-    public void update(Long id, SysUserReq req) {
+    public void update(Long id, SysUserUpdateReq req) {
         SysUser user = super.getById(id);
         if (user == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
@@ -271,8 +273,22 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
      * @param user 用户实体
      * @return 用户视图对象
      */
-    private SysUserResp toVO(SysUser user) {
-        SysUserResp resp = converter.toResp(user);
+    private SysUserDetailResp toDetailVO(SysUser user) {
+        SysUserDetailResp resp = converter.toDetailResp(user);
+        resp.setAvatar(user.getAvatar());
+        if (user.getDeptId() != null) {
+            Map<Long, String> deptMap = deptApi.getDeptNameMapByIds(List.of(user.getDeptId()));
+            resp.setDeptName(deptMap.get(user.getDeptId()));
+        }
+        resp.setRoleNames(roleApi.getRoleNamesByUserId(user.getId()));
+        if (user.getLastLoginIp() != null && !user.getLastLoginIp().isEmpty()) {
+            resp.setLastLoginLocation(Ip2RegionUtil.getRegionByIP(user.getLastLoginIp()));
+        }
+        return resp;
+    }
+
+    private SysUserPageResp toVO(SysUser user) {
+        SysUserPageResp resp = converter.toResp(user);
         resp.setAvatar(user.getAvatar());
         if (user.getDeptId() != null) {
             Map<Long, String> deptMap = deptApi.getDeptNameMapByIds(List.of(user.getDeptId()));
@@ -294,7 +310,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
      * @param users 用户实体列表
      * @return 用户视图对象列表
      */
-    private List<SysUserResp> toVOList(List<SysUser> users) {
+    private List<SysUserPageResp> toVOList(List<SysUser> users) {
         if (users.isEmpty()) {
             return List.of();
         }
@@ -314,7 +330,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
         return users.stream()
                 .map(
                         user -> {
-                            SysUserResp resp = converter.toResp(user);
+                            SysUserPageResp resp = converter.toResp(user);
                             resp.setAvatar(user.getAvatar());
                             // 设置部门名称
                             if (user.getDeptId() != null) {

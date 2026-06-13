@@ -514,11 +514,8 @@ export type ExtendedFormApi = FormApi & {
 export interface VbenFormAdapterOptions<
   T extends BaseFormComponentType = BaseFormComponentType,
 > {
-  config?: {
+  config?: FormCommonConfig & {
     baseModelPropName?: string;
-    disabledOnChangeListener?: boolean;
-    disabledOnInputListener?: boolean;
-    emptyStateValue?: null | undefined;
     modelPropNameMap?: Partial<Record<T, string>>;
   };
   defineRules?: {

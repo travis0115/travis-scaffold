@@ -1,8 +1,10 @@
 package com.travis.monolith.system.user.internal.converter;
 
 import com.travis.infrastructure.common.mapstruct.BaseMapperConfig;
-import com.travis.monolith.system.user.api.request.SysUserReq;
-import com.travis.monolith.system.user.api.response.SysUserResp;
+import com.travis.monolith.system.user.api.request.SysUserCreateReq;
+import com.travis.monolith.system.user.api.request.SysUserUpdateReq;
+import com.travis.monolith.system.user.api.response.SysUserDetailResp;
+import com.travis.monolith.system.user.api.response.SysUserPageResp;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import java.util.List;
 import org.mapstruct.Mapper;
@@ -16,12 +18,14 @@ import org.mapstruct.MappingTarget;
 @Mapper(config = BaseMapperConfig.class)
 public interface SysUserConverter {
 
-    /** SysUser → SysUserResp（基础字段映射） deptName、roleIds、roleNames、lastLoginLocation 需在Service层手动设置 */
-    SysUserResp toResp(SysUser user);
+    /** SysUser → SysUserPageResp（基础字段映射） deptName、roleIds、roleNames、lastLoginLocation 需在Service层手动设置 */
+    SysUserPageResp toResp(SysUser user);
 
-    List<SysUserResp> toRespList(List<SysUser> users);
+    SysUserDetailResp toDetailResp(SysUser user);
 
-    SysUser toEntity(SysUserReq req);
+    List<SysUserPageResp> toRespList(List<SysUser> users);
 
-    void update(SysUserReq req, @MappingTarget SysUser user);
+    SysUser toEntity(SysUserCreateReq req);
+
+    void update(SysUserUpdateReq req, @MappingTarget SysUser user);
 }

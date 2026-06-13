@@ -1,23 +1,14 @@
 package com.travis.infrastructure.framework.web.core.aop;
 
 import com.travis.infrastructure.common.web.constant.MdcKey;
+import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
-import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmitNamespace;
-import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.infrastructure.framework.web.core.util.IpUtil;
 import com.travis.infrastructure.framework.web.core.util.ServletUtil;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
-import java.lang.reflect.Method;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HexFormat;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -28,7 +19,6 @@ import org.springframework.aop.support.AopUtils;
 import org.springframework.context.expression.MethodBasedEvaluationContext;
 import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.Ordered;
-import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.Order;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -37,13 +27,25 @@ import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.multipart.MultipartFile;
 
-/** 防重复提交切面。 */
+import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HexFormat;
+import java.util.UUID;
+
+/**
+ * 防重复提交切面。
+ *
+ * <p>根据当前请求、登录用户、目标方法和业务参数生成 Redis Key，在注解配置的有效期内阻止相同请求重复执行。
+ */
 @Aspect
 @Order(Ordered.HIGHEST_PRECEDENCE + 20)
 @RequiredArgsConstructor
 public class NoRepeatSubmitAspect {
 
-    private static final String KEY_PREFIX = "travis:repeat-submit:";
     private static final DefaultParameterNameDiscoverer PARAMETER_NAME_DISCOVERER =
             new DefaultParameterNameDiscoverer();
     private static final SpelExpressionParser EXPRESSION_PARSER = new SpelExpressionParser();
@@ -54,6 +56,7 @@ public class NoRepeatSubmitAspect {
                     Long.class);
 
     private final StringRedisTemplate redisTemplate;
+    private final String keyPrefix;
 
     @Around("@annotation(noRepeatSubmit)")
     public Object around(ProceedingJoinPoint joinPoint, NoRepeatSubmit noRepeatSubmit)
@@ -98,21 +101,14 @@ public class NoRepeatSubmitAspect {
                         + request.getRequestURI()
                         + ":"
                         + resolveBusinessKey(joinPoint, method, annotation);
-        return KEY_PREFIX
-                + resolveNamespace(joinPoint, method)
+        return keyPrefix
+                + method.getDeclaringClass().getName()
+                + ":"
+                + method.getName()
                 + ":"
                 + principal
                 + ":"
                 + sha256(requestKey);
-    }
-
-    private String resolveNamespace(ProceedingJoinPoint joinPoint, Method method) {
-        var annotation =
-                AnnotatedElementUtils.findMergedAnnotation(
-                        joinPoint.getTarget().getClass(), NoRepeatSubmitNamespace.class);
-        return annotation != null
-                ? annotation.value()
-                : method.getDeclaringClass().getName() + ":" + method.getName();
     }
 
     private String resolveBusinessKey(

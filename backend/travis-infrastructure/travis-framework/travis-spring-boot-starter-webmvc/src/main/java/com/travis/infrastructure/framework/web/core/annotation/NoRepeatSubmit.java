@@ -16,6 +16,7 @@ public @interface NoRepeatSubmit {
     /** 可选的 SpEL 业务 key；为空时使用方法参数摘要。 */
     String key() default "";
 
+    /** 业务 key 的有效期。 */
     long interval() default 3;
 
     TimeUnit timeUnit() default TimeUnit.SECONDS;

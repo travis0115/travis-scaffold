@@ -6,7 +6,6 @@ import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
-import com.travis.infrastructure.framework.web.core.exception.BizException;
 import com.travis.monolith.system.file.api.request.SysFilePageReq;
 import com.travis.monolith.system.file.api.response.FileUploadResp;
 import com.travis.monolith.system.file.api.response.SysFileResp;

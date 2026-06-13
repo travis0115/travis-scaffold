@@ -1,8 +1,10 @@
 package com.travis.monolith.system.menu.internal.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.travis.monolith.system.menu.api.request.SysMenuReq;
-import com.travis.monolith.system.menu.api.response.SysMenuResp;
+import com.travis.monolith.system.menu.api.request.SysMenuCreateReq;
+import com.travis.monolith.system.menu.api.request.SysMenuUpdateReq;
+import com.travis.monolith.system.menu.api.response.SysMenuDetailResp;
+import com.travis.monolith.system.menu.api.response.SysMenuListResp;
 import com.travis.monolith.system.menu.api.response.VbenMenuResp;
 import com.travis.monolith.system.menu.internal.entity.SysMenu;
 import java.util.List;
@@ -19,7 +21,7 @@ public interface SysMenuService extends IService<SysMenu> {
      *
      * @return 菜单树
      */
-    List<SysMenuResp> listTree();
+    List<SysMenuListResp> listTree();
 
     /**
      * 获取菜单详情
@@ -27,14 +29,14 @@ public interface SysMenuService extends IService<SysMenu> {
      * @param id 菜单ID
      * @return 菜单详情视图
      */
-    SysMenuResp getById(Long id);
+    SysMenuDetailResp getById(Long id);
 
     /**
      * 新增菜单
      *
      * @param req 菜单信息请求参数
      */
-    void create(SysMenuReq req);
+    void create(SysMenuCreateReq req);
 
     /**
      * 更新菜单信息
@@ -42,10 +44,10 @@ public interface SysMenuService extends IService<SysMenu> {
      * @param id 菜单ID
      * @param req 菜单信息请求参数
      */
-    void update(Long id, SysMenuReq req);
+    void update(Long id, SysMenuUpdateReq req);
 
     /**
-     * 删除菜单（存在子菜单时禁止删除）
+     * 删除菜单及其所有子菜单
      *
      * @param id 菜单ID
      */

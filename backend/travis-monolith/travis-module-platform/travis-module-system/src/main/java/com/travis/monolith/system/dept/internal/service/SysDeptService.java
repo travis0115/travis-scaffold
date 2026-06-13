@@ -1,8 +1,9 @@
 package com.travis.monolith.system.dept.internal.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.travis.monolith.system.dept.api.request.SysDeptCreateReq;
 import com.travis.monolith.system.dept.api.request.SysDeptPageReq;
-import com.travis.monolith.system.dept.api.request.SysDeptReq;
+import com.travis.monolith.system.dept.api.request.SysDeptUpdateReq;
 import com.travis.monolith.system.dept.api.response.SysDeptResp;
 import com.travis.monolith.system.dept.internal.entity.SysDept;
 import java.util.Collection;
@@ -52,15 +53,14 @@ public interface SysDeptService extends IService<SysDept> {
      *
      * @param req 部门信息请求参数
      */
-    void create(SysDeptReq req);
+    void create(SysDeptCreateReq req);
 
     /**
      * 更新部门信息
      *
-     * @param id 部门ID
      * @param req 部门信息请求参数
      */
-    void update(Long id, SysDeptReq req);
+    void update(Long id, SysDeptUpdateReq req);
 
     /**
      * 删除部门（存在子部门时禁止删除）
@@ -76,4 +76,15 @@ public interface SysDeptService extends IService<SysDept> {
      * @return 部门名称，不存在返回 null
      */
     String getDeptNameById(Long deptId);
+
+    /**
+     * 判断指定部门中是否仍有任意一个存在
+     *
+     * @param deptIds 部门ID集合
+     * @return 任意部门存在时返回 true
+     */
+    boolean existsAnyByIds(Collection<Long> deptIds);
+
+    /** 获取指定部门及全部下级部门ID。 */
+    List<Long> listSelfAndDescendantIds(Long deptId);
 }
