@@ -12,6 +12,7 @@ import com.travis.monolith.system.notice.api.request.SysNoticePageReq;
 import com.travis.monolith.system.notice.api.request.SysNoticeUpdateReq;
 import com.travis.monolith.system.notice.api.response.SysNoticeDetailResp;
 import com.travis.monolith.system.notice.api.response.SysNoticePageResp;
+import com.travis.monolith.system.notice.internal.converter.SysNoticeConverter;
 import com.travis.monolith.system.notice.internal.entity.SysNotice;
 import com.travis.monolith.system.notice.internal.entity.SysUserMessage;
 import com.travis.monolith.system.notice.internal.mapper.SysNoticeMapper;
@@ -19,13 +20,12 @@ import com.travis.monolith.system.notice.internal.mapper.SysUserMessageMapper;
 import com.travis.monolith.system.notice.internal.service.SysNoticeService;
 import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.api.SysUserApi;
-import org.springframework.beans.BeanUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.springframework.beans.BeanUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice>
@@ -38,12 +38,17 @@ public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice
     private final SysUserMessageMapper userMessageMapper;
     private final SysUserApi userApi;
     private final SysRoleApi roleApi;
+    private final SysNoticeConverter converter;
 
     public SysNoticeServiceImpl(
-            SysUserMessageMapper userMessageMapper, SysUserApi userApi, SysRoleApi roleApi) {
+            SysUserMessageMapper userMessageMapper,
+            SysUserApi userApi,
+            SysRoleApi roleApi,
+            SysNoticeConverter converter) {
         this.userMessageMapper = userMessageMapper;
         this.userApi = userApi;
         this.roleApi = roleApi;
+        this.converter = converter;
     }
 
     @Override
@@ -71,8 +76,7 @@ public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice
     @Transactional
     public void create(SysNoticeCreateReq req) {
         validateAudience(req.getAudienceType(), req.getTargetIds());
-        var entity = new SysNotice();
-        copyRequest(req, req.getTargetIds(), entity);
+        var entity = converter.toEntity(req);
         save(entity);
         if (Integer.valueOf(1).equals(entity.getStatus())) {
             publish(entity);
@@ -87,7 +91,7 @@ public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice
         if (entity == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
-        copyRequest(req, req.getTargetIds(), entity);
+        converter.update(req, entity);
         updateById(entity);
         if (Integer.valueOf(1).equals(entity.getStatus())) {
             publish(entity);
@@ -152,11 +156,6 @@ public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice
         }
     }
 
-    private void copyRequest(Object req, List<Long> targetIds, SysNotice entity) {
-        BeanUtils.copyProperties(req, entity, "targetIds");
-        entity.setTargetIds(serializeTargetIds(targetIds));
-    }
-
     private SysNoticePageResp toPageResp(SysNotice notice) {
         var response = new SysNoticePageResp();
         BeanUtils.copyProperties(notice, response, "targetIds");
@@ -169,13 +168,6 @@ public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice
         BeanUtils.copyProperties(notice, response, "targetIds");
         response.setTargetIds(parseTargetIds(notice.getTargetIds()));
         return response;
-    }
-
-    private String serializeTargetIds(Collection<Long> targetIds) {
-        if (targetIds == null || targetIds.isEmpty()) {
-            return null;
-        }
-        return targetIds.stream().map(String::valueOf).collect(Collectors.joining(","));
     }
 
     private List<Long> parseTargetIds(String targetIds) {

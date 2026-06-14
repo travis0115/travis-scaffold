@@ -1,5 +1,6 @@
 package com.travis.monolith.system.file.internal.service.file;
 
+import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.monolith.system.file.internal.entity.SysFileStorageConfig;
 import com.travis.monolith.system.file.internal.service.FileStorageStrategy;

@@ -74,6 +74,7 @@ spring:
     locale: ${travis.web.locale:zh_CN}
     time-zone: ${travis.web.time-zone:UTC}
     date-format: yyyy-MM-dd HH:mm:ss
+    default-property-inclusion: non_null
     serialization:
       indent-output: false #美化输出
     deserialization:

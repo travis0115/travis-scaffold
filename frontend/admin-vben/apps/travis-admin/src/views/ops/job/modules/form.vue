@@ -4,20 +4,20 @@ import type { OpsJobApi } from '#/api';
 import { computed, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
-import { useDebounceFn } from '@vueuse/core';
 
+import { useDebounceFn } from '@vueuse/core';
 import {
   Button,
   Form,
   FormItem,
   Input,
-  InputNumber,
   message,
   Modal,
   Select,
   Space,
 } from 'antdv-next';
 
+import { InputNumber } from '#/adapter/component';
 import { useVbenForm } from '#/adapter/form';
 import {
   createJob,

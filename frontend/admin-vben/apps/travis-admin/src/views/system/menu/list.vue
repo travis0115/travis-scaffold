@@ -73,7 +73,7 @@ function onActionClick({
 }: OnActionClickParams<SystemMenuApi.SysMenu>) {
   switch (code) {
     case 'delete': {
-      onDelete(row);
+      void deleteMenuRow(row);
       break;
     }
     case 'edit': {
@@ -86,6 +86,10 @@ function onActionClick({
     }
     case 'moveUp': {
       onMoveUp(row);
+      break;
+    }
+    case 'remove': {
+      onDelete(row);
       break;
     }
     default: {
@@ -119,36 +123,31 @@ function onCreate() {
   formDrawerApi.setData({}).open();
 }
 
-function onToggleMenu(row: SystemMenuApi.SysMenu) {
-  if (row.children?.length) {
-    gridApi.grid.toggleTreeExpand(row);
+async function deleteMenuRow(row: SystemMenuApi.SysMenu) {
+  const hideLoading = message.loading({
+    content: $t('ui.actionMessage.deleting', [row.menuName]),
+    duration: 0,
+    key: 'action_process_msg',
+  });
+  try {
+    await deleteMenu(row.id);
+    message.success({
+      content: $t('ui.actionMessage.deleteSuccess', [row.menuName]),
+      key: 'action_process_msg',
+    });
+    await onRefresh();
+  } catch {
+    hideLoading();
   }
 }
 
 function onDelete(row: SystemMenuApi.SysMenu) {
-  const hasChildren = Boolean(row.children?.length);
   Modal.confirm({
-    content: hasChildren
-      ? '该菜单下存在子菜单，删除后将同时删除所有子菜单，是否继续？'
-      : `确定删除菜单「${row.menuName}」吗？`,
-    onOk: async () => {
-      const hideLoading = message.loading({
-        content: $t('ui.actionMessage.deleting', [row.menuName]),
-        duration: 0,
-        key: 'action_process_msg',
-      });
-      try {
-        await deleteMenu(row.id);
-        message.success({
-          content: $t('ui.actionMessage.deleteSuccess', [row.menuName]),
-          key: 'action_process_msg',
-        });
-        await onRefresh();
-      } catch (error) {
-        hideLoading();
-        throw error;
-      }
-    },
+    cancelText: $t('common.cancel'),
+    content: `该菜单下存在下级菜单，删除「${row.menuName}」后将同时删除所有下级菜单，请确认是否继续？`,
+    okText: '确认删除',
+    okType: 'danger',
+    onOk: () => deleteMenuRow(row),
     title: `删除菜单「${row.menuName}」`,
   });
 }
@@ -170,7 +169,7 @@ function onMoveDown(row: SystemMenuApi.SysMenu) {
 <template>
   <Page auto-content-height>
     <FormDrawer @success="onRefresh" />
-    <Grid>
+    <Grid :table-title="$t('system.menu.list')">
       <template #toolbar-tools>
         <Button type="primary" @click="onCreate">
           <Plus class="size-5" />
@@ -183,16 +182,9 @@ function onMoveDown(row: SystemMenuApi.SysMenu) {
           class="flex w-full items-center gap-1 text-left"
           :class="{ 'cursor-pointer': row.children?.length }"
           type="button"
-          @click="onToggleMenu(row)"
         >
-          <div class="size-5 shrink-0">
+          <div v-if="row.menuType !== 2 && row.icon" class="size-5 shrink-0">
             <IconifyIcon
-              v-if="row.menuType === 2"
-              icon="carbon:security"
-              class="size-full"
-            />
-            <IconifyIcon
-              v-else-if="row.icon"
               :icon="row.icon || 'carbon:circle-dash'"
               class="size-full"
             />

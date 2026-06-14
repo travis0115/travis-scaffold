@@ -3,6 +3,7 @@ package com.travis.monolith.system.dict.internal.service.impl;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
+import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
@@ -12,6 +13,7 @@ import com.travis.monolith.system.dict.api.request.SysDictItemCreateReq;
 import com.travis.monolith.system.dict.api.request.SysDictItemUpdateReq;
 import com.travis.monolith.system.dict.api.request.SysDictUpdateReq;
 import com.travis.monolith.system.dict.api.response.SysDictItemResp;
+import com.travis.monolith.system.dict.internal.converter.SysDictConverter;
 import com.travis.monolith.system.dict.internal.converter.SysDictItemConverter;
 import com.travis.monolith.system.dict.internal.entity.SysDict;
 import com.travis.monolith.system.dict.internal.entity.SysDictItem;
@@ -22,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = "system")
 public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
         implements SysDictService {
 
@@ -40,7 +45,13 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
     private final SysDictItemService dictItemService;
 
     /** 对象转换器 */
-    private final SysDictItemConverter converter;
+    private final SysDictItemConverter itemConverter;
+
+    /** 字典类型转换器 */
+    private final SysDictConverter converter;
+
+    /** 缓存管理器 */
+    private final CacheManager cacheManager;
 
     /** 获取字典树形数据（每个字典包含其下的数据项作为 children） */
     @Override
@@ -64,7 +75,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
                                 Collectors.groupingBy(
                                         SysDictItem::getDictId,
                                         Collectors.mapping(
-                                                converter::toResp, Collectors.toList())));
+                                                itemConverter::toResp, Collectors.toList())));
         // 为每个字典设置 children
         dictList.forEach(
                 dict -> dict.setChildren(itemsGroup.getOrDefault(dict.getId(), List.of())));
@@ -105,14 +116,9 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
                         new LambdaQueryWrapperX<SysDict>()
                                 .eq(SysDict::getDictType, req.getDictType()));
         if (count > 0) {
-            throw new BizException(SystemErrorCode.SYSTEM_DICT_TYPE_EXISTS);
+            throw new BizException(SystemErrorCode.DICT_TYPE_EXISTS);
         }
-        SysDict dict = new SysDict();
-        dict.setDictName(req.getDictName());
-        dict.setDictType(req.getDictType());
-        dict.setStatus(req.getStatus());
-        dict.setRemark(req.getRemark());
-        save(dict);
+        save(converter.toEntity(req));
     }
 
     /** 更新字典类型 */
@@ -130,19 +136,16 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
                                 .eq(SysDict::getDictType, req.getDictType())
                                 .ne(SysDict::getId, id));
         if (count > 0) {
-            throw new BizException(SystemErrorCode.SYSTEM_DICT_TYPE_EXISTS);
+            throw new BizException(SystemErrorCode.DICT_TYPE_EXISTS);
         }
-        dict.setDictName(req.getDictName());
-        dict.setDictType(req.getDictType());
-        dict.setStatus(req.getStatus());
-        dict.setRemark(req.getRemark());
+        converter.update(req, dict);
         updateById(dict);
     }
 
     /** 删除字典类型（同时删除其下所有字典数据项） */
     @Override
     @Transactional
-    @CacheEvict(value = "system:dict:items", key = "#id")
+    @CacheEvict(key = "'dict:items:' + #id")
     public void deleteById(Long id) {
         // 删除字典下的所有数据项
         dictItemService.remove(
@@ -158,27 +161,33 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
                         new LambdaQueryWrapperX<SysDictItem>()
                                 .eq(SysDictItem::getDictId, dictId)
                                 .orderByAsc(SysDictItem::getSort));
-        return converter.toRespList(items);
+        return itemConverter.toRespList(items);
     }
 
     /** 新增字典数据项（委托给 {@link SysDictItemService}） */
     @Override
-    @CacheEvict(value = "system:dict:items", key = "#req.dictId")
+    @CacheEvict(key = "'dict:items:' + #req.dictId")
     public void createItem(SysDictItemCreateReq req) {
         dictItemService.create(req);
     }
 
     /** 更新字典数据项（委托给 {@link SysDictItemService}） */
     @Override
-    @CacheEvict(value = "system:dict:items", key = "#req.dictId")
+    @CacheEvict(key = "'dict:items:' + #req.dictId")
     public void updateItem(Long id, SysDictItemUpdateReq req) {
         dictItemService.update(id, req);
     }
 
     /** 删除字典数据项（委托给 {@link SysDictItemService}） */
     @Override
-    @CacheEvict(value = "system:dict:items", allEntries = true)
     public void deleteItemById(Long id) {
+        SysDictItem item = dictItemService.getById(id);
         dictItemService.deleteById(id);
+        if (item != null) {
+            var cache = cacheManager.getCache("system");
+            if (cache != null) {
+                cache.evict("dict:items:" + item.getDictId());
+            }
+        }
     }
 }

@@ -3,11 +3,13 @@ package com.travis.monolith.system.dict.internal.service.impl;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
+import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.monolith.system.dict.api.request.SysDictItemCreateReq;
 import com.travis.monolith.system.dict.api.request.SysDictItemUpdateReq;
+import com.travis.monolith.system.dict.internal.converter.SysDictItemConverter;
 import com.travis.monolith.system.dict.internal.entity.SysDictItem;
 import com.travis.monolith.system.dict.internal.mapper.SysDictItemMapper;
 import com.travis.monolith.system.dict.internal.service.SysDictItemService;
@@ -24,6 +26,8 @@ import org.springframework.stereotype.Service;
 public class SysDictItemServiceImpl extends ServiceImpl<SysDictItemMapper, SysDictItem>
         implements SysDictItemService {
 
+    private final SysDictItemConverter converter;
+
     /** 分页查询字典数据项，按排序号升序 */
     @Override
     public PageResp<SysDictItem> page(Long dictId, Integer pageNum, Integer pageSize) {
@@ -38,15 +42,7 @@ public class SysDictItemServiceImpl extends ServiceImpl<SysDictItemMapper, SysDi
     /** 新增字典数据项 */
     @Override
     public void create(SysDictItemCreateReq req) {
-        SysDictItem item = new SysDictItem();
-        item.setDictId(req.getDictId());
-        item.setLabel(req.getLabel());
-        item.setValue(req.getValue());
-        item.setTagStyle(req.getTagStyle());
-        item.setSort(req.getSort());
-        item.setStatus(req.getStatus());
-        item.setRemark(req.getRemark());
-        save(item);
+        save(converter.toEntity(req));
     }
 
     /** 更新字典数据项 */
@@ -56,13 +52,7 @@ public class SysDictItemServiceImpl extends ServiceImpl<SysDictItemMapper, SysDi
         if (item == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
-        item.setDictId(req.getDictId());
-        item.setLabel(req.getLabel());
-        item.setValue(req.getValue());
-        item.setTagStyle(req.getTagStyle());
-        item.setSort(req.getSort());
-        item.setStatus(req.getStatus());
-        item.setRemark(req.getRemark());
+        converter.update(req, item);
         updateById(item);
     }
 

@@ -13,6 +13,7 @@ import {
   getUserDetail,
   updateUser,
 } from '#/api';
+import { isDeptEnabled } from '#/features';
 import { $t } from '#/locales';
 
 import { useFormSchema } from '../data';
@@ -74,19 +75,23 @@ const [Drawer, drawerApi] = useVbenDrawer({
         id.value = undefined;
       }
 
-      // 预加载部门树数据，确保 TreeSelect 能正确显示名称
-      try {
-        deptTreeData.value = await getDeptTree();
-        // 更新表单 schema 中的 deptTreeData
-        formApi.updateSchema([
-          {
-            componentProps: {
-              treeData: deptTreeData.value,
+      if (isDeptEnabled()) {
+        // 预加载部门树数据，确保 TreeSelect 能正确显示名称
+        try {
+          deptTreeData.value = await getDeptTree();
+          // 更新表单 schema 中的 deptTreeData
+          formApi.updateSchema([
+            {
+              componentProps: {
+                treeData: deptTreeData.value,
+              },
+              fieldName: 'deptId',
             },
-            fieldName: 'deptId',
-          },
-        ]);
-      } catch {
+          ]);
+        } catch {
+          deptTreeData.value = [];
+        }
+      } else {
         deptTreeData.value = [];
       }
 

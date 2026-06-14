@@ -329,7 +329,25 @@ setupVbenVxeTable({
  * 对于没有 cellRender 且没有自定义 formatter 的文本列，自动添加 emptyPlaceholder 格式化
  */
 function processColumnsWithEmptyPlaceholder(columns: any[]): any[] {
-  return columns.map((col: any) => {
+  return columns.map((column: any) => {
+    const originalClassName = column.className;
+    const col = column.treeNode
+      ? {
+          ...column,
+          className: (params: any) => {
+            const className =
+              typeof originalClassName === 'function'
+                ? originalClassName(params)
+                : originalClassName;
+            return [
+              className,
+              params.row?.children?.length ? 'cursor-pointer' : undefined,
+            ]
+              .filter(Boolean)
+              .join(' ');
+          },
+        }
+      : column;
     if (col.cellRender?.name === 'CellOperation') {
       return {
         ...col,
@@ -360,6 +378,10 @@ export const useVbenVxeGrid = <T extends Record<string, any>>(
     // 树结构不支持 stripe，自动关闭
     if (options.gridOptions.treeConfig) {
       options.gridOptions.stripe = false;
+      options.gridOptions.treeConfig = {
+        trigger: 'cell',
+        ...options.gridOptions.treeConfig,
+      };
     }
     if (options?.gridOptions?.columns) {
       options.gridOptions.columns = processColumnsWithEmptyPlaceholder(

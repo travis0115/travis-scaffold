@@ -5,16 +5,14 @@ import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
 import com.travis.monolith.system.dept.api.request.SysDeptCreateReq;
-import com.travis.monolith.system.dept.api.request.SysDeptPageReq;
 import com.travis.monolith.system.dept.api.request.SysDeptUpdateReq;
 import com.travis.monolith.system.dept.api.response.SysDeptResp;
 import com.travis.monolith.system.dept.internal.service.SysDeptService;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * 部门管理控制器，提供部门树的增删改查接口
@@ -34,12 +32,11 @@ public class SysDeptController {
     /**
      * 获取部门树形列表
      *
-     * @param req 列表查询参数
      * @return 部门树
      */
     @GetMapping("/list")
-    public ApiResponse<List<SysDeptResp>> list(@Valid SysDeptPageReq req) {
-        return ApiResponse.success(deptService.listTree(req));
+    public ApiResponse<List<SysDeptResp>> list() {
+        return ApiResponse.success(deptService.listTree());
     }
 
     /**
@@ -49,7 +46,7 @@ public class SysDeptController {
      * @return 部门详情
      */
     @GetMapping("/{id}")
-    public ApiResponse<SysDeptResp> getDetail(@PathVariable Long id) {
+    public ApiResponse<SysDeptResp> get(@PathVariable Long id) {
         return ApiResponse.success(deptService.getById(id));
     }
 

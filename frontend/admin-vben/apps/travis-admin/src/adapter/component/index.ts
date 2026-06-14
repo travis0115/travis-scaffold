@@ -170,6 +170,119 @@ const withDefaultPlaceholder = (
   });
 };
 
+const toNumber = (value: unknown) => {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : undefined;
+};
+
+const getDecimalLength = (value: number) => {
+  const text = String(value);
+  return text.includes('.') ? text.split('.')[1]?.length || 0 : 0;
+};
+
+const normalizeNumber = (value: number, step: number) => {
+  const precision = Math.max(getDecimalLength(value), getDecimalLength(step));
+  return Number(value.toFixed(precision));
+};
+
+const StepperInputNumber = defineComponent({
+  name: 'StepperInputNumber',
+  inheritAttrs: false,
+  emits: ['change', 'update:value'],
+  setup(_props, { attrs, emit, expose }) {
+    const innerRef = ref();
+    expose(
+      new Proxy(
+        {},
+        {
+          get: (_target, key) => innerRef.value?.[key],
+          has: (_target, key) => key in (innerRef.value || {}),
+        },
+      ),
+    );
+
+    const updateValue = (value?: number) => {
+      emit('update:value', value);
+      emit('change', value);
+    };
+
+    const getNextValue = (direction: -1 | 1) => {
+      const step = toNumber(attrs.step) ?? 1;
+      const min = toNumber(attrs.min);
+      const max = toNumber(attrs.max);
+      const current = toNumber(attrs.value) ?? min ?? 0;
+      const next = normalizeNumber(current + step * direction, step);
+      return Math.min(max ?? next, Math.max(min ?? next, next));
+    };
+
+    return () => {
+      const {
+        class: className,
+        style,
+        value,
+        wrapperStyle,
+        ...inputNumberAttrs
+      } = attrs;
+      const numberValue = toNumber(value);
+      const min = toNumber(attrs.min);
+      const max = toNumber(attrs.max);
+      const disabled = Boolean(attrs.disabled);
+      const decreaseDisabled =
+        disabled ||
+        (min !== undefined && numberValue !== undefined && numberValue <= min);
+      const increaseDisabled =
+        disabled ||
+        (max !== undefined && numberValue !== undefined && numberValue >= max);
+      const buttonClass =
+        'flex h-9 w-12 items-center justify-center bg-muted/30 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40';
+
+      return h(
+        'div',
+        {
+          class: [
+            'border-input flex h-9 w-full items-center overflow-hidden rounded-md border bg-background shadow-xs',
+            className,
+          ],
+          style,
+        },
+        [
+          h(
+            'button',
+            {
+              'aria-label': '减少',
+              class: [buttonClass, 'border-r'],
+              disabled: decreaseDisabled,
+              onClick: () => updateValue(getNextValue(-1)),
+              type: 'button',
+            },
+            [h(IconifyIcon, { class: 'size-4', icon: 'lucide:minus' })],
+          ),
+          h(InputNumber, {
+            ...inputNumberAttrs,
+            bordered: false,
+            class: 'min-w-0 flex-1 text-center',
+            controls: false,
+            ref: innerRef,
+            value,
+            style: [{ width: '100%' }, wrapperStyle],
+          }),
+          h(
+            'button',
+            {
+              'aria-label': '增加',
+              class: [buttonClass, 'border-l'],
+              disabled: increaseDisabled,
+              onClick: () => updateValue(getNextValue(1)),
+              type: 'button',
+            },
+            [h(IconifyIcon, { class: 'size-4', icon: 'lucide:plus' })],
+          ),
+        ],
+      );
+    };
+  },
+});
+
 const withPreviewUpload = () => {
   // 检查是否为图片文件的辅助函数
   const isImageFile = (file: UploadFile): boolean => {
@@ -642,7 +755,7 @@ async function initComponentAdapter() {
       modelValueProp: 'value',
     }),
     Input: withDefaultPlaceholder(Input, 'input'),
-    InputNumber: withDefaultPlaceholder(InputNumber, 'input', {
+    InputNumber: withDefaultPlaceholder(StepperInputNumber, 'input', {
       style: { width: '100%' },
     }),
     InputPassword: withDefaultPlaceholder(InputPassword, 'input'),
@@ -688,4 +801,4 @@ async function initComponentAdapter() {
   });
 }
 
-export { initComponentAdapter };
+export { initComponentAdapter, StepperInputNumber as InputNumber };

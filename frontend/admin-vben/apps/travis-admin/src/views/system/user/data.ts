@@ -89,7 +89,10 @@ export function useFormSchema(deptTreeData?: any[]): VbenFormSchema[] {
       fieldName: 'roleIds',
       label: $t('system.user.roles'),
     },
-    {
+  ];
+
+  if (isDeptEnabled()) {
+    schemas.push({
       component: 'TreeSelect',
       componentProps: {
         allowClear: true,
@@ -97,13 +100,12 @@ export function useFormSchema(deptTreeData?: any[]): VbenFormSchema[] {
         placeholder: '请选择部门',
         treeData: deptTreeData ?? [],
       },
-      dependencies: {
-        show: () => isDeptEnabled(),
-        triggerFields: [],
-      },
       fieldName: 'deptId',
       label: $t('system.user.dept'),
-    },
+    });
+  }
+
+  schemas.push(
     {
       component: 'Input',
       fieldName: 'mobile',
@@ -130,7 +132,7 @@ export function useFormSchema(deptTreeData?: any[]): VbenFormSchema[] {
       fieldName: 'status',
       label: $t('system.user.status'),
     },
-  ];
+  );
 
   return schemas;
 }

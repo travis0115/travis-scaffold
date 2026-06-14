@@ -1,11 +1,10 @@
 package com.travis.monolith.ops.job.internal.controller.admin;
 
+import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.travis.infrastructure.common.logging.annotation.OperationLog;
 import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
-import com.travis.infrastructure.common.web.enums.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
-import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
 import com.travis.monolith.ops.job.api.request.OpsJobCreateReq;
 import com.travis.monolith.ops.job.api.request.OpsJobImportReq;
@@ -47,124 +46,120 @@ public class OpsJobController {
     private final OpsJobService jobService;
     private final OpsJobLogService logService;
 
+    @SaCheckPermission(value = "ops:job:view", type = "admin")
     @GetMapping("/page")
     public ApiResponse<PageResp<OpsJobPageResp>> page(OpsJobPageReq req) {
-        check("ops:job:view");
         return ApiResponse.success(jobService.page(req));
     }
 
+    @SaCheckPermission(value = "ops:job:view", type = "admin")
     @GetMapping("/{id:\\d+}")
     public ApiResponse<OpsJobDetailResp> get(@PathVariable Long id) {
-        check("ops:job:view");
         return ApiResponse.success(jobService.getDetail(id));
     }
 
+    @SaCheckPermission(value = "ops:job:edit", type = "admin")
     @OperationLog(action = "新增任务")
     @NoRepeatSubmit
     @PostMapping
     public ApiResponse<Void> create(@RequestBody @Valid OpsJobCreateReq req) {
-        check("ops:job:edit");
         jobService.create(req);
         return ApiResponse.success();
     }
 
+    @SaCheckPermission(value = "ops:job:edit", type = "admin")
     @OperationLog(action = "修改任务")
     @NoRepeatSubmit
     @PutMapping("/{id}")
     public ApiResponse<Void> update(
             @PathVariable Long id, @RequestBody @Valid OpsJobUpdateReq req) {
-        check("ops:job:edit");
         jobService.update(id, req);
         return ApiResponse.success();
     }
 
+    @SaCheckPermission(value = "ops:job:edit", type = "admin")
     @OperationLog(action = "删除任务")
     @NoRepeatSubmit
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
-        check("ops:job:edit");
         jobService.delete(id);
         return ApiResponse.success();
     }
 
+    @SaCheckPermission(value = "ops:job:status", type = "admin")
     @OperationLog(action = "启停任务")
     @NoRepeatSubmit
     @PutMapping("/{id}/status")
     public ApiResponse<Void> changeStatus(@PathVariable Long id, @RequestParam Integer status) {
-        check("ops:job:status");
         jobService.changeStatus(id, status);
         return ApiResponse.success();
     }
 
+    @SaCheckPermission(value = "ops:job:run", type = "admin")
     @OperationLog(action = "立即执行任务")
     @NoRepeatSubmit
     @PostMapping("/{id}/run")
     public ApiResponse<Void> runNow(
             @PathVariable Long id, @RequestBody(required = false) OpsJobRunReq req) {
-        check("ops:job:run");
         jobService.runNow(id, req == null ? null : req.getParams());
         return ApiResponse.success();
     }
 
+    @SaCheckPermission(value = "ops:job:edit", type = "admin")
     @OperationLog(action = "复制任务")
     @NoRepeatSubmit
     @PostMapping("/{id}/copy")
     public ApiResponse<Void> copy(@PathVariable Long id) {
-        check("ops:job:edit");
         jobService.copy(id);
         return ApiResponse.success();
     }
 
+    @SaCheckPermission(value = "ops:job:view", type = "admin")
     @PostMapping("/preview")
     public ApiResponse<List<LocalDateTime>> preview(
             @RequestBody @Valid OpsJobPreviewReq req,
             @RequestParam(defaultValue = "5") Integer count) {
-        check("ops:job:view");
         return ApiResponse.success(jobService.preview(req, count));
     }
 
+    @SaCheckPermission(value = "ops:job:view", type = "admin")
     @GetMapping("/handlers")
     public ApiResponse<Collection<String>> handlers() {
-        check("ops:job:view");
         return ApiResponse.success(jobService.listHandlers());
     }
 
+    @SaCheckPermission(value = "ops:job:view", type = "admin")
     @GetMapping("/user-options")
     public ApiResponse<List<SysUserOptionResp>> userOptions(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) List<Long> userIds) {
-        check("ops:job:view");
         return ApiResponse.success(jobService.listUserOptions(keyword, userIds));
     }
 
+    @SaCheckPermission(value = "ops:job:view", type = "admin")
     @GetMapping("/export")
     public ApiResponse<List<OpsJobExportResp>> exportJobs() {
-        check("ops:job:view");
         return ApiResponse.success(jobService.exportJobs());
     }
 
+    @SaCheckPermission(value = "ops:job:edit", type = "admin")
     @OperationLog(action = "导入任务")
     @NoRepeatSubmit
     @PostMapping("/import")
     public ApiResponse<Void> importJobs(@RequestBody List<@Valid OpsJobImportReq> jobs) {
-        check("ops:job:edit");
         jobService.importJobs(jobs);
         return ApiResponse.success();
     }
 
+    @SaCheckPermission(value = "ops:job:view", type = "admin")
     @GetMapping("/{id}/stats")
     public ApiResponse<OpsJobStatsResp> stats(@PathVariable Long id) {
-        check("ops:job:view");
         return ApiResponse.success(logService.stats(id));
     }
 
+    @SaCheckPermission(value = "ops:job:view", type = "admin")
     @GetMapping("/dashboard")
     public ApiResponse<OpsJobDashboardResp> dashboard() {
-        check("ops:job:view");
         return ApiResponse.success(logService.dashboard());
-    }
-
-    private void check(String permission) {
-        StpKit.of(LoginType.ADMIN).checkPermission(permission);
     }
 }

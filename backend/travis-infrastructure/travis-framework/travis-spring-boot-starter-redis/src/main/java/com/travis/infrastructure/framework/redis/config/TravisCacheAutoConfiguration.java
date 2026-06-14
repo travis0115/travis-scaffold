@@ -1,17 +1,19 @@
 package com.travis.infrastructure.framework.redis.config;
 
 import cn.hutool.core.util.StrUtil;
-import java.util.Objects;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.cache.autoconfigure.CacheProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
+import org.springframework.data.redis.cache.CacheKeyPrefix;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
+
+import java.util.Objects;
 
 /**
  * Cache 配置类，基于Redis
@@ -23,10 +25,32 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 @EnableConfigurationProperties({CacheProperties.class})
 public class TravisCacheAutoConfiguration {
 
+    /** 缓存键前缀 */
+    @Bean
+    public CacheKeyPrefix cacheKeyPrefix(CacheProperties cacheProperties) {
+        var redisProperties = cacheProperties.getRedis();
+        return cacheName -> {
+            var keyPrefix = redisProperties.getKeyPrefix();
+            if (!redisProperties.isUseKeyPrefix()) {
+                keyPrefix = null;
+            }
+            if (StrUtil.isNotBlank(keyPrefix)) {
+                keyPrefix =
+                        keyPrefix.lastIndexOf(StrUtil.COLON) == -1
+                                ? keyPrefix + StrUtil.COLON
+                                : keyPrefix;
+                return keyPrefix + cacheName + StrUtil.COLON;
+            }
+            return cacheName + StrUtil.COLON;
+        };
+    }
+
     /** 基于Redis的缓存配置 */
     @Bean
     public RedisCacheConfiguration redisCacheConfiguration(
-            CacheProperties cacheProperties, RedisTemplate<String, Object> redisTemplate) {
+            CacheProperties cacheProperties,
+            CacheKeyPrefix cacheKeyPrefix,
+            RedisTemplate<String, Object> redisTemplate) {
         var config = RedisCacheConfiguration.defaultCacheConfig();
         var redisProperties = cacheProperties.getRedis();
         // 设置默认缓存时间
@@ -38,22 +62,7 @@ public class TravisCacheAutoConfiguration {
             config = config.disableCachingNullValues();
         }
         // 自定义缓存前缀名
-        config =
-                config.computePrefixWith(
-                        cacheName -> {
-                            var keyPrefix = cacheProperties.getRedis().getKeyPrefix();
-                            if (!redisProperties.isUseKeyPrefix()) {
-                                keyPrefix = null;
-                            }
-                            if (StrUtil.isNotBlank(keyPrefix)) {
-                                keyPrefix =
-                                        keyPrefix.lastIndexOf(StrUtil.COLON) == -1
-                                                ? keyPrefix + StrUtil.COLON
-                                                : keyPrefix;
-                                return keyPrefix + cacheName + StrUtil.COLON;
-                            }
-                            return cacheName + StrUtil.COLON;
-                        });
+        config = config.computePrefixWith(cacheKeyPrefix);
         // 设置使用 JSON 序列化方式
         config =
                 config.serializeValuesWith(

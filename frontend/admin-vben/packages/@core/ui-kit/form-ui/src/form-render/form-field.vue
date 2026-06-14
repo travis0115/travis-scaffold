@@ -341,7 +341,8 @@ onUnmounted(() => {
         'form-valid-error': isInValid,
         'form-is-required': shouldRequired,
         'flex-col': isVertical,
-        'flex-row items-center': !isVertical,
+        'flex-row items-center': !isVertical && !description,
+        'flex-row items-start': !isVertical && description,
         'pb-4': !compact,
         'pb-2': compact,
       }"
@@ -356,6 +357,7 @@ onUnmounted(() => {
             {
               'mr-2 shrink-0 justify-end': !isVertical,
               'mb-1 flex-row': isVertical,
+              'pt-1': !isVertical && description,
               'self-start': shouldCollapsible && !isVertical,
             },
             labelClass,

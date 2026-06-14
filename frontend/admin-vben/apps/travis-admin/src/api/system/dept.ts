@@ -4,7 +4,7 @@ export namespace SystemDeptApi {
   export interface SysDept {
     [key: string]: any;
     id: number;
-    parentId: number;
+    parentId: number | string;
     deptName: string;
     sort?: number;
     leader?: string;

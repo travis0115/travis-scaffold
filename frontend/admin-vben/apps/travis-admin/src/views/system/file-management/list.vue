@@ -6,8 +6,9 @@ import { onMounted, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 
-import { Button, Form, FormItem, Image, Input, InputNumber, message, Modal, RadioGroup, Select, Upload } from 'antdv-next';
+import { Button, Form, FormItem, Image, Input, message, Modal, RadioGroup, Select, Upload } from 'antdv-next';
 
+import { InputNumber } from '#/adapter/component';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   createFileFolder,

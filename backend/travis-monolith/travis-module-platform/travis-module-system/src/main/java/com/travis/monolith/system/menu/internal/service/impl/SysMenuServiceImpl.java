@@ -1,9 +1,11 @@
 package com.travis.monolith.system.menu.internal.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
+import com.travis.monolith.system.common.api.SystemErrorCode;
 import com.travis.monolith.system.menu.api.request.SysMenuCreateReq;
 import com.travis.monolith.system.menu.api.request.SysMenuUpdateReq;
 import com.travis.monolith.system.menu.api.response.SysMenuDetailResp;
@@ -17,8 +19,10 @@ import com.travis.monolith.system.role.api.SysRoleApi;
 import java.util.*;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.core.type.TypeReference;
@@ -30,6 +34,7 @@ import tools.jackson.core.type.TypeReference;
  */
 @Service
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = "system")
 public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
         implements SysMenuService {
 
@@ -41,7 +46,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
 
     /** 获取菜单树形列表（管理后台使用），按排序号升序排列 */
     @Override
-    @Cacheable(value = "system:menu:tree", key = "'all'")
+    @Cacheable(key = "'menu:tree:all'")
     public List<SysMenuListResp> listTree() {
         List<SysMenu> allMenus =
                 list(new LambdaQueryWrapperX<SysMenu>().orderByAsc(SysMenu::getSort));
@@ -65,11 +70,13 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     /** 新增菜单，新增后自动关联到所有 admin 角色 */
     @Override
     @Transactional
-    @CacheEvict(
-            value = {"system:menu:tree", "menus:vben"},
-            key = "'all'",
-            allEntries = true)
+    @Caching(
+            evict = {
+                @CacheEvict(key = "'menu:tree:all'"),
+                @CacheEvict(cacheNames = "menus:vben", allEntries = true)
+            })
     public void create(SysMenuCreateReq req) {
+        validatePathUnique(req.getPath(), null);
         SysMenu menu = converter.toEntity(req);
         save(menu);
         // 通过角色服务自动分配给 admin 角色
@@ -78,26 +85,44 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
 
     /** 更新菜单信息 */
     @Override
-    @CacheEvict(
-            value = {"system:menu:tree", "menus:vben"},
-            key = "'all'",
-            allEntries = true)
+    @Caching(
+            evict = {
+                @CacheEvict(key = "'menu:tree:all'"),
+                @CacheEvict(cacheNames = "menus:vben", allEntries = true)
+            })
     public void update(Long id, SysMenuUpdateReq req) {
         SysMenu menu = super.getById(id);
         if (menu == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
+        validatePathUnique(req.getPath(), id);
         converter.update(req, menu);
         updateById(menu);
+    }
+
+    /** 校验非空路由路径唯一性 */
+    private void validatePathUnique(String path, Long excludeId) {
+        if (path == null || path.isBlank()) {
+            return;
+        }
+        LambdaQueryWrapperX<SysMenu> query =
+                new LambdaQueryWrapperX<SysMenu>().eq(SysMenu::getPath, path);
+        if (excludeId != null) {
+            query.ne(SysMenu::getId, excludeId);
+        }
+        if (count(query) > 0) {
+            throw new BizException(SystemErrorCode.MENU_PATH_EXISTS);
+        }
     }
 
     /** 删除菜单及其所有子菜单，并清理角色菜单关联 */
     @Override
     @Transactional
-    @CacheEvict(
-            value = {"system:menu:tree", "menus:vben"},
-            key = "'all'",
-            allEntries = true)
+    @Caching(
+            evict = {
+                @CacheEvict(key = "'menu:tree:all'"),
+                @CacheEvict(cacheNames = "menus:vben", allEntries = true)
+            })
     public void deleteById(Long id) {
         if (super.getById(id) == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
@@ -130,10 +155,11 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     /** 上移菜单，与同级上一个菜单交换排序号 */
     @Override
     @Transactional
-    @CacheEvict(
-            value = {"system:menu:tree", "menus:vben"},
-            key = "'all'",
-            allEntries = true)
+    @Caching(
+            evict = {
+                @CacheEvict(key = "'menu:tree:all'"),
+                @CacheEvict(cacheNames = "menus:vben", allEntries = true)
+            })
     public void moveUp(Long id) {
         SysMenu current = super.getById(id);
         if (current == null) {
@@ -155,10 +181,11 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     /** 下移菜单，与同级下一个菜单交换排序号 */
     @Override
     @Transactional
-    @CacheEvict(
-            value = {"system:menu:tree", "menus:vben"},
-            key = "'all'",
-            allEntries = true)
+    @Caching(
+            evict = {
+                @CacheEvict(key = "'menu:tree:all'"),
+                @CacheEvict(cacheNames = "menus:vben", allEntries = true)
+            })
     public void moveDown(Long id) {
         SysMenu current = super.getById(id);
         if (current == null) {
@@ -250,36 +277,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
                         .map(m -> toVbenTree(m, grouped))
                         .collect(Collectors.toList());
 
-        // 固定第一个叶子菜单（递归取第一个无子菜单的节点，标记 affixTab）
-        affixFirstLeafMenu(result);
-
         return result;
-    }
-
-    /**
-     * 递归找到菜单树中第一个叶子节点（无子菜单的具体页面），标记 affixTab=true 使其固定在标签栏
-     *
-     * @param menus 菜单列表
-     * @return 是否已找到并标记
-     */
-    private boolean affixFirstLeafMenu(List<VbenMenuResp> menus) {
-        if (menus == null || menus.isEmpty()) {
-            return false;
-        }
-        for (VbenMenuResp menu : menus) {
-            if (menu.getChildren() == null || menu.getChildren().isEmpty()) {
-                // 叶子节点，标记固定
-                if (menu.getMeta() != null) {
-                    menu.getMeta().put("affixTab", true);
-                }
-                return true;
-            }
-            // 有子菜单，继续往下找
-            if (affixFirstLeafMenu(menu.getChildren())) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**

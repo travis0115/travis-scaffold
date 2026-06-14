@@ -1,7 +1,6 @@
 package com.travis.monolith.system.dept.api;
 
 import com.travis.monolith.system.dept.api.response.SysDeptResp;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;

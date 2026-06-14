@@ -1,10 +1,12 @@
 package com.travis.monolith.ops.job.internal.service;
 
+import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.monolith.ops.job.api.OpsJobErrorCode;
+import tools.jackson.databind.JsonNode;
+
 import java.util.Iterator;
 import java.util.Map;
-import tools.jackson.databind.JsonNode;
 
 /** 校验 JSON 参数及项目当前支持的 JSON Schema 常用子集。 */
 public final class OpsJobParamValidator {
@@ -20,7 +22,7 @@ public final class OpsJobParamValidator {
         if (!schemaNode.isObject()) {
             throw invalid("JSON Schema 根节点必须是对象");
         }
-        validateNode(paramsNode, schemaNode, "$", true);
+        validateNode(paramsNode, schemaNode, "$");
     }
 
     private static JsonNode parseJson(String value, String message) {
@@ -34,14 +36,14 @@ public final class OpsJobParamValidator {
     }
 
     private static void validateNode(
-            JsonNode value, JsonNode schema, String path, boolean validateRequired) {
-        String type = schema.path("type").asText("");
+            JsonNode value, JsonNode schema, String path) {
+        String type = schema.path("type").asString("");
         if (!type.isBlank() && !matchesType(value, type)) {
             throw invalid(path + " 类型必须为 " + type);
         }
-        if (validateRequired && value.isObject()) {
+        if (value.isObject()) {
             for (JsonNode required : schema.path("required")) {
-                String field = required.asText();
+                String field = required.asString();
                 if (!value.has(field) || value.path(field).isNull()) {
                     throw invalid(path + "." + field + " 为必填字段");
                 }
@@ -56,15 +58,15 @@ public final class OpsJobParamValidator {
                     validateNode(
                             value.path(field.getKey()),
                             field.getValue(),
-                            path + "." + field.getKey(),
-                            true);
+                            path + "." + field.getKey()
+                    );
                 }
             }
         }
         if (value.isArray() && schema.has("items")) {
             for (int index = 0; index < value.size(); index++) {
                 validateNode(
-                        value.get(index), schema.path("items"), path + "[" + index + "]", true);
+                        value.get(index), schema.path("items"), path + "[" + index + "]");
             }
         }
     }

@@ -6,10 +6,11 @@ import type {
 import type { SystemDeptApi } from '#/api';
 
 import { z } from '#/adapter/form';
-import { getDeptTree } from '#/api';
 import { $t } from '#/locales';
 
-export function useSchema(): VbenFormSchema[] {
+export function useSchema(
+  getParentDeptTree: () => Promise<SystemDeptApi.SysDept[]>,
+): VbenFormSchema[] {
   return [
     {
       component: 'Input',
@@ -27,7 +28,8 @@ export function useSchema(): VbenFormSchema[] {
       component: 'ApiTreeSelect',
       componentProps: {
         allowClear: true,
-        api: getDeptTree,
+        alwaysLoad: true,
+        api: getParentDeptTree,
         class: 'w-full',
         labelField: 'deptName',
         valueField: 'id',
@@ -45,6 +47,11 @@ export function useSchema(): VbenFormSchema[] {
       component: 'Input',
       fieldName: 'mobile',
       label: $t('system.dept.mobile'),
+      rules: z
+        .string()
+        .regex(/^$|^1[3-9]\d{9}$/, '请输入有效的手机号')
+        .optional()
+        .or(z.literal('')),
     },
     {
       component: 'InputNumber',
@@ -125,6 +132,13 @@ export function useColumns(
           'edit',
           {
             code: 'delete',
+            show: (row: SystemDeptApi.SysDept) => !row.children?.length,
+          },
+          {
+            code: 'remove',
+            danger: true,
+            show: (row: SystemDeptApi.SysDept) => Boolean(row.children?.length),
+            text: $t('common.delete'),
           },
         ],
       },

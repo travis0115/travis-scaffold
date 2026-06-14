@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
+import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
@@ -104,7 +105,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
                         new LambdaQueryWrapperX<SysRole>()
                                 .eq(SysRole::getRoleCode, req.getRoleCode()));
         if (count > 0) {
-            throw new BizException(SystemErrorCode.SYSTEM_ROLE_CODE_EXISTS);
+            throw new BizException(SystemErrorCode.ROLE_CODE_EXISTS);
         }
         SysRole role = converter.toEntity(req);
         save(role);
@@ -127,7 +128,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
                                     .eq(SysRole::getRoleCode, req.getRoleCode())
                                     .ne(SysRole::getId, id));
             if (count > 0) {
-                throw new BizException(SystemErrorCode.SYSTEM_ROLE_CODE_EXISTS);
+                throw new BizException(SystemErrorCode.ROLE_CODE_EXISTS);
             }
         }
         converter.update(req, role);

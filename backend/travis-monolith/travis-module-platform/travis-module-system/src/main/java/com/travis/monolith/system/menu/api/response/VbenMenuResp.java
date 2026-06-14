@@ -1,6 +1,5 @@
 package com.travis.monolith.system.menu.api.response;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.List;
 import java.util.Map;
 import lombok.AllArgsConstructor;
@@ -17,7 +16,6 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class VbenMenuResp {
     /** 路由名称（对应 Vue Router 的 name） */
     private String name;

@@ -8,7 +8,7 @@ import type { SystemDeptApi } from '#/api';
 import { Page, useVbenDrawer } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
 
-import { Button, message } from 'antdv-next';
+import { Button, message, Modal } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteDept, getDeptTree } from '#/api';
@@ -34,23 +34,33 @@ function onCreate() {
   formDrawerApi.setData(null).open();
 }
 
-function onDelete(row: SystemDeptApi.SysDept) {
+async function deleteDeptRow(row: SystemDeptApi.SysDept) {
   const hideLoading = message.loading({
     content: $t('ui.actionMessage.deleting', [row.deptName]),
     duration: 0,
     key: 'action_process_msg',
   });
-  deleteDept(row.id)
-    .then(() => {
-      message.success({
-        content: $t('ui.actionMessage.deleteSuccess', [row.deptName]),
-        key: 'action_process_msg',
-      });
-      refreshGrid();
-    })
-    .catch(() => {
-      hideLoading();
+  try {
+    await deleteDept(row.id);
+    message.success({
+      content: $t('ui.actionMessage.deleteSuccess', [row.deptName]),
+      key: 'action_process_msg',
     });
+    refreshGrid();
+  } catch {
+    hideLoading();
+  }
+}
+
+function onDelete(row: SystemDeptApi.SysDept) {
+  Modal.confirm({
+    cancelText: $t('common.cancel'),
+    content: `该部门下存在下级部门，删除「${row.deptName}」后将同时删除所有下级部门，请确认是否继续？`,
+    okText: '确认删除',
+    okType: 'danger',
+    onOk: () => deleteDeptRow(row),
+    title: `删除部门「${row.deptName}」`,
+  });
 }
 
 function onActionClick({
@@ -63,11 +73,15 @@ function onActionClick({
       break;
     }
     case 'delete': {
-      onDelete(row);
+      void deleteDeptRow(row);
       break;
     }
     case 'edit': {
       onEdit(row);
+      break;
+    }
+    case 'remove': {
+      onDelete(row);
       break;
     }
   }
@@ -87,6 +101,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
           return await getDeptTree();
         },
       },
+    },
+    rowConfig: {
+      keyField: 'id',
     },
     toolbarConfig: {
       custom: true,

@@ -4,21 +4,18 @@ import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
+import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.quartz.core.QuartzJobHandlerRegistry;
 import com.travis.monolith.ops.job.api.OpsJobErrorCode;
-import com.travis.monolith.ops.job.api.request.OpsJobCreateReq;
-import com.travis.monolith.ops.job.api.request.OpsJobImportReq;
-import com.travis.monolith.ops.job.api.request.OpsJobPageReq;
-import com.travis.monolith.ops.job.api.request.OpsJobPreviewReq;
-import com.travis.monolith.ops.job.api.request.OpsJobUpdateReq;
-import com.travis.monolith.ops.job.api.request.OpsJobWriteReq;
+import com.travis.monolith.ops.job.api.request.*;
 import com.travis.monolith.ops.job.api.response.OpsJobBaseResp;
 import com.travis.monolith.ops.job.api.response.OpsJobDetailResp;
 import com.travis.monolith.ops.job.api.response.OpsJobExportResp;
 import com.travis.monolith.ops.job.api.response.OpsJobPageResp;
+import com.travis.monolith.ops.job.internal.converter.OpsJobConverter;
 import com.travis.monolith.ops.job.internal.entity.OpsJob;
 import com.travis.monolith.ops.job.internal.mapper.OpsJobMapper;
 import com.travis.monolith.ops.job.internal.model.OpsJobCalendarConfig;
@@ -27,17 +24,14 @@ import com.travis.monolith.ops.job.internal.service.OpsJobService;
 import com.travis.monolith.ops.job.internal.service.QuartzJobManager;
 import com.travis.monolith.system.user.api.SysUserApi;
 import com.travis.monolith.system.user.api.response.SysUserOptionResp;
-import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -54,6 +48,7 @@ public class OpsJobServiceImpl extends ServiceImpl<OpsJobMapper, OpsJob> impleme
     private final QuartzJobManager quartzJobManager;
     private final QuartzJobHandlerRegistry handlerRegistry;
     private final SysUserApi userApi;
+    private final OpsJobConverter converter;
 
     @Override
     public PageResp<OpsJobPageResp> page(OpsJobPageReq req) {
@@ -112,9 +107,7 @@ public class OpsJobServiceImpl extends ServiceImpl<OpsJobMapper, OpsJob> impleme
     public void update(Long id, OpsJobUpdateReq req) {
         OpsJob job = getRequired(id);
         validateUserScope(req);
-        Integer status = job.getStatus();
-        copyRequest(req, job);
-        job.setStatus(status);
+        converter.update(req, job);
         updateById(job);
         quartzJobManager.schedule(job);
     }
@@ -212,33 +205,7 @@ public class OpsJobServiceImpl extends ServiceImpl<OpsJobMapper, OpsJob> impleme
 
     private OpsJob buildEntity(OpsJobWriteReq req) {
         validate(req);
-        var job = new OpsJob();
-        copyRequest(req, job);
-        return job;
-    }
-
-    private void copyRequest(OpsJobWriteReq req, OpsJob job) {
-        BeanUtils.copyProperties(
-                req,
-                job,
-                "excludedDates",
-                "excludedWeekdays",
-                "dailyStartTime",
-                "dailyEndTime",
-                "alertUserIds");
-        var calendar =
-                new OpsJobCalendarConfig(
-                        req.getExcludedDates(),
-                        req.getExcludedWeekdays(),
-                        req.getDailyStartTime(),
-                        req.getDailyEndTime());
-        job.setCalendarConfig(calendar.isEmpty() ? null : JsonUtil.toJsonString(calendar));
-        job.setAlertUserIds(serializeIds(req.getAlertUserIds()));
-        job.setPriority(req.getPriority() == null ? 5 : req.getPriority());
-        job.setMisfirePolicy(req.getMisfirePolicy() == null ? 0 : req.getMisfirePolicy());
-        job.setLogRetentionDays(req.getLogRetentionDays() == null ? 30 : req.getLogRetentionDays());
-        job.setParams(
-                req.getParams() == null || req.getParams().isBlank() ? "{}" : req.getParams());
+        return converter.toEntity(req);
     }
 
     private void validate(OpsJobWriteReq req) {
@@ -302,14 +269,6 @@ public class OpsJobServiceImpl extends ServiceImpl<OpsJobMapper, OpsJob> impleme
         }
         response.setNextFireTime(quartzJobManager.nextFireTime(job.getId()));
         return response;
-    }
-
-    private String serializeIds(List<Long> ids) {
-        return ids == null || ids.isEmpty()
-                ? null
-                : ids.stream()
-                        .map(String::valueOf)
-                        .collect(java.util.stream.Collectors.joining(","));
     }
 
     private List<Long> parseIds(String ids) {

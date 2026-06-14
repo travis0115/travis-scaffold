@@ -155,11 +155,14 @@ const showTableTitle = computed(() => {
   return !!slots[TABLE_TITLE]?.() || tableTitle.value;
 });
 
+const isTreeTable = computed(() => !!gridOptions.value?.treeConfig);
+
 const showToolbar = computed(() => {
   return (
     !!slots[TOOLBAR_ACTIONS]?.() ||
     !!slots[TOOLBAR_TOOLS]?.() ||
-    showTableTitle.value
+    showTableTitle.value ||
+    isTreeTable.value
   );
 });
 
@@ -194,7 +197,7 @@ const toolbarOptions = computed(() => {
   // 强制使用固定的toolbar配置，不允许用户自定义
   // 减少配置的复杂度，以及后续维护的成本
   toolbarConfig.slots = {
-    ...(slotActions || showTableTitle.value
+    ...(slotActions || showTableTitle.value || isTreeTable.value
       ? { buttons: TOOLBAR_ACTIONS }
       : {}),
     ...(slotTools ? { tools: TOOLBAR_TOOLS } : {}),
@@ -281,10 +284,58 @@ function onSearchBtnClick() {
   props.api?.toggleSearchForm?.();
 }
 
+const expandedTreeRowKeys = new Set<string>();
+
+function getTreeRowKey(row: Record<string, any>) {
+  const keyField =
+    (gridOptions.value?.treeConfig as any)?.rowField ||
+    (gridOptions.value?.rowConfig as any)?.keyField ||
+    'id';
+  return `${row[keyField]}`;
+}
+
+async function expandAllTreeRows() {
+  await gridRef.value?.setAllTreeExpand(true);
+  expandedTreeRowKeys.clear();
+  gridRef.value?.getTreeExpandRecords().forEach((row) => {
+    expandedTreeRowKeys.add(getTreeRowKey(row));
+  });
+}
+
+async function collapseAllTreeRows() {
+  expandedTreeRowKeys.clear();
+  await gridRef.value?.setAllTreeExpand(false);
+}
+
+function onToggleTreeExpand(event: Record<string, any>) {
+  const key = getTreeRowKey(event.row);
+  if (event.expanded) {
+    expandedTreeRowKeys.add(key);
+  } else {
+    expandedTreeRowKeys.delete(key);
+  }
+  (gridEvents.value?.toggleTreeExpand as any)?.(event);
+}
+
+async function onProxyQuery(event: Record<string, any>) {
+  await nextTick();
+  const rows: Record<string, any>[] = [];
+  expandedTreeRowKeys.forEach((key) => {
+    const row = gridRef.value?.getRowById(key);
+    if (row) rows.push(row);
+  });
+  if (rows.length > 0) {
+    await gridRef.value?.setTreeExpand(rows, true);
+  }
+  (gridEvents.value?.proxyQuery as any)?.(event);
+}
+
 const events = computed(() => {
   return {
     ...gridEvents.value,
+    proxyQuery: onProxyQuery,
     toolbarToolClick: onToolbarToolClick,
+    toggleTreeExpand: onToggleTreeExpand,
   };
 });
 
@@ -421,6 +472,16 @@ onUnmounted(() => {
           </div>
         </slot>
         <slot name="toolbar-actions" v-bind="slotProps"> </slot>
+        <VxeButton
+          v-if="isTreeTable"
+          class="ml-2"
+          @click="expandAllTreeRows"
+        >
+          {{ $t('common.expandAll') }}
+        </VxeButton>
+        <VxeButton v-if="isTreeTable" @click="collapseAllTreeRows">
+          {{ $t('common.collapseAll') }}
+        </VxeButton>
       </template>
 
       <!-- 继承默认的slot -->

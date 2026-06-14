@@ -4,6 +4,7 @@ spring:
     locale: ${spring.web.locale:zh_CN}
     time-zone: Asia/Shanghai
     date-format: yyyy-MM-dd HH:mm:ss
+    default-property-inclusion: non_null
     serialization:
       indent-output: true #格式化输出
     deserialization:

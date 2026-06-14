@@ -22,16 +22,15 @@ import com.travis.monolith.system.user.internal.converter.SysUserConverter;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.mapper.SysUserMapper;
 import com.travis.monolith.system.user.internal.service.SysUserService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 用户管理服务实现，包含密码加密（BCrypt）、角色分配及部门名称关联查询
@@ -109,7 +108,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
                         new LambdaQueryWrapperX<SysUser>()
                                 .eq(SysUser::getUsername, req.getUsername()));
         if (count > 0) {
-            throw new BizException(SystemErrorCode.SYSTEM_USER_USERNAME_EXISTS);
+            throw new BizException(SystemErrorCode.USER_USERNAME_EXISTS);
         }
         SysUser user = converter.toEntity(req);
         user.setPassword(encodePassword(req.getPassword()));
@@ -132,7 +131,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
                                 .eq(SysUser::getUsername, req.getUsername())
                                 .ne(SysUser::getId, id));
         if (count > 0) {
-            throw new BizException(SystemErrorCode.SYSTEM_USER_USERNAME_EXISTS);
+            throw new BizException(SystemErrorCode.USER_USERNAME_EXISTS);
         }
         converter.update(req, user);
         if (req.getPassword() != null && !req.getPassword().isBlank()) {
@@ -177,9 +176,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
         if (user == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
-        user.setNickname(req.getNickname());
-        user.setEmail(req.getEmail());
-        user.setMobile(req.getMobile());
+        converter.updateProfile(req, user);
         updateById(user);
     }
 
@@ -191,7 +188,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
         if (user == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
-        user.setAvatar(req.getAvatar());
+        converter.updateAvatar(req, user);
         updateById(user);
     }
 
@@ -210,7 +207,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
         }
         // BCrypt 校验原密码
         if (!BCrypt.checkpw(req.getOldPassword(), user.getPassword())) {
-            throw new BizException(SystemErrorCode.SYSTEM_USER_OLD_PASSWORD_ERROR);
+            throw new BizException(SystemErrorCode.USER_OLD_PASSWORD_ERROR);
         }
         // 加密新密码并更新
         user.setPassword(BCrypt.hashpw(req.getNewPassword()));

@@ -3,6 +3,7 @@ package com.travis.monolith.system.user.internal.service.impl;
 import cn.hutool.crypto.digest.BCrypt;
 import com.travis.infrastructure.common.event.MessagePublisher;
 import com.travis.infrastructure.common.web.enums.LoginType;
+import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.model.UserAgentInfo;

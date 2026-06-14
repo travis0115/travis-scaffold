@@ -7,6 +7,7 @@ export * from './file-management';
 export * from './login-log';
 export * from './menu';
 export * from './notice';
+export * from './operation-log';
 export * from './role';
-export * from './version-log';
 export * from './user';
+export * from './version-log';

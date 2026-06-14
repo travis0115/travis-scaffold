@@ -79,27 +79,29 @@ public class OperationLogAspect {
         var moduleAnnotation =
                 AnnotatedElementUtils.findMergedAnnotation(
                         joinPoint.getTarget().getClass(), OperationLogModule.class);
-        eventPublisher.publishEvent(
-                new OperationLogEvent(
-                        currentUserId(),
-                        operationLog.action(),
-                        moduleAnnotation != null
-                                ? moduleAnnotation.value()
-                                : joinPoint.getTarget().getClass().getSimpleName(),
-                        signature.getDeclaringTypeName() + "#" + signature.getName(),
-                        request.getRequestURI(),
-                        request.getMethod(),
-                        operationLog.recordRequest()
-                                ? serialize(
-                                        Arrays.stream(joinPoint.getArgs())
-                                                .filter(this::isSerializableArgument)
-                                                .toArray())
-                                : null,
-                        operationLog.recordResponse() ? serialize(result) : null,
-                        IpUtil.getClientIp(request),
-                        System.currentTimeMillis() - startTime,
-                        failure == null ? 1 : 0,
-                        failure == null ? null : truncate(failure.getMessage())));
+        if (request != null) {
+            eventPublisher.publishEvent(
+                    new OperationLogEvent(
+                            currentUserId(),
+                            operationLog.action(),
+                            moduleAnnotation != null
+                                    ? moduleAnnotation.value()
+                                    : joinPoint.getTarget().getClass().getSimpleName(),
+                            signature.getDeclaringTypeName() + "#" + signature.getName(),
+                            request.getRequestURI(),
+                            request.getMethod(),
+                            operationLog.recordRequest()
+                                    ? serialize(
+                                            Arrays.stream(joinPoint.getArgs())
+                                                    .filter(this::isSerializableArgument)
+                                                    .toArray())
+                                    : null,
+                            operationLog.recordResponse() ? serialize(result) : null,
+                            IpUtil.getClientIp(request),
+                            System.currentTimeMillis() - startTime,
+                            failure == null ? 1 : 0,
+                            failure == null ? null : truncate(failure.getMessage())));
+        }
     }
 
     private Long currentUserId() {

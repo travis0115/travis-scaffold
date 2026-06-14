@@ -117,7 +117,16 @@ export function useColumns(
             text: $t('common.moveDown'),
           },
           'edit',
-          'delete',
+          {
+            code: 'delete',
+            show: (row: SystemMenuApi.SysMenu) => !row.children?.length,
+          },
+          {
+            code: 'remove',
+            danger: true,
+            show: (row: SystemMenuApi.SysMenu) => Boolean(row.children?.length),
+            text: $t('common.delete'),
+          },
         ],
       },
       field: 'operation',
