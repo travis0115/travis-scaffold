@@ -91,7 +91,7 @@ async function loadNotifications() {
     avatar: preferences.app.defaultAvatar,
     date: formatDateTime(item.publishTime || item.createTime),
     isRead: item.readStatus === 1,
-    link: '/system/my-message',
+    link: '/message',
     message: item.content,
     title: item.title,
   }));
@@ -118,7 +118,7 @@ async function handleMakeAll() {
   await loadNotifications();
 }
 
-const viewAll = () => router.push('/system/my-message');
+const viewAll = () => router.push('/message');
 
 const handleClick = async (item: NotificationItem) => {
   if (item.id && !item.isRead) await markRead(item.id);

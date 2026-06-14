@@ -1,20 +1,20 @@
 <script lang="ts" setup>
-import type { VbenFormSchema } from '#/adapter/form';
-import type { SystemMenuApi } from '#/api';
+import type {VbenFormSchema} from '#/adapter/form';
+import type {SystemMenuApi} from '#/api';
 
-import { computed, h, ref } from 'vue';
+import {computed, h, ref} from 'vue';
 
-import { useVbenDrawer } from '@vben/common-ui';
-import { getPopupContainer } from '@vben/utils';
+import {useVbenDrawer} from '@vben/common-ui';
+import {getPopupContainer} from '@vben/utils';
 
-import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
+import {breakpointsTailwind, useBreakpoints} from '@vueuse/core';
 
-import { useVbenForm, z } from '#/adapter/form';
-import { createMenu, getMenuDetail, getMenuTree, updateMenu } from '#/api';
-import { $t } from '#/locales';
-import { componentKeys } from '#/router/routes';
+import {useVbenForm, z} from '#/adapter/form';
+import {createMenu, getMenuDetail, getMenuTree, updateMenu} from '#/api';
+import {$t} from '#/locales';
+import {componentKeys} from '#/router/routes';
 
-import { getMenuTypeOptions } from '../data';
+import {getMenuTypeOptions} from '../data';
 
 const emit = defineEmits<{
   success: [];
@@ -24,16 +24,16 @@ const emit = defineEmits<{
 // 应用到选中项容器上（SingleContent 读取 option.data.class），导致选中后输入框
 // 出现背景色块。改用 `dotClass` 仅供圆点渲染读取。
 const badgeVariantOptions = [
-  { dotClass: 'bg-green-500', label: 'default', value: 'default' },
-  { dotClass: 'bg-destructive', label: 'destructive', value: 'destructive' },
-  { dotClass: 'bg-primary', label: 'primary', value: 'primary' },
-  { dotClass: 'bg-green-500', label: 'success', value: 'success' },
-  { dotClass: 'bg-yellow-500', label: 'warning', value: 'warning' },
+  {dotClass: 'bg-green-500', label: 'default', value: 'default'},
+  {dotClass: 'bg-destructive', label: 'destructive', value: 'destructive'},
+  {dotClass: 'bg-primary', label: 'primary', value: 'primary'},
+  {dotClass: 'bg-green-500', label: 'success', value: 'success'},
+  {dotClass: 'bg-yellow-500', label: 'warning', value: 'warning'},
 ];
 
 function renderBadgeVariant(value?: string, label?: string) {
   const option = badgeVariantOptions.find((item) => item.value === value);
-  return h('span', { class: 'flex items-center gap-2' }, [
+  return h('span', {class: 'flex items-center gap-2'}, [
     h('span', {
       class: ['inline-block size-3 rounded-full', option?.dotClass],
     }),
@@ -99,11 +99,13 @@ const schema: VbenFormSchema[] = [
       class: 'w-full',
       allowClear: true,
       filterTreeNode(input: string, node: any) {
-        if (!input || input.length === 0) {
+        const keyword = input.trim().toLowerCase();
+        if (!keyword) {
           return true;
         }
-        const name: string = node.menuName ?? '';
-        return name.includes(input);
+        return [node.menuName, node.label, node.title].some((item) =>
+          String(item ?? '').toLowerCase().includes(keyword),
+        );
       },
       getPopupContainer,
       labelField: 'menuName',
@@ -116,11 +118,11 @@ const schema: VbenFormSchema[] = [
     label: $t('system.menu.parent'),
     renderComponentContent() {
       return {
-        title({ label, menuName }: { label: string; menuName: string }) {
+        title({label, menuName}: { label: string; menuName: string }) {
           const coms = [];
           if (!label && !menuName) return '';
-          coms.push(h('span', { class: '' }, menuName || label));
-          return h('div', { class: 'flex items-center gap-1' }, coms);
+          coms.push(h('span', {class: ''}, menuName || label));
+          return h('div', {class: 'flex items-center gap-1'}, coms);
         },
       };
     },
@@ -134,27 +136,27 @@ const schema: VbenFormSchema[] = [
       rules: (values) => {
         return [0, 1].includes(values.menuType)
           ? z
-              .string()
-              .min(1, $t('ui.formRules.required', [$t('system.menu.path')]))
-              .max(
-                100,
-                $t('ui.formRules.maxLength', [$t('system.menu.path'), 100]),
-              )
-              .refine(
-                (value: string) => value.startsWith('/'),
-                $t('ui.formRules.startWith', [$t('system.menu.path'), '/']),
-              )
-              .refine(
-                async (value: string) => {
-                  return !(await isMenuPathExists(value, formData.value?.id));
-                },
-                (value) => ({
-                  message: $t('ui.formRules.alreadyExists', [
-                    $t('system.menu.path'),
-                    value,
-                  ]),
-                }),
-              )
+            .string()
+            .min(1, $t('ui.formRules.required', [$t('system.menu.path')]))
+            .max(
+              100,
+              $t('ui.formRules.maxLength', [$t('system.menu.path'), 100]),
+            )
+            .refine(
+              (value: string) => value.startsWith('/'),
+              $t('ui.formRules.startWith', [$t('system.menu.path'), '/']),
+            )
+            .refine(
+              async (value: string) => {
+                return !(await isMenuPathExists(value, formData.value?.id));
+              },
+              (value) => ({
+                message: $t('ui.formRules.alreadyExists', [
+                  $t('system.menu.path'),
+                  value,
+                ]),
+              }),
+            )
           : null;
       },
       show: (values) => [0, 1].includes(values.menuType),
@@ -172,7 +174,7 @@ const schema: VbenFormSchema[] = [
       filterOption(input: string, option: { value: string }) {
         return option.value.toLowerCase().includes(input.toLowerCase());
       },
-      options: componentKeys.map((v) => ({ value: v })),
+      options: componentKeys.map((v) => ({value: v})),
     }),
     dependencies: {
       rules: (values) => {
@@ -226,8 +228,8 @@ const schema: VbenFormSchema[] = [
     component: 'RadioGroup',
     componentProps: {
       options: [
-        { label: '否', value: 0 },
-        { label: '是', value: 1 },
+        {label: '否', value: 0},
+        {label: '是', value: 1},
       ],
     },
     defaultValue: 0,
@@ -247,9 +249,9 @@ const schema: VbenFormSchema[] = [
       rules: (values) =>
         values.menuType === 1 && values.isExternal === 1
           ? z
-              .string()
-              .min(1, $t('ui.formRules.required', [$t('system.menu.linkSrc')]))
-              .url($t('ui.formRules.invalidURL'))
+            .string()
+            .min(1, $t('ui.formRules.required', [$t('system.menu.linkSrc')]))
+            .url($t('ui.formRules.invalidURL'))
           : null,
       show: (values) => values.menuType === 1,
       triggerFields: ['menuType', 'isExternal'],
@@ -262,8 +264,8 @@ const schema: VbenFormSchema[] = [
     componentProps: (values) => ({
       disabled: values.isExternal !== 1,
       options: [
-        { label: '内嵌', value: 'iframe' },
-        { label: '新窗口', value: 'newWindow' },
+        {label: '内嵌', value: 'iframe'},
+        {label: '新窗口', value: 'newWindow'},
       ],
     }),
     defaultValue: 'iframe',
@@ -298,6 +300,30 @@ const schema: VbenFormSchema[] = [
     label: $t('system.menu.badgeType.title'),
   },
   {
+    component: 'Select',
+    componentProps: (values) => ({
+      class: 'w-full',
+      disabled: !values._badgeType,
+      options: badgeVariantOptions,
+      labelRender: ({label, value}: { label?: string; value?: string }) =>
+        renderBadgeVariant(value, label),
+      optionRender: ({
+                       option,
+                     }: {
+        option: { data: { label: string; value: string } };
+      }) => renderBadgeVariant(option.data.value, option.data.label),
+    }),
+    defaultValue: defaultBadgeVariant,
+    dependencies: {
+      rules: (values) =>
+        values.menuType !== 2 && values._badgeType ? 'selectRequired' : null,
+      show: (values) => values.menuType !== 2,
+      triggerFields: ['menuType', '_badgeType'],
+    },
+    fieldName: '_badgeVariants',
+    label: $t('system.menu.badgeVariants'),
+  },
+  {
     component: 'Input',
     componentProps: (values) => ({
       allowClear: true,
@@ -316,30 +342,6 @@ const schema: VbenFormSchema[] = [
     label: $t('system.menu.badge'),
   },
   {
-    component: 'Select',
-    componentProps: (values) => ({
-      class: 'w-full',
-      disabled: !values._badgeType,
-      options: badgeVariantOptions,
-      labelRender: ({ label, value }: { label?: string; value?: string }) =>
-        renderBadgeVariant(value, label),
-      optionRender: ({
-        option,
-      }: {
-        option: { data: { label: string; value: string } };
-      }) => renderBadgeVariant(option.data.value, option.data.label),
-    }),
-    defaultValue: defaultBadgeVariant,
-    dependencies: {
-      rules: (values) =>
-        values.menuType !== 2 && values._badgeType ? 'selectRequired' : null,
-      show: (values) => values.menuType !== 2,
-      triggerFields: ['menuType', '_badgeType'],
-    },
-    fieldName: '_badgeVariants',
-    label: $t('system.menu.badgeVariants'),
-  },
-  {
     component: 'InputNumber',
     defaultValue: 0,
     fieldName: 'sort',
@@ -350,8 +352,8 @@ const schema: VbenFormSchema[] = [
     componentProps: {
       buttonStyle: 'solid',
       options: [
-        { label: $t('common.enabled'), value: 1 },
-        { label: $t('common.disabled'), value: 0 },
+        {label: $t('common.enabled'), value: 1},
+        {label: $t('common.disabled'), value: 0},
       ],
       optionType: 'button',
     },
@@ -473,23 +475,23 @@ const [Drawer, drawerApi] = useVbenDrawer({
 });
 
 async function onSubmit() {
-  const { valid } = await formApi.validate();
+  const {valid} = await formApi.validate();
   if (valid) {
     drawerApi.lock();
     const values =
       await formApi.getValues<
         Omit<SystemMenuApi.SysMenu, 'children' | 'createTime'> & {
-          _activeIcon?: string;
-          _affixTab?: boolean;
-          _badge?: string;
-          _badgeType?: 'dot' | 'normal';
-          _badgeVariants?: string;
-          _hideInMenu?: boolean;
-          _hideInTab?: boolean;
-          externalOpenMode?: 'iframe' | 'newWindow';
-          isExternal?: number;
-          linkSrc?: string;
-        }
+        _activeIcon?: string;
+        _affixTab?: boolean;
+        _badge?: string;
+        _badgeType?: 'dot' | 'normal';
+        _badgeVariants?: string;
+        _hideInMenu?: boolean;
+        _hideInTab?: boolean;
+        externalOpenMode?: 'iframe' | 'newWindow';
+        isExternal?: number;
+        linkSrc?: string;
+      }
       >();
 
     // 构建 meta JSON
@@ -580,6 +582,6 @@ const getDrawerTitle = computed(() =>
 </script>
 <template>
   <Drawer class="w-full max-w-200" :title="getDrawerTitle">
-    <Form :layout="isHorizontal ? 'horizontal' : 'vertical'" />
+    <Form :layout="isHorizontal ? 'horizontal' : 'vertical'"/>
   </Drawer>
 </template>

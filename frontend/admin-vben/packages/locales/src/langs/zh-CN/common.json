@@ -23,7 +23,5 @@
   "showSearchPanel": "显示搜索面板",
   "hideSearchPanel": "隐藏搜索面板",
   "moveUp": "上移",
-  "moveDown": "下移",
-  "expandAll": "展开全部",
-  "collapseAll": "收起全部"
+  "moveDown": "下移"
 }

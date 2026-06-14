@@ -1,19 +1,19 @@
 <script lang="ts" setup>
-import type { OnActionClickParams, VxeTableGridOptions } from '#/adapter/vxe-table';
-import type { SystemNoticeApi } from '#/api';
+import type { OnActionClickParams, VxeTableGridOptions } from '../../../adapter/vxe-table';
+import type { SystemNoticeApi } from '../../../api';
 
 import { Page } from '@vben/common-ui';
 
 import { Button } from 'antdv-next';
 
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { useVbenVxeGrid } from '../../../adapter/vxe-table';
 import {
   clearMessages,
   deleteMessage,
   getMessagePage,
   markAllMessagesRead,
   markMessageRead,
-} from '#/api';
+} from '../../../api';
 
 import { useColumns, useGridFormSchema } from './data';
 

@@ -23,7 +23,5 @@
   "showSearchPanel": "Show search panel",
   "hideSearchPanel": "Hide search panel",
   "moveUp": "Move Up",
-  "moveDown": "Move Down",
-  "expandAll": "Expand All",
-  "collapseAll": "Collapse All"
+  "moveDown": "Move Down"
 }

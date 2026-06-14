@@ -294,19 +294,6 @@ function getTreeRowKey(row: Record<string, any>) {
   return `${row[keyField]}`;
 }
 
-async function expandAllTreeRows() {
-  await gridRef.value?.setAllTreeExpand(true);
-  expandedTreeRowKeys.clear();
-  gridRef.value?.getTreeExpandRecords().forEach((row) => {
-    expandedTreeRowKeys.add(getTreeRowKey(row));
-  });
-}
-
-async function collapseAllTreeRows() {
-  expandedTreeRowKeys.clear();
-  await gridRef.value?.setAllTreeExpand(false);
-}
-
 function onToggleTreeExpand(event: Record<string, any>) {
   const key = getTreeRowKey(event.row);
   if (event.expanded) {
@@ -472,16 +459,6 @@ onUnmounted(() => {
           </div>
         </slot>
         <slot name="toolbar-actions" v-bind="slotProps"> </slot>
-        <VxeButton
-          v-if="isTreeTable"
-          class="ml-2"
-          @click="expandAllTreeRows"
-        >
-          {{ $t('common.expandAll') }}
-        </VxeButton>
-        <VxeButton v-if="isTreeTable" @click="collapseAllTreeRows">
-          {{ $t('common.collapseAll') }}
-        </VxeButton>
       </template>
 
       <!-- 继承默认的slot -->

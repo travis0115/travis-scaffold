@@ -218,7 +218,6 @@ const getForceMount = computed(() => {
             headerClass,
             {
               'px-4 py-3': closable,
-              'pl-2': closable && closeIconPlacement === 'left',
             },
           )
         "

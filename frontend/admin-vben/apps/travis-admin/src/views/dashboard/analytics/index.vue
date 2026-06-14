@@ -129,7 +129,7 @@ onMounted(async () => {
           </div>
         </template>
         <template #extra>
-          <Button type="link" @click="router.push('/system/my-message')">
+          <Button type="link" @click="router.push('/message')">
             查看全部
           </Button>
         </template>
@@ -141,7 +141,7 @@ onMounted(async () => {
             :key="item.id"
             class="flex w-full items-start gap-3 rounded-lg border border-border/60 bg-muted/30 p-3 text-left transition-colors hover:bg-muted/70"
             type="button"
-            @click="router.push('/system/my-message')"
+            @click="router.push('/message')"
           >
             <span
               class="mt-1 size-2 shrink-0 rounded-full"

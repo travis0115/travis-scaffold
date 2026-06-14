@@ -4,14 +4,14 @@ import type {
   RouteRecordStringComponent,
 } from '@vben/types';
 
-import { generateAccessible } from '@vben/access';
-import { preferences } from '@vben/preferences';
+import {generateAccessible} from '@vben/access';
+import {preferences} from '@vben/preferences';
 
-import { message } from 'antdv-next';
+import {message} from 'antdv-next';
 
-import { getAllMenusApi } from '#/api';
-import { BasicLayout, IFrameView } from '#/layouts';
-import { $t } from '#/locales';
+import {getAllMenusApi} from '#/api';
+import {BasicLayout, IFrameView} from '#/layouts';
+import {$t} from '#/locales';
 
 const forbiddenComponent = () => import('#/views/_core/fallback/forbidden.vue');
 
@@ -26,6 +26,15 @@ const hiddenRoutes: RouteRecordStringComponent[] = [
     meta: {
       hideInMenu: true,
       title: $t('page.auth.profile'),
+    },
+  },
+  {
+    name: 'Message',
+    path: '/message',
+    component: '_core/message/list',
+    meta: {
+      hideInMenu: true,
+      title: $t('page.message.title'),
     },
   },
 ];
@@ -61,4 +70,4 @@ async function generateAccess(options: GenerateMenuAndRoutesOptions) {
   });
 }
 
-export { generateAccess };
+export {generateAccess};
