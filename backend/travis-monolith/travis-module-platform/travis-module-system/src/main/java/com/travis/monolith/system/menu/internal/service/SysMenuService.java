@@ -3,8 +3,7 @@ package com.travis.monolith.system.menu.internal.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.monolith.system.menu.api.request.SysMenuCreateReq;
 import com.travis.monolith.system.menu.api.request.SysMenuUpdateReq;
-import com.travis.monolith.system.menu.api.response.SysMenuDetailResp;
-import com.travis.monolith.system.menu.api.response.SysMenuListResp;
+import com.travis.monolith.system.menu.api.response.SysMenuResp;
 import com.travis.monolith.system.menu.api.response.VbenMenuResp;
 import com.travis.monolith.system.menu.internal.entity.SysMenu;
 import java.util.List;
@@ -21,7 +20,7 @@ public interface SysMenuService extends IService<SysMenu> {
      *
      * @return 菜单树
      */
-    List<SysMenuListResp> listTree();
+    List<SysMenuResp> listTree();
 
     /**
      * 获取菜单详情
@@ -29,7 +28,7 @@ public interface SysMenuService extends IService<SysMenu> {
      * @param id 菜单ID
      * @return 菜单详情视图
      */
-    SysMenuDetailResp getById(Long id);
+    SysMenuResp getById(Long id);
 
     /**
      * 新增菜单
@@ -68,12 +67,12 @@ public interface SysMenuService extends IService<SysMenu> {
     void moveDown(Long id);
 
     /**
-     * 根据角色ID列表生成 Vben Admin 格式的菜单树（用于前端动态路由渲染）
+     * 根据用户ID生成 Vben Admin 格式的菜单树（用于前端动态路由渲染）
      *
-     * @param roleIds 角色ID列表
+     * @param userId 用户ID
      * @return Vben Admin 格式的菜单树
      */
-    List<VbenMenuResp> getVbenMenuTree(List<Long> roleIds);
+    List<VbenMenuResp> getVbenMenuTree(Long userId);
 
     /**
      * 根据菜单ID列表查询已启用菜单的权限标识列表

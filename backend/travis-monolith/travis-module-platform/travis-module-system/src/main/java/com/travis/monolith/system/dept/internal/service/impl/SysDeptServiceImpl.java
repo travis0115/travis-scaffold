@@ -1,6 +1,5 @@
 package com.travis.monolith.system.dept.internal.service.impl;
 
-import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.event.MessagePublisher;
 import com.travis.infrastructure.common.web.exception.BizException;
@@ -15,17 +14,19 @@ import com.travis.monolith.system.dept.internal.converter.SysDeptConverter;
 import com.travis.monolith.system.dept.internal.entity.SysDept;
 import com.travis.monolith.system.dept.internal.mapper.SysDeptMapper;
 import com.travis.monolith.system.dept.internal.service.SysDeptService;
-import java.util.*;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 部门管理服务实现，支持树形部门结构的构建
@@ -39,9 +40,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
         implements SysDeptService {
 
-    private static final Map<String, SFunction<SysDept, ?>> SORT_COLUMNS =
-            Map.ofEntries(Map.entry("sort", SysDept::getSort));
-
     /** 对象转换器 */
     private final SysDeptConverter converter;
 
@@ -54,7 +52,6 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
     public List<SysDeptResp> listTree() {
         var deptList = list(new LambdaQueryWrapperX<SysDept>().orderByAsc(SysDept::getSort));
         var deptRespList = converter.toRespList(deptList);
-        deptRespList.forEach(v -> v.setChildren(new ArrayList<>()));
         return buildTree(deptRespList);
     }
 
@@ -70,18 +67,18 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
 
     /** 获取部门详情 */
     @Override
+    @Cacheable(key = "'id:'+#id")
     public SysDeptResp getById(Long id) {
         var dept = super.getById(id);
         if (dept == null) {
             throw new BizException(SystemErrorCode.DEPT_NOT_FOUND);
         }
-        var resp = converter.toResp(dept);
-        resp.setChildren(new ArrayList<>());
-        return resp;
+        return converter.toResp(dept);
     }
 
     /** 根据部门ID查询部门名称 */
     @Override
+    @Cacheable(key = "'name:'+#deptId")
     public String getDeptNameById(Long deptId) {
         if (deptId == null) {
             return null;
@@ -134,7 +131,13 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
 
     /** 更新部门信息 */
     @Override
-    @CacheEvict(key = "'tree:all'")
+    @Caching(
+            evict = {
+                @CacheEvict(key = "'tree:all'"),
+                @CacheEvict(key = "'id:'+#id"),
+                @CacheEvict(key = "'name:'+#id")
+            })
+    @Transactional
     public void update(Long id, SysDeptUpdateReq req) {
         var dept = super.getById(id);
         if (dept == null) {
@@ -151,7 +154,7 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
     /** 删除部门（递归删除所有下级部门），通过事件通知用户模块清除关联 */
     @Override
     @Transactional
-    @CacheEvict(key = "'tree:all'")
+    @CacheEvict(allEntries = true)
     public void deleteById(Long id) {
         var ids = new ArrayList<Long>();
         collectAllDescendantIds(id, ids);
@@ -162,24 +165,16 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
                 new TransactionSynchronization() {
                     @Override
                     public void afterCommit() {
-                        publishDeptDeletedEvent(payload);
+                        messagePublisher.asyncPublish(
+                                SystemEvent.DEPT_DELETED,
+                                payload,
+                                (event, body, options, ex) -> {
+                                    if (ex != null) {
+                                        log.error("部门删除事件发送失败, deptIds={}", payload.deptIds(), ex);
+                                    }
+                                });
                     }
                 });
-    }
-
-    private void publishDeptDeletedEvent(DeptDeletedPayload payload) {
-        try {
-            messagePublisher.asyncPublish(
-                    SystemEvent.DEPT_DELETED,
-                    payload,
-                    (event, body, options, ex) -> {
-                        if (ex != null) {
-                            log.error("部门删除事件发送失败, deptIds={}", payload.deptIds(), ex);
-                        }
-                    });
-        } catch (RuntimeException e) {
-            log.error("部门删除事件发送失败, deptIds={}", payload.deptIds(), e);
-        }
     }
 
     /**

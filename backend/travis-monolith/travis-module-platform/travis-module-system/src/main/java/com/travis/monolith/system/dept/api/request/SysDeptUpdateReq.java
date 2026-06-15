@@ -30,7 +30,7 @@ public class SysDeptUpdateReq {
     /** 状态（0-禁用 1-启用） */
     @In(
             value = {0, 1},
-            message = "状态仅允许值为0或1")
+            message = "状态值错误")
     @NotNull(message = "状态值不允许为空")
     private Integer status;
 }

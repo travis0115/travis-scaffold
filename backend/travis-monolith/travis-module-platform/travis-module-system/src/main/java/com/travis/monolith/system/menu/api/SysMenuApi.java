@@ -11,12 +11,12 @@ import java.util.List;
 public interface SysMenuApi {
 
     /**
-     * 根据角色ID列表生成 Vben Admin 格式的菜单树
+     * 根据用户ID生成 Vben Admin 格式的菜单树
      *
-     * @param roleIds 角色ID列表
+     * @param userId 用户ID
      * @return Vben Admin 格式的菜单树
      */
-    List<VbenMenuResp> getVbenMenuTree(List<Long> roleIds);
+    List<VbenMenuResp> getVbenMenuTree(Long userId);
 
     /**
      * 根据菜单ID列表查询已启用菜单的权限标识列表

@@ -21,13 +21,13 @@ import com.travis.monolith.system.user.api.response.UserInfoResp;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.service.SysAuthService;
 import com.travis.monolith.system.user.internal.service.SysUserService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.stereotype.Service;
 
 /**
  * 后台认证服务实现，处理登录验证（BCrypt 密码校验）、用户信息获取及权限查询
@@ -144,14 +144,9 @@ public class SysAuthServiceImpl implements SysAuthService {
 
     /** 获取当前用户的菜单树（用于前端路由渲染），按用户ID缓存 */
     @Override
-    @Cacheable(
-            value = "menus:vben",
-            key =
-                    "T(com.travis.infrastructure.framework.satoken.core.StpKit).getLoginIdAsLong(T(com.travis.infrastructure.common.web.enums.LoginType).ADMIN)")
     public List<VbenMenuResp> listMenus() {
         long userId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
-        List<Long> roleIds = roleApi.getRoleIdsByUserId(userId);
-        return menuApi.getVbenMenuTree(roleIds);
+        return menuApi.getVbenMenuTree(userId);
     }
 
     /** 获取当前用户的权限标识列表（用于前端按钮级权限控制） */

@@ -5,7 +5,7 @@ package com.travis.monolith.system.common.api;
  *
  * @author travis
  */
-public class SysConfigKeyConstant {
+public class ConfigKeyConstant {
     /** api url前缀 */
     public static final String API_PREFIX = "api_prefix";
 }

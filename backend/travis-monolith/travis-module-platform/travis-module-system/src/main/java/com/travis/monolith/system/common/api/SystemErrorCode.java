@@ -23,7 +23,8 @@ public enum SystemErrorCode implements ErrorCode {
     DEPT_PARENT_INVALID("SYS_201", "上级部门不能是当前部门或其下级部门"),
 
     /* menu模块 300-399 */
-    MENU_PATH_EXISTS("SYS_300", "菜单路由路径已存在"),
+    MENU_NOT_FOUND("SYS_300", "菜单不存在"),
+    MENU_PATH_EXISTS("SYS_301", "菜单路由路径已存在"),
 
     /* dict模块 400-499 */
     DICT_TYPE_EXISTS("SYS_400", "字典类型编码已存在"),

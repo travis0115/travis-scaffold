@@ -6,8 +6,7 @@ import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
 import com.travis.monolith.system.menu.api.request.SysMenuCreateReq;
 import com.travis.monolith.system.menu.api.request.SysMenuUpdateReq;
-import com.travis.monolith.system.menu.api.response.SysMenuDetailResp;
-import com.travis.monolith.system.menu.api.response.SysMenuListResp;
+import com.travis.monolith.system.menu.api.response.SysMenuResp;
 import com.travis.monolith.system.menu.internal.service.SysMenuService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -36,7 +35,7 @@ public class SysMenuController {
      * @return 菜单树
      */
     @GetMapping("/list")
-    public ApiResponse<List<SysMenuListResp>> list() {
+    public ApiResponse<List<SysMenuResp>> list() {
         return ApiResponse.success(menuService.listTree());
     }
 
@@ -47,7 +46,7 @@ public class SysMenuController {
      * @return 菜单详情
      */
     @GetMapping("/{id}")
-    public ApiResponse<SysMenuDetailResp> getDetail(@PathVariable Long id) {
+    public ApiResponse<SysMenuResp> getDetail(@PathVariable Long id) {
         return ApiResponse.success(menuService.getById(id));
     }
 

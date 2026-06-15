@@ -1,9 +1,8 @@
 package com.travis.monolith.system.menu.api.request;
 
-import jakarta.validation.constraints.AssertTrue;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import cn.hutool.core.util.StrUtil;
+import com.travis.infrastructure.common.validation.annotation.In;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 /**
@@ -31,17 +30,23 @@ public class SysMenuCreateReq {
     private String component;
 
     /** 权限标识（如 system:user:add） */
-    @Size(max = 100, message = "权限标识长度不能超过100个字符")
+    @Size(max = 200, message = "权限标识长度不能超过200个字符")
     private String perms;
 
     /** 菜单类型（0-目录 1-菜单 2-按钮） */
     @NotNull(message = "菜单类型不能为空")
+    @In(
+            value = {0, 1, 2},
+            message = "菜单类型错误")
     private Integer menuType;
 
     /** 图标 */
     private String icon;
 
     /** 排序号 */
+    @NotNull(message = "排序号不能为空")
+    @Min(value = 0, message = "排序号不能小于0")
+    @Max(value = 9999, message = "排序号不能大于9999")
     private Integer sort;
 
     /** 状态（0-禁用 1-启用） */
@@ -52,7 +57,6 @@ public class SysMenuCreateReq {
 
     @AssertTrue(message = "目录和菜单的路由路径不能为空")
     public boolean isPathValidForRouteMenu() {
-        return !Integer.valueOf(0).equals(menuType) && !Integer.valueOf(1).equals(menuType)
-                || path != null && !path.isBlank();
+        return (menuType != 0 && menuType != 1) || StrUtil.isNotBlank(path);
     }
 }
