@@ -15,7 +15,7 @@ import com.travis.infrastructure.framework.websocket.message.WebSocketMessage;
  *     private final WebSocketMessageSender wsSender;
  *
  *     public void notifyAdmin(Long adminId, String msg) {
- *         wsSender.sendToUser(LoginType.ADMIN.getCode(), String.valueOf(adminId),
+ *         wsSender.sendToUser(LoginType.ADMIN, String.valueOf(adminId),
  *                 WebSocketMessage.toUser("system", String.valueOf(adminId), msg));
  *     }
  *
@@ -39,7 +39,7 @@ public class WebSocketMessageSender {
      * 发送消息给指定用户
      *
      * @param loginType 登录类型（如 "admin"、"user"），对应 {@link
-     *     com.travis.infrastructure.common.web.enums.LoginType}
+     *     com.travis.infrastructure.common.web.constant.LoginType}
      * @param userId 目标用户 ID
      * @param message 消息体
      */

@@ -9,4 +9,7 @@ public class CommonConstant {
 
     /** 优先级步进 */
     public static final int STEP = 100;
+
+    /** 未知 */
+    public static final String UNKNOWN = "unknown";
 }

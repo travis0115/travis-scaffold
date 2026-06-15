@@ -27,6 +27,7 @@ import {
   previewJob,
   updateJob,
 } from '#/api';
+import { OPS_PERMS } from '#/utils/permissions';
 
 import { useJobFormSchema } from '../data';
 
@@ -254,7 +255,9 @@ function confirmUpdate() {
     <JobForm />
     <Space class="mb-4 ml-30">
       <Button @click="cronVisible = true">Cron 生成器</Button>
-      <Button @click="onPreview">预览执行时间</Button>
+      <Button v-access:code="OPS_PERMS.jobQuery" @click="onPreview">
+        预览执行时间
+      </Button>
     </Space>
     <div v-if="previewTimes.length" class="ml-30 rounded border p-3 text-sm">
       <div class="mb-2 font-medium">未来执行时间</div>

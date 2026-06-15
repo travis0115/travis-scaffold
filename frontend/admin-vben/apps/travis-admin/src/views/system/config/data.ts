@@ -3,6 +3,7 @@ import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { SystemConfigApi } from '#/api';
 
 import { $t } from '#/locales';
+import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
 
 export function useFormSchema(): VbenFormSchema[] {
   return [
@@ -83,6 +84,10 @@ export function useColumns<T = SystemConfigApi.SystemConfig>(
           onClick: onActionClick,
         },
         name: 'CellOperation',
+        options: filterAccessOptions(['edit', 'delete'], {
+          delete: SYSTEM_PERMS.configDelete,
+          edit: SYSTEM_PERMS.configUpdate,
+        }),
       },
       field: 'operation',
       fixed: 'right',

@@ -7,6 +7,7 @@ import type { SystemRoleApi } from '#/api';
 
 import { z } from '#/adapter/form';
 import { $t } from '#/locales';
+import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
 
 export function useFormSchema(): VbenFormSchema[] {
   return [
@@ -133,6 +134,10 @@ export function useColumns<T = SystemRoleApi.SysRole>(
           onClick: onActionClick,
         },
         name: 'CellOperation',
+        options: filterAccessOptions(['edit', 'delete'], {
+          delete: SYSTEM_PERMS.roleDelete,
+          edit: SYSTEM_PERMS.roleUpdate,
+        }),
       },
       field: 'operation',
       fixed: 'right',

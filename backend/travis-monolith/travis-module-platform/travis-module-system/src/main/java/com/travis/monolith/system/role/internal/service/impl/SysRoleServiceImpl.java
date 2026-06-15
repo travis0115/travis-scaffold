@@ -114,7 +114,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     /** 更新角色信息 */
     @Override
     @Transactional
-    @CacheEvict(value = "menus:vben", allEntries = true)
+    @CacheEvict(value = "system:menu:vben", allEntries = true)
     public void update(Long id, SysRoleUpdateReq req) {
         SysRole role = super.getById(id);
         if (role == null) {
@@ -151,7 +151,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     /** 分配角色菜单：先删除原有关联，再批量插入新关联，清除菜单缓存 */
     @Override
     @Transactional
-    @CacheEvict(value = "menus:vben", allEntries = true)
+    @CacheEvict(value = "system:menu:vben", allEntries = true)
     public void assignMenus(SysRoleMenuReq req) {
         roleMenuMapper.delete(
                 new LambdaQueryWrapperX<SysRoleMenu>().eq(SysRoleMenu::getRoleId, req.getRoleId()));

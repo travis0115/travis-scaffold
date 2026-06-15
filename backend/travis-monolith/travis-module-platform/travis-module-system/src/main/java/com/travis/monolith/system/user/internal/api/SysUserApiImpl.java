@@ -1,6 +1,6 @@
 package com.travis.monolith.system.user.internal.api;
 
-import com.travis.infrastructure.common.web.enums.LoginType;
+import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.monolith.system.dept.api.SysDeptApi;

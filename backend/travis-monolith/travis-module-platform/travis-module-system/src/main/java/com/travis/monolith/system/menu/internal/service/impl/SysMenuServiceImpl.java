@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
-@CacheConfig(cacheNames = "sys_menu")
+@CacheConfig(cacheNames = "system:menu")
 public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
         implements SysMenuService {
 
@@ -82,8 +82,9 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     public void update(Long id, SysMenuUpdateReq req) {
         var menu = super.getById(id);
         if (menu == null) {
-            throw new BizException(CommonErrorCode.NOT_FOUND);
+            throw new BizException(SystemErrorCode.MENU_NOT_FOUND);
         }
+        validateParent(id, req.getParentId());
         validatePathUnique(req.getPath(), id);
         converter.update(req, menu);
         updateById(menu);
@@ -100,6 +101,15 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
         }
         if (count(query) > 0) {
             throw new BizException(SystemErrorCode.MENU_PATH_EXISTS);
+        }
+    }
+
+    /** 校验上级菜单不能指向当前菜单或其后代菜单 */
+    private void validateParent(Long id, Long parentId) {
+        if (parentId != null
+                && !Objects.equals(parentId, 0L)
+                && getMenuAndDescendantIds(id).contains(parentId)) {
+            throw new BizException(SystemErrorCode.MENU_PARENT_INVALID);
         }
     }
 
@@ -247,13 +257,12 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
         }
 
         // 用 parentId 分组，构建树形 VbenMenuVO
-        var grouped =
-                menus.stream().collect(Collectors.groupingBy(SysMenu::getParentId));
+        var grouped = menus.stream().collect(Collectors.groupingBy(SysMenu::getParentId));
 
         return menus.stream()
-            .filter(m -> m.getParentId() == 0)
-            .map(m -> toVbenTree(m, grouped))
-            .collect(Collectors.toList());
+                .filter(m -> m.getParentId() == 0)
+                .map(m -> toVbenTree(m, grouped))
+                .collect(Collectors.toList());
     }
 
     /**

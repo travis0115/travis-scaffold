@@ -1,7 +1,8 @@
 package com.travis.infrastructure.framework.websocket.interceptor;
 
 import cn.dev33.satoken.stp.StpLogic;
-import com.travis.infrastructure.common.web.enums.LoginType;
+import com.travis.infrastructure.common.web.constant.CommonConstant;
+import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +19,7 @@ import org.springframework.web.socket.server.HandshakeInterceptor;
  *
  * <ul>
  *   <li>{@code token} — Sa-Token 凭证
- *   <li>{@code loginType} — 登录类型（admin / user），对应 {@link LoginType} 枚举
+ *   <li>{@code loginType} — 登录类型（admin / user），对应 {@link LoginType} 常量
  * </ul>
  *
  * <p>示例：{@code ws://host:8080/ws?token=xxx&loginType=admin}
@@ -50,8 +51,8 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor {
 
         // 提取 loginType
         String loginTypeStr = servletRequest.getServletRequest().getParameter("loginType");
-        LoginType loginType = LoginType.from(loginTypeStr);
-        if (loginType == LoginType.UNKNOWN) {
+        String loginType = LoginType.from(loginTypeStr);
+        if (CommonConstant.UNKNOWN.equals(loginType)) {
             log.warn("[WebSocket] loginType 无效，拒绝握手: loginType={}", loginTypeStr);
             return false;
         }
@@ -61,7 +62,7 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor {
         if (token == null || token.isBlank()) {
             log.warn(
                     "[WebSocket] 未携带 token，拒绝握手: loginType={}, remoteAddr={}",
-                    loginType.getCode(),
+                    loginType,
                     servletRequest.getServletRequest().getRemoteAddr());
             return false;
         }
@@ -71,28 +72,25 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor {
             StpLogic stpLogic = StpKit.of(loginType);
             Object loginId = stpLogic.getLoginIdByToken(token);
             if (loginId == null) {
-                log.warn("[WebSocket] token 无效或已过期，拒绝握手: loginType={}", loginType.getCode());
+                log.warn("[WebSocket] token 无效或已过期，拒绝握手: loginType={}", loginType);
                 return false;
             }
 
             String userId = loginId.toString();
-            String sessionKey = buildSessionKey(loginType.getCode(), userId);
+            String sessionKey = buildSessionKey(loginType, userId);
 
-            attributes.put("loginType", loginType.getCode());
+            attributes.put("loginType", loginType);
             attributes.put("userId", userId);
             attributes.put("sessionKey", sessionKey);
 
             log.debug(
                     "[WebSocket] 握手认证成功: loginType={}, userId={}, sessionKey={}",
-                    loginType.getCode(),
+                    loginType,
                     userId,
                     sessionKey);
             return true;
         } catch (Exception e) {
-            log.warn(
-                    "[WebSocket] token 校验异常，拒绝握手: loginType={}, {}",
-                    loginType.getCode(),
-                    e.getMessage());
+            log.warn("[WebSocket] token 校验异常，拒绝握手: loginType={}, {}", loginType, e.getMessage());
             return false;
         }
     }

@@ -19,6 +19,7 @@ import {
   getStorageConfigs,
   uploadFileApi,
 } from '#/api';
+import { SYSTEM_PERMS } from '#/utils/permissions';
 
 import { useColumns, useGridFormSchema } from './data';
 
@@ -100,12 +101,26 @@ onMounted(loadOptions);
           placeholder="选择文件夹"
           :options="folders.map((item) => ({ label: item.folderName, value: item.id }))"
         />
-        <Button @click="folderModalOpen = true">新增文件夹</Button>
-        <Button @click="storageModalOpen = true">
+        <Button
+          v-access:code="SYSTEM_PERMS.fileUpload"
+          @click="folderModalOpen = true"
+        >
+          新增文件夹
+        </Button>
+        <Button
+          v-access:code="SYSTEM_PERMS.fileUpload"
+          @click="storageModalOpen = true"
+        >
           存储配置（{{ storageConfigs.length }}）
         </Button>
-        <Upload :custom-request="customRequest" :show-upload-list="false">
-          <Button type="primary">上传文件</Button>
+        <Upload
+          v-access:code="SYSTEM_PERMS.fileUpload"
+          :custom-request="customRequest"
+          :show-upload-list="false"
+        >
+          <Button v-access:code="SYSTEM_PERMS.fileUpload" type="primary">
+            上传文件
+          </Button>
         </Upload>
       </template>
       <template #preview="{ row }">

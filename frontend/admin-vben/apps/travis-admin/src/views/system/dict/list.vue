@@ -15,6 +15,7 @@ import { Button, message } from 'antdv-next';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteDict, getDictPage } from '#/api';
 import { $t } from '#/locales';
+import { SYSTEM_PERMS } from '#/utils/permissions';
 
 import { useColumns, useGridFormSchema } from './data';
 import FormDrawerComponent from './modules/form.vue';
@@ -143,7 +144,11 @@ function onRefresh() {
     <template #left>
       <Grid :table-title="$t('system.dict.list')">
         <template #toolbar-tools>
-          <Button type="primary" @click="onCreate">
+          <Button
+            v-access:code="SYSTEM_PERMS.dictCreate"
+            type="primary"
+            @click="onCreate"
+          >
             <Plus class="size-5" />
             {{ $t('ui.actionTitle.create', [$t('system.dict.name')]) }}
           </Button>

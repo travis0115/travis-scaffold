@@ -1,10 +1,13 @@
 package com.travis.monolith.system.role.internal.controller.admin;
 
+import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.travis.infrastructure.common.logging.annotation.OperationLog;
 import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
+import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
+import com.travis.monolith.system.common.api.SystemPermsConstant;
 import com.travis.monolith.system.role.api.request.SysRoleCreateReq;
 import com.travis.monolith.system.role.api.request.SysRoleMenuReq;
 import com.travis.monolith.system.role.api.request.SysRolePageReq;
@@ -35,6 +38,7 @@ public class SysRoleController {
 
     /** 分页查询角色列表 */
     @GetMapping("/page")
+    @SaCheckPermission(value = SystemPermsConstant.ROLE_QUERY, type = LoginType.ADMIN)
     public ApiResponse<PageResp<SysRolePageResp>> page(@Valid SysRolePageReq req) {
         return ApiResponse.success(roleService.page(req));
     }
@@ -46,6 +50,7 @@ public class SysRoleController {
      * @return 角色详情（含已分配菜单）
      */
     @GetMapping("/{id}")
+    @SaCheckPermission(value = SystemPermsConstant.ROLE_QUERY, type = LoginType.ADMIN)
     public ApiResponse<SysRoleDetailResp> getDetail(@PathVariable Long id) {
         return ApiResponse.success(roleService.getById(id));
     }
@@ -59,6 +64,7 @@ public class SysRoleController {
     @OperationLog(action = "新增角色")
     @NoRepeatSubmit
     @PostMapping
+    @SaCheckPermission(value = SystemPermsConstant.ROLE_CREATE, type = LoginType.ADMIN)
     public ApiResponse<Void> add(@RequestBody @Valid SysRoleCreateReq req) {
         roleService.create(req);
         return ApiResponse.success();
@@ -74,6 +80,7 @@ public class SysRoleController {
     @OperationLog(action = "更新角色")
     @NoRepeatSubmit
     @PutMapping("/{id}")
+    @SaCheckPermission(value = SystemPermsConstant.ROLE_UPDATE, type = LoginType.ADMIN)
     public ApiResponse<Void> update(
             @PathVariable Long id, @RequestBody @Valid SysRoleUpdateReq req) {
         roleService.update(id, req);
@@ -89,6 +96,7 @@ public class SysRoleController {
     @OperationLog(action = "删除角色")
     @NoRepeatSubmit
     @DeleteMapping("/{id}")
+    @SaCheckPermission(value = SystemPermsConstant.ROLE_DELETE, type = LoginType.ADMIN)
     public ApiResponse<Void> delete(@PathVariable Long id) {
         roleService.deleteById(id);
         return ApiResponse.success();
@@ -103,6 +111,7 @@ public class SysRoleController {
     @OperationLog(action = "分配角色菜单")
     @NoRepeatSubmit
     @PostMapping("/menus")
+    @SaCheckPermission(value = SystemPermsConstant.ROLE_UPDATE, type = LoginType.ADMIN)
     public ApiResponse<Void> assignMenus(@RequestBody @Valid SysRoleMenuReq req) {
         roleService.assignMenus(req);
         return ApiResponse.success();
@@ -110,6 +119,7 @@ public class SysRoleController {
 
     /** 获取所有启用角色列表（不分页） */
     @GetMapping("/list")
+    @SaCheckPermission(value = SystemPermsConstant.ROLE_QUERY, type = LoginType.ADMIN)
     public ApiResponse<java.util.List<SysRoleListResp>> list() {
         return ApiResponse.success(roleService.listEnabled());
     }

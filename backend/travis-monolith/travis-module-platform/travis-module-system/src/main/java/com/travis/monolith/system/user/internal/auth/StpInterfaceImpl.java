@@ -1,7 +1,7 @@
 package com.travis.monolith.system.user.internal.auth;
 
 import cn.dev33.satoken.stp.StpInterface;
-import com.travis.infrastructure.common.web.enums.LoginType;
+import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.internal.service.SysAuthService;
 import java.util.Collections;
@@ -30,7 +30,7 @@ public class StpInterfaceImpl implements StpInterface {
     @Override
     public List<String> getPermissionList(Object loginId, String loginType) {
         try {
-            if (LoginType.ADMIN.getCode().equals(loginType)) {
+            if (LoginType.ADMIN.equals(loginType)) {
                 return sysAuthService.getAccessCodes(Long.parseLong(loginId.toString()));
             }
             return Collections.emptyList();
@@ -49,7 +49,7 @@ public class StpInterfaceImpl implements StpInterface {
     @Override
     public List<String> getRoleList(Object loginId, String loginType) {
         try {
-            if (LoginType.ADMIN.getCode().equals(loginType)) {
+            if (LoginType.ADMIN.equals(loginType)) {
                 return roleApi.getRoleCodesByUserId(Long.parseLong(loginId.toString()));
             }
             return Collections.emptyList();

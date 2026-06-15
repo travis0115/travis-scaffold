@@ -1,6 +1,6 @@
 package com.travis.monolith.system.notice.internal.controller.admin;
 
-import com.travis.infrastructure.common.web.enums.LoginType;
+import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.satoken.core.StpKit;

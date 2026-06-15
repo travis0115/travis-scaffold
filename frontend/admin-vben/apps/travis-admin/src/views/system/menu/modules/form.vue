@@ -13,6 +13,7 @@ import {useVbenForm, z} from '#/adapter/form';
 import {createMenu, getMenuDetail, getMenuTree, updateMenu} from '#/api';
 import {$t} from '#/locales';
 import {componentKeys} from '#/router/routes';
+import {disableTreeNodeAndDescendants} from '#/utils/tree';
 
 import {getMenuTypeOptions} from '../data';
 
@@ -73,6 +74,10 @@ async function isMenuPathExists(path: string, excludeId?: number) {
   );
 }
 
+async function getParentMenuTree() {
+  return disableTreeNodeAndDescendants(await getMenuTree(), formData.value?.id);
+}
+
 const schema: VbenFormSchema[] = [
   {
     component: 'RadioGroup',
@@ -95,7 +100,7 @@ const schema: VbenFormSchema[] = [
   {
     component: 'ApiTreeSelect',
     componentProps: {
-      api: getMenuTree,
+      api: getParentMenuTree,
       class: 'w-full',
       allowClear: true,
       filterTreeNode(input: string, node: any) {
@@ -110,7 +115,7 @@ const schema: VbenFormSchema[] = [
       getPopupContainer,
       labelField: 'menuName',
       showSearch: true,
-      treeDefaultExpandAll: true,
+      treeDefaultExpandAll: false,
       valueField: 'id',
       childrenField: 'children',
     },
@@ -436,6 +441,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
   async onOpenChange(isOpen) {
     if (isOpen) {
       const data = drawerApi.getData<SystemMenuApi.SysMenu>();
+      formData.value = data?.id ? data : undefined;
       formApi.resetForm();
       if (data?.id) {
         // 编辑时加载完整详情
@@ -447,6 +453,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
         // 回填表单值
         const formValues: Record<string, any> = {
           ...detail,
+          parentId: `${detail.parentId}` === '0' ? undefined : detail.parentId,
           _affixTab: metaObj.affixTab ?? false,
           _activeIcon: metaObj.activeIcon,
           _badge: metaObj.badge,
@@ -582,6 +589,6 @@ const getDrawerTitle = computed(() =>
 </script>
 <template>
   <Drawer class="w-full max-w-200" :title="getDrawerTitle">
-    <Form :layout="isHorizontal ? 'horizontal' : 'vertical'"/>
+    <Form :layout="isHorizontal ? 'horizontal' : 'vertical'" />
   </Drawer>
 </template>

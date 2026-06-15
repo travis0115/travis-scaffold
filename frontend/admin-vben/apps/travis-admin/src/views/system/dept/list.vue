@@ -13,6 +13,7 @@ import { Button, message, Modal } from 'antdv-next';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteDept, getDeptTree } from '#/api';
 import { $t } from '#/locales';
+import { SYSTEM_PERMS } from '#/utils/permissions';
 
 import { useColumns } from './data';
 import Form from './modules/form.vue';
@@ -128,7 +129,11 @@ function refreshGrid() {
     <FormDrawer @success="refreshGrid" />
     <Grid :table-title="$t('system.dept.list')">
       <template #toolbar-tools>
-        <Button type="primary" @click="onCreate">
+        <Button
+          v-access:code="SYSTEM_PERMS.deptCreate"
+          type="primary"
+          @click="onCreate"
+        >
           <Plus class="size-5" />
           {{ $t('ui.actionTitle.create', [$t('system.dept.name')]) }}
         </Button>

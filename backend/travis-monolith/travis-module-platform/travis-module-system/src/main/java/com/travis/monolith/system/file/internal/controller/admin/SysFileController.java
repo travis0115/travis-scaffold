@@ -1,7 +1,10 @@
 package com.travis.monolith.system.file.internal.controller.admin;
 
+import cn.dev33.satoken.annotation.SaCheckPermission;
+import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.monolith.system.common.api.SystemPermsConstant;
 import com.travis.monolith.system.file.api.request.SysFilePageReq;
 import com.travis.monolith.system.file.api.response.FileUploadResp;
 import com.travis.monolith.system.file.api.response.SysFileResp;
@@ -29,6 +32,7 @@ public class SysFileController {
      * @return 文件上传响应（path用于存储，url用于展示）
      */
     @PostMapping("/upload")
+    @SaCheckPermission(value = SystemPermsConstant.FILE_UPLOAD, type = LoginType.ADMIN)
     public ApiResponse<FileUploadResp> upload(
             @RequestParam("file") MultipartFile file,
             @RequestParam(required = false) Long folderId) {
@@ -36,11 +40,13 @@ public class SysFileController {
     }
 
     @GetMapping("/page")
+    @SaCheckPermission(value = SystemPermsConstant.FILE_QUERY, type = LoginType.ADMIN)
     public ApiResponse<PageResp<SysFileResp>> page(SysFilePageReq req) {
         return ApiResponse.success(fileService.page(req));
     }
 
     @DeleteMapping("/{id}")
+    @SaCheckPermission(value = SystemPermsConstant.FILE_DELETE, type = LoginType.ADMIN)
     public ApiResponse<Void> delete(@PathVariable Long id) {
         fileService.removeById(id);
         return ApiResponse.success();

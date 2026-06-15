@@ -8,6 +8,7 @@ import { Button } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteNotice, getNoticePage } from '#/api';
+import { SYSTEM_PERMS } from '#/utils/permissions';
 
 import { useColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
@@ -34,7 +35,15 @@ function onActionClick({ code, row }: OnActionClickParams<SystemNoticeApi.Notice
   <Page auto-content-height>
     <FormDrawer @success="gridApi.query()" />
     <Grid table-title="通知公告">
-      <template #toolbar-tools><Button type="primary" @click="formDrawerApi.setData({}).open()">新增公告</Button></template>
+      <template #toolbar-tools>
+        <Button
+          v-access:code="SYSTEM_PERMS.noticeCreate"
+          type="primary"
+          @click="formDrawerApi.setData({}).open()"
+        >
+          新增公告
+        </Button>
+      </template>
     </Grid>
   </Page>
 </template>

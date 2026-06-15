@@ -15,11 +15,14 @@ import { App, Button, message } from 'antdv-next';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteRole, getRolePage, updateRole } from '#/api';
 import { $t } from '#/locales';
+import { useAuthStore } from '#/store';
+import { hasAccessCode, SYSTEM_PERMS } from '#/utils/permissions';
 
 import { useColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
 
 const { modal } = App.useApp();
+const authStore = useAuthStore();
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   connectedComponent: Form,
@@ -32,7 +35,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
     submitOnChange: false,
   },
   gridOptions: {
-    columns: useColumns(onActionClick, onStatusChange),
+    columns: useColumns(
+      onActionClick,
+      hasAccessCode(SYSTEM_PERMS.roleUpdate) ? onStatusChange : undefined,
+    ),
     height: 'auto',
     keepSource: true,
     proxyConfig: {
@@ -101,6 +107,7 @@ async function onStatusChange(
       $t('system.role.switchStatus'),
     );
     await updateRole(row.id, { status: newStatus as 0 | 1 });
+    await authStore.fetchAccessCodes();
     return true;
   } catch {
     return false;
@@ -112,29 +119,23 @@ function onEdit(row: SystemRoleApi.SysRole) {
 }
 
 function onDelete(row: SystemRoleApi.SysRole) {
-  confirm(
-    $t('ui.actionMessage.deleteConfirm', [row.roleName]),
-    $t('ui.actionTitle.delete'),
-  ).then(() => {
-    const hideLoading = message.loading({
-      content: $t('ui.actionMessage.deleting', [row.roleName]),
-      duration: 0,
-      key: 'action_process_msg',
-    });
-    deleteRole(row.id)
-      .then(() => {
-        message.success({
-          content: $t('ui.actionMessage.deleteSuccess', [row.roleName]),
-          key: 'action_process_msg',
-        });
-        onRefresh();
-      })
-      .catch(() => {
-        hideLoading();
-      });
-  }).catch(() => {
-    // 用户取消
+  const hideLoading = message.loading({
+    content: $t('ui.actionMessage.deleting', [row.roleName]),
+    duration: 0,
+    key: 'action_process_msg',
   });
+  deleteRole(row.id)
+    .then(async () => {
+      message.success({
+        content: $t('ui.actionMessage.deleteSuccess', [row.roleName]),
+        key: 'action_process_msg',
+      });
+      await authStore.fetchAccessCodes();
+      onRefresh();
+    })
+    .catch(() => {
+      hideLoading();
+    });
 }
 
 function onRefresh() {
@@ -150,7 +151,11 @@ function onCreate() {
     <FormDrawer @success="onRefresh" />
     <Grid :table-title="$t('system.role.list')">
       <template #toolbar-tools>
-        <Button type="primary" @click="onCreate">
+        <Button
+          v-access:code="SYSTEM_PERMS.roleCreate"
+          type="primary"
+          @click="onCreate"
+        >
           <Plus class="size-5" />
           {{ $t('ui.actionTitle.create', [$t('system.role.name')]) }}
         </Button>

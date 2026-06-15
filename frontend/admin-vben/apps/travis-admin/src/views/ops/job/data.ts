@@ -3,6 +3,7 @@ import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { OpsJobApi } from '#/api';
 
 import { z } from '#/adapter/form';
+import { filterAccessOptions, OPS_PERMS } from '#/utils/permissions';
 
 export const scheduleTypeOptions = [
   { label: 'Cron 表达式', value: 'CRON' },
@@ -196,7 +197,7 @@ export const useJobGridFormSchema = (): VbenFormSchema[] => [
 
 export function useJobColumns(
   onActionClick: OnActionClickFn<OpsJobApi.Job>,
-  onStatusChange: (value: number, row: OpsJobApi.Job) => Promise<boolean>,
+  onStatusChange?: (value: number, row: OpsJobApi.Job) => Promise<boolean>,
 ): VxeTableGridColumns {
   return [
     { field: 'jobName', minWidth: 180, title: '任务名称' },
@@ -231,7 +232,7 @@ export function useJobColumns(
     {
       cellRender: {
         attrs: { beforeChange: onStatusChange },
-        name: 'CellSwitch',
+        name: onStatusChange ? 'CellSwitch' : 'CellTag',
       },
       field: 'status',
       fixed: 'right',
@@ -247,13 +248,19 @@ export function useJobColumns(
           onClick: onActionClick,
         },
         name: 'CellOperation',
-        options: [
+        options: filterAccessOptions([
           'edit',
           { code: 'run', text: '执行' },
           { code: 'stats', text: '统计' },
           { code: 'copy', text: '复制' },
           'delete',
-        ],
+        ], {
+          copy: OPS_PERMS.jobUpdate,
+          delete: OPS_PERMS.jobUpdate,
+          edit: OPS_PERMS.jobUpdate,
+          run: OPS_PERMS.jobOperation,
+          stats: OPS_PERMS.jobQuery,
+        }),
       },
       field: 'operation',
       fixed: 'right',
@@ -306,7 +313,9 @@ export function useLogColumns(
       cellRender: {
         attrs: { onClick: onActionClick },
         name: 'CellOperation',
-        options: [{ code: 'detail', text: '详情' }],
+        options: filterAccessOptions([{ code: 'detail', text: '详情' }], {
+          detail: OPS_PERMS.jobLogQuery,
+        }),
       },
       field: 'operation',
       fixed: 'right',

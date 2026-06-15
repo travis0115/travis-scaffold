@@ -33,7 +33,7 @@ public class SaTokenProperties {
     @Data
     public static class AuthRule {
 
-        /** 登录类型标识，对应 StpLogic.getLoginType() 和 LoginType 枚举的 code */
+        /** 登录类型标识，对应 StpLogic.getLoginType() 和 LoginType 常量值 */
         private String loginType;
 
         /** 该登录类型需要拦截的路径模式（Ant 风格），如 /api/admin/** */

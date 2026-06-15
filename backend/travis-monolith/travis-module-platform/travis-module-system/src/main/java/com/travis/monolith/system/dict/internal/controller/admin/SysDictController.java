@@ -1,10 +1,13 @@
 package com.travis.monolith.system.dict.internal.controller.admin;
 
+import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.travis.infrastructure.common.logging.annotation.OperationLog;
 import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
+import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
+import com.travis.monolith.system.common.api.SystemPermsConstant;
 import com.travis.monolith.system.dict.api.request.SysDictCreateReq;
 import com.travis.monolith.system.dict.api.request.SysDictItemCreateReq;
 import com.travis.monolith.system.dict.api.request.SysDictItemUpdateReq;
@@ -35,12 +38,14 @@ public class SysDictController {
 
     /** 获取字典树形数据（每个字典包含其下的数据项作为 children） */
     @GetMapping("/tree")
+    @SaCheckPermission(value = SystemPermsConstant.DICT_QUERY, type = LoginType.ADMIN)
     public ApiResponse<List<SysDict>> getTree() {
         return ApiResponse.success(dictService.listTree());
     }
 
     /** 分页查询字典类型列表 */
     @GetMapping("/page")
+    @SaCheckPermission(value = SystemPermsConstant.DICT_QUERY, type = LoginType.ADMIN)
     public ApiResponse<PageResp<SysDict>> page(
             @RequestParam(required = false) String dictName,
             @RequestParam(required = false) String dictType,
@@ -57,6 +62,7 @@ public class SysDictController {
      * @return 字典类型实体
      */
     @GetMapping("/{id}")
+    @SaCheckPermission(value = SystemPermsConstant.DICT_QUERY, type = LoginType.ADMIN)
     public ApiResponse<SysDict> getDetail(@PathVariable Long id) {
         return ApiResponse.success(dictService.getById(id));
     }
@@ -70,6 +76,7 @@ public class SysDictController {
     @OperationLog(action = "新增字典")
     @NoRepeatSubmit
     @PostMapping
+    @SaCheckPermission(value = SystemPermsConstant.DICT_CREATE, type = LoginType.ADMIN)
     public ApiResponse<Void> add(@RequestBody @Valid SysDictCreateReq req) {
         dictService.create(req);
         return ApiResponse.success();
@@ -85,6 +92,7 @@ public class SysDictController {
     @OperationLog(action = "更新字典")
     @NoRepeatSubmit
     @PutMapping("/{id}")
+    @SaCheckPermission(value = SystemPermsConstant.DICT_UPDATE, type = LoginType.ADMIN)
     public ApiResponse<Void> update(
             @PathVariable Long id, @RequestBody @Valid SysDictUpdateReq req) {
         dictService.update(id, req);
@@ -100,6 +108,7 @@ public class SysDictController {
     @OperationLog(action = "删除字典")
     @NoRepeatSubmit
     @DeleteMapping("/{id}")
+    @SaCheckPermission(value = SystemPermsConstant.DICT_DELETE, type = LoginType.ADMIN)
     public ApiResponse<Void> delete(@PathVariable Long id) {
         dictService.deleteById(id);
         return ApiResponse.success();
@@ -112,6 +121,7 @@ public class SysDictController {
      * @return 字典数据项列表
      */
     @GetMapping("/items/{dictId}")
+    @SaCheckPermission(value = SystemPermsConstant.DICT_QUERY, type = LoginType.ADMIN)
     public ApiResponse<List<SysDictItemResp>> listItems(@PathVariable Long dictId) {
         return ApiResponse.success(dictService.listItems(dictId));
     }
@@ -125,6 +135,7 @@ public class SysDictController {
     @OperationLog(action = "新增字典项")
     @NoRepeatSubmit
     @PostMapping("/item")
+    @SaCheckPermission(value = SystemPermsConstant.DICT_CREATE, type = LoginType.ADMIN)
     public ApiResponse<Void> createItem(@RequestBody @Valid SysDictItemCreateReq req) {
         dictService.createItem(req);
         return ApiResponse.success();
@@ -140,6 +151,7 @@ public class SysDictController {
     @OperationLog(action = "更新字典项")
     @NoRepeatSubmit
     @PutMapping("/item/{id}")
+    @SaCheckPermission(value = SystemPermsConstant.DICT_UPDATE, type = LoginType.ADMIN)
     public ApiResponse<Void> updateItem(
             @PathVariable Long id, @RequestBody @Valid SysDictItemUpdateReq req) {
         dictService.updateItem(id, req);
@@ -155,6 +167,7 @@ public class SysDictController {
     @OperationLog(action = "删除字典项")
     @NoRepeatSubmit
     @DeleteMapping("/item/{id}")
+    @SaCheckPermission(value = SystemPermsConstant.DICT_DELETE, type = LoginType.ADMIN)
     public ApiResponse<Void> deleteItemById(@PathVariable Long id) {
         dictService.deleteItemById(id);
         return ApiResponse.success();

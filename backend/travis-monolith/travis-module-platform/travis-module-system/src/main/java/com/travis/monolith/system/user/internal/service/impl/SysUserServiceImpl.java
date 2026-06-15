@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
-import com.travis.infrastructure.common.web.enums.LoginType;
+import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
@@ -154,7 +154,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
     /** 分配用户角色：委托给角色服务，清除菜单缓存 */
     @Override
     @Transactional
-    @CacheEvict(value = "menus:vben", allEntries = true)
+    @CacheEvict(value = "system:menu:vben", allEntries = true)
     public void assignRoles(SysUserRoleReq req) {
         roleApi.assignUserRoles(req.getUserId(), req.getRoleIds());
     }

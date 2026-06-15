@@ -1,6 +1,8 @@
 import type { VbenFormSchema } from '#/adapter/form';
 import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 
+import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
+
 export const useGridFormSchema = (): VbenFormSchema[] => [
   { component: 'Input', fieldName: 'fileName', label: '文件名称' },
   { component: 'Input', fieldName: 'mimeType', label: '文件类型' },
@@ -22,7 +24,13 @@ export function useColumns<T>(onActionClick: OnActionClickFn<T>): VxeTableGridCo
     },
     { field: 'createTime', formatter: 'formatDateTime', title: '上传时间', width: 180 },
     {
-      cellRender: { attrs: { onClick: onActionClick }, name: 'CellOperation', options: ['delete'] },
+      cellRender: {
+        attrs: { onClick: onActionClick },
+        name: 'CellOperation',
+        options: filterAccessOptions(['delete'], {
+          delete: SYSTEM_PERMS.fileDelete,
+        }),
+      },
       field: 'operation',
       fixed: 'right',
       title: '操作',

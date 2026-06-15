@@ -19,6 +19,8 @@ import { deleteMenu, getMenuTree, moveDownMenu, moveUpMenu } from '#/api';
 import { $t } from '#/locales';
 import { generateAccess } from '#/router/access';
 import { accessRoutes } from '#/router/routes';
+import { useAuthStore } from '#/store';
+import { SYSTEM_PERMS } from '#/utils/permissions';
 
 import { useColumns } from './data';
 import Form from './modules/form.vue';
@@ -99,20 +101,34 @@ function onActionClick({
 }
 
 async function onRefresh() {
+  await refreshMenuAccess();
+  gridApi.query();
+}
+
+async function refreshMenuAccess() {
   const accessStore = useAccessStore();
   const userStore = useUserStore();
 
   // 重新生成菜单和路由
-  const { accessibleMenus, accessibleRoutes } = await generateAccess({
-    roles: userStore.userInfo?.roles ?? [],
-    router,
-    routes: accessRoutes,
-  });
+  const { accessibleMenus, accessibleRoutes } =
+    await generateAccess({
+      roles: userStore.userInfo?.roles ?? [],
+      router,
+      routes: accessRoutes,
+    });
 
   accessStore.setAccessMenus(accessibleMenus);
   accessStore.setAccessRoutes(accessibleRoutes);
   accessStore.setIsAccessChecked(true);
-  gridApi.query();
+}
+
+async function refreshMenuAndAccessCodes() {
+  const authStore = useAuthStore();
+  await Promise.all([
+    authStore.fetchUserInfo(),
+    authStore.fetchAccessCodes(),
+  ]);
+  await onRefresh();
 }
 
 function onEdit(row: SystemMenuApi.SysMenu) {
@@ -135,7 +151,7 @@ async function deleteMenuRow(row: SystemMenuApi.SysMenu) {
       content: $t('ui.actionMessage.deleteSuccess', [row.menuName]),
       key: 'action_process_msg',
     });
-    await onRefresh();
+    await refreshMenuAndAccessCodes();
   } catch {
     hideLoading();
   }
@@ -155,14 +171,14 @@ function onDelete(row: SystemMenuApi.SysMenu) {
 function onMoveUp(row: SystemMenuApi.SysMenu) {
   moveUpMenu(row.id).then(() => {
     message.success(`「${row.menuName}」已上移`);
-    onRefresh();
+    void onRefresh();
   });
 }
 
 function onMoveDown(row: SystemMenuApi.SysMenu) {
   moveDownMenu(row.id).then(() => {
     message.success(`「${row.menuName}」已下移`);
-    onRefresh();
+    void onRefresh();
   });
 }
 </script>
@@ -171,7 +187,11 @@ function onMoveDown(row: SystemMenuApi.SysMenu) {
     <FormDrawer @success="onRefresh" />
     <Grid :table-title="$t('system.menu.list')">
       <template #toolbar-tools>
-        <Button type="primary" @click="onCreate">
+        <Button
+          v-access:code="SYSTEM_PERMS.menuCreate"
+          type="primary"
+          @click="onCreate"
+        >
           <Plus class="size-5" />
           {{ $t('ui.actionTitle.create', [$t('system.menu.name')]) }}
         </Button>

@@ -7,6 +7,7 @@ import type {
 import type { SystemMenuApi } from '#/api';
 
 import { $t } from '#/locales';
+import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
 
 export function getMenuTypeOptions() {
   return [
@@ -87,14 +88,14 @@ export function useColumns(
       width: 100,
     },
     {
-      align: 'right',
+      align: 'center',
       cellRender: {
         attrs: {
           nameField: 'menuName',
           onClick: onActionClick,
         },
         name: 'CellOperation',
-        options: [
+        options: filterAccessOptions([
           {
             code: 'moveUp',
             disabled: (row: SystemMenuApi.SysMenu) => {
@@ -127,7 +128,13 @@ export function useColumns(
             show: (row: SystemMenuApi.SysMenu) => Boolean(row.children?.length),
             text: $t('common.delete'),
           },
-        ],
+        ], {
+          delete: SYSTEM_PERMS.menuDelete,
+          edit: SYSTEM_PERMS.menuUpdate,
+          moveDown: SYSTEM_PERMS.menuUpdate,
+          moveUp: SYSTEM_PERMS.menuUpdate,
+          remove: SYSTEM_PERMS.menuDelete,
+        }),
       },
       field: 'operation',
       fixed: 'right',

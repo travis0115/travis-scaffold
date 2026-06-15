@@ -18,6 +18,7 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteUser, getDeptTree, getUserPage, updateUser } from '#/api';
 import { isDeptEnabled } from '#/features';
 import { $t } from '#/locales';
+import { hasAccessCode, SYSTEM_PERMS } from '#/utils/permissions';
 
 import { useColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
@@ -96,7 +97,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
     submitOnChange: false,
   },
   gridOptions: {
-    columns: useColumns(onActionClick, onStatusChange),
+    columns: useColumns(
+      onActionClick,
+      hasAccessCode(SYSTEM_PERMS.userUpdate) ? onStatusChange : undefined,
+    ),
     height: 'auto',
     keepSource: true,
     proxyConfig: {
@@ -181,29 +185,22 @@ function onEdit(row: SystemUserApi.SysUser) {
 }
 
 function onDelete(row: SystemUserApi.SysUser) {
-  confirm(
-    $t('ui.actionMessage.deleteConfirm', [row.username]),
-    $t('ui.actionTitle.delete'),
-  ).then(() => {
-    const hideLoading = message.loading({
-      content: $t('ui.actionMessage.deleting', [row.username]),
-      duration: 0,
-      key: 'action_process_msg',
-    });
-    deleteUser(row.id)
-      .then(() => {
-        message.success({
-          content: $t('ui.actionMessage.deleteSuccess', [row.username]),
-          key: 'action_process_msg',
-        });
-        onRefresh();
-      })
-      .catch(() => {
-        hideLoading();
-      });
-  }).catch(() => {
-    // 用户取消
+  const hideLoading = message.loading({
+    content: $t('ui.actionMessage.deleting', [row.username]),
+    duration: 0,
+    key: 'action_process_msg',
   });
+  deleteUser(row.id)
+    .then(() => {
+      message.success({
+        content: $t('ui.actionMessage.deleteSuccess', [row.username]),
+        key: 'action_process_msg',
+      });
+      onRefresh();
+    })
+    .catch(() => {
+      hideLoading();
+    });
 }
 
 function onRefresh() {
@@ -260,7 +257,11 @@ onMounted(() => {
       <div class="ml-4 w-5/6">
         <Grid :table-title="$t('system.user.list')">
           <template #toolbar-tools>
-            <Button type="primary" @click="onCreate">
+            <Button
+              v-access:code="SYSTEM_PERMS.userCreate"
+              type="primary"
+              @click="onCreate"
+            >
               <Plus class="size-5" />
               {{ $t('ui.actionTitle.create', [$t('system.user.name')]) }}
             </Button>
@@ -271,7 +272,11 @@ onMounted(() => {
     <!-- 未启用部门时只显示表格 -->
     <Grid v-else :table-title="$t('system.user.list')">
       <template #toolbar-tools>
-        <Button type="primary" @click="onCreate">
+        <Button
+          v-access:code="SYSTEM_PERMS.userCreate"
+          type="primary"
+          @click="onCreate"
+        >
           <Plus class="size-5" />
           {{ $t('ui.actionTitle.create', [$t('system.user.name')]) }}
         </Button>

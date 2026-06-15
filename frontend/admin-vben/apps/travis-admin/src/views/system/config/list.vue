@@ -13,6 +13,7 @@ import { Button, message } from 'antdv-next';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteConfig, getConfigList } from '#/api';
 import { $t } from '#/locales';
+import { SYSTEM_PERMS } from '#/utils/permissions';
 
 import { useColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
@@ -107,7 +108,11 @@ function onRefresh() {
     <FormDrawer @success="onRefresh" />
     <Grid :table-title="$t('system.config.list')">
       <template #toolbar-tools>
-        <Button type="primary" @click="onCreate">
+        <Button
+          v-access:code="SYSTEM_PERMS.configCreate"
+          type="primary"
+          @click="onCreate"
+        >
           <Plus class="size-5" />
           {{ $t('ui.actionTitle.create', [$t('system.config.name')]) }}
         </Button>

@@ -6,17 +6,21 @@
  */
 import type { App, Directive, DirectiveBinding } from 'vue';
 
+import { watchEffect } from 'vue';
+
 import { useAccess } from './use-access';
 
+const accessDirectiveStops = new WeakMap<Element, () => void>();
+const originalDisplays = new WeakMap<HTMLElement, string>();
+
 function isAccessible(
-  el: Element,
   binding: DirectiveBinding<string | string[]>,
 ) {
   const { accessMode, hasAccessByCodes, hasAccessByRoles } = useAccess();
 
   const value = binding.value;
 
-  if (!value) return;
+  if (!value) return true;
   const authMethod =
     accessMode.value === 'frontend' && binding.arg === 'role'
       ? hasAccessByRoles
@@ -24,17 +28,46 @@ function isAccessible(
 
   const values = Array.isArray(value) ? value : [value];
 
-  if (!authMethod(values)) {
-    el?.remove();
+  return authMethod(values);
+}
+
+function setVisible(el: Element, visible: boolean) {
+  const htmlEl = el as HTMLElement;
+  if (!originalDisplays.has(htmlEl)) {
+    originalDisplays.set(htmlEl, htmlEl.style.display);
   }
+  htmlEl.style.display = visible ? (originalDisplays.get(htmlEl) ?? '') : 'none';
+}
+
+function bindAccessWatcher(
+  el: Element,
+  binding: DirectiveBinding<string | string[]>,
+) {
+  accessDirectiveStops.get(el)?.();
+  const stop = watchEffect(() => {
+    setVisible(el, isAccessible(binding));
+  });
+  accessDirectiveStops.set(el, stop);
 }
 
 const mounted = (el: Element, binding: DirectiveBinding<string | string[]>) => {
-  isAccessible(el, binding);
+  bindAccessWatcher(el, binding);
+};
+
+const updated = (el: Element, binding: DirectiveBinding<string | string[]>) => {
+  bindAccessWatcher(el, binding);
+};
+
+const beforeUnmount = (el: Element) => {
+  accessDirectiveStops.get(el)?.();
+  accessDirectiveStops.delete(el);
+  originalDisplays.delete(el as HTMLElement);
 };
 
 const authDirective: Directive = {
+  beforeUnmount,
   mounted,
+  updated,
 };
 
 export function registerAccessDirective(app: App) {

@@ -2,6 +2,7 @@ import type { VbenFormSchema } from '#/adapter/form';
 import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 
 import { z } from '#/adapter/form';
+import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
 
 export const useFormSchema = (): VbenFormSchema[] => [
   { component: 'Input', fieldName: 'title', label: '公告标题', rules: z.string().min(1) },
@@ -96,7 +97,14 @@ export function useColumns<T>(onActionClick: OnActionClickFn<T>): VxeTableGridCo
     { field: 'publishTime', formatter: 'formatDateTime', title: '发布时间', width: 180 },
     { field: 'status', fixed: 'right', formatter: ({ cellValue }: any) => cellValue === 1 ? '已发布' : '草稿', title: '状态', width: 100 },
     {
-      cellRender: { attrs: { nameField: 'title', onClick: onActionClick }, name: 'CellOperation' },
+      cellRender: {
+        attrs: { nameField: 'title', onClick: onActionClick },
+        name: 'CellOperation',
+        options: filterAccessOptions(['edit', 'delete'], {
+          delete: SYSTEM_PERMS.noticeDelete,
+          edit: SYSTEM_PERMS.noticeUpdate,
+        }),
+      },
       field: 'operation',
       fixed: 'right',
       title: '操作',

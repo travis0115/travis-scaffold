@@ -7,6 +7,7 @@ import type { SystemDeptApi } from '#/api';
 
 import { z } from '#/adapter/form';
 import { $t } from '#/locales';
+import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
 
 export function useSchema(
   getParentDeptTree: () => Promise<SystemDeptApi.SysDept[]>,
@@ -32,6 +33,7 @@ export function useSchema(
         api: getParentDeptTree,
         class: 'w-full',
         labelField: 'deptName',
+        treeDefaultExpandAll: false,
         valueField: 'id',
         childrenField: 'children',
       },
@@ -117,14 +119,14 @@ export function useColumns(
       width: 100,
     },
     {
-      align: 'right',
+      align: 'center',
       cellRender: {
         attrs: {
           nameField: 'deptName',
           onClick: onActionClick,
         },
         name: 'CellOperation',
-        options: [
+        options: filterAccessOptions([
           {
             code: 'append',
             text: $t('system.menu.appendChildren'),
@@ -140,7 +142,12 @@ export function useColumns(
             show: (row: SystemDeptApi.SysDept) => Boolean(row.children?.length),
             text: $t('common.delete'),
           },
-        ],
+        ], {
+          append: SYSTEM_PERMS.deptCreate,
+          delete: SYSTEM_PERMS.deptDelete,
+          edit: SYSTEM_PERMS.deptUpdate,
+          remove: SYSTEM_PERMS.deptDelete,
+        }),
       },
       field: 'operation',
       fixed: 'right',

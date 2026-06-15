@@ -11,10 +11,11 @@ import { formatDateTime } from '@vben/utils';
 import { Button, Card, Empty, Skeleton } from 'antdv-next';
 
 import { getJobDashboard, getRecentMessages } from '#/api';
+import { OPS_PERMS } from '#/utils/permissions';
 
 const router = useRouter();
 const { hasAccessByCodes } = useAccess();
-const canViewJobDashboard = hasAccessByCodes(['ops:job:view']);
+const canViewJobDashboard = hasAccessByCodes([OPS_PERMS.jobQuery]);
 
 const dashboard = ref<OpsJobApi.Dashboard>();
 const messages = ref<SystemNoticeApi.UserMessage[]>([]);

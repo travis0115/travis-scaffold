@@ -9,6 +9,7 @@ import { z } from '#/adapter/form';
 import { getRoleList } from '#/api';
 import { isDeptEnabled } from '#/features';
 import { $t } from '#/locales';
+import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
 
 export function useFormSchema(deptTreeData?: any[]): VbenFormSchema[] {
   const schemas: VbenFormSchema[] = [
@@ -236,7 +237,11 @@ export function useColumns<T = SystemUserApi.SysUser>(
           onClick: onActionClick,
         },
         name: 'CellOperation',
-        options: ['edit', 'resetPassword', 'delete'],
+        options: filterAccessOptions(['edit', 'resetPassword', 'delete'], {
+          delete: SYSTEM_PERMS.userDelete,
+          edit: SYSTEM_PERMS.userUpdate,
+          resetPassword: SYSTEM_PERMS.userUpdate,
+        }),
       },
       field: 'operation',
       fixed: 'right',

@@ -201,9 +201,10 @@ const StepperInputNumber = defineComponent({
       ),
     );
 
-    const updateValue = (value?: number) => {
-      emit('update:value', value);
-      emit('change', value);
+    const updateValue = (value: unknown) => {
+      const numberValue = toNumber(value);
+      emit('update:value', numberValue);
+      emit('change', numberValue);
     };
 
     const getNextValue = (direction: -1 | 1) => {
@@ -262,6 +263,7 @@ const StepperInputNumber = defineComponent({
             bordered: false,
             class: 'min-w-0 flex-1 text-center',
             controls: false,
+            'onUpdate:value': updateValue,
             ref: innerRef,
             value,
             style: [{ width: '100%' }, wrapperStyle],

@@ -19,7 +19,7 @@ public interface WebSocketSessionManager {
      * 发送消息给指定用户
      *
      * @param loginType 登录类型（如 "admin"、"user"），对应 {@link
-     *     com.travis.infrastructure.common.web.enums.LoginType}
+     *     com.travis.infrastructure.common.web.constant.LoginType}
      * @param userId 目标用户 ID
      * @param message 消息体
      */

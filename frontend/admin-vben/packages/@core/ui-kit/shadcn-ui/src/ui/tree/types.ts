@@ -35,6 +35,8 @@ export interface TreeProps {
   selectAllLabel?: string;
   /** 显示由iconField指定的图标 */
   showIcon?: boolean;
+  /** 是否显示默认工具条 */
+  showToolbar?: boolean;
   /** 启用展开收缩动画 */
   transition?: boolean;
   /** 树数据 */
@@ -56,6 +58,7 @@ export function treePropsDefaults() {
     iconField: 'icon',
     labelField: 'label',
     multiple: false,
+    showToolbar: true,
     showIcon: true,
     transition: true,
     valueField: 'value',

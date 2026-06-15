@@ -16,6 +16,7 @@ import { Button, message } from 'antdv-next';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteDictItem, getDictItems } from '#/api';
 import { $t } from '#/locales';
+import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
 
 import ItemModalComponent from './item-modal.vue';
 
@@ -66,7 +67,10 @@ const columns: VxeTableGridColumns<SystemDictApi.SysDictItem> = [
         onClick: onActionClick,
       },
       name: 'CellOperation',
-      options: ['edit', 'delete'],
+      options: filterAccessOptions(['edit', 'delete'], {
+        delete: SYSTEM_PERMS.dictDelete,
+        edit: SYSTEM_PERMS.dictUpdate,
+      }),
     },
     field: 'operation',
     fixed: 'right',
@@ -171,7 +175,12 @@ watch(
     <ItemModal @success="handleItemSuccess" />
     <Grid :table-title="tableTitle">
       <template #toolbar-tools>
-        <Button type="primary" :disabled="!props.dict" @click="onAddItem">
+        <Button
+          v-access:code="SYSTEM_PERMS.dictCreate"
+          type="primary"
+          :disabled="!props.dict"
+          @click="onAddItem"
+        >
           <Plus class="size-5" />
           {{ $t('system.dict.item.addItem') }}
         </Button>

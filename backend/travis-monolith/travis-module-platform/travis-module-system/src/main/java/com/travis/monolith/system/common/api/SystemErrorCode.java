@@ -25,6 +25,7 @@ public enum SystemErrorCode implements ErrorCode {
     /* menu模块 300-399 */
     MENU_NOT_FOUND("SYS_300", "菜单不存在"),
     MENU_PATH_EXISTS("SYS_301", "菜单路由路径已存在"),
+    MENU_PARENT_INVALID("SYS_302", "上级菜单不能是当前菜单或其下级菜单"),
 
     /* dict模块 400-499 */
     DICT_TYPE_EXISTS("SYS_400", "字典类型编码已存在"),

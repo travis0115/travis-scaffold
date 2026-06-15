@@ -1,7 +1,10 @@
 package com.travis.monolith.system.log.errorlog.internal.controller.admin;
 
+import cn.dev33.satoken.annotation.SaCheckPermission;
+import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.monolith.system.common.api.SystemPermsConstant;
 import com.travis.monolith.system.log.errorlog.api.request.SysErrorLogPageReq;
 import com.travis.monolith.system.log.errorlog.internal.entity.SysErrorLog;
 import com.travis.monolith.system.log.errorlog.internal.service.SysErrorLogService;
@@ -17,6 +20,7 @@ public class SysErrorLogController {
     private final SysErrorLogService errorLogService;
 
     @GetMapping("/page")
+    @SaCheckPermission(value = SystemPermsConstant.ERROR_LOG_QUERY, type = LoginType.ADMIN)
     public ApiResponse<PageResp<SysErrorLog>> page(SysErrorLogPageReq req) {
         return ApiResponse.success(errorLogService.page(req));
     }

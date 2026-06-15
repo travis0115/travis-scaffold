@@ -7,6 +7,7 @@ import type { SystemVersionLogApi } from '#/api';
 
 import { z } from '#/adapter/form';
 import { $t } from '#/locales';
+import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
 
 export function useFormSchema(): VbenFormSchema[] {
   return [
@@ -133,7 +134,10 @@ export function useColumns(
           onClick: onActionClick,
         },
         name: 'CellOperation',
-        options: ['edit', 'delete'],
+        options: filterAccessOptions(['edit', 'delete'], {
+          delete: SYSTEM_PERMS.versionDelete,
+          edit: SYSTEM_PERMS.versionUpdate,
+        }),
       },
       field: 'operation',
       fixed: 'right',

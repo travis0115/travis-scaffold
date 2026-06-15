@@ -33,6 +33,7 @@ import {
   importJobs,
   runJob,
 } from '#/api';
+import { hasAccessCode, OPS_PERMS } from '#/utils/permissions';
 
 import { useJobColumns, useJobGridFormSchema } from './data';
 import JobForm from './modules/form.vue';
@@ -53,7 +54,10 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: { schema: useJobGridFormSchema() },
   gridOptions: {
-    columns: useJobColumns(onJobAction, onStatusChange),
+    columns: useJobColumns(
+      onJobAction,
+      hasAccessCode(OPS_PERMS.jobOperation) ? onStatusChange : undefined,
+    ),
     height: 'auto',
     proxyConfig: {
       ajax: {
@@ -86,14 +90,9 @@ async function onStatusChange(value: number, row: OpsJobApi.Job) {
 }
 
 function onDelete(row: OpsJobApi.Job) {
-  Modal.confirm({
-    content: '任务删除后不再调度，但历史执行日志会保留。',
-    onOk: async () => {
-      await deleteJob(row.id);
-      message.success('任务已删除');
-      await gridApi.query();
-    },
-    title: `删除任务“${row.jobName}”`,
+  deleteJob(row.id).then(async () => {
+    message.success('任务已删除');
+    await gridApi.query();
   });
 }
 
@@ -173,19 +172,19 @@ async function onImportFile(event: Event) {
     <Grid table-title="任务管理">
       <template #toolbar-tools>
         <Space>
-          <Button v-access:code="['ops:job:view']" @click="onExport">
+          <Button v-access:code="OPS_PERMS.jobQuery" @click="onExport">
             <Download class="size-4" />
             导出
           </Button>
           <Button
-            v-access:code="['ops:job:edit']"
+            v-access:code="OPS_PERMS.jobUpdate"
             @click="importInput?.click()"
           >
             <ArrowUpToLine class="size-4" />
             导入
           </Button>
           <Button
-            v-access:code="['ops:job:edit']"
+            v-access:code="OPS_PERMS.jobUpdate"
             type="primary"
             @click="formDrawerApi.setData({}).open()"
           >

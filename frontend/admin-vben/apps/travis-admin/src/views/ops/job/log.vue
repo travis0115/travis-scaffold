@@ -26,6 +26,7 @@ import {
   getJobLogDetail,
   getJobLogPage,
 } from '#/api';
+import { OPS_PERMS } from '#/utils/permissions';
 
 import { useLogColumns, useLogGridFormSchema } from './data';
 
@@ -91,11 +92,11 @@ function onClean() {
     <Grid table-title="执行日志">
       <template #toolbar-tools>
         <Space>
-          <Button v-access:code="['ops:job:view']" @click="onExport">
+          <Button v-access:code="OPS_PERMS.jobLogQuery" @click="onExport">
             <Download class="size-4" />
             导出
           </Button>
-          <Button danger v-access:code="['ops:job:edit']" @click="onClean">
+          <Button danger v-access:code="OPS_PERMS.jobOperation" @click="onClean">
             清理日志
           </Button>
         </Space>

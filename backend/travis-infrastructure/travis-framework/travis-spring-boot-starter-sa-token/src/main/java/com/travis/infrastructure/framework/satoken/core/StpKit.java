@@ -2,7 +2,6 @@ package com.travis.infrastructure.framework.satoken.core;
 
 import cn.dev33.satoken.jwt.StpLogicJwtForSimple;
 import cn.dev33.satoken.stp.StpLogic;
-import com.travis.infrastructure.common.web.enums.LoginType;
 import com.travis.infrastructure.framework.satoken.config.properties.SaTokenProperties;
 import java.util.Collection;
 import java.util.Collections;
@@ -30,11 +29,11 @@ import java.util.Map;
  *   T(...StpKit).getLoginIdAsLong(T(...LoginType).ADMIN)
  * </pre>
  *
- * <p>新增 LoginType 只需：
+ * <p>新增 loginType 只需：
  *
  * <ol>
  *   <li>在 YAML 的 auth-rules 中添加一条 login-type 配置
- *   <li>在 LoginType 枚举中添加对应枚举值
+ *   <li>在 LoginType 常量类中添加对应常量
  * </ol>
  *
  * 无需修改本类，无需手动注册 Bean。
@@ -68,17 +67,6 @@ public class StpKit {
     // ==================== 核心方法 ====================
 
     /**
-     * 按 LoginType 枚举获取 StpLogic
-     *
-     * @param loginType 登录类型枚举
-     * @return 对应的 StpLogic 实例
-     * @throws IllegalStateException 该 loginType 未在 YAML 中配置
-     */
-    public static StpLogic of(LoginType loginType) {
-        return require(loginType.getCode());
-    }
-
-    /**
      * 按 loginType 字符串获取 StpLogic
      *
      * @param loginType 登录类型标识
@@ -101,12 +89,12 @@ public class StpKit {
      *
      * <p>用法：{@code T(...StpKit).getLoginIdAsLong(T(...LoginType).ADMIN)}
      */
-    public static long getLoginIdAsLong(LoginType type) {
+    public static long getLoginIdAsLong(String type) {
         return of(type).getLoginIdAsLong();
     }
 
     /** SpEL 桥接：获取指定 loginType 的当前 Token 值 */
-    public static String getTokenValue(LoginType type) {
+    public static String getTokenValue(String type) {
         return of(type).getTokenValue();
     }
 

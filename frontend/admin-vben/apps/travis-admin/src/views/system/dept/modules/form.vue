@@ -8,6 +8,7 @@ import { useVbenDrawer } from '@vben/common-ui';
 import { useVbenForm } from '#/adapter/form';
 import { createDept, getDeptDetail, getDeptTree, updateDept } from '#/api';
 import { $t } from '#/locales';
+import { disableTreeNodeAndDescendants } from '#/utils/tree';
 
 import { useSchema } from '../data';
 
@@ -15,23 +16,7 @@ const emit = defineEmits(['success']);
 const formData = ref<SystemDeptApi.SysDept>();
 
 async function getParentDeptTree() {
-  const deptTree = await getDeptTree();
-  const currentId = formData.value?.id;
-  if (!currentId) {
-    return deptTree;
-  }
-  const filterTree = (
-    departments: SystemDeptApi.SysDept[],
-  ): SystemDeptApi.SysDept[] =>
-    departments
-      .filter((department) => `${department.id}` !== `${currentId}`)
-      .map((department) => ({
-        ...department,
-        children: department.children
-          ? filterTree(department.children)
-          : undefined,
-      }));
-  return filterTree(deptTree);
+  return disableTreeNodeAndDescendants(await getDeptTree(), formData.value?.id);
 }
 
 const getTitle = computed(() => {
