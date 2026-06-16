@@ -33,6 +33,7 @@ import {
   importJobs,
   runJob,
 } from '#/api';
+import { getDictLabel } from '#/utils/dict';
 import { hasAccessCode, OPS_PERMS } from '#/utils/permissions';
 
 import { useJobColumns, useJobGridFormSchema } from './data';
@@ -84,7 +85,7 @@ function onJobAction({ code, row }: OnActionClickParams<OpsJobApi.Job>) {
 
 async function onStatusChange(value: number, row: OpsJobApi.Job) {
   await changeJobStatus(row.id, value);
-  message.success(value === 1 ? '任务已启用' : '任务已暂停');
+  message.success(`任务已${getDictLabel('sys_status', value)}`);
   await gridApi.query();
   return true;
 }

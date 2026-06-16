@@ -3,6 +3,7 @@ import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { OpsJobApi } from '#/api';
 
 import { z } from '#/adapter/form';
+import { getDictOptions } from '#/utils/dict';
 import { filterAccessOptions, OPS_PERMS } from '#/utils/permissions';
 
 export const scheduleTypeOptions = [
@@ -185,10 +186,7 @@ export const useJobGridFormSchema = (): VbenFormSchema[] => [
     component: 'Select',
     componentProps: {
       allowClear: true,
-      options: [
-        { label: '暂停', value: 0 },
-        { label: '启用', value: 1 },
-      ],
+      options: getDictOptions('sys_status'),
     },
     fieldName: 'status',
     label: '状态',
@@ -231,7 +229,7 @@ export function useJobColumns(
     },
     {
       cellRender: {
-        attrs: { beforeChange: onStatusChange },
+        attrs: { beforeChange: onStatusChange, dictType: 'sys_status' },
         name: onStatusChange ? 'CellSwitch' : 'CellTag',
       },
       field: 'status',

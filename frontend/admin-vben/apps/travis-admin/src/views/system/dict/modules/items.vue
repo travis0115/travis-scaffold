@@ -16,6 +16,7 @@ import { Button, message } from 'antdv-next';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteDictItem, getDictItems } from '#/api';
 import { $t } from '#/locales';
+import { reloadDictOptions } from '#/utils/dict';
 import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
 
 import ItemModalComponent from './item-modal.vue';
@@ -52,7 +53,7 @@ const columns: VxeTableGridColumns<SystemDictApi.SysDictItem> = [
     title: $t('system.dict.item.remark'),
   },
   {
-    cellRender: { name: 'CellTag' },
+    cellRender: { attrs: { dictType: 'sys_status' }, name: 'CellTag' },
     field: 'status',
     fixed: 'right',
     title: $t('system.dict.item.status'),
@@ -146,6 +147,7 @@ function onEditItem(record: SystemDictApi.SysDictItem) {
 
 async function onDeleteItem(record: SystemDictApi.SysDictItem) {
   await deleteDictItem(record.id);
+  await reloadDictOptions();
   message.success($t('ui.actionMessage.deleteSuccess', [record.label]));
   await gridApi.query();
   emit('success');

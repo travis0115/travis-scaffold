@@ -31,6 +31,7 @@ const tabsValue = defineModel<string>('modelValue');
         <div class="mt-4 flex-col-center h-40 gap-4">
           <slot name="avatar">
             <VbenAvatar
+              :fallback-src="preferences.app.defaultAvatar"
               :src="userInfo?.avatar && userInfo.avatar.trim() !== '' ? userInfo.avatar : preferences.app.defaultAvatar"
               class="size-20"
             />

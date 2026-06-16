@@ -8,6 +8,7 @@ import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
+import com.travis.monolith.system.common.api.SystemErrorCode;
 import com.travis.monolith.system.config.api.request.SysConfigCreateReq;
 import com.travis.monolith.system.config.api.request.SysConfigPageReq;
 import com.travis.monolith.system.config.api.request.SysConfigUpdateReq;
@@ -34,7 +35,6 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
 
     private static final Map<String, SFunction<SysConfig, ?>> SORT_COLUMNS =
             Map.of(
-                    "configGroup", SysConfig::getConfigGroup,
                     "configKey", SysConfig::getConfigKey,
                     "createTime", SysConfig::getCreateTime,
                     "updateTime", SysConfig::getUpdateTime);
@@ -45,14 +45,12 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
     public PageResp<SysConfigPageResp> page(SysConfigPageReq req) {
         var wrapper =
                 new LambdaQueryWrapperX<SysConfig>()
-                        .likeIfPresent(SysConfig::getConfigGroup, req.getConfigGroup())
                         .likeIfPresent(SysConfig::getConfigKey, req.getConfigKey())
                         .orderByAllowed(
                                 req.getOrderBy(),
                                 req.getAsc(),
                                 SORT_COLUMNS,
                                 true,
-                                SysConfig::getConfigGroup,
                                 SysConfig::getConfigKey);
         Page<SysConfig> page = page(new Page<>(req.getPageNum(), req.getPageSize()), wrapper);
         return PageConverter.toResp(page.convert(converter::toResp));
@@ -84,10 +82,8 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
     @Override
     @Transactional
     public void update(Long id, SysConfigUpdateReq req) {
-        SysConfig entity = super.getById(id);
-        if (entity == null) {
-            throw new BizException(CommonErrorCode.NOT_FOUND);
-        }
+        SysConfig entity = getConfigOrThrow(id);
+        checkBuiltinKey(entity, req);
         converter.update(req, entity);
         updateById(entity);
     }
@@ -95,6 +91,29 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
     @Override
     @Transactional
     public void deleteById(Long id) {
+        SysConfig entity = getConfigOrThrow(id);
+        checkDeletable(entity);
         removeById(id);
+    }
+
+    private SysConfig getConfigOrThrow(Long id) {
+        SysConfig config = super.getById(id);
+        if (config == null) {
+            throw new BizException(CommonErrorCode.NOT_FOUND);
+        }
+        return config;
+    }
+
+    private void checkBuiltinKey(SysConfig entity, SysConfigUpdateReq req) {
+        if (Integer.valueOf(1).equals(entity.getIsBuiltin())
+                && !entity.getConfigKey().equals(req.getConfigKey())) {
+            throw new BizException(SystemErrorCode.CONFIG_BUILTIN_KEY_NOT_MODIFIABLE);
+        }
+    }
+
+    private void checkDeletable(SysConfig entity) {
+        if (Integer.valueOf(1).equals(entity.getIsBuiltin())) {
+            throw new BizException(SystemErrorCode.CONFIG_BUILTIN_NOT_DELETABLE);
+        }
     }
 }

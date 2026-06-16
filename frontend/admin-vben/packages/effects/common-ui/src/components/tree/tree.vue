@@ -8,7 +8,15 @@ import { $t } from '@vben/locales';
 
 import { treePropsDefaults, VbenTree } from '@vben-core/shadcn-ui';
 
-const props = withDefaults(defineProps<TreeProps>(), treePropsDefaults());
+type CommonTreeProps = {
+  /** 是否显示默认工具条 */
+  showToolbar?: boolean;
+} & TreeProps;
+
+const props = withDefaults(
+  defineProps<CommonTreeProps>(),
+  treePropsDefaults(),
+);
 const treeRef = ref();
 
 defineExpose({

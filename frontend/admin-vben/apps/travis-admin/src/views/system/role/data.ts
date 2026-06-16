@@ -7,6 +7,7 @@ import type { SystemRoleApi } from '#/api';
 
 import { z } from '#/adapter/form';
 import { $t } from '#/locales';
+import { getDictOptions } from '#/utils/dict';
 import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
 
 export function useFormSchema(): VbenFormSchema[] {
@@ -39,10 +40,7 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'RadioGroup',
       componentProps: {
         buttonStyle: 'solid',
-        options: [
-          { label: $t('common.enabled'), value: 1 },
-          { label: $t('common.disabled'), value: 0 },
-        ],
+        options: getDictOptions('sys_status'),
         optionType: 'button',
       },
       defaultValue: 1,
@@ -75,10 +73,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
       component: 'Select',
       componentProps: {
         allowClear: true,
-        options: [
-          { label: $t('common.enabled'), value: 1 },
-          { label: $t('common.disabled'), value: 0 },
-        ],
+        options: getDictOptions('sys_status'),
       },
       fieldName: 'status',
       label: $t('system.role.status'),
@@ -93,6 +88,11 @@ export function useColumns<T = SystemRoleApi.SysRole>(
     row: T,
   ) => PromiseLike<boolean | undefined>,
 ): VxeTableGridColumns {
+  const isNotModifiable = (row: Pick<SystemRoleApi.SysRole, 'modifiable'>) =>
+    row.modifiable === 0;
+  const isBuiltin = (row: Pick<SystemRoleApi.SysRole, 'isBuiltin'>) =>
+    row.isBuiltin === 1;
+
   return [
     {
       field: 'roleName',
@@ -103,6 +103,17 @@ export function useColumns<T = SystemRoleApi.SysRole>(
       field: 'roleCode',
       title: $t('system.role.roleCode'),
       width: 150,
+    },
+    {
+      cellRender: {
+        attrs: {
+          dictType: 'sys_role_type',
+        },
+        name: 'CellTag',
+      },
+      field: 'isBuiltin',
+      title: $t('system.role.roleType'),
+      width: 110,
     },
     {
       field: 'remark',
@@ -117,7 +128,11 @@ export function useColumns<T = SystemRoleApi.SysRole>(
     },
     {
       cellRender: {
-        attrs: { beforeChange: onStatusChange },
+        attrs: {
+          beforeChange: onStatusChange,
+          dictType: 'sys_status',
+          disabled: isNotModifiable,
+        },
         name: onStatusChange ? 'CellSwitch' : 'CellTag',
       },
       field: 'status',
@@ -134,10 +149,23 @@ export function useColumns<T = SystemRoleApi.SysRole>(
           onClick: onActionClick,
         },
         name: 'CellOperation',
-        options: filterAccessOptions(['edit', 'delete'], {
-          delete: SYSTEM_PERMS.roleDelete,
-          edit: SYSTEM_PERMS.roleUpdate,
-        }),
+        options: filterAccessOptions(
+          [
+            {
+              code: 'edit',
+              show: (row: SystemRoleApi.SysRole) => !isNotModifiable(row),
+            },
+            {
+              code: 'delete',
+              show: (row: SystemRoleApi.SysRole) =>
+                !isNotModifiable(row) && !isBuiltin(row),
+            },
+          ],
+          {
+            delete: SYSTEM_PERMS.roleDelete,
+            edit: SYSTEM_PERMS.roleUpdate,
+          },
+        ),
       },
       field: 'operation',
       fixed: 'right',

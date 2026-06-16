@@ -11,10 +11,6 @@ import lombok.Data;
  */
 @Data
 public class SysConfigCreateReq {
-    /** 配置分组 */
-    @Size(max = 100, message = "配置分组长度不能超过100个字符")
-    private String configGroup;
-
     /** 配置键 */
     @NotBlank(message = "配置键不能为空")
     @Size(max = 200, message = "配置键长度不能超过200个字符")

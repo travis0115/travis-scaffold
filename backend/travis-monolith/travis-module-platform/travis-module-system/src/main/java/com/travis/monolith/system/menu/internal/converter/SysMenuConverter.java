@@ -5,11 +5,10 @@ import com.travis.monolith.system.menu.api.request.SysMenuCreateReq;
 import com.travis.monolith.system.menu.api.request.SysMenuUpdateReq;
 import com.travis.monolith.system.menu.api.response.SysMenuResp;
 import com.travis.monolith.system.menu.internal.entity.SysMenu;
+import java.util.List;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
-
-import java.util.List;
 
 /**
  * 菜单对象转换器

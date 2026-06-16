@@ -154,7 +154,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
     /** 分配用户角色：委托给角色服务，清除菜单缓存 */
     @Override
     @Transactional
-    @CacheEvict(value = "system:menu:vben", allEntries = true)
+    @CacheEvict(value = "system:menu", allEntries = true)
     public void assignRoles(SysUserRoleReq req) {
         roleApi.assignUserRoles(req.getUserId(), req.getRoleIds());
     }

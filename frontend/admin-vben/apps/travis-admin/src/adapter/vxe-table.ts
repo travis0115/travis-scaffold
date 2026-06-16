@@ -3,8 +3,9 @@ import type { Recordable } from '@vben/types';
 
 import type { ComponentPropsMap, ComponentType } from './component';
 
-import { h } from 'vue';
+import { h, unref } from 'vue';
 
+import { VbenAvatar } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 import { $te } from '@vben/locales';
 import {
@@ -15,9 +16,10 @@ import { preferences } from '@vben/preferences';
 import { get, isFunction, isString } from '@vben/utils';
 
 import { objectOmit } from '@vueuse/core';
-import { Avatar, Button, Image, Popconfirm, Switch, Tag } from 'antdv-next';
+import { Button, Image, Popconfirm, Switch, Tag } from 'antdv-next';
 
 import { $t } from '#/locales';
+import { getDictOptions } from '#/utils/dict';
 
 import { useVbenForm } from './form';
 
@@ -94,41 +96,69 @@ setupVbenVxeTable({
         const src = rawSrc && rawSrc.trim() !== ''
           ? rawSrc
           : preferences.app.defaultAvatar;
-        return h(Avatar, { src, size: 32, ...props });
+        return h(VbenAvatar, {
+          class: 'size-8',
+          fallbackSrc: preferences.app.defaultAvatar,
+          src,
+          ...props,
+        });
       },
     });
 
+    function renderStatusTag(
+      value: any,
+      options: any,
+      props: Recordable<any>,
+      dictType?: string,
+    ) {
+      if (value === null || value === undefined || value === '') {
+        return h('span', {}, '-');
+      }
+      const tagOptions = (dictType ? getDictOptions(dictType) : unref(options)) ?? [
+        { color: 'success', label: $t('common.enabled'), value: 1 },
+        { color: 'error', label: $t('common.disabled'), value: 0 },
+      ];
+      const tagItem = tagOptions.find((item: any) => item.value === value);
+      return h(
+        Tag,
+        {
+          ...props,
+          ...objectOmit(tagItem ?? {}, ['label']),
+        },
+        { default: () => tagItem?.label ?? value },
+      );
+    }
+
     // 单元格渲染： Tag
     vxeUI.renderer.add('CellTag', {
-      renderTableDefault({ options, props }, { column, row }) {
+      renderTableDefault({ attrs, options, props }, { column, row }) {
         const value = get(row, column.field);
-        // 空值显示占位符
-        if (value === null || value === undefined || value === '') {
-          return h('span', {}, '-');
-        }
-        const tagOptions = options ?? [
-          { color: 'success', label: $t('common.enabled'), value: 1 },
-          { color: 'error', label: $t('common.disabled'), value: 0 },
-        ];
-        const tagItem = tagOptions.find((item) => item.value === value);
-        return h(
-          Tag,
-          {
-            ...props,
-            ...objectOmit(tagItem ?? {}, ['label']),
-          },
-          { default: () => tagItem?.label ?? value },
-        );
+        return renderStatusTag(value, options, props ?? {}, attrs?.dictType);
       },
     });
 
     vxeUI.renderer.add('CellSwitch', {
-      renderTableDefault({ attrs, props }, { column, row }) {
+      renderTableDefault({ attrs, options, props }, { column, row }) {
+        if (attrs?.disabled?.(row)) {
+          return renderStatusTag(
+            get(row, column.field),
+            options,
+            props ?? {},
+            attrs?.dictType,
+          );
+        }
         const loadingKey = `__loading_${column.field}`;
+        const tagOptions = attrs?.dictType
+          ? getDictOptions(attrs.dictType)
+          : (unref(options) ?? []);
+        const checkedOption = tagOptions.find((item: any) => item.value === 1);
+        const uncheckedOption = tagOptions.find(
+          (item: any) => item.value === 0,
+        );
         const finallyProps = {
-          checkedChildren: $t('common.enabled'),
+          checkedChildren: checkedOption?.label ?? $t('common.enabled'),
           checkedValue: 1,
-          unCheckedChildren: $t('common.disabled'),
+          unCheckedChildren: uncheckedOption?.label ?? $t('common.disabled'),
           unCheckedValue: 0,
           ...props,
           checked: row[column.field],
@@ -296,6 +326,9 @@ setupVbenVxeTable({
         const btns = operations.map((opt) =>
           opt.code === 'delete' ? renderConfirm(opt) : renderBtn(opt),
         );
+        if (btns.length === 0) {
+          return h('span', {}, '-');
+        }
         return h(
           'div',
           {

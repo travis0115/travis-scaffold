@@ -86,7 +86,7 @@ onMounted(async () => {
     <Skeleton v-if="loading" active :paragraph="{ rows: 8 }" />
 
     <div v-else class="flex flex-col gap-5">
-      <Card v-if="canViewJobDashboard" :bordered="false" title="任务调度">
+      <Card v-if="canViewJobDashboard" title="任务调度" variant="borderless">
         <template #extra>
           <div class="flex gap-2">
             <Button type="link" @click="router.push('/ops/job/list')">
@@ -122,7 +122,7 @@ onMounted(async () => {
         </div>
       </Card>
 
-      <Card :bordered="false">
+      <Card variant="borderless">
         <template #title>
           <div class="flex items-center gap-2">
             <IconifyIcon class="size-5 text-blue-500" icon="lucide:bell" />

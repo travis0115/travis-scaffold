@@ -12,9 +12,6 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class SysConfigPageReq extends PageRequest {
-    /** 配置分组（模糊匹配） */
-    private String configGroup;
-
     /** 配置键（模糊匹配） */
     private String configKey;
 }

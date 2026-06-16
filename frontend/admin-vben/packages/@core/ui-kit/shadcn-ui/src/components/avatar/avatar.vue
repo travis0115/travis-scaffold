@@ -9,7 +9,7 @@ import type { CSSProperties } from 'vue';
 
 import type { ClassType } from '@vben-core/typings';
 
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 import { Avatar, AvatarFallback, AvatarImage } from '../../ui';
 
@@ -18,6 +18,7 @@ interface Props extends AvatarFallbackProps, AvatarImageProps, AvatarRootProps {
   class?: ClassType;
   dot?: boolean;
   dotClass?: ClassType;
+  fallbackSrc?: string;
   fit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
   size?: number;
 }
@@ -33,6 +34,25 @@ const props = withDefaults(defineProps<Props>(), {
   dotClass: 'bg-green-500',
   fit: 'cover',
 });
+
+const displaySrc = ref(props.src);
+
+watch(
+  () => props.src,
+  (src) => {
+    displaySrc.value = src;
+  },
+);
+
+function handleLoadingStatusChange(status: string) {
+  if (
+    status === 'error' &&
+    props.fallbackSrc &&
+    displaySrc.value !== props.fallbackSrc
+  ) {
+    displaySrc.value = props.fallbackSrc;
+  }
+}
 
 const imageStyle = computed<CSSProperties>(() => {
   const { fit } = props;
@@ -63,7 +83,12 @@ const rootStyle = computed(() => {
     class="relative flex shrink-0 items-center"
   >
     <Avatar :class="props.class" class="size-full">
-      <AvatarImage :alt="alt" :src="src" :style="imageStyle" />
+      <AvatarImage
+        :alt="alt"
+        :src="displaySrc"
+        :style="imageStyle"
+        @loading-status-change="handleLoadingStatusChange"
+      />
       <AvatarFallback>{{ text }}</AvatarFallback>
     </Avatar>
     <span

@@ -4,6 +4,7 @@ import type { Recordable } from '@vben/types';
 import { computed, reactive } from 'vue';
 
 import { $t } from '@vben/locales';
+import { preferences } from '@vben/preferences';
 
 import { useVbenForm, z } from '@vben-core/form-ui';
 import { useVbenModal } from '@vben-core/popup-ui';
@@ -92,6 +93,7 @@ async function handleSubmit() {
       <div class="w-full">
         <div class="ml-2 flex w-full flex-col items-center">
           <VbenAvatar
+            :fallback-src="preferences.app.defaultAvatar"
             :src="avatar"
             class="size-20"
             dot-class="bottom-0 right-1 border-2 size-4 bg-green-500"

@@ -7,6 +7,7 @@ import type { SystemDeptApi } from '#/api';
 
 import { z } from '#/adapter/form';
 import { $t } from '#/locales';
+import { getDictOptions } from '#/utils/dict';
 import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
 
 export function useSchema(
@@ -65,10 +66,7 @@ export function useSchema(
       component: 'RadioGroup',
       componentProps: {
         buttonStyle: 'solid',
-        options: [
-          { label: $t('common.enabled'), value: 1 },
-          { label: $t('common.disabled'), value: 0 },
-        ],
+        options: getDictOptions('sys_status'),
         optionType: 'button',
       },
       defaultValue: 1,
@@ -112,7 +110,7 @@ export function useColumns(
       formatter: 'formatDateTime',
     },
     {
-      cellRender: { name: 'CellTag' },
+      cellRender: { attrs: { dictType: 'sys_status' }, name: 'CellTag' },
       field: 'status',
       fixed: 'right',
       title: $t('system.dept.status'),

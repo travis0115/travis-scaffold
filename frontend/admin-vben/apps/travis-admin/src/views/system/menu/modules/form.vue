@@ -13,6 +13,7 @@ import {useVbenForm, z} from '#/adapter/form';
 import {createMenu, getMenuDetail, getMenuTree, updateMenu} from '#/api';
 import {$t} from '#/locales';
 import {componentKeys} from '#/router/routes';
+import {getDictOptions} from '#/utils/dict';
 import {disableTreeNodeAndDescendants} from '#/utils/tree';
 
 import {getMenuTypeOptions} from '../data';
@@ -208,7 +209,7 @@ const schema: VbenFormSchema[] = [
   {
     component: 'IconPicker',
     componentProps: {
-      prefix: 'carbon',
+      prefix: 'mdi',
     },
     dependencies: {
       show: (values) => [0, 1].includes(values.menuType),
@@ -220,7 +221,7 @@ const schema: VbenFormSchema[] = [
   {
     component: 'IconPicker',
     componentProps: {
-      prefix: 'carbon',
+      prefix: 'fluent-color',
     },
     dependencies: {
       show: (values) => [0, 1].includes(values.menuType),
@@ -356,10 +357,7 @@ const schema: VbenFormSchema[] = [
     component: 'RadioGroup',
     componentProps: {
       buttonStyle: 'solid',
-      options: [
-        {label: $t('common.enabled'), value: 1},
-        {label: $t('common.disabled'), value: 0},
-      ],
+      options: getDictOptions('sys_status'),
       optionType: 'button',
     },
     defaultValue: 1,

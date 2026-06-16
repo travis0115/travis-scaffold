@@ -9,11 +9,6 @@ export function useFormSchema(): VbenFormSchema[] {
   return [
     {
       component: 'Input',
-      fieldName: 'configGroup',
-      label: $t('system.config.configGroup'),
-    },
-    {
-      component: 'Input',
       fieldName: 'configKey',
       label: $t('system.config.configKey'),
     },
@@ -34,11 +29,6 @@ export function useGridFormSchema(): VbenFormSchema[] {
   return [
     {
       component: 'Input',
-      fieldName: 'configGroup',
-      label: $t('system.config.configGroup'),
-    },
-    {
-      component: 'Input',
       fieldName: 'configKey',
       label: $t('system.config.configKey'),
     },
@@ -48,16 +38,25 @@ export function useGridFormSchema(): VbenFormSchema[] {
 export function useColumns<T = SystemConfigApi.SystemConfig>(
   onActionClick: OnActionClickFn<T>,
 ): VxeTableGridColumns {
+  const isBuiltin = (row: Pick<SystemConfigApi.SystemConfig, 'isBuiltin'>) =>
+    row.isBuiltin === 1;
+
   return [
-    {
-      field: 'configGroup',
-      title: $t('system.config.configGroup'),
-      width: 150,
-    },
     {
       field: 'configKey',
       title: $t('system.config.configKey'),
       width: 200,
+    },
+    {
+      cellRender: {
+        attrs: {
+          dictType: 'sys_config_type',
+        },
+        name: 'CellTag',
+      },
+      field: 'isBuiltin',
+      title: $t('system.config.configType'),
+      width: 110,
     },
     {
       field: 'configValue',
@@ -84,10 +83,19 @@ export function useColumns<T = SystemConfigApi.SystemConfig>(
           onClick: onActionClick,
         },
         name: 'CellOperation',
-        options: filterAccessOptions(['edit', 'delete'], {
-          delete: SYSTEM_PERMS.configDelete,
-          edit: SYSTEM_PERMS.configUpdate,
-        }),
+        options: filterAccessOptions(
+          [
+            'edit',
+            {
+              code: 'delete',
+              show: (row: SystemConfigApi.SystemConfig) => !isBuiltin(row),
+            },
+          ],
+          {
+            delete: SYSTEM_PERMS.configDelete,
+            edit: SYSTEM_PERMS.configUpdate,
+          },
+        ),
       },
       field: 'operation',
       fixed: 'right',

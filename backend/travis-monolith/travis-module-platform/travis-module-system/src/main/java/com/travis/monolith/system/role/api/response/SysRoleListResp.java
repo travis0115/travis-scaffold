@@ -32,6 +32,9 @@ public class SysRoleListResp {
     /** 是否可编辑（0-否 1-是） */
     private Integer modifiable;
 
+    /** 是否系统内置（0-否 1-是） */
+    private Integer isBuiltin;
+
     /** 状态（0-禁用 1-启用） */
     private Integer status;
 

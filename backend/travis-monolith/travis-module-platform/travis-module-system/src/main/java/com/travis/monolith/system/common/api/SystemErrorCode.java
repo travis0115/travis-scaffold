@@ -17,6 +17,8 @@ public enum SystemErrorCode implements ErrorCode {
 
     /* role模块 100-199 */
     ROLE_CODE_EXISTS("SYS_100", "角色编码已存在"),
+    ROLE_NOT_MODIFIABLE("SYS_101", "该角色不允许修改或删除"),
+    ROLE_BUILTIN_NOT_DELETABLE("SYS_102", "系统内置角色不允许删除"),
 
     /* dept模块 200-299 */
     DEPT_NOT_FOUND("SYS_200", "部门不存在"),
@@ -30,15 +32,16 @@ public enum SystemErrorCode implements ErrorCode {
     /* dict模块 400-499 */
     DICT_TYPE_EXISTS("SYS_400", "字典类型编码已存在"),
 
-/* errorlog模块 500-599 */
-/* loginlog模块 600-699 */
-/* operationlog模块 700-799 */
-/* versionlog模块 800-899 */
-/* notice模块 900-999 */
-/* file模块 1000-1099 */
-/* config模块 1100-1199 */
-
-;
+    /* errorlog模块 500-599 */
+    /* loginlog模块 600-699 */
+    /* operationlog模块 700-799 */
+    /* versionlog模块 800-899 */
+    /* notice模块 900-999 */
+    /* file模块 1000-1099 */
+    /* config模块 1100-1199 */
+    CONFIG_BUILTIN_NOT_DELETABLE("SYS_1100", "系统内置配置不允许删除"),
+    CONFIG_BUILTIN_KEY_NOT_MODIFIABLE("SYS_1101", "系统内置配置不允许修改配置键"),
+    ;
 
     private final String code;
 

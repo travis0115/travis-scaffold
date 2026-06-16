@@ -8,6 +8,7 @@ import { useVbenDrawer } from '@vben/common-ui';
 import { useVbenForm } from '#/adapter/form';
 import { createDict, getDictDetail, updateDict } from '#/api';
 import { $t } from '#/locales';
+import { reloadDictOptions } from '#/utils/dict';
 
 import { useFormSchema } from '../data';
 
@@ -35,6 +36,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
       await (formData.value?.id
         ? updateDict(formData.value.id, values)
         : createDict(values));
+      await reloadDictOptions();
       emit('success');
       drawerApi.close();
     } catch {

@@ -48,9 +48,25 @@ const [Drawer, drawerApi] = useVbenDrawer({
       formApi.resetForm();
       if (data?.id) {
         formData.value = data;
+        formApi.updateSchema([
+          {
+            componentProps: {
+              disabled: data.isBuiltin === 1,
+            },
+            fieldName: 'configKey',
+          },
+        ]);
         await formApi.setValues(data);
       } else {
         formData.value = undefined;
+        formApi.updateSchema([
+          {
+            componentProps: {
+              disabled: false,
+            },
+            fieldName: 'configKey',
+          },
+        ]);
       }
     }
   },

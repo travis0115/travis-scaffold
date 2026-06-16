@@ -8,6 +8,7 @@ import { Tag } from 'antdv-next';
 import { useVbenForm, z } from '#/adapter/form';
 import { createDictItem, updateDictItem } from '#/api';
 import { $t } from '#/locales';
+import { getDictOptions, reloadDictOptions } from '#/utils/dict';
 
 const emit = defineEmits(['success']);
 const formData = ref<Record<string, any>>({});
@@ -68,10 +69,7 @@ const [Form, formApi] = useVbenForm({
       component: 'RadioGroup',
       componentProps: {
         buttonStyle: 'solid',
-        options: [
-          { label: $t('common.enabled'), value: 1 },
-          { label: $t('common.disabled'), value: 0 },
-        ],
+        options: getDictOptions('sys_status'),
         optionType: 'button',
       },
       defaultValue: 1,
@@ -99,6 +97,7 @@ const [Modal, modalApi] = useVbenModal({
         ? updateDictItem(formData.value.itemId, payload)
         : createDictItem(payload);
       await savePromise;
+      await reloadDictOptions();
       emit('success');
       modalApi.close();
     } catch {

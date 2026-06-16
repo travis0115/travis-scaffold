@@ -11,6 +11,7 @@ export namespace SystemDictApi {
     status: 0 | 1;
     remark?: string;
     createTime?: string;
+    children?: SysDictItem[];
   }
 
   export interface SysDictItem {

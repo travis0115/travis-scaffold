@@ -15,6 +15,8 @@ import com.travis.monolith.system.menu.internal.entity.SysMenu;
 import com.travis.monolith.system.menu.internal.mapper.SysMenuMapper;
 import com.travis.monolith.system.menu.internal.service.SysMenuService;
 import com.travis.monolith.system.role.api.SysRoleApi;
+import java.util.*;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -22,9 +24,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.core.type.TypeReference;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 菜单管理服务实现，支持菜单树构建和前端 Vben 路由菜单生成

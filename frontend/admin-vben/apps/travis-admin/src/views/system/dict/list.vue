@@ -15,6 +15,7 @@ import { Button, message } from 'antdv-next';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteDict, getDictPage } from '#/api';
 import { $t } from '#/locales';
+import { reloadDictOptions } from '#/utils/dict';
 import { SYSTEM_PERMS } from '#/utils/permissions';
 
 import { useColumns, useGridFormSchema } from './data';
@@ -113,7 +114,8 @@ function onDelete(row: SystemDictApi.SysDict) {
     key: 'action_process_msg',
   });
   deleteDict(row.id)
-    .then(() => {
+    .then(async () => {
+      await reloadDictOptions();
       message.success({
         content: $t('ui.actionMessage.deleteSuccess', [row.dictName]),
         key: 'action_process_msg',

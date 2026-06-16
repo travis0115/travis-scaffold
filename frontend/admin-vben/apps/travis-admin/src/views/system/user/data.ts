@@ -9,6 +9,7 @@ import { z } from '#/adapter/form';
 import { getRoleList } from '#/api';
 import { isDeptEnabled } from '#/features';
 import { $t } from '#/locales';
+import { getDictOptions } from '#/utils/dict';
 import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
 
 export function useFormSchema(deptTreeData?: any[]): VbenFormSchema[] {
@@ -123,10 +124,7 @@ export function useFormSchema(deptTreeData?: any[]): VbenFormSchema[] {
       component: 'RadioGroup',
       componentProps: {
         buttonStyle: 'solid',
-        options: [
-          { label: $t('common.enabled'), value: 1 },
-          { label: $t('common.disabled'), value: 0 },
-        ],
+        options: getDictOptions('sys_status'),
         optionType: 'button',
       },
       defaultValue: 1,
@@ -154,10 +152,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
       component: 'Select',
       componentProps: {
         allowClear: true,
-        options: [
-          { label: $t('common.enabled'), value: 1 },
-          { label: $t('common.disabled'), value: 0 },
-        ],
+        options: getDictOptions('sys_status'),
       },
       fieldName: 'status',
       label: $t('system.user.status'),
@@ -220,7 +215,7 @@ export function useColumns<T = SystemUserApi.SysUser>(
     },
     {
       cellRender: {
-        attrs: { beforeChange: onStatusChange },
+        attrs: { beforeChange: onStatusChange, dictType: 'sys_status' },
         name: onStatusChange ? 'CellSwitch' : 'CellTag',
       },
       field: 'status',

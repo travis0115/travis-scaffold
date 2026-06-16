@@ -59,6 +59,3 @@ spring:
   modulith:
     runtime:
       verification-enabled: false #是否启用运行时验证，true/false
-travis:
-  web:
-    domain: http://127.0.0.1

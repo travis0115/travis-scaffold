@@ -7,14 +7,11 @@ import type {
 import type { SystemMenuApi } from '#/api';
 
 import { $t } from '#/locales';
+import { getDictOptions } from '#/utils/dict';
 import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
 
 export function getMenuTypeOptions() {
-  return [
-    { color: 'processing', label: $t('system.menu.typeCatalog'), value: 0 },
-    { color: 'default', label: $t('system.menu.typeMenu'), value: 1 },
-    { color: 'error', label: $t('system.menu.typeButton'), value: 2 },
-  ];
+  return getDictOptions('sys_menu_type');
 }
 
 function flattenTree(nodes: SystemMenuApi.SysMenu[]): SystemMenuApi.SysMenu[] {
@@ -42,7 +39,7 @@ export function useColumns(
     },
     {
       align: 'center',
-      cellRender: { name: 'CellTag', options: getMenuTypeOptions() },
+      cellRender: { attrs: { dictType: 'sys_menu_type' }, name: 'CellTag' },
       field: 'menuType',
       title: $t('system.menu.type'),
       width: 100,
@@ -81,7 +78,7 @@ export function useColumns(
       width: 80,
     },
     {
-      cellRender: { name: 'CellTag' },
+      cellRender: { attrs: { dictType: 'sys_status' }, name: 'CellTag' },
       field: 'status',
       fixed: 'right',
       title: $t('system.menu.status'),

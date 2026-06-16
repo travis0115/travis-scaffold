@@ -1,12 +1,11 @@
 package com.travis.monolith.system.menu.api.response;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * 菜单树形结构视图，用于后台管理界面的菜单管理

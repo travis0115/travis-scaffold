@@ -12,11 +12,10 @@ import com.travis.monolith.system.menu.api.request.SysMenuUpdateReq;
 import com.travis.monolith.system.menu.api.response.SysMenuResp;
 import com.travis.monolith.system.menu.internal.service.SysMenuService;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * 菜单管理控制器，提供菜单树的增删改查接口

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-import { Profile, VbenButton, VCropper } from '@vben/common-ui';
+import { Profile, VbenAvatar, VbenButton, VCropper } from '@vben/common-ui';
 import { preferences } from '@vben/preferences';
 import { useUserStore } from '@vben/stores';
 
@@ -200,10 +200,11 @@ function onModalCancel() {
           class="group relative size-20 cursor-pointer overflow-hidden rounded-full"
           @click="openAvatarModal"
         >
-          <img
+          <VbenAvatar
+            :fallback-src="preferences.app.defaultAvatar"
             :src="avatarUrl"
             alt="头像"
-            class="size-full rounded-full object-cover"
+            class="size-20"
           />
           <div
             class="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100"

@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import type { Recordable } from '@vben/types';
-
 import type {
   OnActionClickParams,
   VxeTableGridOptions,
@@ -16,6 +14,7 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteRole, getRolePage, updateRole } from '#/api';
 import { $t } from '#/locales';
 import { useAuthStore } from '#/store';
+import { getDictLabel } from '#/utils/dict';
 import { hasAccessCode, SYSTEM_PERMS } from '#/utils/permissions';
 
 import { useColumns, useGridFormSchema } from './data';
@@ -97,13 +96,12 @@ async function onStatusChange(
   newStatus: number,
   row: SystemRoleApi.SysRole,
 ) {
-  const status: Recordable<string> = {
-    0: $t('common.disabled'),
-    1: $t('common.enabled'),
-  };
   try {
     await confirm(
-      $t('system.role.confirmStatusChange', { roleName: row.roleName, status: status[newStatus.toString()] }),
+      $t('system.role.confirmStatusChange', {
+        roleName: row.roleName,
+        status: getDictLabel('sys_status', newStatus),
+      }),
       $t('system.role.switchStatus'),
     );
     await updateRole(row.id, { status: newStatus as 0 | 1 });

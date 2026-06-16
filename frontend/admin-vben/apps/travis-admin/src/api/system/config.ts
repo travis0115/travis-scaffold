@@ -7,11 +7,11 @@ import { requestClient } from '#/api/request';
 export namespace SystemConfigApi {
   export interface SystemConfig {
     [key: string]: any;
-    configGroup?: string;
     configKey: string;
     configValue?: string;
     createTime?: string;
     id: string;
+    isBuiltin: 0 | 1;
     remark?: string;
     updateTime?: string;
   }
@@ -59,7 +59,7 @@ async function updateConfig(
  * 删除配置
  */
 async function deleteConfig(id: string) {
-  return requestClient.delete(`/system/config/${id}`)
+  return requestClient.delete(`/system/config/${id}`);
 }
 
 export {

@@ -37,7 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 @RequiredArgsConstructor
-@CacheConfig(cacheNames = "system")
+@CacheConfig(cacheNames = "system:dict")
 public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
         implements SysDictService {
 
@@ -145,7 +145,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
     /** 删除字典类型（同时删除其下所有字典数据项） */
     @Override
     @Transactional
-    @CacheEvict(key = "'dict:items:' + #id")
+    @CacheEvict(key = "'items:' + #id")
     public void deleteById(Long id) {
         // 删除字典下的所有数据项
         dictItemService.remove(
@@ -166,14 +166,14 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
 
     /** 新增字典数据项（委托给 {@link SysDictItemService}） */
     @Override
-    @CacheEvict(key = "'dict:items:' + #req.dictId")
+    @CacheEvict(key = "'items:' + #req.dictId")
     public void createItem(SysDictItemCreateReq req) {
         dictItemService.create(req);
     }
 
     /** 更新字典数据项（委托给 {@link SysDictItemService}） */
     @Override
-    @CacheEvict(key = "'dict:items:' + #req.dictId")
+    @CacheEvict(key = "'items:' + #req.dictId")
     public void updateItem(Long id, SysDictItemUpdateReq req) {
         dictItemService.update(id, req);
     }
@@ -184,9 +184,9 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
         SysDictItem item = dictItemService.getById(id);
         dictItemService.deleteById(id);
         if (item != null) {
-            var cache = cacheManager.getCache("system");
+            var cache = cacheManager.getCache("system:dict");
             if (cache != null) {
-                cache.evict("dict:items:" + item.getDictId());
+                cache.evict("items:" + item.getDictId());
             }
         }
     }

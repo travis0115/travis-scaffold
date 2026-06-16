@@ -7,6 +7,7 @@ import type { SystemDictApi } from '#/api';
 
 import { z } from '#/adapter/form';
 import { $t } from '#/locales';
+import { getDictOptions } from '#/utils/dict';
 import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
 
 export function useFormSchema(): VbenFormSchema[] {
@@ -39,10 +40,7 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'RadioGroup',
       componentProps: {
         buttonStyle: 'solid',
-        options: [
-          { label: $t('common.enabled'), value: 1 },
-          { label: $t('common.disabled'), value: 0 },
-        ],
+        options: getDictOptions('sys_status'),
         optionType: 'button',
       },
       defaultValue: 1,
@@ -68,10 +66,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
       component: 'Select',
       componentProps: {
         allowClear: true,
-        options: [
-          { label: $t('common.enabled'), value: 1 },
-          { label: $t('common.disabled'), value: 0 },
-        ],
+        options: getDictOptions('sys_status'),
       },
       fieldName: 'status',
       label: $t('system.dict.status'),
@@ -100,7 +95,7 @@ export function useColumns(
       title: $t('system.dict.remark'),
     },
     {
-      cellRender: { name: 'CellTag' },
+      cellRender: { attrs: { dictType: 'sys_status' }, name: 'CellTag' },
       field: 'status',
       fixed: 'right',
       title: $t('system.dict.status'),

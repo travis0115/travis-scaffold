@@ -12,6 +12,7 @@ export namespace SystemRoleApi {
     roleCode: string;
     remark?: string;
     modifiable: 0 | 1;
+    isBuiltin: 0 | 1;
     status: 0 | 1;
     menuIds?: number[];
     createTime?: string;

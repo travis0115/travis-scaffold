@@ -20,14 +20,14 @@ public class SysConfigDetailResp {
     /** 主键ID */
     private Long id;
 
-    /** 配置分组 */
-    private String configGroup;
-
     /** 配置键 */
     private String configKey;
 
     /** 配置值 */
     private String configValue;
+
+    /** 是否系统内置（0-否 1-是） */
+    private Integer isBuiltin;
 
     /** 备注 */
     private String remark;

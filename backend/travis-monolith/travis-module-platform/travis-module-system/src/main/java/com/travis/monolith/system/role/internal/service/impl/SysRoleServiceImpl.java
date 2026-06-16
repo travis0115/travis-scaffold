@@ -114,12 +114,10 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     /** 更新角色信息 */
     @Override
     @Transactional
-    @CacheEvict(value = "system:menu:vben", allEntries = true)
+    @CacheEvict(value = "system:menu", allEntries = true)
     public void update(Long id, SysRoleUpdateReq req) {
-        SysRole role = super.getById(id);
-        if (role == null) {
-            throw new BizException(CommonErrorCode.NOT_FOUND);
-        }
+        SysRole role = getRoleOrThrow(id);
+        checkModifiable(role);
         // 检查角色编码唯一性（排除自身）
         if (req.getRoleCode() != null) {
             long count =
@@ -139,6 +137,8 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     @Override
     @Transactional
     public void deleteById(Long id) {
+        SysRole role = getRoleOrThrow(id);
+        checkDeletable(role);
         // 删除角色-菜单关联
         roleMenuMapper.delete(
                 new LambdaQueryWrapperX<SysRoleMenu>().eq(SysRoleMenu::getRoleId, id));
@@ -151,8 +151,10 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     /** 分配角色菜单：先删除原有关联，再批量插入新关联，清除菜单缓存 */
     @Override
     @Transactional
-    @CacheEvict(value = "system:menu:vben", allEntries = true)
+    @CacheEvict(value = "system:menu", allEntries = true)
     public void assignMenus(SysRoleMenuReq req) {
+        SysRole role = getRoleOrThrow(req.getRoleId());
+        checkModifiable(role);
         roleMenuMapper.delete(
                 new LambdaQueryWrapperX<SysRoleMenu>().eq(SysRoleMenu::getRoleId, req.getRoleId()));
         if (req.getMenuIds() != null && !req.getMenuIds().isEmpty()) {
@@ -354,5 +356,26 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
                                 Collectors.mapping(
                                         ur -> roleNameMap.getOrDefault(ur.getRoleId(), "未知角色"),
                                         Collectors.toList())));
+    }
+
+    private SysRole getRoleOrThrow(Long id) {
+        SysRole role = super.getById(id);
+        if (role == null) {
+            throw new BizException(CommonErrorCode.NOT_FOUND);
+        }
+        return role;
+    }
+
+    private void checkModifiable(SysRole role) {
+        if (Integer.valueOf(0).equals(role.getModifiable())) {
+            throw new BizException(SystemErrorCode.ROLE_NOT_MODIFIABLE);
+        }
+    }
+
+    private void checkDeletable(SysRole role) {
+        checkModifiable(role);
+        if (Integer.valueOf(1).equals(role.getIsBuiltin())) {
+            throw new BizException(SystemErrorCode.ROLE_BUILTIN_NOT_DELETABLE);
+        }
     }
 }

@@ -65,5 +65,3 @@ travis:
     auto-initialize:
       enabled: true  # 启动时自动初始化不存在的 Topic 和消费者分组
       namesrv-addr: ${ROCKETMQ_NAMESRV_ADDR:127.0.0.1:9876}  # NameServer 地址（注意：不是 Proxy gRPC 端口），启用 auto-initialize 时必填
-  web:
-    domain: http://127.0.0.1

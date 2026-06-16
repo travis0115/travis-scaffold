@@ -3,6 +3,7 @@ import { computed, reactive, ref } from 'vue';
 
 import { LockKeyhole } from '@vben/icons';
 import { $t, useI18n } from '@vben/locales';
+import { preferences } from '@vben/preferences';
 import { storeToRefs, useAccessStore } from '@vben/stores';
 
 import { useScrollLock } from '@vben-core/composables';
@@ -129,7 +130,11 @@ useScrollLock();
         @keydown.enter.prevent="handleSubmit"
       >
         <div class="mb-10 flex-col-center w-[90%] max-w-75 px-4">
-          <VbenAvatar :src="avatar" class="enter-x mb-6 size-20" />
+          <VbenAvatar
+            :fallback-src="preferences.app.defaultAvatar"
+            :src="avatar"
+            class="enter-x mb-6 size-20"
+          />
           <div class="enter-x mb-2 w-full items-center">
             <Form />
           </div>
