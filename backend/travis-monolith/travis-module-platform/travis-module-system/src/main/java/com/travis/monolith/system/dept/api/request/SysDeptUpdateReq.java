@@ -1,7 +1,8 @@
 package com.travis.monolith.system.dept.api.request;
 
-import com.travis.infrastructure.common.validation.annotation.In;
+import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.common.validation.annotation.Mobile;
+import com.travis.monolith.system.common.api.enums.Status;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
@@ -22,15 +23,14 @@ public class SysDeptUpdateReq {
     private Integer sort;
 
     /** 负责人 */
+    @Size(min = 2, max = 20, message = "负责人长度为2-20个字符")
     private String leader;
 
     /** 联系电话 */
     @Mobile private String mobile;
 
     /** 状态（0-禁用 1-启用） */
-    @In(
-            value = {0, 1},
-            message = "状态值错误")
+    @EnumValue(value = Status.class, message = "状态值错误")
     @NotNull(message = "状态值不允许为空")
     private Integer status;
 }

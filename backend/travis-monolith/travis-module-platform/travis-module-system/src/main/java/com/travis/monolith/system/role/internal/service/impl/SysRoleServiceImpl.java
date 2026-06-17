@@ -1,37 +1,39 @@
 package com.travis.monolith.system.role.internal.service.impl;
 
-import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.exception.BizException;
-import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
-import com.travis.monolith.system.common.api.SystemErrorCode;
+import com.travis.monolith.system.common.api.enums.IsBuiltin;
+import com.travis.monolith.system.common.api.enums.Modifiable;
+import com.travis.monolith.system.common.api.enums.Status;
+import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.role.api.request.SysRoleCreateReq;
 import com.travis.monolith.system.role.api.request.SysRoleMenuReq;
 import com.travis.monolith.system.role.api.request.SysRolePageReq;
 import com.travis.monolith.system.role.api.request.SysRoleUpdateReq;
-import com.travis.monolith.system.role.api.response.SysRoleDetailResp;
-import com.travis.monolith.system.role.api.response.SysRoleListResp;
-import com.travis.monolith.system.role.api.response.SysRolePageResp;
+import com.travis.monolith.system.role.api.response.SysRoleResp;
 import com.travis.monolith.system.role.internal.converter.SysRoleConverter;
 import com.travis.monolith.system.role.internal.entity.SysRole;
 import com.travis.monolith.system.role.internal.entity.SysRoleMenu;
 import com.travis.monolith.system.role.internal.entity.SysUserRole;
+import com.travis.monolith.system.role.internal.enums.Role;
 import com.travis.monolith.system.role.internal.mapper.SysRoleMapper;
 import com.travis.monolith.system.role.internal.mapper.SysRoleMenuMapper;
 import com.travis.monolith.system.role.internal.mapper.SysUserRoleMapper;
 import com.travis.monolith.system.role.internal.service.SysRoleService;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 角色管理服务实现，包含角色-菜单关联、角色信息查询
@@ -40,17 +42,9 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = "system:role")
 public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
         implements SysRoleService {
-
-    private static final Map<String, SFunction<SysRole, ?>> SORT_COLUMNS =
-            Map.of(
-                    "id", SysRole::getId,
-                    "roleName", SysRole::getRoleName,
-                    "roleCode", SysRole::getRoleCode,
-                    "status", SysRole::getStatus,
-                    "createTime", SysRole::getCreateTime,
-                    "updateTime", SysRole::getUpdateTime);
 
     /** 角色-菜单关联 Mapper */
     private final SysRoleMenuMapper roleMenuMapper;
@@ -63,26 +57,23 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
 
     /** 分页查询角色列表，支持按角色名称、编码、状态筛选 */
     @Override
-    public PageResp<SysRolePageResp> page(SysRolePageReq req) {
+    public PageResp<SysRoleResp> page(SysRolePageReq req) {
         LambdaQueryWrapperX<SysRole> wrapper =
                 new LambdaQueryWrapperX<SysRole>()
                         .likeIfPresent(SysRole::getRoleName, req.getRoleName())
                         .likeIfPresent(SysRole::getRoleCode, req.getRoleCode())
                         .eqIfPresent(SysRole::getStatus, req.getStatus())
-                        .orderByAllowed(
-                                req.getOrderBy(), req.getAsc(), SORT_COLUMNS, true, SysRole::getId);
-        Page<SysRole> page = page(new Page<>(req.getPageNum(), req.getPageSize()), wrapper);
+                        .orderByAsc(SysRole::getId);
+        var page = page(new Page<>(req.getPageNum(), req.getPageSize()), wrapper);
         return PageConverter.toResp(page.convert(converter::toResp));
     }
 
     /** 获取角色详情，同时查询角色关联的菜单ID列表 */
     @Override
-    public SysRoleDetailResp getById(Long id) {
-        SysRole role = super.getById(id);
-        if (role == null) {
-            throw new BizException(CommonErrorCode.NOT_FOUND);
-        }
-        SysRoleDetailResp vo = converter.toDetailResp(role);
+    @Cacheable(key = "'id:'+#id")
+    public SysRoleResp getById(Long id) {
+        var role = getRoleOrThrow(id);
+        var roleResp = converter.toResp(role);
         List<Long> menuIds =
                 roleMenuMapper
                         .selectList(
@@ -91,13 +82,14 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
                         .stream()
                         .map(SysRoleMenu::getMenuId)
                         .collect(Collectors.toList());
-        vo.setMenuIds(menuIds);
-        return vo;
+        roleResp.setMenuIds(menuIds);
+        return roleResp;
     }
 
     /** 新增角色 */
     @Override
     @Transactional
+    @CacheEvict(key = "'list:enabled'")
     public void create(SysRoleCreateReq req) {
         // 检查角色编码唯一性
         long count =
@@ -107,16 +99,22 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
         if (count > 0) {
             throw new BizException(SystemErrorCode.ROLE_CODE_EXISTS);
         }
-        SysRole role = converter.toEntity(req);
+        var role = converter.toEntity(req);
         save(role);
     }
 
     /** 更新角色信息 */
     @Override
     @Transactional
-    @CacheEvict(value = "system:menu", allEntries = true)
+    @Caching(
+            evict = {
+                @CacheEvict(key = "'id:'+#id"),
+                @CacheEvict(key = "'code:'+#id"),
+                @CacheEvict(key = "'name:'+#id"),
+                @CacheEvict(key = "'list:enabled'")
+            })
     public void update(Long id, SysRoleUpdateReq req) {
-        SysRole role = getRoleOrThrow(id);
+        var role = getRoleOrThrow(id);
         checkModifiable(role);
         // 检查角色编码唯一性（排除自身）
         if (req.getRoleCode() != null) {
@@ -136,24 +134,39 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     /** 删除角色，同时清除角色-菜单和用户-角色关联 */
     @Override
     @Transactional
+    @Caching(
+            evict = {
+                @CacheEvict(key = "'id:'+#id"),
+                @CacheEvict(key = "'code:'+#id"),
+                @CacheEvict(key = "'name:'+#id"),
+                @CacheEvict(key = "'list:enabled'"),
+                @CacheEvict(value = "system:user-role", allEntries = true),
+                @CacheEvict(value = "system:role-menu", key = "'role:'+#id"),
+                @CacheEvict(value = "system:menu:vben", allEntries = true)
+            })
     public void deleteById(Long id) {
-        SysRole role = getRoleOrThrow(id);
+        var role = getRoleOrThrow(id);
         checkDeletable(role);
+        removeById(id);
         // 删除角色-菜单关联
         roleMenuMapper.delete(
                 new LambdaQueryWrapperX<SysRoleMenu>().eq(SysRoleMenu::getRoleId, id));
         // 删除用户-角色关联
         userRoleMapper.delete(
                 new LambdaQueryWrapperX<SysUserRole>().eq(SysUserRole::getRoleId, id));
-        removeById(id);
     }
 
     /** 分配角色菜单：先删除原有关联，再批量插入新关联，清除菜单缓存 */
     @Override
     @Transactional
-    @CacheEvict(value = "system:menu", allEntries = true)
+    @Caching(
+            evict = {
+                @CacheEvict(key = "'id:'+#req.roleId"),
+                @CacheEvict(value = "system:role-menu", key = "'role:'+#req.roleId"),
+                @CacheEvict(value = "system:menu:vben", allEntries = true)
+            })
     public void assignMenus(SysRoleMenuReq req) {
-        SysRole role = getRoleOrThrow(req.getRoleId());
+        var role = getRoleOrThrow(req.getRoleId());
         checkModifiable(role);
         roleMenuMapper.delete(
                 new LambdaQueryWrapperX<SysRoleMenu>().eq(SysRoleMenu::getRoleId, req.getRoleId()));
@@ -168,62 +181,61 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
                                         return rm;
                                     })
                             .toList();
-            list.forEach(roleMenuMapper::insert);
+            roleMenuMapper.insert(list);
         }
     }
 
-    /** 根据角色ID列表获取角色编码列表 */
+    /** 根据角色ID获取角色编码 */
     @Override
-    public List<String> getRoleCodesByRoleIds(List<Long> roleIds) {
-        if (roleIds == null || roleIds.isEmpty()) {
-            return List.of();
+    @Cacheable(key = "'code:'+#roleId")
+    public String getRoleCodeByRoleId(Long roleId) {
+        if (roleId == null) {
+            return null;
         }
-        return listByIds(roleIds).stream().map(SysRole::getRoleCode).collect(Collectors.toList());
+        var role = super.getById(roleId);
+        return role == null ? null : role.getRoleCode();
     }
 
-    /** 根据角色ID列表获取角色名称列表 */
+    /** 根据角色ID获取角色名称 */
     @Override
-    public List<String> getRoleNamesByRoleIds(List<Long> roleIds) {
-        if (roleIds == null || roleIds.isEmpty()) {
-            return List.of();
+    @Cacheable(key = "'name:'+#roleId")
+    public String getRoleNameByRoleId(Long roleId) {
+        if (roleId == null) {
+            return null;
         }
-        return listByIds(roleIds).stream().map(SysRole::getRoleName).collect(Collectors.toList());
+        var role = super.getById(roleId);
+        return role == null ? null : role.getRoleName();
     }
 
-    /** 根据角色ID列表批量查询角色名称映射 */
+    /** 根据角色ID查询关联的菜单ID列表 */
     @Override
-    public Map<Long, String> getRoleNameMapByIds(Set<Long> roleIds) {
-        if (roleIds == null || roleIds.isEmpty()) {
-            return Map.of();
-        }
-        return listByIds(roleIds).stream()
-                .collect(Collectors.toMap(SysRole::getId, SysRole::getRoleName));
-    }
-
-    /** 根据角色ID列表查询关联的菜单ID列表 */
-    @Override
-    public List<Long> getMenuIdsByRoleIds(List<Long> roleIds) {
-        if (roleIds == null || roleIds.isEmpty()) {
+    @Cacheable(value = "system:role-menu", key = "'role:'+#roleId")
+    public List<Long> getMenuIdsByRoleId(Long roleId) {
+        if (roleId == null) {
             return List.of();
         }
         return roleMenuMapper
                 .selectList(
-                        new LambdaQueryWrapperX<SysRoleMenu>().in(SysRoleMenu::getRoleId, roleIds))
+                        new LambdaQueryWrapperX<SysRoleMenu>().eq(SysRoleMenu::getRoleId, roleId))
                 .stream()
                 .map(SysRoleMenu::getMenuId)
-                .distinct()
                 .collect(Collectors.toList());
     }
 
     /** 自动为所有 admin 角色分配指定菜单 */
     @Override
     @Transactional
+    @Caching(
+            evict = {
+                @CacheEvict(allEntries = true),
+                @CacheEvict(value = "system:role-menu", allEntries = true),
+                @CacheEvict(value = "system:menu:vben", allEntries = true)
+            })
     public void assignMenuToAdminRoles(Long menuId) {
         List<SysRole> adminRoles =
                 list(
                         new LambdaQueryWrapperX<SysRole>()
-                                .eq(SysRole::getRoleCode, "admin")
-                                .eq(SysRole::getStatus, 1));
+                                .eq(SysRole::getRoleCode, Role.ADMIN.getValue()));
         for (SysRole role : adminRoles) {
             long count =
                     roleMenuMapper.selectCount(
@@ -242,6 +254,12 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     /** 删除指定菜单的所有角色关联 */
     @Override
     @Transactional
+    @Caching(
+            evict = {
+                @CacheEvict(allEntries = true),
+                @CacheEvict(value = "system:role-menu", allEntries = true),
+                @CacheEvict(value = "system:menu", allEntries = true)
+            })
     public void removeMenuRelations(List<Long> menuIds) {
         if (menuIds == null || menuIds.isEmpty()) {
             return;
@@ -252,16 +270,18 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
 
     /** 获取所有启用角色列表（不分页） */
     @Override
-    public List<SysRoleListResp> listEnabled() {
-        return converter.toListResp(
+    @Cacheable(key = "'list:enabled'")
+    public List<SysRoleResp> listEnabled() {
+        return converter.toRespList(
                 list(
                         new LambdaQueryWrapperX<SysRole>()
-                                .eq(SysRole::getStatus, 1)
+                                .eq(SysRole::getStatus, Status.ENABLED.getValue())
                                 .orderByAsc(SysRole::getCreateTime)));
     }
 
     /** 根据用户ID查询其角色ID列表 */
     @Override
+    @Cacheable(value = "system:user-role", key = "'user:'+#userId")
     public List<Long> getRoleIdsByUserId(Long userId) {
         return userRoleMapper
                 .selectList(
@@ -272,42 +292,28 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     }
 
     @Override
-    public List<Long> getUserIdsByRoleIds(List<Long> roleIds) {
-        if (roleIds == null || roleIds.isEmpty()) {
+    @Cacheable(value = "system:user-role", key = "'role:'+#roleId")
+    public List<Long> getUserIdsByRoleId(Long roleId) {
+        if (roleId == null) {
             return List.of();
         }
         return userRoleMapper
                 .selectList(
-                        new LambdaQueryWrapperX<SysUserRole>().in(SysUserRole::getRoleId, roleIds))
+                        new LambdaQueryWrapperX<SysUserRole>().eq(SysUserRole::getRoleId, roleId))
                 .stream()
                 .map(SysUserRole::getUserId)
                 .distinct()
                 .toList();
     }
 
-    /** 根据用户ID查询角色编码列表 */
-    @Override
-    public List<String> getRoleCodesByUserId(Long userId) {
-        List<Long> roleIds = getRoleIdsByUserId(userId);
-        if (roleIds.isEmpty()) {
-            return List.of();
-        }
-        return listByIds(roleIds).stream().map(SysRole::getRoleCode).collect(Collectors.toList());
-    }
-
-    /** 根据用户ID查询角色名称列表 */
-    @Override
-    public List<String> getRoleNamesByUserId(Long userId) {
-        List<Long> roleIds = getRoleIdsByUserId(userId);
-        if (roleIds.isEmpty()) {
-            return List.of();
-        }
-        return listByIds(roleIds).stream().map(SysRole::getRoleName).collect(Collectors.toList());
-    }
-
     /** 删除指定用户的所有角色关联 */
     @Override
     @Transactional
+    @Caching(
+            evict = {
+                @CacheEvict(value = "system:user-role", allEntries = true),
+                @CacheEvict(value = "system:menu:vben", key = "#userId")
+            })
     public void deleteUserRolesByUserId(Long userId) {
         userRoleMapper.delete(
                 new LambdaQueryWrapperX<SysUserRole>().eq(SysUserRole::getUserId, userId));
@@ -316,6 +322,11 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     /** 为指定用户分配角色 */
     @Override
     @Transactional
+    @Caching(
+            evict = {
+                @CacheEvict(value = "system:user-role", allEntries = true),
+                @CacheEvict(value = "system:menu:vben", key = "#userId")
+            })
     public void assignUserRoles(Long userId, List<Long> roleIds) {
         userRoleMapper.delete(
                 new LambdaQueryWrapperX<SysUserRole>().eq(SysUserRole::getUserId, userId));
@@ -329,52 +340,28 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
                                         ur.setRoleId(roleId);
                                         return ur;
                                     })
-                            .collect(Collectors.toList());
+                            .toList();
             list.forEach(userRoleMapper::insert);
         }
-    }
-
-    /** 批量查询多个用户的角色名称映射 */
-    @Override
-    public Map<Long, List<String>> batchGetRoleNamesByUserIds(List<Long> userIds) {
-        if (userIds == null || userIds.isEmpty()) {
-            return Map.of();
-        }
-        List<SysUserRole> userRoles =
-                userRoleMapper.selectList(
-                        new LambdaQueryWrapperX<SysUserRole>().in(SysUserRole::getUserId, userIds));
-        if (userRoles.isEmpty()) {
-            return Map.of();
-        }
-        Set<Long> roleIds =
-                userRoles.stream().map(SysUserRole::getRoleId).collect(Collectors.toSet());
-        Map<Long, String> roleNameMap = getRoleNameMapByIds(roleIds);
-        return userRoles.stream()
-                .collect(
-                        Collectors.groupingBy(
-                                SysUserRole::getUserId,
-                                Collectors.mapping(
-                                        ur -> roleNameMap.getOrDefault(ur.getRoleId(), "未知角色"),
-                                        Collectors.toList())));
     }
 
     private SysRole getRoleOrThrow(Long id) {
         SysRole role = super.getById(id);
         if (role == null) {
-            throw new BizException(CommonErrorCode.NOT_FOUND);
+            throw new BizException(SystemErrorCode.ROLE_NOT_FOUND);
         }
         return role;
     }
 
     private void checkModifiable(SysRole role) {
-        if (Integer.valueOf(0).equals(role.getModifiable())) {
+        if (Modifiable.IMMUTABLE.getValue().equals(role.getModifiable())) {
             throw new BizException(SystemErrorCode.ROLE_NOT_MODIFIABLE);
         }
     }
 
     private void checkDeletable(SysRole role) {
         checkModifiable(role);
-        if (Integer.valueOf(1).equals(role.getIsBuiltin())) {
+        if (IsBuiltin.BUILTIN.getValue().equals(role.getIsBuiltin())) {
             throw new BizException(SystemErrorCode.ROLE_BUILTIN_NOT_DELETABLE);
         }
     }

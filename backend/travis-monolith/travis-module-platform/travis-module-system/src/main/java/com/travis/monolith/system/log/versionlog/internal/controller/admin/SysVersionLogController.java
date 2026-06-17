@@ -4,7 +4,7 @@ import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
-import com.travis.monolith.system.common.api.SystemPermsConstant;
+import com.travis.monolith.system.common.api.constant.SystemPermission;
 import com.travis.monolith.system.log.versionlog.api.request.SysVersionLogCreateReq;
 import com.travis.monolith.system.log.versionlog.api.request.SysVersionLogUpdateReq;
 import com.travis.monolith.system.log.versionlog.api.response.SysVersionLogDetailResp;
@@ -32,7 +32,7 @@ public class SysVersionLogController {
 
     /** 分页查询版本日志 */
     @GetMapping("/page")
-    @SaCheckPermission(value = SystemPermsConstant.VERSION_QUERY, type = LoginType.ADMIN)
+    @SaCheckPermission(value = SystemPermission.VERSION_QUERY, type = LoginType.ADMIN)
     public ApiResponse<PageResp<SysVersionLogPageResp>> page(
             @RequestParam(required = false) String version,
             @RequestParam(required = false) String title,
@@ -45,14 +45,14 @@ public class SysVersionLogController {
 
     /** 获取版本日志详情 */
     @GetMapping("/{id}")
-    @SaCheckPermission(value = SystemPermsConstant.VERSION_QUERY, type = LoginType.ADMIN)
-    public ApiResponse<SysVersionLogDetailResp> getDetail(@PathVariable Long id) {
+    @SaCheckPermission(value = SystemPermission.VERSION_QUERY, type = LoginType.ADMIN)
+    public ApiResponse<SysVersionLogDetailResp> get(@PathVariable Long id) {
         return ApiResponse.success(versionLogService.getById(id));
     }
 
     /** 新增版本日志 */
     @PostMapping
-    @SaCheckPermission(value = SystemPermsConstant.VERSION_CREATE, type = LoginType.ADMIN)
+    @SaCheckPermission(value = SystemPermission.VERSION_CREATE, type = LoginType.ADMIN)
     public ApiResponse<Void> add(@RequestBody @Valid SysVersionLogCreateReq req) {
         versionLogService.create(req);
         return ApiResponse.success();
@@ -60,7 +60,7 @@ public class SysVersionLogController {
 
     /** 更新版本日志 */
     @PutMapping("/{id}")
-    @SaCheckPermission(value = SystemPermsConstant.VERSION_UPDATE, type = LoginType.ADMIN)
+    @SaCheckPermission(value = SystemPermission.VERSION_UPDATE, type = LoginType.ADMIN)
     public ApiResponse<Void> update(
             @PathVariable Long id, @RequestBody @Valid SysVersionLogUpdateReq req) {
         versionLogService.update(id, req);
@@ -69,7 +69,7 @@ public class SysVersionLogController {
 
     /** 删除版本日志 */
     @DeleteMapping("/{id}")
-    @SaCheckPermission(value = SystemPermsConstant.VERSION_DELETE, type = LoginType.ADMIN)
+    @SaCheckPermission(value = SystemPermission.VERSION_DELETE, type = LoginType.ADMIN)
     public ApiResponse<Void> delete(@PathVariable Long id) {
         versionLogService.deleteById(id);
         return ApiResponse.success();

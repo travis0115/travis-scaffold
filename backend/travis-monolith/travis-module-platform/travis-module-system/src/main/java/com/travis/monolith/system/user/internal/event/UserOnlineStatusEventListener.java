@@ -1,7 +1,8 @@
 package com.travis.monolith.system.user.internal.event;
 
 import com.travis.infrastructure.framework.rocketmq.core.AbstractEventListener;
-import com.travis.monolith.system.common.api.SystemEventConstant;
+import com.travis.monolith.system.common.api.event.SystemEventTopic;
+import com.travis.monolith.system.common.api.event.SystemEventType;
 import com.travis.monolith.system.user.api.event.UserOnlinePayload;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,8 +27,8 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RocketMQMessageListener(
-        topic = SystemEventConstant.NORMAL_EVENT,
-        tag = SystemEventConstant.USER_ONLINE_STATUS,
+        topic = SystemEventTopic.NORMAL_EVENT,
+        tag = SystemEventType.USER_ONLINE_STATUS,
         consumerGroup = EventConsumerGroup.USER_ONLINE_STATUS_CONSUMER_GROUP)
 @RequiredArgsConstructor
 public class UserOnlineStatusEventListener extends AbstractEventListener<UserOnlinePayload> {

@@ -6,7 +6,7 @@ import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
-import com.travis.monolith.system.common.api.SystemPermsConstant;
+import com.travis.monolith.system.common.api.constant.SystemPermission;
 import com.travis.monolith.system.dept.api.request.SysDeptCreateReq;
 import com.travis.monolith.system.dept.api.request.SysDeptUpdateReq;
 import com.travis.monolith.system.dept.api.response.SysDeptResp;
@@ -38,7 +38,7 @@ public class SysDeptController {
      * @return 部门树
      */
     @GetMapping("/list")
-    @SaCheckPermission(value = SystemPermsConstant.DEPT_QUERY, type = LoginType.ADMIN)
+    @SaCheckPermission(value = SystemPermission.DEPT_QUERY, type = LoginType.ADMIN)
     public ApiResponse<List<SysDeptResp>> list() {
         return ApiResponse.success(deptService.listTree());
     }
@@ -50,7 +50,7 @@ public class SysDeptController {
      * @return 部门详情
      */
     @GetMapping("/{id}")
-    @SaCheckPermission(value = SystemPermsConstant.DEPT_QUERY, type = LoginType.ADMIN)
+    @SaCheckPermission(value = SystemPermission.DEPT_QUERY, type = LoginType.ADMIN)
     public ApiResponse<SysDeptResp> get(@PathVariable Long id) {
         return ApiResponse.success(deptService.getById(id));
     }
@@ -64,7 +64,7 @@ public class SysDeptController {
     @OperationLog(action = "新增部门")
     @NoRepeatSubmit
     @PostMapping
-    @SaCheckPermission(value = SystemPermsConstant.DEPT_CREATE, type = LoginType.ADMIN)
+    @SaCheckPermission(value = SystemPermission.DEPT_CREATE, type = LoginType.ADMIN)
     public ApiResponse<Void> add(@RequestBody @Valid SysDeptCreateReq req) {
         deptService.create(req);
         return ApiResponse.success();
@@ -80,7 +80,7 @@ public class SysDeptController {
     @OperationLog(action = "更新部门")
     @NoRepeatSubmit
     @PutMapping("/{id}")
-    @SaCheckPermission(value = SystemPermsConstant.DEPT_UPDATE, type = LoginType.ADMIN)
+    @SaCheckPermission(value = SystemPermission.DEPT_UPDATE, type = LoginType.ADMIN)
     public ApiResponse<Void> update(
             @PathVariable Long id, @RequestBody @Valid SysDeptUpdateReq req) {
         deptService.update(id, req);
@@ -96,7 +96,7 @@ public class SysDeptController {
     @OperationLog(action = "删除部门")
     @NoRepeatSubmit
     @DeleteMapping("/{id}")
-    @SaCheckPermission(value = SystemPermsConstant.DEPT_DELETE, type = LoginType.ADMIN)
+    @SaCheckPermission(value = SystemPermission.DEPT_DELETE, type = LoginType.ADMIN)
     public ApiResponse<Void> delete(@PathVariable Long id) {
         deptService.deleteById(id);
         return ApiResponse.success();

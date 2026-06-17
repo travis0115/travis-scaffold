@@ -7,9 +7,9 @@ import com.travis.monolith.system.dept.api.SysDeptApi;
 import com.travis.monolith.system.user.api.SysUserApi;
 import com.travis.monolith.system.user.api.response.SysUserOptionResp;
 import com.travis.monolith.system.user.internal.entity.SysUser;
-import com.travis.monolith.system.user.internal.mapper.SysUserMapper;
 import com.travis.monolith.system.user.internal.service.SysUserService;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -21,7 +21,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SysUserApiImpl implements SysUserApi {
     private final SysUserService userService;
-    private final SysUserMapper userMapper;
     private final SysDeptApi deptApi;
 
     @Override
@@ -54,11 +53,7 @@ public class SysUserApiImpl implements SysUserApi {
 
     @Override
     public String getUsernameById(Long userId) {
-        if (userId == null) {
-            return null;
-        }
-        var user = userMapper.selectById(userId);
-        return user != null ? user.getUsername() : null;
+        return userService.getUsernameById(userId);
     }
 
     @Override
@@ -66,8 +61,14 @@ public class SysUserApiImpl implements SysUserApi {
         if (userIds == null || userIds.isEmpty()) {
             return Map.of();
         }
-        return userMapper.selectBatchIds(userIds).stream()
-                .collect(Collectors.toMap(SysUser::getId, SysUser::getUsername));
+        Map<Long, String> result = new LinkedHashMap<>();
+        for (Long userId : userIds) {
+            var username = userService.getUsernameById(userId);
+            if (username != null) {
+                result.put(userId, username);
+            }
+        }
+        return result;
     }
 
     @Override

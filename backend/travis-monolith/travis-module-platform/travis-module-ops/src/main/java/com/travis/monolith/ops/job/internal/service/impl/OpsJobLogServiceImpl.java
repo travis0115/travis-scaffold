@@ -67,7 +67,7 @@ public class OpsJobLogServiceImpl extends ServiceImpl<OpsJobLogMapper, OpsJobLog
     }
 
     @Override
-    public OpsJobLogDetailResp getDetail(Long id) {
+    public OpsJobLogDetailResp get(Long id) {
         OpsJobLog log = getById(id);
         if (log == null) {
             throw new BizException(OpsJobErrorCode.LOG_NOT_FOUND);

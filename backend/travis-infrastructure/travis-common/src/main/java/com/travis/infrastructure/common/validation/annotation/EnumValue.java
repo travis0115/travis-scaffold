@@ -1,6 +1,6 @@
 package com.travis.infrastructure.common.validation.annotation;
 
-import com.travis.infrastructure.common.validation.validator.InValidator;
+import com.travis.infrastructure.common.validation.validator.EnumValueValidator;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 import java.lang.annotation.*;
@@ -14,9 +14,9 @@ import java.lang.annotation.*;
     ElementType.TYPE_USE
 })
 @Retention(RetentionPolicy.RUNTIME)
-@Constraint(validatedBy = InValidator.class)
+@Constraint(validatedBy = EnumValueValidator.class)
 @Documented
-public @interface In {
+public @interface EnumValue {
 
     String message() default "参数值不在允许范围内";
 
@@ -24,5 +24,5 @@ public @interface In {
 
     Class<? extends Payload>[] payload() default {};
 
-    int[] value();
+    Class<? extends Enum<?>> value();
 }

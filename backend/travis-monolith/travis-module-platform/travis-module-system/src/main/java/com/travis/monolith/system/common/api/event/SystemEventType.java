@@ -1,13 +1,11 @@
-package com.travis.monolith.system.common.api;
+package com.travis.monolith.system.common.api.event;
 
 /**
- * System模块 Event相关常量
+ * System模块 Event
  *
  * @author travis
  */
-public class SystemEventConstant {
-    /** 系统普通消息 Topic */
-    public static final String NORMAL_EVENT = "system-normal-event";
+public class SystemEventType {
 
     /** 用户登录事件 Tag */
     public static final String USER_LOGIN = "user-login";

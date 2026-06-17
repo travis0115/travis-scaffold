@@ -11,6 +11,7 @@ type DictOption = {
 };
 
 const dictOptionsCache = new Map<string, DictOption[]>();
+let dictTreeCache: SystemDictApi.SysDict[] | undefined;
 let dictTreePromise: Promise<SystemDictApi.SysDict[]> | undefined;
 
 function normalizeDictValue(value: string) {
@@ -36,16 +37,27 @@ function buildDictOptions(dict?: SystemDictApi.SysDict) {
     }));
 }
 
+function syncOptions(
+  options: DictOption[],
+  dicts: SystemDictApi.SysDict[],
+  dictType: string,
+) {
+  const dict = dicts.find((item) => item.dictType === dictType);
+  options.splice(0, options.length, ...buildDictOptions(dict));
+}
+
 function syncCachedOptions(dicts: SystemDictApi.SysDict[]) {
   dictOptionsCache.forEach((options, dictType) => {
-    const dict = dicts.find((item) => item.dictType === dictType);
-    options.splice(0, options.length, ...buildDictOptions(dict));
+    syncOptions(options, dicts, dictType);
   });
 }
 
-function loadDictTree() {
-  dictTreePromise ??= getDictTree()
+function loadDictTree(force = false) {
+  if (!force && dictTreePromise) return dictTreePromise;
+
+  dictTreePromise = getDictTree()
     .then((dicts) => {
+      dictTreeCache = dicts;
       syncCachedOptions(dicts);
       return dicts;
     })
@@ -63,22 +75,21 @@ export function getDictOptions(dictType: string) {
   const options = reactive<DictOption[]>([]);
   dictOptionsCache.set(dictType, options);
 
-  loadDictTree();
+  if (dictTreeCache) {
+    syncOptions(options, dictTreeCache, dictType);
+  } else {
+    loadDictTree();
+  }
 
   return options;
 }
 
+export async function initDictOptions() {
+  await loadDictTree();
+}
+
 export async function reloadDictOptions() {
-  dictTreePromise = getDictTree()
-    .then((dicts) => {
-      syncCachedOptions(dicts);
-      return dicts;
-    })
-    .catch((error) => {
-      dictTreePromise = undefined;
-      throw error;
-    });
-  await dictTreePromise;
+  await loadDictTree(true);
 }
 
 export function getDictLabel(

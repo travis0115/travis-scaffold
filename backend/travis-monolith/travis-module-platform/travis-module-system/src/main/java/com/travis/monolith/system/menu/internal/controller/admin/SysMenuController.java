@@ -6,7 +6,7 @@ import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
-import com.travis.monolith.system.common.api.SystemPermsConstant;
+import com.travis.monolith.system.common.api.constant.SystemPermission;
 import com.travis.monolith.system.menu.api.request.SysMenuCreateReq;
 import com.travis.monolith.system.menu.api.request.SysMenuUpdateReq;
 import com.travis.monolith.system.menu.api.response.SysMenuResp;
@@ -38,7 +38,7 @@ public class SysMenuController {
      * @return 菜单树
      */
     @GetMapping("/list")
-    @SaCheckPermission(value = SystemPermsConstant.MENU_QUERY, type = LoginType.ADMIN)
+    @SaCheckPermission(value = SystemPermission.MENU_QUERY, type = LoginType.ADMIN)
     public ApiResponse<List<SysMenuResp>> list() {
         return ApiResponse.success(menuService.listTree());
     }
@@ -50,7 +50,7 @@ public class SysMenuController {
      * @return 菜单详情
      */
     @GetMapping("/{id}")
-    @SaCheckPermission(value = SystemPermsConstant.MENU_QUERY, type = LoginType.ADMIN)
+    @SaCheckPermission(value = SystemPermission.MENU_QUERY, type = LoginType.ADMIN)
     public ApiResponse<SysMenuResp> get(@PathVariable Long id) {
         return ApiResponse.success(menuService.getById(id));
     }
@@ -64,7 +64,7 @@ public class SysMenuController {
     @OperationLog(action = "新增菜单")
     @NoRepeatSubmit
     @PostMapping
-    @SaCheckPermission(value = SystemPermsConstant.MENU_CREATE, type = LoginType.ADMIN)
+    @SaCheckPermission(value = SystemPermission.MENU_CREATE, type = LoginType.ADMIN)
     public ApiResponse<Void> create(@RequestBody @Valid SysMenuCreateReq req) {
         menuService.create(req);
         return ApiResponse.success();
@@ -80,7 +80,7 @@ public class SysMenuController {
     @OperationLog(action = "更新菜单")
     @NoRepeatSubmit
     @PutMapping("/{id}")
-    @SaCheckPermission(value = SystemPermsConstant.MENU_UPDATE, type = LoginType.ADMIN)
+    @SaCheckPermission(value = SystemPermission.MENU_UPDATE, type = LoginType.ADMIN)
     public ApiResponse<Void> update(
             @PathVariable Long id, @RequestBody @Valid SysMenuUpdateReq req) {
         menuService.update(id, req);
@@ -96,7 +96,7 @@ public class SysMenuController {
     @OperationLog(action = "删除菜单")
     @NoRepeatSubmit
     @DeleteMapping("/{id}")
-    @SaCheckPermission(value = SystemPermsConstant.MENU_DELETE, type = LoginType.ADMIN)
+    @SaCheckPermission(value = SystemPermission.MENU_DELETE, type = LoginType.ADMIN)
     public ApiResponse<Void> delete(@PathVariable Long id) {
         menuService.deleteById(id);
         return ApiResponse.success();
@@ -111,7 +111,7 @@ public class SysMenuController {
     @OperationLog(action = "上移菜单")
     @NoRepeatSubmit(interval = 1)
     @PutMapping("/{id}/move-up")
-    @SaCheckPermission(value = SystemPermsConstant.MENU_UPDATE, type = LoginType.ADMIN)
+    @SaCheckPermission(value = SystemPermission.MENU_UPDATE, type = LoginType.ADMIN)
     public ApiResponse<Void> moveUp(@PathVariable Long id) {
         menuService.moveUp(id);
         return ApiResponse.success();
@@ -126,7 +126,7 @@ public class SysMenuController {
     @OperationLog(action = "下移菜单")
     @NoRepeatSubmit(interval = 1)
     @PutMapping("/{id}/move-down")
-    @SaCheckPermission(value = SystemPermsConstant.MENU_UPDATE, type = LoginType.ADMIN)
+    @SaCheckPermission(value = SystemPermission.MENU_UPDATE, type = LoginType.ADMIN)
     public ApiResponse<Void> moveDown(@PathVariable Long id) {
         menuService.moveDown(id);
         return ApiResponse.success();

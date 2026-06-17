@@ -12,7 +12,7 @@ import com.travis.monolith.system.notice.internal.entity.SysNotice;
 public interface SysNoticeService extends IService<SysNotice> {
     PageResp<SysNoticePageResp> page(SysNoticePageReq req);
 
-    SysNoticeDetailResp getDetail(Long id);
+    SysNoticeDetailResp get(Long id);
 
     void create(SysNoticeCreateReq req);
 

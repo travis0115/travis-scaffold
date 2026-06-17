@@ -41,7 +41,7 @@ public class OpsJobController {
     @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_QUERY, type = LoginType.ADMIN)
     @GetMapping("/{id:\\d+}")
     public ApiResponse<OpsJobDetailResp> get(@PathVariable Long id) {
-        return ApiResponse.success(jobService.getDetail(id));
+        return ApiResponse.success(jobService.get(id));
     }
 
     @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_UPDATE, type = LoginType.ADMIN)

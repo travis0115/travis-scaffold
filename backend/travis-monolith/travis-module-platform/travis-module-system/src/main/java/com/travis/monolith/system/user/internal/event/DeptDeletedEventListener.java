@@ -2,7 +2,8 @@ package com.travis.monolith.system.user.internal.event;
 
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.rocketmq.core.AbstractEventListener;
-import com.travis.monolith.system.common.api.SystemEventConstant;
+import com.travis.monolith.system.common.api.event.SystemEventTopic;
+import com.travis.monolith.system.common.api.event.SystemEventType;
 import com.travis.monolith.system.dept.api.SysDeptApi;
 import com.travis.monolith.system.dept.api.event.DeptDeletedPayload;
 import com.travis.monolith.system.user.internal.entity.SysUser;
@@ -20,8 +21,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RocketMQMessageListener(
-        topic = SystemEventConstant.NORMAL_EVENT,
-        tag = SystemEventConstant.DEPT_DELETED,
+        topic = SystemEventTopic.NORMAL_EVENT,
+        tag = SystemEventType.DEPT_DELETED,
         consumerGroup = EventConsumerGroup.DEPT_DELETED_CONSUMER_GROUP)
 @RequiredArgsConstructor
 public class DeptDeletedEventListener extends AbstractEventListener<DeptDeletedPayload> {

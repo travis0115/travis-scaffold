@@ -7,7 +7,7 @@ import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
-import com.travis.monolith.system.common.api.SystemPermsConstant;
+import com.travis.monolith.system.common.api.constant.SystemPermission;
 import com.travis.monolith.system.user.api.request.ChangePasswordReq;
 import com.travis.monolith.system.user.api.request.ResetPasswordReq;
 import com.travis.monolith.system.user.api.request.SysUserCreateReq;
@@ -46,7 +46,7 @@ public class SysUserController {
      * @return 分页结果
      */
     @GetMapping("/page")
-    @SaCheckPermission(value = SystemPermsConstant.USER_QUERY, type = LoginType.ADMIN)
+    @SaCheckPermission(value = SystemPermission.USER_QUERY, type = LoginType.ADMIN)
     public ApiResponse<PageResp<SysUserPageResp>> page(@Valid SysUserPageReq req) {
         return ApiResponse.success(userService.page(req));
     }
@@ -58,8 +58,8 @@ public class SysUserController {
      * @return 用户详情（含角色信息）
      */
     @GetMapping("/{id}")
-    @SaCheckPermission(value = SystemPermsConstant.USER_QUERY, type = LoginType.ADMIN)
-    public ApiResponse<SysUserDetailResp> getDetail(@PathVariable Long id) {
+    @SaCheckPermission(value = SystemPermission.USER_QUERY, type = LoginType.ADMIN)
+    public ApiResponse<SysUserDetailResp> get(@PathVariable Long id) {
         return ApiResponse.success(userService.getById(id));
     }
 
@@ -72,7 +72,7 @@ public class SysUserController {
     @OperationLog(action = "新增用户")
     @NoRepeatSubmit
     @PostMapping
-    @SaCheckPermission(value = SystemPermsConstant.USER_CREATE, type = LoginType.ADMIN)
+    @SaCheckPermission(value = SystemPermission.USER_CREATE, type = LoginType.ADMIN)
     public ApiResponse<Long> add(@RequestBody @Valid SysUserCreateReq req) {
         return ApiResponse.success(userService.create(req));
     }
@@ -87,7 +87,7 @@ public class SysUserController {
     @OperationLog(action = "更新用户")
     @NoRepeatSubmit
     @PutMapping("/{id}")
-    @SaCheckPermission(value = SystemPermsConstant.USER_UPDATE, type = LoginType.ADMIN)
+    @SaCheckPermission(value = SystemPermission.USER_UPDATE, type = LoginType.ADMIN)
     public ApiResponse<Void> update(
             @PathVariable Long id, @RequestBody @Valid SysUserUpdateReq req) {
         userService.update(id, req);
@@ -103,7 +103,7 @@ public class SysUserController {
     @OperationLog(action = "删除用户")
     @NoRepeatSubmit
     @DeleteMapping("/{id}")
-    @SaCheckPermission(value = SystemPermsConstant.USER_DELETE, type = LoginType.ADMIN)
+    @SaCheckPermission(value = SystemPermission.USER_DELETE, type = LoginType.ADMIN)
     public ApiResponse<Void> delete(@PathVariable Long id) {
         userService.deleteById(id);
         return ApiResponse.success();
@@ -118,7 +118,7 @@ public class SysUserController {
     @OperationLog(action = "分配用户角色")
     @NoRepeatSubmit
     @PostMapping("/roles")
-    @SaCheckPermission(value = SystemPermsConstant.USER_UPDATE, type = LoginType.ADMIN)
+    @SaCheckPermission(value = SystemPermission.USER_UPDATE, type = LoginType.ADMIN)
     public ApiResponse<Void> assignRoles(@RequestBody @Valid SysUserRoleReq req) {
         userService.assignRoles(req);
         return ApiResponse.success();
@@ -176,7 +176,7 @@ public class SysUserController {
     @OperationLog(action = "重置用户密码", recordRequest = false, recordResponse = false)
     @NoRepeatSubmit
     @PutMapping("/{id}/reset-password")
-    @SaCheckPermission(value = SystemPermsConstant.USER_UPDATE, type = LoginType.ADMIN)
+    @SaCheckPermission(value = SystemPermission.USER_UPDATE, type = LoginType.ADMIN)
     public ApiResponse<String> resetPassword(
             @PathVariable Long id, @RequestBody(required = false) ResetPasswordReq req) {
         String newPassword =

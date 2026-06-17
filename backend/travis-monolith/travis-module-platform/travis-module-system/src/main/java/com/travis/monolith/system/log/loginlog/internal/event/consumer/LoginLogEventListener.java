@@ -1,7 +1,8 @@
 package com.travis.monolith.system.log.loginlog.internal.event.consumer;
 
 import com.travis.infrastructure.framework.rocketmq.core.AbstractEventListener;
-import com.travis.monolith.system.common.api.SystemEventConstant;
+import com.travis.monolith.system.common.api.event.SystemEventTopic;
+import com.travis.monolith.system.common.api.event.SystemEventType;
 import com.travis.monolith.system.log.loginlog.internal.service.SysLoginLogService;
 import com.travis.monolith.system.user.api.event.UserLoginPayload;
 import com.travis.monolith.system.user.internal.event.EventConsumerGroup;
@@ -16,8 +17,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RocketMQMessageListener(
-        topic = SystemEventConstant.NORMAL_EVENT,
-        tag = SystemEventConstant.USER_LOGIN,
+        topic = SystemEventTopic.NORMAL_EVENT,
+        tag = SystemEventType.USER_LOGIN,
         consumerGroup = EventConsumerGroup.USER_LOGIN_CONSUMER_GROUP)
 @RequiredArgsConstructor
 public class LoginLogEventListener extends AbstractEventListener<UserLoginPayload> {

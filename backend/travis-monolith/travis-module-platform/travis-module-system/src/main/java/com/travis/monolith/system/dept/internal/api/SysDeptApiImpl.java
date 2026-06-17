@@ -4,6 +4,7 @@ import com.travis.monolith.system.dept.api.SysDeptApi;
 import com.travis.monolith.system.dept.api.response.SysDeptResp;
 import com.travis.monolith.system.dept.internal.service.SysDeptService;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +28,17 @@ public class SysDeptApiImpl implements SysDeptApi {
 
     @Override
     public Map<Long, String> getDeptNameMapByIds(Collection<Long> ids) {
-        return deptService.getDeptNameMapByIds(ids);
+        if (ids == null || ids.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, String> result = new LinkedHashMap<>();
+        for (Long id : ids) {
+            var deptName = deptService.getDeptNameById(id);
+            if (deptName != null) {
+                result.put(id, deptName);
+            }
+        }
+        return result;
     }
 
     @Override

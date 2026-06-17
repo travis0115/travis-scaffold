@@ -2,7 +2,7 @@ package com.travis.monolith.system.user.internal.event;
 
 import com.travis.infrastructure.common.event.MessagePublisher;
 import com.travis.infrastructure.framework.websocket.core.WebSocketSessionListener;
-import com.travis.monolith.system.common.api.SystemEvent;
+import com.travis.monolith.system.common.api.event.SystemEvent;
 import com.travis.monolith.system.user.api.event.UserOnlinePayload;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

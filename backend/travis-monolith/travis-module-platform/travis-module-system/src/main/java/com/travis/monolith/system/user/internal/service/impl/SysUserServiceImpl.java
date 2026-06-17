@@ -12,7 +12,7 @@ import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.util.Ip2RegionUtil;
-import com.travis.monolith.system.common.api.SystemErrorCode;
+import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.dept.api.SysDeptApi;
 import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.api.request.*;
@@ -22,15 +22,16 @@ import com.travis.monolith.system.user.internal.converter.SysUserConverter;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.mapper.SysUserMapper;
 import com.travis.monolith.system.user.internal.service.SysUserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 用户管理服务实现，包含密码加密（BCrypt）、角色分配及部门名称关联查询
@@ -39,6 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = "system:user")
 public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
         implements SysUserService {
 
@@ -119,6 +121,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
     /** 更新用户信息，密码为空时保持原密码不变 */
     @Override
     @Transactional
+    @CacheEvict( key = "'username:'+#id")
     public void update(Long id, SysUserUpdateReq req) {
         SysUser user = super.getById(id);
         if (user == null) {
@@ -143,6 +146,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
     /** 删除用户，同时清除用户-角色关联并使其会话失效 */
     @Override
     @Transactional
+    @CacheEvict(key = "'username:'+#id")
     public void deleteById(Long id) {
         // 通过角色服务删除用户-角色关联
         roleApi.deleteUserRolesByUserId(id);
@@ -166,6 +170,21 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
                 new LambdaQueryWrapperX<SysUser>()
                         .eq(SysUser::getUsername, username)
                         .last("LIMIT 1"));
+    }
+
+    /** 根据用户ID查询用户名 */
+    @Override
+    @Cacheable(key = "'username:'+#userId")
+    public String getUsernameById(Long userId) {
+        if (userId == null) {
+            return null;
+        }
+        var user =
+                lambdaQuery()
+                        .select(SysUser::getId, SysUser::getUsername)
+                        .eq(SysUser::getId, userId)
+                        .one();
+        return user == null ? null : user.getUsername();
     }
 
     /** 当前登录用户修改个人资料 */
@@ -301,48 +320,4 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
         return resp;
     }
 
-    /**
-     * 批量实体转视图对象，优化 N+1 查询：一次性加载所有部门和角色数据
-     *
-     * @param users 用户实体列表
-     * @return 用户视图对象列表
-     */
-    private List<SysUserPageResp> toVOList(List<SysUser> users) {
-        if (users.isEmpty()) {
-            return List.of();
-        }
-
-        // 批量查询所有关联的部门
-        Set<Long> deptIds =
-                users.stream()
-                        .map(SysUser::getDeptId)
-                        .filter(java.util.Objects::nonNull)
-                        .collect(Collectors.toSet());
-        Map<Long, String> deptNameMap = deptApi.getDeptNameMapByIds(deptIds);
-
-        // 批量查询所有关联的角色名称（按用户分组）
-        List<Long> userIds = users.stream().map(SysUser::getId).collect(Collectors.toList());
-        Map<Long, List<String>> userRoleNamesMap = roleApi.batchGetRoleNamesByUserIds(userIds);
-
-        return users.stream()
-                .map(
-                        user -> {
-                            SysUserPageResp resp = converter.toResp(user);
-                            resp.setAvatar(user.getAvatar());
-                            // 设置部门名称
-                            if (user.getDeptId() != null) {
-                                resp.setDeptName(deptNameMap.get(user.getDeptId()));
-                            }
-                            // 设置角色名称
-                            resp.setRoleNames(
-                                    userRoleNamesMap.getOrDefault(user.getId(), List.of()));
-                            // 解析最后登录IP到地理位置
-                            if (user.getLastLoginIp() != null && !user.getLastLoginIp().isEmpty()) {
-                                resp.setLastLoginLocation(
-                                        Ip2RegionUtil.getRegionByIP(user.getLastLoginIp()));
-                            }
-                            return resp;
-                        })
-                .collect(Collectors.toList());
-    }
 }

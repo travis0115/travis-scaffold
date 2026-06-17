@@ -82,7 +82,7 @@ public class OpsJobServiceImpl extends ServiceImpl<OpsJobMapper, OpsJob> impleme
     }
 
     @Override
-    public OpsJobDetailResp getDetail(Long id) {
+    public OpsJobDetailResp get(Long id) {
         OpsJob job = getRequired(id);
         return toResponse(
                 job, userApi.getUsernameById(job.getOwnerUserId()), new OpsJobDetailResp());

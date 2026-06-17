@@ -1,8 +1,11 @@
 package com.travis.monolith.system.menu.api.request;
 
 import cn.hutool.core.util.StrUtil;
-import com.travis.infrastructure.common.validation.annotation.In;
+import com.travis.infrastructure.common.validation.annotation.EnumValue;
+import com.travis.monolith.system.common.api.enums.MenuType;
+import com.travis.monolith.system.common.api.enums.Status;
 import jakarta.validation.constraints.*;
+import java.util.Objects;
 import lombok.Data;
 
 /**
@@ -35,9 +38,7 @@ public class SysMenuCreateReq {
 
     /** 菜单类型（0-目录 1-菜单 2-按钮） */
     @NotNull(message = "菜单类型不能为空")
-    @In(
-            value = {0, 1, 2},
-            message = "菜单类型错误")
+    @EnumValue(value = MenuType.class, message = "菜单类型错误")
     private Integer menuType;
 
     /** 图标 */
@@ -50,6 +51,8 @@ public class SysMenuCreateReq {
     private Integer sort;
 
     /** 状态（0-禁用 1-启用） */
+    @EnumValue(value = Status.class, message = "状态值错误")
+    @NotNull(message = "状态值不允许为空")
     private Integer status;
 
     /** 路由元信息JSON（Vben Admin RouteMeta 扩展字段） */
@@ -57,6 +60,8 @@ public class SysMenuCreateReq {
 
     @AssertTrue(message = "目录和菜单的路由路径不能为空")
     public boolean isPathValidForRouteMenu() {
-        return (menuType != 0 && menuType != 1) || StrUtil.isNotBlank(path);
+        return (!Objects.equals(menuType, MenuType.DIRECTORY.getValue())
+                        && !Objects.equals(menuType, MenuType.MENU.getValue()))
+                || StrUtil.isNotBlank(path);
     }
 }

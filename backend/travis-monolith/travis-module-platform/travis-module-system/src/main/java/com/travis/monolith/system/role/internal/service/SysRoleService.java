@@ -6,13 +6,10 @@ import com.travis.monolith.system.role.api.request.SysRoleCreateReq;
 import com.travis.monolith.system.role.api.request.SysRoleMenuReq;
 import com.travis.monolith.system.role.api.request.SysRolePageReq;
 import com.travis.monolith.system.role.api.request.SysRoleUpdateReq;
-import com.travis.monolith.system.role.api.response.SysRoleDetailResp;
-import com.travis.monolith.system.role.api.response.SysRoleListResp;
-import com.travis.monolith.system.role.api.response.SysRolePageResp;
+import com.travis.monolith.system.role.api.response.SysRoleResp;
 import com.travis.monolith.system.role.internal.entity.SysRole;
+
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * 角色管理服务接口，提供角色的增删改查、菜单分配及角色信息查询
@@ -27,7 +24,7 @@ public interface SysRoleService extends IService<SysRole> {
      * @param req 分页查询参数
      * @return 分页结果
      */
-    PageResp<SysRolePageResp> page(SysRolePageReq req);
+    PageResp<SysRoleResp> page(SysRolePageReq req);
 
     /**
      * 获取角色详情，包含已分配的菜单ID列表
@@ -35,7 +32,7 @@ public interface SysRoleService extends IService<SysRole> {
      * @param id 角色ID
      * @return 角色详情视图
      */
-    SysRoleDetailResp getById(Long id);
+    SysRoleResp getById(Long id);
 
     /**
      * 新增角色
@@ -67,36 +64,28 @@ public interface SysRoleService extends IService<SysRole> {
     void assignMenus(SysRoleMenuReq req);
 
     /**
-     * 根据角色ID列表获取角色编码列表
+     * 根据角色ID获取角色编码
      *
-     * @param roleIds 角色ID列表
-     * @return 角色编码列表
+     * @param roleId 角色ID
+     * @return 角色编码
      */
-    List<String> getRoleCodesByRoleIds(List<Long> roleIds);
+    String getRoleCodeByRoleId(Long roleId);
 
     /**
-     * 根据角色ID列表获取角色名称列表
+     * 根据角色ID获取角色名称
      *
-     * @param roleIds 角色ID列表
-     * @return 角色名称列表
+     * @param roleId 角色ID
+     * @return 角色名称
      */
-    List<String> getRoleNamesByRoleIds(List<Long> roleIds);
+    String getRoleNameByRoleId(Long roleId);
 
     /**
-     * 根据角色ID列表批量查询角色名称映射（roleId -> roleName）
+     * 根据角色ID获取关联的菜单ID列表
      *
-     * @param roleIds 角色ID集合
-     * @return roleId -> roleName 映射
+     * @param roleId 角色ID
+     * @return 菜单ID列表
      */
-    Map<Long, String> getRoleNameMapByIds(Set<Long> roleIds);
-
-    /**
-     * 根据角色ID列表获取关联的菜单ID列表
-     *
-     * @param roleIds 角色ID列表
-     * @return 菜单ID列表（去重）
-     */
-    List<Long> getMenuIdsByRoleIds(List<Long> roleIds);
+    List<Long> getMenuIdsByRoleId(Long roleId);
 
     /**
      * 将指定菜单自动分配给所有 admin 角色
@@ -117,7 +106,7 @@ public interface SysRoleService extends IService<SysRole> {
      *
      * @return 角色列表
      */
-    List<SysRoleListResp> listEnabled();
+    List<SysRoleResp> listEnabled();
 
     /**
      * 根据用户ID查询其角色ID列表
@@ -126,22 +115,6 @@ public interface SysRoleService extends IService<SysRole> {
      * @return 角色ID列表
      */
     List<Long> getRoleIdsByUserId(Long userId);
-
-    /**
-     * 根据用户ID查询角色编码列表
-     *
-     * @param userId 用户ID
-     * @return 角色编码列表
-     */
-    List<String> getRoleCodesByUserId(Long userId);
-
-    /**
-     * 根据用户ID查询角色名称列表
-     *
-     * @param userId 用户ID
-     * @return 角色名称列表
-     */
-    List<String> getRoleNamesByUserId(Long userId);
 
     /**
      * 删除指定用户的所有角色关联
@@ -158,13 +131,8 @@ public interface SysRoleService extends IService<SysRole> {
      */
     void assignUserRoles(Long userId, List<Long> roleIds);
 
-    /**
-     * 批量查询多个用户的角色名称映射
-     *
-     * @param userIds 用户ID列表
-     * @return userId -> roleNameList 映射
-     */
-    Map<Long, List<String>> batchGetRoleNamesByUserIds(List<Long> userIds);
 
-    List<Long> getUserIdsByRoleIds(List<Long> roleIds);
+
+    /** 根据角色ID获取关联的用户ID列表 */
+    List<Long> getUserIdsByRoleId(Long roleId);
 }

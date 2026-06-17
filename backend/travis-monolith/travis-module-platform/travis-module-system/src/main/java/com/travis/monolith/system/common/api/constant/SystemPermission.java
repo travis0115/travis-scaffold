@@ -1,12 +1,12 @@
-package com.travis.monolith.system.common.api;
+package com.travis.monolith.system.common.api.constant;
 
 /**
  * 系统权限常量
  *
  * @author travis
  */
-public class SystemPermsConstant {
-    private SystemPermsConstant() {}
+public class SystemPermission {
+    private SystemPermission() {}
 
     /*
      ──────────────────────────────────────────────────────────────── *

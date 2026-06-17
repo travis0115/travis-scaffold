@@ -4,8 +4,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.event.MessagePublisher;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
-import com.travis.monolith.system.common.api.SystemErrorCode;
-import com.travis.monolith.system.common.api.SystemEvent;
+import com.travis.monolith.system.common.api.enums.SystemErrorCode;
+import com.travis.monolith.system.common.api.event.SystemEvent;
 import com.travis.monolith.system.dept.api.event.DeptDeletedPayload;
 import com.travis.monolith.system.dept.api.request.SysDeptCreateReq;
 import com.travis.monolith.system.dept.api.request.SysDeptUpdateReq;
@@ -14,8 +14,6 @@ import com.travis.monolith.system.dept.internal.converter.SysDeptConverter;
 import com.travis.monolith.system.dept.internal.entity.SysDept;
 import com.travis.monolith.system.dept.internal.mapper.SysDeptMapper;
 import com.travis.monolith.system.dept.internal.service.SysDeptService;
-import java.util.*;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheConfig;
@@ -26,6 +24,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 部门管理服务实现，支持树形部门结构的构建

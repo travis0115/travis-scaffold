@@ -64,7 +64,7 @@ public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice
     }
 
     @Override
-    public SysNoticeDetailResp getDetail(Long id) {
+    public SysNoticeDetailResp get(Long id) {
         SysNotice notice = getById(id);
         if (notice == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);

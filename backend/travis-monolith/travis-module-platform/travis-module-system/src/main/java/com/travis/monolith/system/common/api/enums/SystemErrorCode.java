@@ -1,4 +1,4 @@
-package com.travis.monolith.system.common.api;
+package com.travis.monolith.system.common.api.enums;
 
 import com.travis.infrastructure.common.web.exception.ErrorCode;
 import lombok.AllArgsConstructor;
@@ -16,9 +16,10 @@ public enum SystemErrorCode implements ErrorCode {
     USER_USERNAME_EXISTS("SYS_001", "用户名已存在"),
 
     /* role模块 100-199 */
-    ROLE_CODE_EXISTS("SYS_100", "角色编码已存在"),
-    ROLE_NOT_MODIFIABLE("SYS_101", "该角色不允许修改或删除"),
-    ROLE_BUILTIN_NOT_DELETABLE("SYS_102", "系统内置角色不允许删除"),
+    ROLE_NOT_FOUND("SYS_100", "部门不存在"),
+    ROLE_CODE_EXISTS("SYS_101", "角色编码已存在"),
+    ROLE_NOT_MODIFIABLE("SYS_102", "该角色不允许修改或删除"),
+    ROLE_BUILTIN_NOT_DELETABLE("SYS_103", "系统内置角色不允许删除"),
 
     /* dept模块 200-299 */
     DEPT_NOT_FOUND("SYS_200", "部门不存在"),

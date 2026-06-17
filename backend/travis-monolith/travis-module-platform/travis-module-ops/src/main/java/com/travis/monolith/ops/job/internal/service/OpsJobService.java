@@ -17,7 +17,7 @@ import java.util.List;
 public interface OpsJobService {
     PageResp<OpsJobPageResp> page(OpsJobPageReq req);
 
-    OpsJobDetailResp getDetail(Long id);
+    OpsJobDetailResp get(Long id);
 
     void create(OpsJobCreateReq req);
 

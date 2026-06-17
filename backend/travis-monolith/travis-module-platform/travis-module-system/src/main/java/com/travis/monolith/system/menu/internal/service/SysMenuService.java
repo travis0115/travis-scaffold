@@ -74,11 +74,12 @@ public interface SysMenuService extends IService<SysMenu> {
      */
     List<VbenMenuResp> getVbenMenuTree(Long userId);
 
+
     /**
-     * 根据菜单ID列表查询已启用菜单的权限标识列表
+     * 根据菜单ID查询已启用菜单的权限标识
      *
-     * @param menuIds 菜单ID列表
-     * @return 权限标识列表（去重）
+     * @param menuId 菜单ID
+     * @return 权限标识；无权限标识时返回空字符串
      */
-    List<String> getPermissionsByMenuIds(List<Long> menuIds);
+    String getPermissionByMenuId(Long menuId);
 }

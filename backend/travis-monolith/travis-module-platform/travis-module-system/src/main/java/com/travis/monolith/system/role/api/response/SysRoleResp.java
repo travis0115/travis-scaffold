@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SysRoleDetailResp {
+public class SysRoleResp {
     /** 角色ID */
     private Long id;
 

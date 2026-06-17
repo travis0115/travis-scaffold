@@ -11,6 +11,7 @@ import '@vben/styles/antdv-next';
 import { useTitle } from '@vueuse/core';
 
 import { $t, setupI18n } from '#/locales';
+import { initDictOptions } from '#/utils/dict';
 
 import { initComponentAdapter } from './adapter/component';
 import { initSetupVbenForm } from './adapter/form';
@@ -48,6 +49,9 @@ async function bootstrap(namespace: string) {
 
   // 配置 pinia-tore
   await initStores(app, { namespace });
+
+  // 登录态可用时预加载字典，避免表格单元格渲染时才临时拉取。
+  await initDictOptions().catch(() => undefined);
 
   // 初始化时区（使用默认handler，不对接后端API）
   // 后续如需对接后端API保存用户时区偏好，参考 playground/src/timezone-init.ts

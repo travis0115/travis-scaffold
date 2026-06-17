@@ -16,7 +16,8 @@ import lombok.Data;
 public class SysUserCreateReq {
     /** 用户名 */
     @NotBlank(message = "用户名不能为空")
-    @Username(message = "用户名格式不正确，需以字母开头，长度6-16位，仅支持字母、数字和下划线")
+    @Username(message = "用户名格式不正确，需以字母开头，仅支持字母、数字和下划线")
+    @Size(min = 6, max = 16, message = "用户名长度为6-16个字符")
     private String username;
 
     /** 密码（明文，服务端使用 BCrypt 加密后存储） */

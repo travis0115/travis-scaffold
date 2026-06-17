@@ -142,7 +142,7 @@ public class OperationLogAspect {
                 if (SENSITIVE_FIELDS.contains(entry.getKey().toLowerCase())) {
                     objectNode.set(
                             entry.getKey(),
-                            JsonUtil.getObjectMapper().getNodeFactory().textNode("******"));
+                            JsonUtil.getObjectMapper().getNodeFactory().stringNode("******"));
                 } else {
                     maskSensitiveFields(entry.getValue());
                 }

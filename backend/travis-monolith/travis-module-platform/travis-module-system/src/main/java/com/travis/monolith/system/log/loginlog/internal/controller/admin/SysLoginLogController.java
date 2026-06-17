@@ -4,7 +4,7 @@ import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
-import com.travis.monolith.system.common.api.SystemPermsConstant;
+import com.travis.monolith.system.common.api.constant.SystemPermission;
 import com.travis.monolith.system.log.loginlog.api.request.SysLoginLogPageReq;
 import com.travis.monolith.system.log.loginlog.internal.entity.SysLoginLog;
 import com.travis.monolith.system.log.loginlog.internal.service.SysLoginLogService;
@@ -32,7 +32,7 @@ public class SysLoginLogController {
      * @return 分页结果
      */
     @GetMapping("/page")
-    @SaCheckPermission(value = SystemPermsConstant.LOGIN_LOG_QUERY, type = LoginType.ADMIN)
+    @SaCheckPermission(value = SystemPermission.LOGIN_LOG_QUERY, type = LoginType.ADMIN)
     public ApiResponse<PageResp<SysLoginLog>> page(@Valid SysLoginLogPageReq req) {
         return ApiResponse.success(loginLogService.page(req));
     }

@@ -5,7 +5,8 @@ import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
-import com.travis.monolith.system.common.api.SystemErrorCode;
+import com.travis.monolith.system.common.api.enums.Status;
+import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.menu.api.request.SysMenuCreateReq;
 import com.travis.monolith.system.menu.api.request.SysMenuUpdateReq;
 import com.travis.monolith.system.menu.api.response.SysMenuResp;
@@ -15,15 +16,17 @@ import com.travis.monolith.system.menu.internal.entity.SysMenu;
 import com.travis.monolith.system.menu.internal.mapper.SysMenuMapper;
 import com.travis.monolith.system.menu.internal.service.SysMenuService;
 import com.travis.monolith.system.role.api.SysRoleApi;
-import java.util.*;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.core.type.TypeReference;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 菜单管理服务实现，支持菜单树构建和前端 Vben 路由菜单生成
@@ -65,7 +68,11 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     /** 新增菜单 新增后自动关联到所有 admin 角色 */
     @Override
     @Transactional
-    @CacheEvict(allEntries = true)
+    @Caching(
+            evict = {
+                @CacheEvict(allEntries = true),
+                @CacheEvict(value = "system:menu:vben", allEntries = true)
+            })
     public void create(SysMenuCreateReq req) {
         validatePathUnique(req.getPath(), null);
         var menu = converter.toEntity(req);
@@ -76,7 +83,11 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
 
     /** 更新菜单信息 */
     @Override
-    @CacheEvict(allEntries = true)
+    @Caching(
+            evict = {
+                @CacheEvict(allEntries = true),
+                @CacheEvict(value = "system:menu:vben", allEntries = true)
+            })
     @Transactional
     public void update(Long id, SysMenuUpdateReq req) {
         var menu = super.getById(id);
@@ -115,7 +126,11 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     /** 删除菜单及其所有子菜单，并清理角色菜单关联 */
     @Override
     @Transactional
-    @CacheEvict(allEntries = true)
+    @Caching(
+            evict = {
+                @CacheEvict(allEntries = true),
+                @CacheEvict(value = "system:menu:vben", allEntries = true)
+            })
     public void deleteById(Long id) {
         if (super.getById(id) == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
@@ -148,7 +163,11 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     /** 上移菜单，与同级上一个菜单交换排序号 */
     @Override
     @Transactional
-    @CacheEvict(allEntries = true)
+    @Caching(
+            evict = {
+                @CacheEvict(allEntries = true),
+                @CacheEvict(value = "system:menu:vben", allEntries = true)
+            })
     public void moveUp(Long id) {
         var current = super.getById(id);
         if (current == null) {
@@ -170,7 +189,11 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     /** 下移菜单，与同级下一个菜单交换排序号 */
     @Override
     @Transactional
-    @CacheEvict(allEntries = true)
+    @Caching(
+            evict = {
+                @CacheEvict(allEntries = true),
+                @CacheEvict(value = "system:menu:vben", allEntries = true)
+            })
     public void moveDown(Long id) {
         SysMenu current = super.getById(id);
         if (current == null) {
@@ -208,9 +231,9 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
         updateById(b);
     }
 
-    /** 根据角色ID列表生成 Vben Admin 格式的菜单树，自动补充父级菜单确保树结构完整 */
+    /** 根据用户ID生成 Vben Admin 格式的菜单树，自动补充父级菜单确保树结构完整 */
     @Override
-    @Cacheable(key = "'vben:'+#userId")
+    @Cacheable(value = "system:menu:vben", key = "#userId")
     public List<VbenMenuResp> getVbenMenuTree(Long userId) {
         var roleIds = roleApi.getRoleIdsByUserId(userId);
         if (roleIds == null || roleIds.isEmpty()) {
@@ -350,21 +373,21 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
                 .collect(Collectors.toList());
     }
 
-    /** 根据菜单ID列表查询已启用菜单的权限标识列表 */
+    /** 根据菜单ID查询已启用菜单的权限标识 */
     @Override
-    public List<String> getPermissionsByMenuIds(List<Long> menuIds) {
-        if (menuIds == null || menuIds.isEmpty()) {
-            return List.of();
+    @Cacheable(key = "'perm:id:'+#menuId")
+    public String getPermissionByMenuId(Long menuId) {
+        if (menuId == null) {
+            return "";
         }
-        return list(
+        var menu =
+                getOne(
                         new LambdaQueryWrapperX<SysMenu>()
-                                .in(SysMenu::getId, menuIds)
+                                .eq(SysMenu::getId, menuId)
                                 .isNotNull(SysMenu::getPerms)
                                 .ne(SysMenu::getPerms, "")
-                                .eq(SysMenu::getStatus, 1))
-                .stream()
-                .map(SysMenu::getPerms)
-                .distinct()
-                .collect(Collectors.toList());
+                                .eq(SysMenu::getStatus, Status.ENABLED.getValue())
+                                .last("LIMIT 1"));
+        return menu == null ? "" : menu.getPerms();
     }
 }
