@@ -1,6 +1,7 @@
 package com.travis.monolith.system.user.internal.service.impl;
 
 import cn.hutool.core.util.RandomUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.BCrypt;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
@@ -12,7 +13,9 @@ import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.util.Ip2RegionUtil;
+import com.travis.monolith.system.common.api.constant.SysConfigKey;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
+import com.travis.monolith.system.config.api.SysConfigApi;
 import com.travis.monolith.system.dept.api.SysDeptApi;
 import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.api.request.*;
@@ -53,6 +56,9 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
 
     /** 角色 API */
     private final SysRoleApi roleApi;
+
+    /** 系统配置 API */
+    private final SysConfigApi configApi;
 
     /** 对象转换器 */
     private final SysUserConverter converter;
@@ -96,7 +102,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     @Transactional
     public Long create(SysUserCreateReq req) {
         // 检查用户名唯一性
-        long count =
+        var count =
                 count(
                         new LambdaQueryWrapperX<SysUser>()
                                 .eq(SysUser::getUsername, req.getUsername()));
@@ -116,7 +122,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     public void update(Long id, SysUserUpdateReq req) {
         var user = getByIdOrThrow(id);
         // 检查用户名唯一性（排除自身）
-        long count =
+        var count =
                 count(
                         new LambdaQueryWrapperX<SysUser>()
                                 .eq(SysUser::getUsername, req.getUsername())
@@ -146,7 +152,6 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     public void assignRoles(SysUserRoleReq req) {
         roleApi.assignUserRoles(req.getUserId(), req.getRoleIds());
     }
-    
 
     /** 根据用户ID查询用户名 */
     @Override
@@ -165,34 +170,43 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
 
     /** 当前登录用户修改个人资料 */
     @Override
+    @Transactional
+    @CacheEvict(
+            key =
+                    "'detail:' + T(com.travis.infrastructure.framework.satoken.core.StpKit).getLoginIdAsLong(T(com.travis.infrastructure.common.web.constant.LoginType).ADMIN)")
     public void updateProfile(SysUserProfileReq req) {
-        long userId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
-        SysUser user = getByIdOrThrow(userId);
+        var userId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
+        var user = getByIdOrThrow(userId);
         converter.update(req, user);
         updateById(user);
     }
 
     /** 当前登录用户更新头像 */
     @Override
+    @Transactional
+    @CacheEvict(
+            key =
+                    "'detail:' + T(com.travis.infrastructure.framework.satoken.core.StpKit).getLoginIdAsLong(T(com.travis.infrastructure.common.web.constant.LoginType).ADMIN)")
     public void updateAvatar(SysUserUpdateAvatarReq req) {
-        long userId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
-        SysUser user = getByIdOrThrow(userId);
+        var userId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
+        var user = getByIdOrThrow(userId);
         converter.update(req, user);
         updateById(user);
     }
 
     /** 当前登录用户修改密码：校验原密码，加密新密码后更新 */
     @Override
+    @Transactional
     public void changePassword(SysUserChangePasswordReq req) {
-        long userId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
+        var userId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
         // 显式查询密码字段（SysUser 中 password 标记了 select=false）
-        SysUser user =
+        var user =
                 lambdaQuery()
                         .eq(SysUser::getId, userId)
                         .select(SysUser::getId, SysUser::getPassword)
                         .one();
         if (user == null) {
-            throw new BizException(CommonErrorCode.NOT_FOUND);
+            throw new BizException(CommonErrorCode.DATABASE_RECORD_NOT_FOUND);
         }
         // BCrypt 校验原密码
         if (!BCrypt.checkpw(req.getOldPassword(), user.getPassword())) {
@@ -215,7 +229,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     @Override
     @Transactional
     public String resetPassword(Long id, String newPassword) {
-        SysUser user = getByIdOrThrow(id);
+        var user = getByIdOrThrow(id);
         if (newPassword == null || newPassword.isBlank()) {
             newPassword = RandomUtil.randomString(8);
         }
@@ -228,7 +242,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
 
     private SysUserResp toResp(SysUser user) {
         var resp = converter.toResp(user);
-        resp.setAvatar(user.getAvatar());
+        resp.setAvatar(buildAvatarUrl(user.getAvatar()));
         if (user.getDeptId() != null) {
             Map<Long, String> deptMap = deptApi.getDeptNameMapByIds(List.of(user.getDeptId()));
             String deptName = deptMap.get(user.getDeptId());
@@ -241,5 +255,19 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
             resp.setLastLoginLocation(Ip2RegionUtil.getRegionByIP(user.getLastLoginIp()));
         }
         return resp;
+    }
+
+    private String buildAvatarUrl(String avatar) {
+        if (StrUtil.isBlank(avatar)
+                || avatar.startsWith("http://")
+                || avatar.startsWith("https://")
+                || avatar.startsWith("//")) {
+            return avatar;
+        }
+        var baseUrl = configApi.getValue(SysConfigKey.APP_RESOURCE_BASE_URL);
+        if (StrUtil.isBlank(baseUrl)) {
+            return avatar;
+        }
+        return baseUrl + (avatar.startsWith("/") ? avatar : "/" + avatar);
     }
 }

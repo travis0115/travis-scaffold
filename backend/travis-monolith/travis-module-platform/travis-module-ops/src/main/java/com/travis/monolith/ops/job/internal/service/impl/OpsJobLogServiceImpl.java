@@ -103,7 +103,7 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
     @Transactional
     @CacheEvict(allEntries = true)
     public void cleanExpired() {
-        List<OpsJob> jobs = jobMapper.selectList();
+        List<OpsJob> jobs = jobMapper.listAll();
         for (OpsJob job : jobs) {
             int retentionDays = job.getLogRetentionDays() == null ? 30 : job.getLogRetentionDays();
             baseMapper.deleteExpiredPhysically(
@@ -135,7 +135,7 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
         if (cached instanceof String value) {
             return JsonUtil.parseObject(value, OpsJobDashboardResp.class);
         }
-        long totalJobs = jobMapper.selectCount();
+        long totalJobs = jobMapper.countAll();
         long enabledJobs =
                 jobMapper.selectCount(new LambdaQueryWrapperX<OpsJob>().eq(OpsJob::getStatus, 1));
         long executions = count();

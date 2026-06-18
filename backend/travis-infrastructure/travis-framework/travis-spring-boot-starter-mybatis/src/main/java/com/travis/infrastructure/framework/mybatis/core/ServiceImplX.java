@@ -22,7 +22,7 @@ public abstract class ServiceImplX<M extends BaseMapperX<T>, T> extends ServiceI
     protected T getByIdOrThrow(Serializable id) {
         T entity = super.getById(id);
         if (entity == null) {
-            throw new BizException(CommonErrorCode.DATABASE_SELECT_NOT_FOUND);
+            throw new BizException(CommonErrorCode.DATABASE_RECORD_NOT_FOUND);
         }
         return entity;
     }
@@ -30,7 +30,7 @@ public abstract class ServiceImplX<M extends BaseMapperX<T>, T> extends ServiceI
     protected T getOneOrThrow(LambdaQueryWrapperX<T> wrapper) {
         T entity = baseMapper.selectOne(wrapper.last("LIMIT 1"));
         if (entity == null) {
-            throw new BizException(CommonErrorCode.DATABASE_SELECT_NOT_FOUND);
+            throw new BizException(CommonErrorCode.DATABASE_RECORD_NOT_FOUND);
         }
         return entity;
     }

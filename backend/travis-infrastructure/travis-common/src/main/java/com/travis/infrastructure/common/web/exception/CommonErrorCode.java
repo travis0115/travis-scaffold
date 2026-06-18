@@ -63,7 +63,7 @@ public enum CommonErrorCode implements ErrorCode {
 
     /** 数据库 */
     DATABASE_OPERATION_FAILED("2100", "数据库操作失败"),
-    DATABASE_SELECT_NOT_FOUND("2101", "数据记录不存在"),
+    DATABASE_RECORD_NOT_FOUND("2101", "数据记录不存在"),
     DATABASE_INSERT_FAILED("2102", "新增数据记录失败"),
     DATABASE_UPDATE_FAILED("2103", "修改数据记录失败"),
     DATABASE_DELETE_FAILED("2104", "删除数据记录失败"),

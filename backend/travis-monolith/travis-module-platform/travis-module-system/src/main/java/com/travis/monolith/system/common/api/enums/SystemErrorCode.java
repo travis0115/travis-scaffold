@@ -16,19 +16,16 @@ public enum SystemErrorCode implements ErrorCode {
     USER_USERNAME_EXISTS("SYS_001", "用户名已存在"),
 
     /* role模块 100-199 */
-    ROLE_NOT_FOUND("SYS_100", "部门不存在"),
-    ROLE_CODE_EXISTS("SYS_101", "角色编码已存在"),
-    ROLE_NOT_MODIFIABLE("SYS_102", "该角色不允许修改或删除"),
-    ROLE_BUILTIN_NOT_DELETABLE("SYS_103", "系统内置角色不允许删除"),
+    ROLE_BUILTIN_NOT_DELETABLE("SYS_100", "系统内置角色不允许删除"),
+    ROLE_NOT_MODIFIABLE("SYS_101", "该角色不允许修改或删除"),
+    ROLE_CODE_EXISTS("SYS_102", "角色编码已存在"),
 
     /* dept模块 200-299 */
-    DEPT_NOT_FOUND("SYS_200", "部门不存在"),
-    DEPT_PARENT_INVALID("SYS_201", "上级部门不能是当前部门或其下级部门"),
+    DEPT_PARENT_INVALID("SYS_200", "上级部门不能是当前部门或其下级部门"),
 
     /* menu模块 300-399 */
-    MENU_NOT_FOUND("SYS_300", "菜单不存在"),
-    MENU_PATH_EXISTS("SYS_301", "菜单路由路径已存在"),
-    MENU_PARENT_INVALID("SYS_302", "上级菜单不能是当前菜单或其下级菜单"),
+    MENU_PATH_EXISTS("SYS_300", "菜单路由路径已存在"),
+    MENU_PARENT_INVALID("SYS_301", "上级菜单不能是当前菜单或其下级菜单"),
 
     /* dict模块 400-499 */
     DICT_TYPE_EXISTS("SYS_400", "字典类型编码已存在"),
@@ -39,6 +36,7 @@ public enum SystemErrorCode implements ErrorCode {
     /* versionlog模块 800-899 */
     /* notice模块 900-999 */
     /* file模块 1000-1099 */
+
     /* config模块 1100-1199 */
     CONFIG_BUILTIN_NOT_DELETABLE("SYS_1100", "系统内置配置不允许删除"),
     CONFIG_BUILTIN_KEY_NOT_MODIFIABLE("SYS_1101", "系统内置配置不允许修改配置键"),

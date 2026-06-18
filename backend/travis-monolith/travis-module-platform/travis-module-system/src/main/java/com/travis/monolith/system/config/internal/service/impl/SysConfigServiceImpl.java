@@ -17,13 +17,14 @@ import com.travis.monolith.system.config.internal.converter.SysConfigConverter;
 import com.travis.monolith.system.config.internal.entity.SysConfig;
 import com.travis.monolith.system.config.internal.mapper.SysConfigMapper;
 import com.travis.monolith.system.config.internal.service.SysConfigService;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Map;
 
 /**
  * 系统配置服务实现
@@ -67,8 +68,8 @@ public class SysConfigServiceImpl extends ServiceImplX<SysConfigMapper, SysConfi
 
     @Override
     @Cacheable(key = "'value:'+#configKey")
-    public String getValue(String configKey) {
-        SysConfig config =
+    public String getValueByKey(String configKey) {
+        var config =
                 getOne(new LambdaQueryWrapperX<SysConfig>().eq(SysConfig::getConfigKey, configKey));
         return config != null ? config.getConfigValue() : null;
     }

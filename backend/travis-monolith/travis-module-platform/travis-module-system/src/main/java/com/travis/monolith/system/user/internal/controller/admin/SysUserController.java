@@ -65,7 +65,7 @@ public class SysUserController {
     @NoRepeatSubmit
     @PostMapping
     @SaCheckPermission(value = SystemPermission.USER_CREATE, type = LoginType.ADMIN)
-    public ApiResponse<Long> add(@RequestBody @Valid SysUserCreateReq req) {
+    public ApiResponse<Long> create(@RequestBody @Valid SysUserCreateReq req) {
         return ApiResponse.success(userService.create(req));
     }
 
@@ -171,11 +171,11 @@ public class SysUserController {
     @SaCheckPermission(value = SystemPermission.USER_UPDATE, type = LoginType.ADMIN)
     public ApiResponse<String> resetPassword(
             @PathVariable Long id, @RequestBody(required = false) SysUserResetPasswordReq req) {
-        String newPassword =
+        var newPassword =
                 (req != null && req.getNewPassword() != null && !req.getNewPassword().isBlank())
                         ? req.getNewPassword()
                         : null;
-        String resultPassword = userService.resetPassword(id, newPassword);
+        var resultPassword = userService.resetPassword(id, newPassword);
         return ApiResponse.success(resultPassword);
     }
 }

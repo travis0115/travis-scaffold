@@ -12,9 +12,12 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface OperationLog {
 
+    /** 业务行为 */
     String action();
 
+    /** 是否记录请求参数 */
     boolean recordRequest() default true;
 
+    /** 是否记录返回结果 */
     boolean recordResponse() default true;
 }

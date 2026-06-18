@@ -23,7 +23,7 @@ public interface SysConfigService extends IService<SysConfig> {
     SysConfigDetailResp getById(Long id);
 
     /** 根据配置键获取配置值 */
-    String getValue(String configKey);
+    String getValueByKey(String configKey);
 
     /** 新增配置 */
     void create(SysConfigCreateReq req);

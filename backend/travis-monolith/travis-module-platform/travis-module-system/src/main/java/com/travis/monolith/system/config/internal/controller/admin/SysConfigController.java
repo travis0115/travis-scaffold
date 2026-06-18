@@ -51,7 +51,7 @@ public class SysConfigController {
     @GetMapping("/key/{configKey}/value")
     @SaCheckPermission(value = SystemPermission.CONFIG_QUERY, type = LoginType.ADMIN)
     public ApiResponse<String> getValue(@PathVariable String configKey) {
-        return ApiResponse.success(sysConfigService.getValue(configKey));
+        return ApiResponse.success(sysConfigService.getValueByKey(configKey));
     }
 
     /** 新增配置 */

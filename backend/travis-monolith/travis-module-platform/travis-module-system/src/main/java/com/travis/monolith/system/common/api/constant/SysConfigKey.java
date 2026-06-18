@@ -5,7 +5,7 @@ package com.travis.monolith.system.common.api.constant;
  *
  * @author travis
  */
-public class ConfigKey {
+public class SysConfigKey {
     /** 资源文件访问地址 */
     public static final String APP_RESOURCE_BASE_URL = "app.resource-base-url";
 }
