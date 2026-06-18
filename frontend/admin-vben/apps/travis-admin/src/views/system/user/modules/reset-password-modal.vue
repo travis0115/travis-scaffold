@@ -1,10 +1,11 @@
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { h, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import { App, InputPassword, message, RadioGroup } from 'antdv-next';
+import { App, Button } from 'antdv-next';
 
+import { useVbenForm, z } from '#/adapter/form';
 import { resetUserPassword } from '#/api';
 import { $t } from '#/locales';
 
@@ -14,42 +15,95 @@ const { modal: antdModal } = App.useApp();
 
 const userId = ref<number>();
 const nicknameVal = ref('');
+const passwordVisible = ref(true);
 
-const resetType = ref<'custom' | 'random'>('random');
-const customPassword = ref('');
-const resultPassword = ref('');
+function generateRandomPassword() {
+  const groups = [
+    'ABCDEFGHJKLMNPQRSTUVWXYZ',
+    'abcdefghjkmnpqrstuvwxyz',
+    '23456789',
+    '~!@#$%^&*',
+  ];
+  const chars = groups.join('');
+  const password = groups.map((group) => pickChar(group));
+  for (let i = password.length; i < 12; i++) {
+    password.push(pickChar(chars));
+  }
+  return password.toSorted(() => Math.random() - 0.5).join('');
+}
+
+function pickChar(chars: string) {
+  return chars.charAt(Math.floor(Math.random() * chars.length));
+}
+
+function isValidPassword(value?: string) {
+  const pwd = value?.trim();
+  if (!pwd) return false;
+  if (pwd.length < 8 || pwd.length > 32) return false;
+
+  let types = 0;
+  if (/[a-z]/.test(pwd)) types++;
+  if (/[A-Z]/.test(pwd)) types++;
+  if (/\d/.test(pwd)) types++;
+  if (/[~!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(pwd)) types++;
+  return types >= 3;
+}
+
+const [Form, formApi] = useVbenForm({
+  layout: 'vertical',
+  schema: [
+    {
+      component: 'InputPassword',
+      componentProps: () => ({
+        visibilityToggle: {
+          visible: passwordVisible.value,
+          onVisibleChange: (visible: boolean) => {
+            passwordVisible.value = visible;
+          },
+        },
+      }),
+      fieldName: 'password',
+      label: $t('system.user.newPassword'),
+      renderComponentContent(_values, formApi) {
+        return {
+          addonAfter: () =>
+            h(
+              Button,
+              {
+                size: 'small',
+                type: 'link',
+                onClick: () => {
+                  formApi.setFieldValue('password', generateRandomPassword());
+                  passwordVisible.value = true;
+                },
+              },
+              () => $t('system.user.generatePassword'),
+            ),
+        };
+      },
+      rules: z.string().refine(isValidPassword, {
+        message: '密码需为8-32位，并包含大写字母、小写字母、数字、特殊符号中的至少3种',
+      }),
+    },
+  ],
+  showDefaultActions: false,
+});
 
 const [Modal, modalApi] = useVbenModal({
   async onConfirm() {
     if (!userId.value) return;
 
-    if (resetType.value === 'custom') {
-      const pwd = customPassword.value.trim();
-      if (!pwd) {
-        message.warning($t('system.user.newPassword'));
-        return;
-      }
-      if (pwd.length < 8 || pwd.length > 32) {
-        message.warning('密码长度需为8-32位');
-        return;
-      }
-      let types = 0;
-      if (/[a-z]/.test(pwd)) types++;
-      if (/[A-Z]/.test(pwd)) types++;
-      if (/\d/.test(pwd)) types++;
-      if (/[~!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(pwd)) types++;
-      if (types < 3) {
-        message.warning('密码需包含大写字母、小写字母、数字、特殊符号中的至少3种');
-        return;
-      }
-    }
+    const { valid } = await formApi.validate();
+    if (!valid) return;
+
+    const { password } = await formApi.getValues();
     modalApi.lock();
     try {
-      const password =
-        resetType.value === 'custom' ? customPassword.value : undefined;
-      const result = await resetUserPassword(userId.value, password);
+      const result = await resetUserPassword(
+        userId.value,
+        password.trim(),
+      );
       const pwd = typeof result === 'string' ? result : String(result ?? '');
-      resultPassword.value = pwd;
       emit('success');
       modalApi.close();
       antdModal.success({
@@ -65,37 +119,15 @@ const [Modal, modalApi] = useVbenModal({
       const data = modalApi.getData<{ id: number; nickname: string }>();
       userId.value = data?.id;
       nicknameVal.value = data?.nickname ?? '';
-      resetType.value = 'random';
-      customPassword.value = '';
-      resultPassword.value = '';
+      formApi.resetForm();
+      formApi.setFieldValue('password', generateRandomPassword(), false);
+      passwordVisible.value = true;
     }
   },
 });
 </script>
 <template>
   <Modal :title="$t('system.user.resetPasswordTitle', { name: nicknameVal })">
-    <div class="flex flex-col gap-4">
-      <RadioGroup
-        v-model:value="resetType"
-        :options="[
-          { label: $t('system.user.resetPasswordRandom'), value: 'random' },
-          { label: $t('system.user.resetPasswordCustom'), value: 'custom' },
-        ]"
-        option-type="button"
-        button-style="solid"
-      />
-      <div v-if="resetType === 'random'" class="text-muted-foreground text-sm">
-        {{ $t('system.user.resetPasswordRandom') }}（8-32位，含大小写字母、数字和特殊符号中的至少3种）
-      </div>
-      <div v-else class="flex flex-col gap-1">
-        <InputPassword
-          v-model:value="customPassword"
-          :placeholder="$t('system.user.newPassword')"         
-        />
-        <span class="text-muted-foreground text-xs">
-          密码需为8-32位，并包含大写字母、小写字母、数字、特殊符号中的至少3种
-        </span>
-      </div>
-    </div>
+    <Form />
   </Modal>
 </template>

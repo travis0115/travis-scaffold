@@ -236,6 +236,10 @@ const fieldProps = computed(() => {
     keepValue: true,
     label: isString(label) ? label : '',
     ...(rules ? { rules } : {}),
+    validateOnBlur: true,
+    validateOnChange: false,
+    validateOnInput: false,
+    validateOnModelUpdate: false,
     ...(formFieldProps as Record<string, any>),
   };
 });
@@ -341,8 +345,7 @@ onUnmounted(() => {
         'form-valid-error': isInValid,
         'form-is-required': shouldRequired,
         'flex-col': isVertical,
-        'flex-row items-center': !isVertical && !description,
-        'flex-row items-start': !isVertical && description,
+        'flex-row items-start': !isVertical,
         'pb-4': !compact,
         'pb-2': compact,
       }"
@@ -357,7 +360,7 @@ onUnmounted(() => {
             {
               'mr-2 shrink-0 justify-end': !isVertical,
               'mb-1 flex-row': isVertical,
-              'pt-1': !isVertical && description,
+              'pt-1': !isVertical,
               'self-start': shouldCollapsible && !isVertical,
             },
             labelClass,
@@ -458,7 +461,7 @@ onUnmounted(() => {
         </FormDescription>
 
         <Transition name="slide-up" v-if="!compact">
-          <FormMessage class="absolute" />
+          <FormMessage class="mt-1" />
         </Transition>
       </div>
     </FormItem>

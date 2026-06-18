@@ -4,7 +4,7 @@ import { registerAccessDirective } from '@vben/access';
 import { setDefaultDrawerProps,setDefaultModalProps } from '@vben/common-ui';
 import { registerLoadingDirective } from '@vben/common-ui/es/loading';
 import { preferences } from '@vben/preferences';
-import { initStores, setTimezoneHandler } from '@vben/stores';
+import { initStores, setTimezoneHandler, useAccessStore } from '@vben/stores';
 import '@vben/styles';
 import '@vben/styles/antdv-next';
 
@@ -51,7 +51,9 @@ async function bootstrap(namespace: string) {
   await initStores(app, { namespace });
 
   // 登录态可用时预加载字典，避免表格单元格渲染时才临时拉取。
-  await initDictOptions().catch(() => undefined);
+  if (useAccessStore().accessToken) {
+    await initDictOptions().catch(() => undefined);
+  }
 
   // 初始化时区（使用默认handler，不对接后端API）
   // 后续如需对接后端API保存用户时区偏好，参考 playground/src/timezone-init.ts

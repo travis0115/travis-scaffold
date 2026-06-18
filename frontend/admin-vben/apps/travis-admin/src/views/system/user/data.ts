@@ -25,7 +25,7 @@ function generateRandomPassword() {
   ];
   const chars = groups.join('');
   const password = groups.map((group) => pickChar(group));
-  for (let i = password.length; i < 12; i++) {
+  for (let i = password.length; i < 8; i++) {
     password.push(pickChar(chars));
   }
   return password.toSorted(() => Math.random() - 0.5).join('');
@@ -65,14 +65,10 @@ export function useFormSchema(deptTreeData?: any[]): VbenFormSchema[] {
       label: $t('system.user.username'),
       rules: z
         .string()
-        .min(6, $t('ui.formRules.minLength', [$t('system.user.username'), 6]))
-        .max(16, $t('ui.formRules.maxLength', [$t('system.user.username'), 16]))
         .regex(
           /^[a-zA-Z][a-zA-Z0-9_]{5,15}$/,
           '用户名需以字母开头，长度为6-16位，仅支持字母、数字和下划线',
         ),
-      description:
-        '用户名需以字母开头，长度为6-16位，仅支持字母、数字和下划线',
     },
     {
       component: 'Input',
@@ -85,39 +81,7 @@ export function useFormSchema(deptTreeData?: any[]): VbenFormSchema[] {
         .max(20, '昵称长度为2-20个字符'),
     },
     {
-      component: 'Input',
-      componentProps: {
-        type: 'password',
-      },
-      dependencies: {
-        rules: (values) => {
-          if (values.id) return null;
-          return z
-            .string()
-            .min(8, '密码长度不能少于8位')
-            .max(32, '密码长度不能超过32位')
-            .refine(
-              (value) => {
-                let types = 0;
-                if (/[a-z]/.test(value)) types++;
-                if (/[A-Z]/.test(value)) types++;
-                if (/\d/.test(value)) types++;
-                if (/[~!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value))
-                  types++;
-                return types >= 3;
-              },
-              {
-                message:
-                  '密码需包含大写字母、小写字母、数字、特殊符号中的至少3种',
-              },
-            );
-        },
-        show: (values) => {
-          // 编辑时隐藏密码字段
-          return !values.id;
-        },
-        triggerFields: ['id'],
-      },
+      component: 'InputPassword',
       fieldName: 'password',
       label: $t('system.user.password'),
       renderComponentContent(_values, formApi) {
@@ -136,8 +100,23 @@ export function useFormSchema(deptTreeData?: any[]): VbenFormSchema[] {
             ),
         };
       },
-      description:
-        '密码需为8-32位，并包含大写字母、小写字母、数字、特殊符号中的至少3种',
+      rules: z
+        .string()
+        .min(8, '密码长度不能少于8位')
+        .max(32, '密码长度不能超过32位')
+        .refine(
+          (value) => {
+            let types = 0;
+            if (/[a-z]/.test(value)) types++;
+            if (/[A-Z]/.test(value)) types++;
+            if (/\d/.test(value)) types++;
+            if (/[~!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value)) types++;
+            return types >= 3;
+          },
+          {
+            message: '密码需包含大写字母、小写字母、数字、特殊符号中的至少3种',
+          },
+        ),
     },
     {
       component: 'ApiSelect',
@@ -243,33 +222,24 @@ export function useColumns<T = SystemUserApi.SysUser>(
     {
       field: 'username',
       title: $t('system.user.username'),
-      width: 120,
+      width: 140,
     },
     {
       field: 'nickname',
       title: $t('system.user.nickname'),
-      width: 120,
-    },
-    {
-      className: 'whitespace-pre-line text-center leading-6',
-      field: 'contactInfo',
-      formatter: ({ row }) => formatContactInfo(row),
-      headerAlign: 'center',
-      showOverflow: false,
-      title: $t('system.user.contactInfo'),
-      width: 210,
+      width: 140,
     },
     {
       field: 'deptName',
       title: $t('system.user.dept'),
-      width: 120,
+      width: 140,
       visible: isDeptEnabled(),
       formatter: 'emptyPlaceholder',
     },
     {
       field: 'roleNames',
       title: $t('system.user.roles'),
-      minWidth: 120,
+      width: 120,
       formatter: ({ row }) => {
         if (row.roleNames && row.roleNames.length > 0) {
           return row.roleNames.join(', ');
@@ -279,14 +249,25 @@ export function useColumns<T = SystemUserApi.SysUser>(
     },
     {
       className: 'whitespace-pre-line text-center leading-6',
+      field: 'contactInfo',
+      formatter: ({ row }) => formatContactInfo(row),
+      headerAlign: 'center',
+      showOverflow: false,
+      title: $t('system.user.contactInfo'),
+      minWidth: 210,
+    },
+    
+    {
+      className: 'whitespace-pre-line text-center leading-6',
       field: 'lastLoginTime',
       formatter: ({ row }) => formatLastLogin(row),
       headerAlign: 'center',
       showOverflow: false,
       sortable: true,
       title: $t('system.user.lastLogin'),
-      width: 240,
+      minWidth: 240,
     },
+    
     {
       field: 'createTime',
       title: $t('system.user.createTime'),

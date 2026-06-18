@@ -243,9 +243,9 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     private SysUserResp toResp(SysUser user) {
         var resp = converter.toResp(user);
         resp.setAvatar(buildAvatarUrl(user.getAvatar()));
-        if (user.getDeptId() != null) {
-            Map<Long, String> deptMap = deptApi.getDeptNameMapByIds(List.of(user.getDeptId()));
-            String deptName = deptMap.get(user.getDeptId());
+        if (user.getDeptId() != null && user.getDeptId() != 0) {
+            var deptMap = deptApi.getDeptNameMapByIds(List.of(user.getDeptId()));
+            var deptName = deptMap.get(user.getDeptId());
             if (deptName != null) {
                 resp.setDeptName(deptName);
             }

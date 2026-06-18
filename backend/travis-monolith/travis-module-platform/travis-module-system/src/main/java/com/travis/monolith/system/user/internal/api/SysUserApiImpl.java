@@ -3,19 +3,17 @@ package com.travis.monolith.system.user.internal.api;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
+import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.dept.api.SysDeptApi;
 import com.travis.monolith.system.user.api.SysUserApi;
 import com.travis.monolith.system.user.api.response.SysUserOptionResp;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.service.SysUserService;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -25,15 +23,7 @@ public class SysUserApiImpl implements SysUserApi {
 
     @Override
     public List<Long> listEnabledUserIds() {
-        return queryEnabledUserIds(new LambdaQueryWrapperX<>());
-    }
-
-    @Override
-    public List<Long> listEnabledUserIdsByIds(Collection<Long> userIds) {
-        if (userIds == null || userIds.isEmpty()) {
-            return List.of();
-        }
-        return queryEnabledUserIds(new LambdaQueryWrapperX<SysUser>().in(SysUser::getId, userIds));
+        return listEnabledUserIds(new LambdaQueryWrapperX<>());
     }
 
     @Override
@@ -41,12 +31,12 @@ public class SysUserApiImpl implements SysUserApi {
         if (deptIds == null || deptIds.isEmpty()) {
             return List.of();
         }
-        return queryEnabledUserIds(
+        return listEnabledUserIds(
                 new LambdaQueryWrapperX<SysUser>().in(SysUser::getDeptId, deptIds));
     }
 
-    private List<Long> queryEnabledUserIds(LambdaQueryWrapperX<SysUser> wrapper) {
-        return userService.list(wrapper.eq(SysUser::getStatus, 1)).stream()
+    private List<Long> listEnabledUserIds(LambdaQueryWrapperX<SysUser> wrapper) {
+        return userService.list(wrapper.eq(SysUser::getStatus, Status.ENABLED.getValue())).stream()
                 .map(SysUser::getId)
                 .toList();
     }
@@ -73,7 +63,7 @@ public class SysUserApiImpl implements SysUserApi {
 
     @Override
     public List<SysUserOptionResp> listCurrentUserScopedOptions(String keyword, int limit) {
-        LambdaQueryWrapperX<SysUser> wrapper = currentUserScopeWrapper();
+        var wrapper = currentUserScopeWrapper();
         if (keyword != null && !keyword.isBlank()) {
             wrapper.and(
                     condition ->
@@ -97,16 +87,12 @@ public class SysUserApiImpl implements SysUserApi {
     }
 
     private LambdaQueryWrapperX<SysUser> currentUserScopeWrapper() {
-        long currentUserId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
-        SysUser currentUser =
-                userService
-                        .lambdaQuery()
-                        .select(SysUser::getId, SysUser::getDeptId)
-                        .eq(SysUser::getId, currentUserId)
-                        .one();
-        LambdaQueryWrapperX<SysUser> wrapper =
-                new LambdaQueryWrapperX<SysUser>().eq(SysUser::getStatus, 1);
-        if (currentUser == null || currentUser.getDeptId() == null) {
+        var currentUserId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
+        var currentUser = userService.getById(currentUserId);
+        var wrapper =
+                new LambdaQueryWrapperX<SysUser>()
+                        .eq(SysUser::getStatus, Status.ENABLED.getValue());
+        if (currentUser.getDeptId() == null) {
             return wrapper.eq(SysUser::getId, currentUserId);
         }
         return wrapper.in(

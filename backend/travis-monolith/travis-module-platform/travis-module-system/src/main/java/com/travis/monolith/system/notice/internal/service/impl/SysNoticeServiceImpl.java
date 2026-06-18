@@ -20,15 +20,19 @@ import com.travis.monolith.system.notice.internal.mapper.SysUserMessageMapper;
 import com.travis.monolith.system.notice.internal.service.SysNoticeService;
 import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.api.SysUserApi;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
 import org.springframework.beans.BeanUtils;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @CacheConfig(cacheNames = "system:notice")
@@ -139,9 +143,8 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
         List<Long> targetIds = parseTargetIds(notice.getTargetIds());
         return switch (notice.getAudienceType()) {
             case AUDIENCE_ALL -> userApi.listEnabledUserIds();
-            case AUDIENCE_USER -> userApi.listEnabledUserIdsByIds(targetIds);
-            case AUDIENCE_ROLE ->
-                    userApi.listEnabledUserIdsByIds(roleApi.getUserIdsByRoleIds(targetIds));
+            case AUDIENCE_USER -> targetIds;
+            case AUDIENCE_ROLE -> roleApi.getUserIdsByRoleIds(targetIds);
             case AUDIENCE_DEPT -> userApi.listEnabledUserIdsByDeptIds(targetIds);
             default -> throw new BizException(CommonErrorCode.BAD_REQUEST);
         };

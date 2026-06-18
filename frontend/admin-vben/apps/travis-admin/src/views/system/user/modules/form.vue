@@ -67,6 +67,12 @@ const [Drawer, drawerApi] = useVbenDrawer({
     if (isOpen) {
       const data = drawerApi.getData<SystemUserApi.SysUser>();
       formApi.resetForm();
+      formApi.updateSchema([
+        {
+          fieldName: 'password',
+          hide: Boolean(data?.id),
+        },
+      ]);
 
       if (data?.id) {
         formData.value = data;
