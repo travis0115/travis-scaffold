@@ -258,7 +258,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
             evict = {
                 @CacheEvict(allEntries = true),
                 @CacheEvict(value = "system:role-menu", allEntries = true),
-                @CacheEvict(value = "system:menu", allEntries = true)
+                @CacheEvict(value = "system:menu:vben", allEntries = true)
             })
     public void removeMenuRelations(List<Long> menuIds) {
         if (menuIds == null || menuIds.isEmpty()) {

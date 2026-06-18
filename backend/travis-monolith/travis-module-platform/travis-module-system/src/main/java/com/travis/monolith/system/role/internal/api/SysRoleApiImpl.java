@@ -1,15 +1,12 @@
 package com.travis.monolith.system.role.internal.api;
 
 import com.travis.monolith.system.role.api.SysRoleApi;
-import com.travis.monolith.system.role.api.response.SysRoleResp;
 import com.travis.monolith.system.role.internal.service.SysRoleService;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.Objects;
 
 /**
  * 角色模块对外 API 实现，委托调用内部 Service
@@ -49,11 +46,6 @@ public class SysRoleApiImpl implements SysRoleApi {
     }
 
     @Override
-    public String getRoleCodeByRoleId(Long roleId) {
-        return roleService.getRoleCodeByRoleId(roleId);
-    }
-
-    @Override
     public List<String> getRoleNamesByRoleIds(List<Long> roleIds) {
         if (roleIds == null || roleIds.isEmpty()) {
             return List.of();
@@ -62,26 +54,6 @@ public class SysRoleApiImpl implements SysRoleApi {
                 .map(roleService::getRoleNameByRoleId)
                 .filter(Objects::nonNull)
                 .toList();
-    }
-
-    @Override
-    public String getRoleNameByRoleId(Long roleId) {
-        return roleService.getRoleNameByRoleId(roleId);
-    }
-
-    @Override
-    public Map<Long, String> getRoleNameMapByIds(Set<Long> roleIds) {
-        if (roleIds == null || roleIds.isEmpty()) {
-            return Map.of();
-        }
-        Map<Long, String> result = new LinkedHashMap<>();
-        for (Long roleId : roleIds) {
-            var roleName = roleService.getRoleNameByRoleId(roleId);
-            if (roleName != null) {
-                result.put(roleId, roleName);
-            }
-        }
-        return result;
     }
 
     @Override
@@ -96,11 +68,6 @@ public class SysRoleApiImpl implements SysRoleApi {
     }
 
     @Override
-    public List<Long> getMenuIdsByRoleId(Long roleId) {
-        return roleService.getMenuIdsByRoleId(roleId);
-    }
-
-    @Override
     public void deleteUserRolesByUserId(Long userId) {
         roleService.deleteUserRolesByUserId(userId);
     }
@@ -108,18 +75,6 @@ public class SysRoleApiImpl implements SysRoleApi {
     @Override
     public void assignUserRoles(Long userId, List<Long> roleIds) {
         roleService.assignUserRoles(userId, roleIds);
-    }
-
-    @Override
-    public Map<Long, List<String>> batchGetRoleNamesByUserIds(List<Long> userIds) {
-        if (userIds == null || userIds.isEmpty()) {
-            return Map.of();
-        }
-        Map<Long, List<String>> result = new LinkedHashMap<>();
-        for (Long userId : userIds) {
-            result.put(userId, getRoleNamesByRoleIds(roleService.getRoleIdsByUserId(userId)));
-        }
-        return result;
     }
 
     @Override
@@ -133,11 +88,6 @@ public class SysRoleApiImpl implements SysRoleApi {
     }
 
     @Override
-    public List<SysRoleResp> listEnabled() {
-        return roleService.listEnabled();
-    }
-
-    @Override
     public List<Long> getUserIdsByRoleIds(List<Long> roleIds) {
         if (roleIds == null || roleIds.isEmpty()) {
             return List.of();
@@ -146,10 +96,5 @@ public class SysRoleApiImpl implements SysRoleApi {
                 .flatMap(roleId -> roleService.getUserIdsByRoleId(roleId).stream())
                 .distinct()
                 .toList();
-    }
-
-    @Override
-    public List<Long> getUserIdsByRoleId(Long roleId) {
-        return roleService.getUserIdsByRoleId(roleId);
     }
 }
