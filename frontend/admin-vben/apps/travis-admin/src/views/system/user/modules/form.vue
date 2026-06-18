@@ -9,7 +9,7 @@ import { useVbenForm } from '#/adapter/form';
 import {
   assignUserRoles,
   createUser,
-  getDeptTree,
+  getEnabledDeptTree,
   getUserDetail,
   updateUser,
 } from '#/api';
@@ -80,7 +80,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
       if (isDeptEnabled()) {
         // 预加载部门树数据，确保 TreeSelect 能正确显示名称
         try {
-          deptTreeData.value = await getDeptTree();
+          deptTreeData.value = await getEnabledDeptTree();
           // 更新表单 schema 中的 deptTreeData
           formApi.updateSchema([
             {

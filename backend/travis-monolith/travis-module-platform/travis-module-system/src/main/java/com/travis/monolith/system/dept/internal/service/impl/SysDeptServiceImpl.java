@@ -4,6 +4,7 @@ import com.travis.infrastructure.common.event.MessagePublisher;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
+import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.common.api.event.SystemEvent;
 import com.travis.monolith.system.dept.api.event.DeptDeletedPayload;
@@ -51,6 +52,19 @@ public class SysDeptServiceImpl extends ServiceImplX<SysDeptMapper, SysDept>
     @Cacheable(key = "'tree:all'")
     public List<SysDeptResp> listTree() {
         var deptList = list(new LambdaQueryWrapperX<SysDept>().orderByAsc(SysDept::getSort));
+        var deptRespList = converter.toRespList(deptList);
+        return buildTree(deptRespList);
+    }
+
+    /** 获取启用部门树形列表 */
+    @Override
+    @Cacheable(key = "'tree:enabled'")
+    public List<SysDeptResp> listEnabledTree() {
+        var deptList =
+                list(
+                        new LambdaQueryWrapperX<SysDept>()
+                                .eq(SysDept::getStatus, Status.ENABLED.getValue())
+                                .orderByAsc(SysDept::getSort));
         var deptRespList = converter.toRespList(deptList);
         return buildTree(deptRespList);
     }
@@ -117,7 +131,7 @@ public class SysDeptServiceImpl extends ServiceImplX<SysDeptMapper, SysDept>
     /** 新增部门 */
     @Override
     @Transactional
-    @CacheEvict(key = "'tree:all'")
+    @Caching(evict = {@CacheEvict(key = "'tree:all'"), @CacheEvict(key = "'tree:enabled'")})
     public void create(SysDeptCreateReq req) {
         var dept = converter.toEntity(req);
         save(dept);
@@ -128,6 +142,7 @@ public class SysDeptServiceImpl extends ServiceImplX<SysDeptMapper, SysDept>
     @Caching(
             evict = {
                 @CacheEvict(key = "'tree:all'"),
+                @CacheEvict(key = "'tree:enabled'"),
                 @CacheEvict(key = "'detail:'+#id"),
                 @CacheEvict(key = "'name:'+#id")
             })

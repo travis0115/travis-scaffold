@@ -25,6 +25,15 @@ async function getDeptTree() {
 }
 
 /**
+ * 获取启用部门树形列表
+ */
+async function getEnabledDeptTree() {
+  return requestClient.get<SystemDeptApi.SysDept[]>(
+    '/system/dept/list-enabled',
+  );
+}
+
+/**
  * 获取部门详情
  */
 async function getDeptDetail(id: number) {
@@ -52,4 +61,11 @@ async function deleteDept(id: number) {
   return requestClient.delete(`/system/dept/${id}`);
 }
 
-export { createDept, deleteDept, getDeptDetail, getDeptTree, updateDept };
+export {
+  createDept,
+  deleteDept,
+  getDeptDetail,
+  getDeptTree,
+  getEnabledDeptTree,
+  updateDept,
+};

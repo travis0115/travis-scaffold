@@ -27,6 +27,11 @@ public class SysDeptApiImpl implements SysDeptApi {
     }
 
     @Override
+    public List<SysDeptResp> listEnabledTree() {
+        return deptService.listEnabledTree();
+    }
+
+    @Override
     public Map<Long, String> getDeptNameMapByIds(Collection<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return Map.of();

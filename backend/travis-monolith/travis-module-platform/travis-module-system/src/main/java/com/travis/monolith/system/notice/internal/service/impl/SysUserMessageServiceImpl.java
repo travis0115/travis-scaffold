@@ -16,6 +16,9 @@ import com.travis.monolith.system.notice.internal.entity.SysUserMessage;
 import com.travis.monolith.system.notice.internal.mapper.SysNoticeMapper;
 import com.travis.monolith.system.notice.internal.mapper.SysUserMessageMapper;
 import com.travis.monolith.system.notice.internal.service.SysUserMessageService;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -23,8 +26,6 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class SysUserMessageServiceImpl extends ServiceImplX<SysUserMessageMapper, SysUserMessage>
@@ -108,14 +109,6 @@ public class SysUserMessageServiceImpl extends ServiceImplX<SysUserMessageMapper
     @Override
     @Transactional
     public void delete(Long userId, Long id) {
-        SysUserMessage message =
-                getOne(
-                        new LambdaQueryWrapperX<SysUserMessage>()
-                                .eq(SysUserMessage::getId, id)
-                                .eq(SysUserMessage::getUserId, userId));
-        if (message == null) {
-            throw new BizException(CommonErrorCode.NOT_FOUND);
-        }
         baseMapper.deleteMessage(id, userId);
     }
 

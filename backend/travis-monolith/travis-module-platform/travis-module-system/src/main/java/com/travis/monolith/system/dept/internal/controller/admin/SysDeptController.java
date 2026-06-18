@@ -44,6 +44,17 @@ public class SysDeptController {
     }
 
     /**
+     * 获取启用部门树形列表
+     *
+     * @return 启用部门树
+     */
+    @GetMapping("/list-enabled")
+    @SaCheckPermission(value = SystemPermission.DEPT_QUERY, type = LoginType.ADMIN)
+    public ApiResponse<List<SysDeptResp>> listEnabled() {
+        return ApiResponse.success(deptService.listEnabledTree());
+    }
+
+    /**
      * 获取部门详情
      *
      * @param id 部门ID

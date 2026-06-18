@@ -68,7 +68,7 @@ public class SysMenuServiceImpl extends ServiceImplX<SysMenuMapper, SysMenu>
     @Transactional
     @Caching(
             evict = {
-                @CacheEvict(allEntries = true),
+                @CacheEvict(key = "'tree:all'"),
                 @CacheEvict(value = "system:menu:tree:vben", allEntries = true)
             })
     public void create(SysMenuCreateReq req) {
@@ -83,7 +83,9 @@ public class SysMenuServiceImpl extends ServiceImplX<SysMenuMapper, SysMenu>
     @Override
     @Caching(
             evict = {
-                @CacheEvict(allEntries = true),
+                @CacheEvict(key = "'permission:'+#id"),
+                @CacheEvict(key = "'detail:'+#id"),
+                @CacheEvict(key = "'tree:all'"),
                 @CacheEvict(value = "system:menu:tree:vben", allEntries = true)
             })
     @Transactional
@@ -121,11 +123,7 @@ public class SysMenuServiceImpl extends ServiceImplX<SysMenuMapper, SysMenu>
     /** 删除菜单及其所有子菜单，并清理角色菜单关联 */
     @Override
     @Transactional
-    @Caching(
-            evict = {
-                @CacheEvict(allEntries = true),
-                @CacheEvict(value = "system:menu:tree:vben", allEntries = true)
-            })
+    @CacheEvict(allEntries = true)
     public void deleteById(Long id) {
         if (super.getById(id) == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
@@ -158,11 +156,7 @@ public class SysMenuServiceImpl extends ServiceImplX<SysMenuMapper, SysMenu>
     /** 上移菜单，与同级上一个菜单交换排序号 */
     @Override
     @Transactional
-    @Caching(
-            evict = {
-                @CacheEvict(allEntries = true),
-                @CacheEvict(value = "system:menu:tree:vben", allEntries = true)
-            })
+    @CacheEvict(allEntries = true)
     public void moveUp(Long id) {
         var current = getByIdOrThrow(id);
         // 查询同级所有菜单，按排序号升序
@@ -181,11 +175,7 @@ public class SysMenuServiceImpl extends ServiceImplX<SysMenuMapper, SysMenu>
     /** 下移菜单，与同级下一个菜单交换排序号 */
     @Override
     @Transactional
-    @Caching(
-            evict = {
-                @CacheEvict(allEntries = true),
-                @CacheEvict(value = "system:menu:tree:vben", allEntries = true)
-            })
+    @CacheEvict(allEntries = true)
     public void moveDown(Long id) {
         var current = getByIdOrThrow(id);
         // 查询同级所有菜单，按排序号升序

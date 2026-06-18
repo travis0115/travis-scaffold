@@ -24,6 +24,13 @@ public interface SysDeptService extends IService<SysDept> {
     List<SysDeptResp> listTree();
 
     /**
+     * 获取启用部门树形列表
+     *
+     * @return 启用部门树
+     */
+    List<SysDeptResp> listEnabledTree();
+
+    /**
      * 根据部门ID列表批量获取部门名称映射
      *
      * @param ids 部门ID集合
