@@ -2,15 +2,16 @@ package com.travis.monolith.system.user.internal.converter;
 
 import com.travis.infrastructure.common.mapstruct.BaseMapperConfig;
 import com.travis.monolith.system.user.api.request.SysUserCreateReq;
+import com.travis.monolith.system.user.api.request.SysUserProfileReq;
+import com.travis.monolith.system.user.api.request.SysUserUpdateAvatarReq;
 import com.travis.monolith.system.user.api.request.SysUserUpdateReq;
-import com.travis.monolith.system.user.api.request.UpdateAvatarReq;
-import com.travis.monolith.system.user.api.request.UserProfileReq;
-import com.travis.monolith.system.user.api.response.SysUserDetailResp;
-import com.travis.monolith.system.user.api.response.SysUserPageResp;
+import com.travis.monolith.system.user.api.response.SysUserResp;
 import com.travis.monolith.system.user.internal.entity.SysUser;
-import java.util.List;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
+
+import java.util.List;
 
 /**
  * 用户对象转换器
@@ -20,18 +21,18 @@ import org.mapstruct.MappingTarget;
 @Mapper(config = BaseMapperConfig.class)
 public interface SysUserConverter {
 
-    /** SysUser → SysUserPageResp（基础字段映射） deptName、roleIds、roleNames、lastLoginLocation 需在Service层手动设置 */
-    SysUserPageResp toResp(SysUser user);
+    /** SysUser → SysUserResp（基础字段映射） deptName、roleIds、roleNames、lastLoginLocation 需在Service层手动设置 */
+    SysUserResp toResp(SysUser user);
 
-    SysUserDetailResp toDetailResp(SysUser user);
+    List<SysUserResp> toRespList(List<SysUser> users);
 
-    List<SysUserPageResp> toRespList(List<SysUser> users);
-
+    @Mapping(target = "deptId", defaultValue = "0L")
     SysUser toEntity(SysUserCreateReq req);
 
+    @Mapping(target = "deptId", defaultValue = "0L")
     void update(SysUserUpdateReq req, @MappingTarget SysUser user);
 
-    void updateProfile(UserProfileReq req, @MappingTarget SysUser user);
+    void update(SysUserProfileReq req, @MappingTarget SysUser user);
 
-    void updateAvatar(UpdateAvatarReq req, @MappingTarget SysUser user);
+    void update(SysUserUpdateAvatarReq req, @MappingTarget SysUser user);
 }

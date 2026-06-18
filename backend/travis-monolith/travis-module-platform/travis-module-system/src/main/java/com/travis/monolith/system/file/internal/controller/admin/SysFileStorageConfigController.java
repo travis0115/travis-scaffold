@@ -22,7 +22,7 @@ public class SysFileStorageConfigController {
     @GetMapping("/list")
     @SaCheckPermission(value = SystemPermission.FILE_QUERY, type = LoginType.ADMIN)
     public ApiResponse<List<SysFileStorageConfig>> listAll() {
-        return ApiResponse.success(storageConfigService.list());
+        return ApiResponse.success(storageConfigService.listAll());
     }
 
     @PostMapping

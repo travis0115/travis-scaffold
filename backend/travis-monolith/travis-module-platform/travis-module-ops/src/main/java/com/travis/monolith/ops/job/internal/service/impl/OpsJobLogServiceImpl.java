@@ -2,12 +2,12 @@ package com.travis.monolith.ops.job.internal.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
+import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.redis.core.RedisUtil;
 import com.travis.monolith.ops.job.api.OpsJobErrorCode;
 import com.travis.monolith.ops.job.api.request.OpsJobLogPageReq;
@@ -20,6 +20,9 @@ import com.travis.monolith.ops.job.internal.service.OpsJobLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,7 +38,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class OpsJobLogServiceImpl extends ServiceImpl<OpsJobLogMapper, OpsJobLog>
+@CacheConfig(cacheNames = "ops:job-log")
+public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLog>
         implements OpsJobLogService {
 
     private static final String STATS_KEY_PREFIX = "travis:ops:job:stats:";
@@ -67,6 +71,7 @@ public class OpsJobLogServiceImpl extends ServiceImpl<OpsJobLogMapper, OpsJobLog
     }
 
     @Override
+    @Cacheable(key = "'detail:'+#id")
     public OpsJobLogDetailResp get(Long id) {
         OpsJobLog log = getById(id);
         if (log == null) {
@@ -84,6 +89,7 @@ public class OpsJobLogServiceImpl extends ServiceImpl<OpsJobLogMapper, OpsJobLog
 
     @Override
     @Transactional
+    @CacheEvict(allEntries = true)
     public void clean(Long jobId) {
         if (jobId == null) {
             baseMapper.deleteAllPhysically();
@@ -95,6 +101,7 @@ public class OpsJobLogServiceImpl extends ServiceImpl<OpsJobLogMapper, OpsJobLog
 
     @Override
     @Transactional
+    @CacheEvict(allEntries = true)
     public void cleanExpired() {
         List<OpsJob> jobs = jobMapper.selectList();
         for (OpsJob job : jobs) {
@@ -154,6 +161,7 @@ public class OpsJobLogServiceImpl extends ServiceImpl<OpsJobLogMapper, OpsJobLog
     }
 
     @Override
+    @CacheEvict(key = "'detail:'+#log.id")
     public void updateExecution(OpsJobLog log) {
         updateById(log);
         invalidateStats(log.getJobId());

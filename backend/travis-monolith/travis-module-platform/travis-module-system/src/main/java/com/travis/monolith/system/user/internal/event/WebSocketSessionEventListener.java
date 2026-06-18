@@ -30,7 +30,7 @@ public class WebSocketSessionEventListener implements WebSocketSessionListener {
                 UserOnlinePayload.builder()
                         .loginType(loginType)
                         .userId(userId)
-                        .online(true)
+                        .isOnline(true)
                         .build());
     }
 
@@ -42,7 +42,7 @@ public class WebSocketSessionEventListener implements WebSocketSessionListener {
                 UserOnlinePayload.builder()
                         .loginType(loginType)
                         .userId(userId)
-                        .online(false)
+                        .isOnline(false)
                         .build());
     }
 }

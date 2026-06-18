@@ -2,12 +2,12 @@ package com.travis.monolith.ops.job.internal.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
+import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.quartz.core.QuartzJobHandlerRegistry;
 import com.travis.monolith.ops.job.api.OpsJobErrorCode;
 import com.travis.monolith.ops.job.api.request.*;
@@ -26,6 +26,9 @@ import com.travis.monolith.system.user.api.SysUserApi;
 import com.travis.monolith.system.user.api.response.SysUserOptionResp;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,7 +38,8 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class OpsJobServiceImpl extends ServiceImpl<OpsJobMapper, OpsJob> implements OpsJobService {
+@CacheConfig(cacheNames = "ops:job")
+public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implements OpsJobService {
 
     private static final Map<String, SFunction<OpsJob, ?>> SORT_COLUMNS =
             Map.of(
@@ -65,7 +69,7 @@ public class OpsJobServiceImpl extends ServiceImpl<OpsJobMapper, OpsJob> impleme
                                 SORT_COLUMNS,
                                 false,
                                 OpsJob::getCreateTime);
-        Page<OpsJob> page = page(new Page<>(req.getPageNum(), req.getPageSize()), wrapper);
+        Page<OpsJob> page = page(req.getPageNum(), req.getPageSize(), wrapper);
         Map<Long, String> ownerNames =
                 userApi.getUsernameMapByIds(
                         page.getRecords().stream()
@@ -82,6 +86,7 @@ public class OpsJobServiceImpl extends ServiceImpl<OpsJobMapper, OpsJob> impleme
     }
 
     @Override
+    @Cacheable(key = "'detail:'+#id")
     public OpsJobDetailResp get(Long id) {
         OpsJob job = getRequired(id);
         return toResponse(
@@ -90,6 +95,7 @@ public class OpsJobServiceImpl extends ServiceImpl<OpsJobMapper, OpsJob> impleme
 
     @Override
     @Transactional
+    @CacheEvict(allEntries = true)
     public void create(OpsJobCreateReq req) {
         createJob(req);
     }
@@ -104,6 +110,7 @@ public class OpsJobServiceImpl extends ServiceImpl<OpsJobMapper, OpsJob> impleme
 
     @Override
     @Transactional
+    @CacheEvict(key = "'detail:'+#id")
     public void update(Long id, OpsJobUpdateReq req) {
         OpsJob job = getRequired(id);
         validateUserScope(req);
@@ -114,6 +121,7 @@ public class OpsJobServiceImpl extends ServiceImpl<OpsJobMapper, OpsJob> impleme
 
     @Override
     @Transactional
+    @CacheEvict(key = "'detail:'+#id")
     public void delete(Long id) {
         getRequired(id);
         quartzJobManager.delete(id);
@@ -122,6 +130,7 @@ public class OpsJobServiceImpl extends ServiceImpl<OpsJobMapper, OpsJob> impleme
 
     @Override
     @Transactional
+    @CacheEvict(key = "'detail:'+#id")
     public void changeStatus(Long id, Integer status) {
         OpsJob job = getRequired(id);
         if (Integer.valueOf(1).equals(status)) {
@@ -146,6 +155,7 @@ public class OpsJobServiceImpl extends ServiceImpl<OpsJobMapper, OpsJob> impleme
 
     @Override
     @Transactional
+    @CacheEvict(allEntries = true)
     public void copy(Long id) {
         OpsJob source = getRequired(id);
         var copy = new OpsJob();
@@ -196,6 +206,7 @@ public class OpsJobServiceImpl extends ServiceImpl<OpsJobMapper, OpsJob> impleme
 
     @Override
     @Transactional
+    @CacheEvict(allEntries = true)
     public void importJobs(List<OpsJobImportReq> jobs) {
         if (jobs == null) {
             return;

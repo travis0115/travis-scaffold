@@ -1,12 +1,10 @@
 package com.travis.monolith.system.dict.internal.service.impl;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
-import com.travis.infrastructure.common.web.exception.BizException;
-import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
+import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.monolith.system.dict.api.request.SysDictItemCreateReq;
 import com.travis.monolith.system.dict.api.request.SysDictItemUpdateReq;
 import com.travis.monolith.system.dict.internal.converter.SysDictItemConverter;
@@ -23,7 +21,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @RequiredArgsConstructor
-public class SysDictItemServiceImpl extends ServiceImpl<SysDictItemMapper, SysDictItem>
+public class SysDictItemServiceImpl extends ServiceImplX<SysDictItemMapper, SysDictItem>
         implements SysDictItemService {
 
     private final SysDictItemConverter converter;
@@ -35,7 +33,7 @@ public class SysDictItemServiceImpl extends ServiceImpl<SysDictItemMapper, SysDi
                 new LambdaQueryWrapperX<SysDictItem>()
                         .eq(dictId != null, SysDictItem::getDictId, dictId)
                         .orderByAsc(SysDictItem::getSort);
-        Page<SysDictItem> page = page(new Page<>(pageNum, pageSize), wrapper);
+        Page<SysDictItem> page = page(pageNum, pageSize, wrapper);
         return PageConverter.toResp(page);
     }
 
@@ -48,10 +46,7 @@ public class SysDictItemServiceImpl extends ServiceImpl<SysDictItemMapper, SysDi
     /** 更新字典数据项 */
     @Override
     public void update(Long id, SysDictItemUpdateReq req) {
-        SysDictItem item = super.getById(id);
-        if (item == null) {
-            throw new BizException(CommonErrorCode.NOT_FOUND);
-        }
+        SysDictItem item = getByIdOrThrow(id);
         converter.update(req, item);
         updateById(item);
     }

@@ -1,12 +1,12 @@
 package com.travis.monolith.system.notice.internal.service.impl;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
+import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.monolith.system.notice.api.request.SysUserMessagePageReq;
 import com.travis.monolith.system.notice.api.response.SysUserMessageBaseResp;
 import com.travis.monolith.system.notice.api.response.SysUserMessagePageResp;
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class SysUserMessageServiceImpl extends ServiceImpl<SysUserMessageMapper, SysUserMessage>
+public class SysUserMessageServiceImpl extends ServiceImplX<SysUserMessageMapper, SysUserMessage>
         implements SysUserMessageService {
     private final SysNoticeMapper noticeMapper;
 

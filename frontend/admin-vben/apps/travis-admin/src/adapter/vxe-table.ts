@@ -5,7 +5,6 @@ import type { ComponentPropsMap, ComponentType } from './component';
 
 import { h, unref } from 'vue';
 
-import { VbenAvatar } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 import { $te } from '@vben/locales';
 import {
@@ -46,11 +45,15 @@ setupVbenVxeTable({
           },
           showActiveMsg: true,
           showResponseMsg: false,
+          sort: true,
         },
         rowConfig: {
           isHover: true,
         },
         round: true,
+        sortConfig: {
+          trigger: 'cell',
+        },
         showOverflow: true,
         size: 'small',
         stripe: true,
@@ -96,12 +99,19 @@ setupVbenVxeTable({
         const src = rawSrc && rawSrc.trim() !== ''
           ? rawSrc
           : preferences.app.defaultAvatar;
-        return h(VbenAvatar, {
-          class: 'size-8',
-          fallbackSrc: preferences.app.defaultAvatar,
-          src,
-          ...props,
-        });
+        return h(
+          'div',
+          { class: 'flex w-full justify-center' },
+          h(Image, {
+            class: 'cursor-zoom-in rounded-full object-cover',
+            fallback: preferences.app.defaultAvatar,
+            height: 32,
+            preview: { src },
+            src,
+            width: 32,
+            ...props,
+          }),
+        );
       },
     });
 
@@ -364,6 +374,7 @@ setupVbenVxeTable({
 function processColumnsWithEmptyPlaceholder(columns: any[]): any[] {
   return columns.map((column: any) => {
     const originalClassName = column.className;
+    const originalHeaderClassName = column.headerClassName;
     const col = column.treeNode
       ? {
           ...column,
@@ -381,6 +392,15 @@ function processColumnsWithEmptyPlaceholder(columns: any[]): any[] {
           },
         }
       : column;
+    if (col.sortable) {
+      col.headerClassName = (params: any) => {
+        const headerClassName =
+          typeof originalHeaderClassName === 'function'
+            ? originalHeaderClassName(params)
+            : originalHeaderClassName;
+        return [headerClassName, 'cursor-pointer'].filter(Boolean).join(' ');
+      };
+    }
     if (col.cellRender?.name === 'CellOperation') {
       return {
         ...col,

@@ -1,12 +1,10 @@
 package com.travis.monolith.system.log.versionlog.internal.service.impl;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
-import com.travis.infrastructure.common.web.exception.BizException;
-import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
+import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.monolith.system.log.versionlog.api.request.SysVersionLogCreateReq;
 import com.travis.monolith.system.log.versionlog.api.request.SysVersionLogUpdateReq;
 import com.travis.monolith.system.log.versionlog.api.response.SysVersionLogDetailResp;
@@ -18,6 +16,9 @@ import com.travis.monolith.system.log.versionlog.internal.mapper.SysVersionLogMa
 import com.travis.monolith.system.log.versionlog.internal.service.SysVersionLogService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +29,8 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 @RequiredArgsConstructor
-public class SysVersionLogServiceImpl extends ServiceImpl<SysVersionLogMapper, SysVersionLog>
+@CacheConfig(cacheNames = "system:version-log")
+public class SysVersionLogServiceImpl extends ServiceImplX<SysVersionLogMapper, SysVersionLog>
         implements SysVersionLogService {
 
     private final SysVersionLogConverter converter;
@@ -42,21 +44,19 @@ public class SysVersionLogServiceImpl extends ServiceImpl<SysVersionLogMapper, S
                         .likeIfPresent(SysVersionLog::getTitle, title)
                         .eqIfPresent(SysVersionLog::getStatus, status)
                         .orderByDesc(SysVersionLog::getCreateTime);
-        Page<SysVersionLog> page = page(new Page<>(pageNum, pageSize), wrapper);
+        Page<SysVersionLog> page = page(pageNum, pageSize, wrapper);
         return PageConverter.toResp(page.convert(converter::toResp));
     }
 
     @Override
+    @Cacheable(key = "'detail:'+#id")
     public SysVersionLogDetailResp getById(Long id) {
-        SysVersionLog versionLog = super.getById(id);
-        if (versionLog == null) {
-            throw new BizException(CommonErrorCode.NOT_FOUND);
-        }
-        return converter.toDetailResp(versionLog);
+        return converter.toDetailResp(getByIdOrThrow(id));
     }
 
     @Override
     @Transactional
+    @CacheEvict(allEntries = true)
     public void create(SysVersionLogCreateReq req) {
         SysVersionLog entity = converter.toEntity(req);
         save(entity);
@@ -64,22 +64,22 @@ public class SysVersionLogServiceImpl extends ServiceImpl<SysVersionLogMapper, S
 
     @Override
     @Transactional
+    @CacheEvict(allEntries = true)
     public void update(Long id, SysVersionLogUpdateReq req) {
-        SysVersionLog entity = super.getById(id);
-        if (entity == null) {
-            throw new BizException(CommonErrorCode.NOT_FOUND);
-        }
+        SysVersionLog entity = getByIdOrThrow(id);
         converter.update(req, entity);
         updateById(entity);
     }
 
     @Override
     @Transactional
+    @CacheEvict(allEntries = true)
     public void deleteById(Long id) {
         removeById(id);
     }
 
     @Override
+    @Cacheable(key = "'published-list:' + (#limit == null || #limit <= 0 ? 10 : #limit)")
     public List<SysVersionLogPublishedResp> listPublished(Integer limit) {
         if (limit == null || limit <= 0) {
             limit = 10;
@@ -88,7 +88,7 @@ public class SysVersionLogServiceImpl extends ServiceImpl<SysVersionLogMapper, S
                 new LambdaQueryWrapperX<SysVersionLog>()
                         .eq(SysVersionLog::getStatus, 1)
                         .orderByDesc(SysVersionLog::getPublishTime);
-        Page<SysVersionLog> page = page(new Page<>(1, limit), wrapper);
+        Page<SysVersionLog> page = page(1, limit, wrapper);
         return converter.toPublishedRespList(page.getRecords());
     }
 }

@@ -2,10 +2,10 @@ package com.travis.monolith.system.log.operationlog.internal.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
+import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.monolith.system.log.operationlog.api.request.SysOperationLogPageReq;
 import com.travis.monolith.system.log.operationlog.internal.entity.SysOperationLog;
 import com.travis.monolith.system.log.operationlog.internal.mapper.SysOperationLogMapper;
@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author travis
  */
 @Service
-public class SysOperationLogServiceImpl extends ServiceImpl<SysOperationLogMapper, SysOperationLog>
+public class SysOperationLogServiceImpl extends ServiceImplX<SysOperationLogMapper, SysOperationLog>
         implements SysOperationLogService {
 
     private static final Map<String, SFunction<SysOperationLog, ?>> SORT_COLUMNS =
@@ -53,7 +53,7 @@ public class SysOperationLogServiceImpl extends ServiceImpl<SysOperationLogMappe
                                 SORT_COLUMNS,
                                 false,
                                 SysOperationLog::getCreateTime);
-        Page<SysOperationLog> page = page(new Page<>(req.getPageNum(), req.getPageSize()), wrapper);
+        Page<SysOperationLog> page = page(req.getPageNum(), req.getPageSize(), wrapper);
         return PageConverter.toResp(page);
     }
 

@@ -35,7 +35,7 @@ public class UserOnlineStatusEventListener extends AbstractEventListener<UserOnl
 
     @Override
     protected void onEvent(UserOnlinePayload payload) {
-        if (payload.online()) {
+        if (payload.isOnline()) {
             log.info(
                     "[OnlineStatus] 用户上线: loginType={}, userId={}",
                     payload.loginType(),

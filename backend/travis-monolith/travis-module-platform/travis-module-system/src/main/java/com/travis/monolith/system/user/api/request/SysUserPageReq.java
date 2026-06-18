@@ -15,8 +15,14 @@ public class SysUserPageReq extends PageRequest {
     /** 用户名（模糊匹配） */
     private String username;
 
+    /** 昵称（模糊匹配） */
+    private String nickname;
+
     /** 手机号（模糊匹配） */
     private String mobile;
+
+    /** 邮箱（模糊匹配） */
+    private String email;
 
     /** 状态（0-禁用 1-启用） */
     private Integer status;

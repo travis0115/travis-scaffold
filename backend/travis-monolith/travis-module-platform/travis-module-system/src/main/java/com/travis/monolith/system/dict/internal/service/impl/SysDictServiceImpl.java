@@ -1,12 +1,11 @@
 package com.travis.monolith.system.dict.internal.service.impl;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.exception.BizException;
-import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
+import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.dict.api.request.SysDictCreateReq;
 import com.travis.monolith.system.dict.api.request.SysDictItemCreateReq;
@@ -27,6 +26,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,7 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @CacheConfig(cacheNames = "system:dict")
-public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
+public class SysDictServiceImpl extends ServiceImplX<SysDictMapper, SysDict>
         implements SysDictService {
 
     /** 字典数据项服务 */
@@ -55,6 +56,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
 
     /** 获取字典树形数据（每个字典包含其下的数据项作为 children） */
     @Override
+    @Cacheable(key = "'tree:all'")
     public List<SysDict> listTree() {
         // 查询所有字典类型
         List<SysDict> dictList = list();
@@ -92,23 +94,21 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
                         .likeIfPresent(SysDict::getDictType, dictType)
                         .eqIfPresent(SysDict::getStatus, status)
                         .orderByDesc(SysDict::getCreateTime);
-        Page<SysDict> page = page(new Page<>(pageNum, pageSize), wrapper);
+        Page<SysDict> page = page(pageNum, pageSize, wrapper);
         return PageConverter.toResp(page);
     }
 
     /** 获取字典类型详情 */
     @Override
+    @Cacheable(key = "'detail:'+#id")
     public SysDict getById(Long id) {
-        SysDict dict = super.getById(id);
-        if (dict == null) {
-            throw new BizException(CommonErrorCode.NOT_FOUND);
-        }
-        return dict;
+        return getByIdOrThrow(id);
     }
 
     /** 新增字典类型 */
     @Override
     @Transactional
+    @CacheEvict(key = "'tree:all'")
     public void create(SysDictCreateReq req) {
         // 检查字典类型编码唯一性
         long count =
@@ -124,11 +124,13 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
     /** 更新字典类型 */
     @Override
     @Transactional
+    @Caching(
+            evict = {
+                @CacheEvict(key = "'tree:all'"),
+                @CacheEvict(key = "'detail:'+#id")
+            })
     public void update(Long id, SysDictUpdateReq req) {
-        SysDict dict = super.getById(id);
-        if (dict == null) {
-            throw new BizException(CommonErrorCode.NOT_FOUND);
-        }
+        SysDict dict = getByIdOrThrow(id);
         // 检查字典类型编码唯一性（排除自身）
         long count =
                 count(
@@ -145,7 +147,12 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
     /** 删除字典类型（同时删除其下所有字典数据项） */
     @Override
     @Transactional
-    @CacheEvict(key = "'items:' + #id")
+    @Caching(
+            evict = {
+                @CacheEvict(key = "'tree:all'"),
+                @CacheEvict(key = "'detail:'+#id"),
+                @CacheEvict(key = "'item-list:' + #id")
+            })
     public void deleteById(Long id) {
         // 删除字典下的所有数据项
         dictItemService.remove(
@@ -155,6 +162,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
 
     /** 查询指定字典类型下的所有数据项，按排序号升序 */
     @Override
+    @Cacheable(key = "'item-list:' + #dictId")
     public List<SysDictItemResp> listItems(Long dictId) {
         List<SysDictItem> items =
                 dictItemService.list(
@@ -166,14 +174,22 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
 
     /** 新增字典数据项（委托给 {@link SysDictItemService}） */
     @Override
-    @CacheEvict(key = "'items:' + #req.dictId")
+    @Caching(
+            evict = {
+                @CacheEvict(key = "'tree:all'"),
+                @CacheEvict(key = "'item-list:' + #req.dictId")
+            })
     public void createItem(SysDictItemCreateReq req) {
         dictItemService.create(req);
     }
 
     /** 更新字典数据项（委托给 {@link SysDictItemService}） */
     @Override
-    @CacheEvict(key = "'items:' + #req.dictId")
+    @Caching(
+            evict = {
+                @CacheEvict(key = "'tree:all'"),
+                @CacheEvict(key = "'item-list:' + #req.dictId")
+            })
     public void updateItem(Long id, SysDictItemUpdateReq req) {
         dictItemService.update(id, req);
     }
@@ -186,7 +202,8 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
         if (item != null) {
             var cache = cacheManager.getCache("system:dict");
             if (cache != null) {
-                cache.evict("items:" + item.getDictId());
+                cache.evict("tree:all");
+                cache.evict("item-list:" + item.getDictId());
             }
         }
     }

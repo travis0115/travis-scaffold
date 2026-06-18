@@ -2,10 +2,10 @@ package com.travis.monolith.system.user.internal.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.travis.infrastructure.framework.mybatis.core.BaseEntity;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import java.time.LocalDateTime;
 
 /**
  * 管理员用户实体，对应 sys_user 表
@@ -36,12 +36,6 @@ public class SysUser extends BaseEntity {
 
     /** 所属部门ID */
     private Long deptId;
-
-    /** 邀请码 */
-    private String invitationCode;
-
-    /** 可用余额 */
-    private BigDecimal availableBalance;
 
     /** 状态（0-禁用 1-启用） */
     private Integer status;

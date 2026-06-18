@@ -1,8 +1,8 @@
 package com.travis.infrastructure.framework.mybatis.core;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+
 import java.util.List;
 
 /**
@@ -14,35 +14,14 @@ import java.util.List;
  * @author travis
  */
 public interface BaseMapperX<T> extends BaseMapper<T> {
-
-    /**
-     * 根据指定字段查询单条记录
-     *
-     * @param field 字段的 Lambda 引用
-     * @param value 字段值
-     * @return 匹配的单条记录，若无则返回 null
-     */
-    default T selectOne(SFunction<T, ?> field, Object value) {
-        return selectOne(new LambdaQueryWrapperX<T>().eq(field, value).last("LIMIT 1"));
-    }
-
-    /**
-     * 根据指定字段查询记录列表
-     *
-     * @param field 字段的 Lambda 引用
-     * @param value 字段值
-     * @return 匹配的记录列表
-     */
-    default List<T> selectList(SFunction<T, ?> field, Object value) {
-        return selectList(new LambdaQueryWrapperX<T>().eq(field, value));
-    }
+    
 
     /**
      * 查询全部记录总数
      *
      * @return 记录总数
      */
-    default Long selectCount() {
+    default Long countAll() {
         return selectCount(new QueryWrapperX<>());
     }
 
@@ -51,7 +30,7 @@ public interface BaseMapperX<T> extends BaseMapper<T> {
      *
      * @return 全部记录列表
      */
-    default List<T> selectList() {
+    default List<T> listAll() {
         return selectList(new QueryWrapperX<>());
     }
 
@@ -63,7 +42,7 @@ public interface BaseMapperX<T> extends BaseMapper<T> {
      * @param wrapper 查询条件
      * @return 分页结果
      */
-    default Page<T> selectPage(int pageNum, int pageSize, LambdaQueryWrapperX<T> wrapper) {
+    default Page<T> page(int pageNum, int pageSize, LambdaQueryWrapperX<T> wrapper) {
         return selectPage(new Page<>(pageNum, pageSize), wrapper);
     }
 
@@ -74,7 +53,7 @@ public interface BaseMapperX<T> extends BaseMapper<T> {
      * @param pageSize 每页大小
      * @return 分页结果
      */
-    default Page<T> selectPage(int pageNum, int pageSize) {
+    default Page<T> page(int pageNum, int pageSize) {
         return selectPage(new Page<>(pageNum, pageSize), new QueryWrapperX<>());
     }
 }

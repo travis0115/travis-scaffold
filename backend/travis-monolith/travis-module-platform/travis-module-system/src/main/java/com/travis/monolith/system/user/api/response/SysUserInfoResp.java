@@ -1,10 +1,11 @@
 package com.travis.monolith.system.user.api.response;
 
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 /**
  * 当前登录用户信息视图，用于前端展示用户资料和权限信息
@@ -15,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserInfoResp {
+public class SysUserInfoResp {
     /** 用户ID */
     private Long id;
 
@@ -42,7 +43,4 @@ public class UserInfoResp {
 
     /** 权限标识列表 */
     private List<String> permissions;
-
-    /** 登录后默认跳转路径 */
-    private String homePath;
 }

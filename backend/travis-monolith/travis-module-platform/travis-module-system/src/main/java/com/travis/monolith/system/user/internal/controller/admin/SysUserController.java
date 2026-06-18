@@ -8,16 +8,8 @@ import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
 import com.travis.monolith.system.common.api.constant.SystemPermission;
-import com.travis.monolith.system.user.api.request.ChangePasswordReq;
-import com.travis.monolith.system.user.api.request.ResetPasswordReq;
-import com.travis.monolith.system.user.api.request.SysUserCreateReq;
-import com.travis.monolith.system.user.api.request.SysUserPageReq;
-import com.travis.monolith.system.user.api.request.SysUserRoleReq;
-import com.travis.monolith.system.user.api.request.SysUserUpdateReq;
-import com.travis.monolith.system.user.api.request.UpdateAvatarReq;
-import com.travis.monolith.system.user.api.request.UserProfileReq;
-import com.travis.monolith.system.user.api.response.SysUserDetailResp;
-import com.travis.monolith.system.user.api.response.SysUserPageResp;
+import com.travis.monolith.system.user.api.request.*;
+import com.travis.monolith.system.user.api.response.SysUserResp;
 import com.travis.monolith.system.user.internal.service.SysUserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -47,7 +39,7 @@ public class SysUserController {
      */
     @GetMapping("/page")
     @SaCheckPermission(value = SystemPermission.USER_QUERY, type = LoginType.ADMIN)
-    public ApiResponse<PageResp<SysUserPageResp>> page(@Valid SysUserPageReq req) {
+    public ApiResponse<PageResp<SysUserResp>> page(@Valid SysUserPageReq req) {
         return ApiResponse.success(userService.page(req));
     }
 
@@ -59,7 +51,7 @@ public class SysUserController {
      */
     @GetMapping("/{id}")
     @SaCheckPermission(value = SystemPermission.USER_QUERY, type = LoginType.ADMIN)
-    public ApiResponse<SysUserDetailResp> get(@PathVariable Long id) {
+    public ApiResponse<SysUserResp> get(@PathVariable Long id) {
         return ApiResponse.success(userService.getById(id));
     }
 
@@ -133,7 +125,7 @@ public class SysUserController {
     @OperationLog(action = "修改个人资料")
     @NoRepeatSubmit
     @PutMapping("/profile")
-    public ApiResponse<Void> updateProfile(@RequestBody @Valid UserProfileReq req) {
+    public ApiResponse<Void> updateProfile(@RequestBody @Valid SysUserProfileReq req) {
         userService.updateProfile(req);
         return ApiResponse.success();
     }
@@ -147,7 +139,7 @@ public class SysUserController {
     @OperationLog(action = "修改头像")
     @NoRepeatSubmit
     @PutMapping("/avatar")
-    public ApiResponse<Void> updateAvatar(@RequestBody @Valid UpdateAvatarReq req) {
+    public ApiResponse<Void> updateAvatar(@RequestBody @Valid SysUserUpdateAvatarReq req) {
         userService.updateAvatar(req);
         return ApiResponse.success();
     }
@@ -161,7 +153,7 @@ public class SysUserController {
     @OperationLog(action = "修改密码", recordRequest = false, recordResponse = false)
     @NoRepeatSubmit
     @PutMapping("/change-password")
-    public ApiResponse<Void> changePassword(@RequestBody @Valid ChangePasswordReq req) {
+    public ApiResponse<Void> changePassword(@RequestBody @Valid SysUserChangePasswordReq req) {
         userService.changePassword(req);
         return ApiResponse.success();
     }
@@ -178,7 +170,7 @@ public class SysUserController {
     @PutMapping("/{id}/reset-password")
     @SaCheckPermission(value = SystemPermission.USER_UPDATE, type = LoginType.ADMIN)
     public ApiResponse<String> resetPassword(
-            @PathVariable Long id, @RequestBody(required = false) ResetPasswordReq req) {
+            @PathVariable Long id, @RequestBody(required = false) SysUserResetPasswordReq req) {
         String newPassword =
                 (req != null && req.getNewPassword() != null && !req.getNewPassword().isBlank())
                         ? req.getNewPassword()

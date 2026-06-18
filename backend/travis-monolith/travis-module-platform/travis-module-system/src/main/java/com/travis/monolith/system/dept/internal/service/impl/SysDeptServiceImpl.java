@@ -1,9 +1,9 @@
 package com.travis.monolith.system.dept.internal.service.impl;
 
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.event.MessagePublisher;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
+import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.common.api.event.SystemEvent;
 import com.travis.monolith.system.dept.api.event.DeptDeletedPayload;
@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 @CacheConfig(cacheNames = "system:dept")
-public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
+public class SysDeptServiceImpl extends ServiceImplX<SysDeptMapper, SysDept>
         implements SysDeptService {
 
     /** 对象转换器 */
@@ -67,12 +67,9 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
 
     /** 获取部门详情 */
     @Override
-    @Cacheable(key = "'id:'+#id")
+    @Cacheable(key = "'detail:'+#id")
     public SysDeptResp getById(Long id) {
-        var dept = super.getById(id);
-        if (dept == null) {
-            throw new BizException(SystemErrorCode.DEPT_NOT_FOUND);
-        }
+        var dept = getByIdOrThrow(id);
         return converter.toResp(dept);
     }
 
@@ -83,10 +80,7 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
         if (deptId == null) {
             return null;
         }
-        var dept = super.getById(deptId);
-        if (dept == null) {
-            throw new BizException(SystemErrorCode.DEPT_NOT_FOUND);
-        }
+        var dept = getByIdOrThrow(deptId);
         return dept.getDeptName();
     }
 
@@ -134,15 +128,12 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept>
     @Caching(
             evict = {
                 @CacheEvict(key = "'tree:all'"),
-                @CacheEvict(key = "'id:'+#id"),
+                @CacheEvict(key = "'detail:'+#id"),
                 @CacheEvict(key = "'name:'+#id")
             })
     @Transactional
     public void update(Long id, SysDeptUpdateReq req) {
-        var dept = super.getById(id);
-        if (dept == null) {
-            throw new BizException(SystemErrorCode.DEPT_NOT_FOUND);
-        }
+        var dept = getByIdOrThrow(id);
         var parentId = req.getParentId();
         if (parentId != null && parentId != 0 && listSelfAndDescendantIds(id).contains(parentId)) {
             throw new BizException(SystemErrorCode.DEPT_PARENT_INVALID);

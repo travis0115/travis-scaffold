@@ -1,12 +1,12 @@
 package com.travis.monolith.system.notice.internal.service.impl;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
+import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.monolith.system.notice.api.request.SysNoticeCreateReq;
 import com.travis.monolith.system.notice.api.request.SysNoticePageReq;
 import com.travis.monolith.system.notice.api.request.SysNoticeUpdateReq;
@@ -24,11 +24,15 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice>
+@CacheConfig(cacheNames = "system:notice")
+public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotice>
         implements SysNoticeService {
     private static final int AUDIENCE_ALL = 0;
     private static final int AUDIENCE_USER = 1;
@@ -59,17 +63,14 @@ public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice
                         .eqIfPresent(SysNotice::getNoticeType, req.getNoticeType())
                         .eqIfPresent(SysNotice::getStatus, req.getStatus())
                         .orderByDesc(SysNotice::getCreateTime);
-        Page<SysNotice> page = page(new Page<>(req.getPageNum(), req.getPageSize()), wrapper);
+        Page<SysNotice> page = page(req.getPageNum(), req.getPageSize(), wrapper);
         return PageConverter.toResp(page.convert(this::toPageResp));
     }
 
     @Override
+    @Cacheable(key = "'detail:'+#id")
     public SysNoticeDetailResp get(Long id) {
-        SysNotice notice = getById(id);
-        if (notice == null) {
-            throw new BizException(CommonErrorCode.NOT_FOUND);
-        }
-        return toDetailResp(notice);
+        return toDetailResp(getByIdOrThrow(id));
     }
 
     @Override
@@ -85,12 +86,10 @@ public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice
 
     @Override
     @Transactional
+    @CacheEvict(key = "'detail:'+#id")
     public void update(Long id, SysNoticeUpdateReq req) {
         validateAudience(req.getAudienceType(), req.getTargetIds());
-        var entity = getById(id);
-        if (entity == null) {
-            throw new BizException(CommonErrorCode.NOT_FOUND);
-        }
+        var entity = getByIdOrThrow(id);
         converter.update(req, entity);
         updateById(entity);
         if (Integer.valueOf(1).equals(entity.getStatus())) {
@@ -100,6 +99,7 @@ public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice
 
     @Override
     @Transactional
+    @CacheEvict(key = "'detail:'+#id")
     public void delete(Long id) {
         userMessageMapper.deleteByNoticeId(id);
         removeById(id);

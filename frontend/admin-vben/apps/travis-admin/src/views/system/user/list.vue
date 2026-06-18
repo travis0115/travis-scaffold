@@ -104,10 +104,14 @@ const [Grid, gridApi] = useVbenVxeGrid({
     keepSource: true,
     proxyConfig: {
       ajax: {
-        query: async ({ page }, formValues) => {
+        query: async ({ page, sort }, formValues) => {
+          const orderParams = sort?.order
+            ? { asc: sort.order === 'asc', orderBy: sort.field || sort.property }
+            : {};
           return await getUserPage({
             pageNum: page.currentPage,
             pageSize: page.pageSize,
+            ...orderParams,
             ...formValues,
             ...(selectedDeptId.value ? { deptId: selectedDeptId.value } : {}),
           });
@@ -116,6 +120,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     rowConfig: {
       keyField: 'id',
+    },
+    sortConfig: {
+      remote: true,
     },
     toolbarConfig: {
       custom: true,

@@ -9,9 +9,9 @@ import lombok.Builder;
  */
 @Builder
 public record UserOnlinePayload(
-        /* 登录类型（如 "admin"、"user"） */
+        /* 登录类型（如 "admin"、"user"），见 com.travis.infrastructure.common.web.constant.LoginType */
         String loginType,
         /* 用户 ID */
         String userId,
         /* 是否在线：true=上线，false=下线 */
-        boolean online) {}
+        boolean isOnline) {}

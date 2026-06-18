@@ -2,12 +2,11 @@ package com.travis.monolith.system.config.internal.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.exception.BizException;
-import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
+import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.config.api.request.SysConfigCreateReq;
 import com.travis.monolith.system.config.api.request.SysConfigPageReq;
@@ -20,6 +19,9 @@ import com.travis.monolith.system.config.internal.mapper.SysConfigMapper;
 import com.travis.monolith.system.config.internal.service.SysConfigService;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +32,8 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 @RequiredArgsConstructor
-public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig>
+@CacheConfig(cacheNames = "system:config")
+public class SysConfigServiceImpl extends ServiceImplX<SysConfigMapper, SysConfig>
         implements SysConfigService {
 
     private static final Map<String, SFunction<SysConfig, ?>> SORT_COLUMNS =
@@ -52,20 +55,18 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
                                 SORT_COLUMNS,
                                 true,
                                 SysConfig::getConfigKey);
-        Page<SysConfig> page = page(new Page<>(req.getPageNum(), req.getPageSize()), wrapper);
+        Page<SysConfig> page = page(req.getPageNum(), req.getPageSize(), wrapper);
         return PageConverter.toResp(page.convert(converter::toResp));
     }
 
     @Override
+    @Cacheable(key = "'detail:'+#id")
     public SysConfigDetailResp getById(Long id) {
-        SysConfig config = super.getById(id);
-        if (config == null) {
-            throw new BizException(CommonErrorCode.NOT_FOUND);
-        }
-        return converter.toDetailResp(config);
+        return converter.toDetailResp(getByIdOrThrow(id));
     }
 
     @Override
+    @Cacheable(key = "'value:'+#configKey")
     public String getValue(String configKey) {
         SysConfig config =
                 getOne(new LambdaQueryWrapperX<SysConfig>().eq(SysConfig::getConfigKey, configKey));
@@ -74,6 +75,7 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
 
     @Override
     @Transactional
+    @CacheEvict(allEntries = true)
     public void create(SysConfigCreateReq req) {
         SysConfig entity = converter.toEntity(req);
         save(entity);
@@ -81,6 +83,7 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
 
     @Override
     @Transactional
+    @CacheEvict(allEntries = true)
     public void update(Long id, SysConfigUpdateReq req) {
         SysConfig entity = getConfigOrThrow(id);
         checkBuiltinKey(entity, req);
@@ -90,6 +93,7 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
 
     @Override
     @Transactional
+    @CacheEvict(allEntries = true)
     public void deleteById(Long id) {
         SysConfig entity = getConfigOrThrow(id);
         checkDeletable(entity);
@@ -97,11 +101,7 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
     }
 
     private SysConfig getConfigOrThrow(Long id) {
-        SysConfig config = super.getById(id);
-        if (config == null) {
-            throw new BizException(CommonErrorCode.NOT_FOUND);
-        }
-        return config;
+        return getByIdOrThrow(id);
     }
 
     private void checkBuiltinKey(SysConfig entity, SysConfigUpdateReq req) {

@@ -5,12 +5,57 @@ import type {
 } from '#/adapter/vxe-table';
 import type { SystemUserApi } from '#/api';
 
+import { h } from 'vue';
+
+import { Button } from 'antdv-next';
+
 import { z } from '#/adapter/form';
 import { getRoleList } from '#/api';
 import { isDeptEnabled } from '#/features';
 import { $t } from '#/locales';
 import { getDictOptions } from '#/utils/dict';
 import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
+
+function generateRandomPassword() {
+  const groups = [
+    'ABCDEFGHJKLMNPQRSTUVWXYZ',
+    'abcdefghjkmnpqrstuvwxyz',
+    '23456789',
+    '~!@#$%^&*',
+  ];
+  const chars = groups.join('');
+  const password = groups.map((group) => pickChar(group));
+  for (let i = password.length; i < 12; i++) {
+    password.push(pickChar(chars));
+  }
+  return password.toSorted(() => Math.random() - 0.5).join('');
+}
+
+function pickChar(chars: string) {
+  return chars.charAt(Math.floor(Math.random() * chars.length));
+}
+
+function formatLastLogin(row: SystemUserApi.SysUser) {
+  if (!row.lastLoginTime && !row.lastLoginIp && !row.lastLoginLocation) {
+    return '-';
+  }
+  return [
+    `时间：${row.lastLoginTime || '-'}`,
+    `IP：${row.lastLoginIp || '-'}${
+      row.lastLoginLocation ? `（${row.lastLoginLocation}）` : ''
+    }`,
+  ].join('\n');
+}
+
+function formatContactInfo(row: SystemUserApi.SysUser) {
+  if (!row.mobile && !row.email) {
+    return '-';
+  }
+  return [
+    `${$t('system.user.mobile')}：${row.mobile || '-'}`,
+    `${$t('system.user.email')}：${row.email || '-'}`,
+  ].join('\n');
+}
 
 export function useFormSchema(deptTreeData?: any[]): VbenFormSchema[] {
   const schemas: VbenFormSchema[] = [
@@ -75,6 +120,22 @@ export function useFormSchema(deptTreeData?: any[]): VbenFormSchema[] {
       },
       fieldName: 'password',
       label: $t('system.user.password'),
+      renderComponentContent(_values, formApi) {
+        return {
+          addonAfter: () =>
+            h(
+              Button,
+              {
+                size: 'small',
+                type: 'link',
+                onClick: () => {
+                  formApi.setFieldValue('password', generateRandomPassword());
+                },
+              },
+              () => $t('system.user.generatePassword'),
+            ),
+        };
+      },
       description:
         '密码需为8-32位，并包含大写字母、小写字母、数字、特殊符号中的至少3种',
     },
@@ -112,7 +173,11 @@ export function useFormSchema(deptTreeData?: any[]): VbenFormSchema[] {
       component: 'Input',
       fieldName: 'mobile',
       label: $t('system.user.mobile'),
-      rules: z.string().regex(/^$|^1[3-9]\d{9}$/, '请输入有效的手机号').optional().or(z.literal('')),
+      rules: z
+        .string()
+        .regex(/^$|^1[3-9]\d{9}$/, '请输入有效的手机号')
+        .optional()
+        .or(z.literal('')),
     },
     {
       component: 'Input',
@@ -169,6 +234,7 @@ export function useColumns<T = SystemUserApi.SysUser>(
 ): VxeTableGridColumns {
   return [
     {
+      align: 'center',
       cellRender: { name: 'CellAvatar' },
       field: 'avatar',
       title: $t('system.user.avatar'),
@@ -185,9 +251,13 @@ export function useColumns<T = SystemUserApi.SysUser>(
       width: 120,
     },
     {
-      field: 'mobile',
-      title: $t('system.user.mobile'),
-      width: 130,
+      className: 'whitespace-pre-line text-center leading-6',
+      field: 'contactInfo',
+      formatter: ({ row }) => formatContactInfo(row),
+      headerAlign: 'center',
+      showOverflow: false,
+      title: $t('system.user.contactInfo'),
+      width: 210,
     },
     {
       field: 'deptName',
@@ -208,8 +278,19 @@ export function useColumns<T = SystemUserApi.SysUser>(
       },
     },
     {
+      className: 'whitespace-pre-line text-center leading-6',
+      field: 'lastLoginTime',
+      formatter: ({ row }) => formatLastLogin(row),
+      headerAlign: 'center',
+      showOverflow: false,
+      sortable: true,
+      title: $t('system.user.lastLogin'),
+      width: 240,
+    },
+    {
       field: 'createTime',
       title: $t('system.user.createTime'),
+      sortable: true,
       width: 180,
       formatter: 'formatDateTime',
     },

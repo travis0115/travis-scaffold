@@ -18,7 +18,7 @@ import java.lang.annotation.*;
 @Documented
 public @interface Password {
 
-    String message() default "密码格式不正确";
+    String message() default "密码需为8-32位，并包含大写字母、小写字母、数字、特殊符号中的至少3种";
 
     Class<?>[] groups() default {};
 

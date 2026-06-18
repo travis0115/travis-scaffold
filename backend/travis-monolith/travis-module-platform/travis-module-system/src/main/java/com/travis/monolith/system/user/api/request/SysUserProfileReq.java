@@ -11,7 +11,7 @@ import lombok.Data;
  * @author travis
  */
 @Data
-public class UserProfileReq {
+public class SysUserProfileReq {
     /** 昵称 */
     @NotBlank(message = "昵称不能为空")
     private String nickname;

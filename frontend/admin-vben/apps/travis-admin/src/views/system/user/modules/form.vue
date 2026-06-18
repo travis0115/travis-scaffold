@@ -71,7 +71,9 @@ const [Drawer, drawerApi] = useVbenDrawer({
       if (data?.id) {
         formData.value = data;
         id.value = data.id;
+        formApi.setValues({ id: data.id });
       } else {
+        formData.value = undefined;
         id.value = undefined;
       }
 

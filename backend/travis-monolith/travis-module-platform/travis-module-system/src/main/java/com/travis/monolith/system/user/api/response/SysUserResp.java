@@ -1,12 +1,12 @@
 package com.travis.monolith.system.user.api.response;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 管理员用户详情视图，包含部门名称和角色关联信息
@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SysUserPageResp {
+public class SysUserResp {
     /** 用户ID */
     private Long id;
 
@@ -41,9 +41,6 @@ public class SysUserPageResp {
 
     /** 所属部门名称（关联查询） */
     private String deptName;
-
-    /** 可用余额 */
-    private BigDecimal availableBalance;
 
     /** 状态（0-禁用 1-启用） */
     private Integer status;

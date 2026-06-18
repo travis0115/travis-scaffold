@@ -9,8 +9,8 @@ import lombok.Data;
  * @author travis
  */
 @Data
-public class ResetPasswordReq {
+public class SysUserResetPasswordReq {
     /** 新密码（可选，不传则使用默认密码） */
-    @Password(message = "密码需为8-32位，并包含大写字母、小写字母、数字、特殊符号中的至少3种")
+    @Password
     private String newPassword;
 }

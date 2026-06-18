@@ -6,7 +6,7 @@ import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.monolith.system.menu.api.response.VbenMenuResp;
 import com.travis.monolith.system.user.api.request.SysUserLoginReq;
 import com.travis.monolith.system.user.api.response.SysUserLoginResp;
-import com.travis.monolith.system.user.api.response.UserInfoResp;
+import com.travis.monolith.system.user.api.response.SysUserInfoResp;
 import com.travis.monolith.system.user.internal.service.SysAuthService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -58,7 +58,7 @@ public class SysAuthController {
      * @return 用户信息（包含角色和权限）
      */
     @GetMapping("/user-info")
-    public ApiResponse<UserInfoResp> getUserInfo() {
+    public ApiResponse<SysUserInfoResp> getUserInfo() {
         return ApiResponse.success(sysAuthService.getUserInfo());
     }
 

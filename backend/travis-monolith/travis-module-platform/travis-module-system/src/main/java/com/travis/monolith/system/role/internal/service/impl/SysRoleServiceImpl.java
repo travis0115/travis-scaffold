@@ -1,11 +1,10 @@
 package com.travis.monolith.system.role.internal.service.impl;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
+import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.monolith.system.common.api.enums.IsBuiltin;
 import com.travis.monolith.system.common.api.enums.Modifiable;
 import com.travis.monolith.system.common.api.enums.Status;
@@ -43,7 +42,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @CacheConfig(cacheNames = "system:role")
-public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
+public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
         implements SysRoleService {
 
     /** 角色-菜单关联 Mapper */
@@ -63,16 +62,16 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
                         .likeIfPresent(SysRole::getRoleName, req.getRoleName())
                         .likeIfPresent(SysRole::getRoleCode, req.getRoleCode())
                         .eqIfPresent(SysRole::getStatus, req.getStatus())
-                        .orderByAsc(SysRole::getId);
-        var page = page(new Page<>(req.getPageNum(), req.getPageSize()), wrapper);
+                        .orderByAsc(SysRole::getCreateTime);
+        var page = page(req.getPageNum(), req.getPageSize(), wrapper);
         return PageConverter.toResp(page.convert(converter::toResp));
     }
 
     /** 获取角色详情，同时查询角色关联的菜单ID列表 */
     @Override
-    @Cacheable(key = "'id:'+#id")
+    @Cacheable(key = "'detail:'+#id")
     public SysRoleResp getById(Long id) {
-        var role = getRoleOrThrow(id);
+        var role = getByIdOrThrow(id);
         var roleResp = converter.toResp(role);
         List<Long> menuIds =
                 roleMenuMapper
@@ -108,13 +107,13 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     @Transactional
     @Caching(
             evict = {
-                @CacheEvict(key = "'id:'+#id"),
+                @CacheEvict(key = "'detail:'+#id"),
                 @CacheEvict(key = "'code:'+#id"),
                 @CacheEvict(key = "'name:'+#id"),
                 @CacheEvict(key = "'list:enabled'")
             })
     public void update(Long id, SysRoleUpdateReq req) {
-        var role = getRoleOrThrow(id);
+        var role = getByIdOrThrow(id);
         checkModifiable(role);
         // 检查角色编码唯一性（排除自身）
         if (req.getRoleCode() != null) {
@@ -136,16 +135,16 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     @Transactional
     @Caching(
             evict = {
-                @CacheEvict(key = "'id:'+#id"),
+                @CacheEvict(key = "'detail:'+#id"),
                 @CacheEvict(key = "'code:'+#id"),
                 @CacheEvict(key = "'name:'+#id"),
                 @CacheEvict(key = "'list:enabled'"),
                 @CacheEvict(value = "system:user-role", allEntries = true),
-                @CacheEvict(value = "system:role-menu", key = "'role:'+#id"),
-                @CacheEvict(value = "system:menu:vben", allEntries = true)
+                @CacheEvict(value = "system:role-menu", key = "'menu-ids:'+#id"),
+                @CacheEvict(value = "system:menu:tree:vben", allEntries = true)
             })
     public void deleteById(Long id) {
-        var role = getRoleOrThrow(id);
+        var role = getByIdOrThrow(id);
         checkDeletable(role);
         removeById(id);
         // 删除角色-菜单关联
@@ -161,12 +160,12 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     @Transactional
     @Caching(
             evict = {
-                @CacheEvict(key = "'id:'+#req.roleId"),
-                @CacheEvict(value = "system:role-menu", key = "'role:'+#req.roleId"),
-                @CacheEvict(value = "system:menu:vben", allEntries = true)
+                @CacheEvict(key = "'detail:'+#req.roleId"),
+                @CacheEvict(value = "system:role-menu", key = "'menu-ids:'+#req.roleId"),
+                @CacheEvict(value = "system:menu:tree:vben", allEntries = true)
             })
     public void assignMenus(SysRoleMenuReq req) {
-        var role = getRoleOrThrow(req.getRoleId());
+        var role = getByIdOrThrow(req.getRoleId());
         checkModifiable(role);
         roleMenuMapper.delete(
                 new LambdaQueryWrapperX<SysRoleMenu>().eq(SysRoleMenu::getRoleId, req.getRoleId()));
@@ -209,7 +208,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
 
     /** 根据角色ID查询关联的菜单ID列表 */
     @Override
-    @Cacheable(value = "system:role-menu", key = "'role:'+#roleId")
+    @Cacheable(value = "system:role-menu", key = "'menu-ids:'+#roleId")
     public List<Long> getMenuIdsByRoleId(Long roleId) {
         if (roleId == null) {
             return List.of();
@@ -229,7 +228,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
             evict = {
                 @CacheEvict(allEntries = true),
                 @CacheEvict(value = "system:role-menu", allEntries = true),
-                @CacheEvict(value = "system:menu:vben", allEntries = true)
+                @CacheEvict(value = "system:menu:tree:vben", allEntries = true)
             })
     public void assignMenuToAdminRoles(Long menuId) {
         List<SysRole> adminRoles =
@@ -258,7 +257,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
             evict = {
                 @CacheEvict(allEntries = true),
                 @CacheEvict(value = "system:role-menu", allEntries = true),
-                @CacheEvict(value = "system:menu:vben", allEntries = true)
+                @CacheEvict(value = "system:menu:tree:vben", allEntries = true)
             })
     public void removeMenuRelations(List<Long> menuIds) {
         if (menuIds == null || menuIds.isEmpty()) {
@@ -281,7 +280,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
 
     /** 根据用户ID查询其角色ID列表 */
     @Override
-    @Cacheable(value = "system:user-role", key = "'user:'+#userId")
+    @Cacheable(value = "system:user-role", key = "'role-ids:'+#userId")
     public List<Long> getRoleIdsByUserId(Long userId) {
         return userRoleMapper
                 .selectList(
@@ -292,7 +291,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     }
 
     @Override
-    @Cacheable(value = "system:user-role", key = "'role:'+#roleId")
+    @Cacheable(value = "system:user-role", key = "'user-ids:'+#roleId")
     public List<Long> getUserIdsByRoleId(Long roleId) {
         if (roleId == null) {
             return List.of();
@@ -312,7 +311,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     @Caching(
             evict = {
                 @CacheEvict(value = "system:user-role", allEntries = true),
-                @CacheEvict(value = "system:menu:vben", key = "#userId")
+                @CacheEvict(value = "system:menu:tree:vben", key = "#userId")
             })
     public void deleteUserRolesByUserId(Long userId) {
         userRoleMapper.delete(
@@ -325,7 +324,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     @Caching(
             evict = {
                 @CacheEvict(value = "system:user-role", allEntries = true),
-                @CacheEvict(value = "system:menu:vben", key = "#userId")
+                @CacheEvict(value = "system:menu:tree:vben", key = "#userId")
             })
     public void assignUserRoles(Long userId, List<Long> roleIds) {
         userRoleMapper.delete(
@@ -345,13 +344,6 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
         }
     }
 
-    private SysRole getRoleOrThrow(Long id) {
-        SysRole role = super.getById(id);
-        if (role == null) {
-            throw new BizException(SystemErrorCode.ROLE_NOT_FOUND);
-        }
-        return role;
-    }
 
     private void checkModifiable(SysRole role) {
         if (Modifiable.IMMUTABLE.getValue().equals(role.getModifiable())) {

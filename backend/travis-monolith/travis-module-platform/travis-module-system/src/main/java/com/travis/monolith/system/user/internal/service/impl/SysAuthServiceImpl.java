@@ -15,9 +15,9 @@ import com.travis.monolith.system.menu.api.response.VbenMenuResp;
 import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.api.event.UserLoginPayload;
 import com.travis.monolith.system.user.api.request.SysUserLoginReq;
-import com.travis.monolith.system.user.api.response.SysUserDetailResp;
+import com.travis.monolith.system.user.api.response.SysUserResp;
 import com.travis.monolith.system.user.api.response.SysUserLoginResp;
-import com.travis.monolith.system.user.api.response.UserInfoResp;
+import com.travis.monolith.system.user.api.response.SysUserInfoResp;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.service.SysAuthService;
 import com.travis.monolith.system.user.internal.service.SysUserService;
@@ -117,9 +117,9 @@ public class SysAuthServiceImpl implements SysAuthService {
 
     /** 获取当前登录用户信息，包含角色编码和权限列表 */
     @Override
-    public UserInfoResp getUserInfo() {
+    public SysUserInfoResp getUserInfo() {
         long userId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
-        SysUserDetailResp user = userService.getById(userId);
+        SysUserResp user = userService.getById(userId);
         if (user == null) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
@@ -128,18 +128,17 @@ public class SysAuthServiceImpl implements SysAuthService {
         List<String> permissions = getPermissionsByUserId(userId);
         List<String> roleNames = roleApi.getRoleNamesByUserId(userId);
 
-        return UserInfoResp.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .nickname(user.getNickname())
-                .avatar(user.getAvatar())
-                .email(user.getEmail())
-                .mobile(user.getMobile())
-                .roles(roleCodes)
-                .roleNames(roleNames)
-                .permissions(permissions)
-                .homePath("/")
-                .build();
+        return SysUserInfoResp.builder()
+                              .id(user.getId())
+                              .username(user.getUsername())
+                              .nickname(user.getNickname())
+                              .avatar(user.getAvatar())
+                              .email(user.getEmail())
+                              .mobile(user.getMobile())
+                              .roles(roleCodes)
+                              .roleNames(roleNames)
+                              .permissions(permissions)
+                              .build();
     }
 
     /** 获取当前用户的菜单树（用于前端路由渲染），按用户ID缓存 */

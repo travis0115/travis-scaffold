@@ -18,6 +18,9 @@ export namespace SystemUserApi {
     status: 0 | 1;
     roleIds?: number[];
     roleNames?: string[];
+    lastLoginIp?: string;
+    lastLoginLocation?: string;
+    lastLoginTime?: string;
     createTime?: string;
   }
 }

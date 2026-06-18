@@ -10,13 +10,13 @@ import lombok.Data;
  * @author travis
  */
 @Data
-public class ChangePasswordReq {
+public class SysUserChangePasswordReq {
     /** 原密码 */
     @NotBlank(message = "原密码不能为空")
     private String oldPassword;
 
     /** 新密码 */
     @NotBlank(message = "新密码不能为空")
-    @Password(message = "密码需为8-32位，并包含大写字母、小写字母、数字、特殊符号中的至少3种")
+    @Password
     private String newPassword;
 }

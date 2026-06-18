@@ -9,7 +9,7 @@ import lombok.Data;
  * @author travis
  */
 @Data
-public class UpdateAvatarReq {
+public class SysUserUpdateAvatarReq {
     /** 头像地址 */
     @NotBlank(message = "头像地址不能为空")
     private String avatar;

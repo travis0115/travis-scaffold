@@ -2,15 +2,8 @@ package com.travis.monolith.system.user.internal.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.infrastructure.common.web.model.PageResp;
-import com.travis.monolith.system.user.api.request.ChangePasswordReq;
-import com.travis.monolith.system.user.api.request.SysUserCreateReq;
-import com.travis.monolith.system.user.api.request.SysUserPageReq;
-import com.travis.monolith.system.user.api.request.SysUserRoleReq;
-import com.travis.monolith.system.user.api.request.SysUserUpdateReq;
-import com.travis.monolith.system.user.api.request.UpdateAvatarReq;
-import com.travis.monolith.system.user.api.request.UserProfileReq;
-import com.travis.monolith.system.user.api.response.SysUserDetailResp;
-import com.travis.monolith.system.user.api.response.SysUserPageResp;
+import com.travis.monolith.system.user.api.request.*;
+import com.travis.monolith.system.user.api.response.SysUserResp;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 
 /**
@@ -26,7 +19,7 @@ public interface SysUserService extends IService<SysUser> {
      * @param req 分页查询参数
      * @return 分页结果
      */
-    PageResp<SysUserPageResp> page(SysUserPageReq req);
+    PageResp<SysUserResp> page(SysUserPageReq req);
 
     /**
      * 获取用户详情，包含关联的角色信息
@@ -34,7 +27,7 @@ public interface SysUserService extends IService<SysUser> {
      * @param id 用户ID
      * @return 用户详情视图
      */
-    SysUserDetailResp getById(Long id);
+    SysUserResp getById(Long id);
 
     /**
      * 新增用户
@@ -66,13 +59,6 @@ public interface SysUserService extends IService<SysUser> {
      */
     void assignRoles(SysUserRoleReq req);
 
-    /**
-     * 根据用户名查询用户
-     *
-     * @param username 用户名
-     * @return 用户实体
-     */
-    SysUser getUserByUsername(String username);
 
     /**
      * 根据用户ID查询用户名
@@ -87,21 +73,21 @@ public interface SysUserService extends IService<SysUser> {
      *
      * @param req 个人资料请求参数
      */
-    void updateProfile(UserProfileReq req);
+    void updateProfile(SysUserProfileReq req);
 
     /**
      * 当前登录用户更新头像
      *
      * @param req 头像更新请求参数
      */
-    void updateAvatar(UpdateAvatarReq req);
+    void updateAvatar(SysUserUpdateAvatarReq req);
 
     /**
      * 当前登录用户修改密码
      *
      * @param req 修改密码请求参数
      */
-    void changePassword(ChangePasswordReq req);
+    void changePassword(SysUserChangePasswordReq req);
 
     /**
      * 重置用户密码

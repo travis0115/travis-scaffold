@@ -1,12 +1,12 @@
 package com.travis.monolith.system.file.internal.service.impl;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
+import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.monolith.system.file.api.request.SysFilePageReq;
 import com.travis.monolith.system.file.api.response.FileUploadResp;
 import com.travis.monolith.system.file.api.response.SysFileResp;
@@ -31,7 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
  */
 @Service
 @RequiredArgsConstructor
-public class SysFileServiceImpl extends ServiceImpl<SysFileMapper, SysFile>
+public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
         implements SysFileService {
 
     private final java.util.List<FileStorageStrategy> storageStrategies;
@@ -83,7 +83,7 @@ public class SysFileServiceImpl extends ServiceImpl<SysFileMapper, SysFile>
                         .likeIfPresent(SysFile::getMimeType, req.getMimeType())
                         .eqIfPresent(SysFile::getStorageConfigId, req.getStorageConfigId())
                         .orderByDesc(SysFile::getCreateTime);
-        Page<SysFile> page = page(new Page<>(req.getPageNum(), req.getPageSize()), wrapper);
+        Page<SysFile> page = page(req.getPageNum(), req.getPageSize(), wrapper);
         if (page.getRecords().isEmpty()) {
             return PageConverter.toResp(
                     new Page<SysFileResp>(page.getCurrent(), page.getSize(), page.getTotal()));

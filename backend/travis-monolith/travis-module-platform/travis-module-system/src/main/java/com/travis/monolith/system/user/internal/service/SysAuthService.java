@@ -3,7 +3,7 @@ package com.travis.monolith.system.user.internal.service;
 import com.travis.monolith.system.menu.api.response.VbenMenuResp;
 import com.travis.monolith.system.user.api.request.SysUserLoginReq;
 import com.travis.monolith.system.user.api.response.SysUserLoginResp;
-import com.travis.monolith.system.user.api.response.UserInfoResp;
+import com.travis.monolith.system.user.api.response.SysUserInfoResp;
 import java.util.List;
 
 /**
@@ -26,7 +26,7 @@ public interface SysAuthService {
      *
      * @return 用户信息视图
      */
-    UserInfoResp getUserInfo();
+    SysUserInfoResp getUserInfo();
 
     /**
      * 获取当前用户的菜单树（用于前端路由渲染）

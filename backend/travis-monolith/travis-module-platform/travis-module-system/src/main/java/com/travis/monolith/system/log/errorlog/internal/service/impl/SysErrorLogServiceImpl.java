@@ -1,10 +1,9 @@
 package com.travis.monolith.system.log.errorlog.internal.service.impl;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
+import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.monolith.system.log.errorlog.api.request.SysErrorLogPageReq;
 import com.travis.monolith.system.log.errorlog.internal.entity.SysErrorLog;
 import com.travis.monolith.system.log.errorlog.internal.mapper.SysErrorLogMapper;
@@ -12,7 +11,7 @@ import com.travis.monolith.system.log.errorlog.internal.service.SysErrorLogServi
 import org.springframework.stereotype.Service;
 
 @Service
-public class SysErrorLogServiceImpl extends ServiceImpl<SysErrorLogMapper, SysErrorLog>
+public class SysErrorLogServiceImpl extends ServiceImplX<SysErrorLogMapper, SysErrorLog>
         implements SysErrorLogService {
     @Override
     public PageResp<SysErrorLog> page(SysErrorLogPageReq req) {
@@ -23,6 +22,6 @@ public class SysErrorLogServiceImpl extends ServiceImpl<SysErrorLogMapper, SysEr
                         .geIfPresent(SysErrorLog::getCreateTime, req.getStartTime())
                         .leIfPresent(SysErrorLog::getCreateTime, req.getEndTime())
                         .orderByDesc(SysErrorLog::getCreateTime);
-        return PageConverter.toResp(page(new Page<>(req.getPageNum(), req.getPageSize()), wrapper));
+        return PageConverter.toResp(page(req.getPageNum(), req.getPageSize(), wrapper));
     }
 }
