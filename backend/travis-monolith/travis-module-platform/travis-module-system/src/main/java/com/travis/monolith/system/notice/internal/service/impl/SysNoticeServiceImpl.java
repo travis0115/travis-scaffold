@@ -142,10 +142,10 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
     private List<Long> resolveRecipients(SysNotice notice) {
         List<Long> targetIds = parseTargetIds(notice.getTargetIds());
         return switch (notice.getAudienceType()) {
-            case AUDIENCE_ALL -> userApi.listEnabledUserIds();
+            case AUDIENCE_ALL -> userApi.listUserIds();
             case AUDIENCE_USER -> targetIds;
             case AUDIENCE_ROLE -> roleApi.getUserIdsByRoleIds(targetIds);
-            case AUDIENCE_DEPT -> userApi.listEnabledUserIdsByDeptIds(targetIds);
+            case AUDIENCE_DEPT -> userApi.listUserIdsByDeptIds(targetIds);
             default -> throw new BizException(CommonErrorCode.BAD_REQUEST);
         };
     }

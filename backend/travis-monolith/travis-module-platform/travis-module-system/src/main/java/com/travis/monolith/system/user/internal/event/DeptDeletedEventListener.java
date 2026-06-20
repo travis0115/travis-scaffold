@@ -1,14 +1,11 @@
 package com.travis.monolith.system.user.internal.event;
 
-import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.rocketmq.core.AbstractEventListener;
 import com.travis.monolith.system.common.api.event.SystemEventTopic;
 import com.travis.monolith.system.common.api.event.SystemEventType;
 import com.travis.monolith.system.dept.api.SysDeptApi;
 import com.travis.monolith.system.dept.api.event.DeptDeletedPayload;
-import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.service.SysUserService;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.rocketmq.client.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Component;
@@ -36,13 +33,7 @@ public class DeptDeletedEventListener extends AbstractEventListener<DeptDeletedP
             return;
         }
         for (Long deptId : payload.deptIds()) {
-            List<SysUser> users =
-                    sysUserService.list(
-                            new LambdaQueryWrapperX<SysUser>().eq(SysUser::getDeptId, deptId));
-            for (SysUser user : users) {
-                user.setDeptId(null);
-                sysUserService.updateById(user);
-            }
+            sysUserService.resetDept(deptId);
         }
     }
 }

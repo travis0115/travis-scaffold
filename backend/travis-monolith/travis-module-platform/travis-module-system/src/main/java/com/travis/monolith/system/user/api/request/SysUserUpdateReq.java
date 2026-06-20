@@ -23,7 +23,6 @@ public class SysUserUpdateReq {
     @Size(min = 6, max = 16, message = "用户名长度为6-16个字符")
     private String username;
 
-
     /** 昵称 */
     @NotBlank(message = "昵称不能为空")
     @Size(min = 2, max = 20, message = "昵称长度为2-20个字符")
@@ -36,7 +35,7 @@ public class SysUserUpdateReq {
     @Mobile private String mobile;
 
     /** 所属部门ID */
-    private Long deptId;
+    private Long deptId = 0L;
 
     /** 状态（0-禁用 1-启用） */
     @EnumValue(value = Status.class, message = "状态值错误")

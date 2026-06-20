@@ -6,6 +6,8 @@ import com.travis.monolith.system.user.api.request.*;
 import com.travis.monolith.system.user.api.response.SysUserResp;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 
+import java.util.List;
+
 /**
  * 用户管理服务接口，提供管理员的分页查询、增删改查及角色分配
  *
@@ -28,6 +30,12 @@ public interface SysUserService extends IService<SysUser> {
      * @return 用户详情视图
      */
     SysUserResp getById(Long id);
+
+    /** 获取所有启用用户列表（不分页） */
+    List<Long> listUserIds();
+
+    /** 根据部门ID获取用户ID列表 */
+    List<Long> listUserIdsByDeptId(Long deptId);
 
     /**
      * 新增用户
@@ -53,12 +61,18 @@ public interface SysUserService extends IService<SysUser> {
     void deleteById(Long id);
 
     /**
+     * 重置用户部门归属
+     *
+     * @param id 用户ID
+     */
+    void resetDept(Long id);
+
+    /**
      * 为用户分配角色（先清除原有关联再批量插入）
      *
      * @param req 用户角色分配请求参数
      */
     void assignRoles(SysUserRoleReq req);
-
 
     /**
      * 根据用户ID查询用户名

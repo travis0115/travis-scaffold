@@ -22,23 +22,18 @@ public class SysUserApiImpl implements SysUserApi {
     private final SysDeptApi deptApi;
 
     @Override
-    public List<Long> listEnabledUserIds() {
-        return listEnabledUserIds(new LambdaQueryWrapperX<>());
+    public List<Long> listUserIds() {
+        return userService.listUserIds();
     }
 
     @Override
-    public List<Long> listEnabledUserIdsByDeptIds(Collection<Long> deptIds) {
+    public List<Long> listUserIdsByDeptIds(Collection<Long> deptIds) {
         if (deptIds == null || deptIds.isEmpty()) {
             return List.of();
         }
-        return listEnabledUserIds(
-                new LambdaQueryWrapperX<SysUser>().in(SysUser::getDeptId, deptIds));
-    }
-
-    private List<Long> listEnabledUserIds(LambdaQueryWrapperX<SysUser> wrapper) {
-        return userService.list(wrapper.eq(SysUser::getStatus, Status.ENABLED.getValue())).stream()
-                .map(SysUser::getId)
-                .toList();
+        var userIdList = new ArrayList<Long>();
+        deptIds.forEach(id -> userIdList.addAll(userService.listUserIdsByDeptId(id)));
+        return userIdList;
     }
 
     @Override
@@ -46,6 +41,7 @@ public class SysUserApiImpl implements SysUserApi {
         return userService.getUsernameById(userId);
     }
 
+    // TODO 调整API
     @Override
     public Map<Long, String> getUsernameMapByIds(Collection<Long> userIds) {
         if (userIds == null || userIds.isEmpty()) {

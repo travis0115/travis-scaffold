@@ -11,6 +11,7 @@ import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
+import com.travis.infrastructure.framework.redis.core.RedisUtil;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.util.Ip2RegionUtil;
 import com.travis.monolith.system.common.api.constant.SysConfigKey;
@@ -97,9 +98,30 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         return resp;
     }
 
+    /** 获取所有启用用户列表（不分页） */
+    @Override
+    @Cacheable(key = "'list:id:all'")
+    public List<Long> listUserIds() {
+        return list().stream().map(SysUser::getId).toList();
+    }
+
+    /** 根据部门ID查询用户ID列表 */
+    @Override
+    @Cacheable(key = "'list:id:dept:'+#deptId")
+    public List<Long> listUserIdsByDeptId(Long deptId) {
+        return list(new LambdaQueryWrapperX<SysUser>().eq(SysUser::getDeptId, deptId)).stream()
+                .map(SysUser::getId)
+                .toList();
+    }
+
     /** 新增用户，密码使用 BCrypt 加密存储 */
     @Override
     @Transactional
+    @Caching(
+            evict = {
+                @CacheEvict(key = "'list:id:all'"),
+                @CacheEvict(key = "'list:id:dept:'+#req.deptId")
+            })
     public Long create(SysUserCreateReq req) {
         // 检查用户名唯一性
         var count =
@@ -130,6 +152,9 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         if (count > 0) {
             throw new BizException(SystemErrorCode.USER_USERNAME_EXISTS);
         }
+        if (req.getDeptId() != null && !req.getDeptId().equals(user.getDeptId())) {
+            RedisUtil.delete("list:id:dept:" + user.getDeptId());
+        }
         converter.update(req, user);
         updateById(user);
     }
@@ -137,13 +162,32 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     /** 删除用户，同时清除用户-角色关联并使其会话失效 */
     @Override
     @Transactional
-    @Caching(evict = {@CacheEvict(key = "'username:'+#id"), @CacheEvict(key = "'detail:'+#id")})
+    @Caching(
+            evict = {
+                @CacheEvict(key = "'username:'+#id"),
+                @CacheEvict(key = "'detail:'+#id"),
+                @CacheEvict(key = "'list:id:all'")
+            })
     public void deleteById(Long id) {
+        var user = getByIdOrThrow(id);
+        removeById(id);
+        RedisUtil.delete("list:id:dept:" + user.getDeptId());
         // 通过角色服务删除用户-角色关联
         roleApi.deleteUserRolesByUserId(id);
-        removeById(id);
         // 使用户会话失效
         StpKit.of(LoginType.ADMIN).logout(id);
+    }
+
+    @Override
+    @Transactional
+    @Caching(evict = {@CacheEvict(key = "'username:'+#id"), @CacheEvict(key = "'detail:'+#id")})
+    public void resetDept(Long id) {
+        var user = getByIdOrThrow(id);
+        var originalDeptId = user.getDeptId();
+        user.setDeptId(0L);
+        updateById(user);
+        RedisUtil.delete("list:id:dept:" + originalDeptId);
+        RedisUtil.delete("list:id:dept:" + 0L);
     }
 
     /** 分配用户角色：委托给角色服务 */
