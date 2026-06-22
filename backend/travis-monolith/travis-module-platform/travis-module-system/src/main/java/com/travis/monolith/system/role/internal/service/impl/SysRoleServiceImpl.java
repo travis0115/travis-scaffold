@@ -23,6 +23,8 @@ import com.travis.monolith.system.role.internal.mapper.SysRoleMapper;
 import com.travis.monolith.system.role.internal.mapper.SysRoleMenuMapper;
 import com.travis.monolith.system.role.internal.mapper.SysUserRoleMapper;
 import com.travis.monolith.system.role.internal.service.SysRoleService;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -30,9 +32,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 角色管理服务实现，包含角色-菜单关联、角色信息查询
@@ -110,7 +109,8 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
                 @CacheEvict(key = "'detail:'+#id"),
                 @CacheEvict(key = "'code:'+#id"),
                 @CacheEvict(key = "'name:'+#id"),
-                @CacheEvict(key = "'list:enabled'")
+                @CacheEvict(key = "'list:enabled'"),
+                @CacheEvict(value = "system:user:detail", allEntries = true)
             })
     public void update(Long id, SysRoleUpdateReq req) {
         var role = getByIdOrThrow(id);
@@ -157,7 +157,8 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
                 @CacheEvict(key = "'list:enabled'"),
                 @CacheEvict(value = "system:user-role", allEntries = true),
                 @CacheEvict(value = "system:role-menu", key = "'menu-ids:'+#id"),
-                @CacheEvict(value = "system:menu:tree:vben", allEntries = true)
+                @CacheEvict(value = "system:menu:tree:vben", allEntries = true),
+                @CacheEvict(value = "system:user:detail", allEntries = true)
             })
     public void deleteById(Long id) {
         var role = getByIdOrThrow(id);
@@ -327,7 +328,8 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
     @Caching(
             evict = {
                 @CacheEvict(value = "system:user-role", allEntries = true),
-                @CacheEvict(value = "system:menu:tree:vben", key = "#userId")
+                @CacheEvict(value = "system:menu:tree:vben", key = "#userId"),
+                @CacheEvict(value = "system:user", key = "'detail:'+#userId")
             })
     public void deleteUserRolesByUserId(Long userId) {
         userRoleMapper.delete(
@@ -340,7 +342,8 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
     @Caching(
             evict = {
                 @CacheEvict(value = "system:user-role", allEntries = true),
-                @CacheEvict(value = "system:menu:tree:vben", key = "#userId")
+                @CacheEvict(value = "system:menu:tree:vben", key = "#userId"),
+                @CacheEvict(value = "system:user", key = "'detail:'+#userId")
             })
     public void assignUserRoles(Long userId, List<Long> roleIds) {
         userRoleMapper.delete(
