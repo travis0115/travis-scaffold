@@ -123,17 +123,17 @@ export function useColumns(
       cellRender: {
         attrs: {
           beforeChange: onStatusChange,
-          options: [
-            { label: $t('system.versionLog.statusDraft'), value: 0 },
-            { label: $t('system.versionLog.statusPublished'), value: 1 },
-          ],
         },
-        name: 'CellRadio',
+        name: onStatusChange ? 'CellSwitch' : 'CellTag',
+        options: [
+          { label: $t('system.versionLog.statusDraft'), value: 0 },
+          { label: $t('system.versionLog.statusPublished'), value: 1 },
+        ],
       },
       field: 'status',
       fixed: 'right',
       title: $t('system.versionLog.status'),
-      width: 140,
+      width: 100,
     },
     {
       align: 'center',

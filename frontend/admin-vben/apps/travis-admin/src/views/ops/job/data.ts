@@ -230,12 +230,12 @@ export function useJobColumns(
     {
       cellRender: {
         attrs: { beforeChange: onStatusChange, dictType: 'sys_status' },
-        name: 'CellRadio',
+        name: onStatusChange ? 'CellSwitch' : 'CellTag',
       },
       field: 'status',
       fixed: 'right',
       title: '状态',
-      width: 140,
+      width: 100,
     },
     {
       align: 'center',

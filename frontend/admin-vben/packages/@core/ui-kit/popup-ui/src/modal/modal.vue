@@ -247,7 +247,8 @@ function handleClosed() {
               !shouldFullscreen,
             'top-0 left-0 size-full max-h-full max-w-full transform-[translate(0,0)]!':
               shouldFullscreen,
-            'top-1/2': centered && !shouldFullscreen,
+            'top-1/2 transform-[translate(0,-50%)]':
+              centered && !shouldFullscreen,
             'duration-300': !dragging,
             hidden: isClosed,
           },

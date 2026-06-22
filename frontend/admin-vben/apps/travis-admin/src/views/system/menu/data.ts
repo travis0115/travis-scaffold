@@ -81,12 +81,12 @@ export function useColumns(
     {
       cellRender: {
         attrs: { beforeChange: onStatusChange, dictType: 'sys_status' },
-        name: 'CellRadio',
+        name: onStatusChange ? 'CellSwitch' : 'CellTag',
       },
       field: 'status',
       fixed: 'right',
       title: $t('system.menu.status'),
-      width: 140,
+      width: 100,
     },
     {
       align: 'center',

@@ -15,7 +15,7 @@ import { preferences } from '@vben/preferences';
 import { get, isFunction, isString } from '@vben/utils';
 
 import { objectOmit } from '@vueuse/core';
-import { Button, Image, Popconfirm, RadioGroup, Switch, Tag } from 'antdv-next';
+import { Button, Image, Popconfirm, Switch, Tag } from 'antdv-next';
 
 import { $t } from '#/locales';
 import { getDictOptions } from '#/utils/dict';
@@ -187,47 +187,6 @@ setupVbenVxeTable({
           }
         }
         return h(Switch, finallyProps);
-      },
-    });
-
-    vxeUI.renderer.add('CellRadio', {
-      renderTableDefault({ attrs, options, props }, { column, row }) {
-        const loadingKey = `__loading_${column.field}`;
-        const radioOptions =
-          attrs?.options ??
-          (attrs?.dictType ? getDictOptions(attrs.dictType) : unref(options)) ??
-          [
-            { label: $t('common.enabled'), value: 1 },
-            { label: $t('common.disabled'), value: 0 },
-          ];
-        const attrDisabled = isFunction(attrs?.disabled)
-          ? attrs.disabled(row)
-          : attrs?.disabled;
-        const disabled = !attrs?.beforeChange || attrDisabled;
-
-        async function onChange(newVal: any) {
-          if (newVal === row[column.field]) return;
-          row[loadingKey] = true;
-          try {
-            const result = await attrs?.beforeChange?.(newVal, row);
-            if (result !== false) {
-              row[column.field] = newVal;
-            }
-          } finally {
-            row[loadingKey] = false;
-          }
-        }
-
-        return h(RadioGroup, {
-          buttonStyle: 'solid',
-          optionType: 'button',
-          size: 'small',
-          ...props,
-          disabled: disabled || (row[loadingKey] ?? false),
-          options: radioOptions,
-          value: row[column.field],
-          'onUpdate:value': onChange,
-        });
       },
     });
 

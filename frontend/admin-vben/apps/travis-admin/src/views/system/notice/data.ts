@@ -102,14 +102,14 @@ export function useColumns<T>(
       cellRender: {
         attrs: {
           beforeChange: onStatusChange,
-          options: [{ label: '草稿', value: 0 }, { label: '已发布', value: 1 }],
         },
-        name: 'CellRadio',
+        name: onStatusChange ? 'CellSwitch' : 'CellTag',
+        options: [{ label: '草稿', value: 0 }, { label: '已发布', value: 1 }],
       },
       field: 'status',
       fixed: 'right',
       title: '状态',
-      width: 140,
+      width: 100,
     },
     {
       cellRender: {

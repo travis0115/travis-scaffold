@@ -1,1 +1,74 @@
 @import '@vben/tailwind-config/theme';
+
+.ant-modal-root .ant-modal {
+  transform-origin: center center !important;
+}
+
+.ant-modal-root .ant-modal.ant-zoom-enter.ant-zoom-enter-active,
+.ant-modal-root .ant-modal.ant-zoom-appear.ant-zoom-appear-active {
+  animation-name: vben-modal-scale-in !important;
+}
+
+.ant-modal-root .ant-modal.ant-zoom-leave.ant-zoom-leave-active {
+  animation-name: vben-modal-scale-out !important;
+}
+
+.vben-dialog-motion {
+  transform-origin: center center;
+}
+
+.vben-dialog-motion-open {
+  animation: vben-dialog-scale-in 0.2s ease-out both !important;
+}
+
+.vben-dialog-motion-closed {
+  animation: vben-dialog-scale-out 0.16s ease-in both !important;
+}
+
+@keyframes vben-modal-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes vben-modal-scale-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
+
+@keyframes vben-dialog-scale-in {
+  from {
+    opacity: 0;
+    scale: 0.92;
+  }
+
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+@keyframes vben-dialog-scale-out {
+  from {
+    opacity: 1;
+    scale: 1;
+  }
+
+  to {
+    opacity: 0;
+    scale: 0.92;
+  }
+}

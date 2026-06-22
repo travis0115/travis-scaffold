@@ -68,7 +68,11 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits);
 const contentRef = ref<InstanceType<typeof DialogContent> | null>(null);
 function onAnimationEnd(event: AnimationEvent) {
   // 只有在 contentRef 的动画结束时才触发 opened/closed 事件
-  if (event.target === contentRef.value?.$el) {
+  const target = event.target as HTMLElement;
+  if (
+    target === contentRef.value?.$el ||
+    target.classList.contains('vben-dialog-motion')
+  ) {
     if (props.open) {
       emits('opened');
     } else {
@@ -102,11 +106,8 @@ defineExpose({
       v-bind="forwarded"
       :class="
         cn(
-          'z-popup bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 w-full p-6 shadow-lg outline-hidden sm:rounded-xl',
-          {
-            'data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-top-[48%]':
-              animationType === 'slide',
-          },
+          'vben-dialog-motion z-popup bg-background w-full p-6 shadow-lg outline-hidden sm:rounded-xl',
+          open ? 'vben-dialog-motion-open' : 'vben-dialog-motion-closed',
           props.class,
         )
       "
