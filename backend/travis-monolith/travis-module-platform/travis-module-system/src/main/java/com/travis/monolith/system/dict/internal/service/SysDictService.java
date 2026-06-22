@@ -60,6 +60,9 @@ public interface SysDictService extends IService<SysDict> {
      */
     void update(Long id, SysDictUpdateReq req);
 
+    /** 修改字典类型状态 */
+    void updateStatus(Long id, Integer status);
+
     /**
      * 删除字典类型
      *
@@ -89,6 +92,9 @@ public interface SysDictService extends IService<SysDict> {
      * @param req 字典数据项请求参数
      */
     void updateItem(Long id, SysDictItemUpdateReq req);
+
+    /** 修改字典数据项状态 */
+    void updateItemStatus(Long id, Integer status);
 
     /**
      * 删除字典数据项

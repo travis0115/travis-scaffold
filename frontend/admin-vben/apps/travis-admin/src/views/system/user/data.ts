@@ -278,12 +278,12 @@ export function useColumns<T = SystemUserApi.SysUser>(
     {
       cellRender: {
         attrs: { beforeChange: onStatusChange, dictType: 'sys_status' },
-        name: onStatusChange ? 'CellSwitch' : 'CellTag',
+        name: 'CellRadio',
       },
       field: 'status',
       fixed: 'right',
       title: $t('system.user.status'),
-      width: 100,
+      width: 140,
     },
     {
       align: 'center',

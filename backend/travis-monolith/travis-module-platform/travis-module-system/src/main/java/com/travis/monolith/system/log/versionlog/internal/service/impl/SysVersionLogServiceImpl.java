@@ -74,6 +74,15 @@ public class SysVersionLogServiceImpl extends ServiceImplX<SysVersionLogMapper, 
     @Override
     @Transactional
     @CacheEvict(allEntries = true)
+    public void updateStatus(Long id, Integer status) {
+        SysVersionLog entity = getByIdOrThrow(id);
+        entity.setStatus(status);
+        updateById(entity);
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(allEntries = true)
     public void deleteById(Long id) {
         removeById(id);
     }

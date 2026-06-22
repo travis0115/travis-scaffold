@@ -50,6 +50,12 @@ async function updateRole(id: number, data: Partial<SystemRoleApi.SysRole>) {
   return requestClient.put(`/system/role/${id}`, data);
 }
 
+async function updateRoleStatus(id: number, status: 0 | 1) {
+  return requestClient.put(`/system/role/${id}/status`, undefined, {
+    params: { status },
+  });
+}
+
 /**
  * 删除角色
  */
@@ -79,4 +85,5 @@ export {
   getRoleList,
   getRolePage,
   updateRole,
+  updateRoleStatus,
 };

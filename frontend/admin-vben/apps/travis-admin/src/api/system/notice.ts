@@ -39,6 +39,8 @@ const createNotice = (data: Partial<SystemNoticeApi.Notice>) =>
   requestClient.post('/system/notice', data);
 const updateNotice = (id: number, data: Partial<SystemNoticeApi.Notice>) =>
   requestClient.put(`/system/notice/${id}`, data);
+const updateNoticeStatus = (id: number, status: number) =>
+  requestClient.put(`/system/notice/${id}/status`, undefined, { params: { status } });
 const deleteNotice = (id: number) => requestClient.delete(`/system/notice/${id}`);
 const getRecentMessages = (limit = 10) =>
   requestClient.get<SystemNoticeApi.UserMessage[]>('/system/message/recent', {
@@ -69,4 +71,5 @@ export {
   markAllMessagesRead,
   markMessageRead,
   updateNotice,
+  updateNoticeStatus,
 };

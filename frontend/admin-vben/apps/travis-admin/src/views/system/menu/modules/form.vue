@@ -441,6 +441,12 @@ const [Drawer, drawerApi] = useVbenDrawer({
       const data = drawerApi.getData<SystemMenuApi.SysMenu>();
       formData.value = data?.id ? data : undefined;
       formApi.resetForm();
+      formApi.updateSchema([
+        {
+          fieldName: 'status',
+          hide: Boolean(data?.id),
+        },
+      ]);
       if (data?.id) {
         // 编辑时加载完整详情
         const detail = await getMenuDetail(data.id);
@@ -566,6 +572,7 @@ async function onSubmit() {
     delete (data as any).externalOpenMode;
     delete (data as any).isExternal;
     delete (data as any).linkSrc;
+    if (formData.value?.id) delete data.status;
 
     try {
       await (formData.value?.id

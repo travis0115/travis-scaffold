@@ -71,6 +71,12 @@ async function updateDict(id: number, data: Partial<SystemDictApi.SysDict>) {
   return requestClient.put(`/system/dict/${id}`, data);
 }
 
+async function updateDictStatus(id: number, status: 0 | 1) {
+  return requestClient.put(`/system/dict/${id}/status`, undefined, {
+    params: { status },
+  });
+}
+
 /**
  * 删除字典类型
  */
@@ -104,6 +110,12 @@ async function updateDictItem(
   return requestClient.put(`/system/dict/item/${id}`, data);
 }
 
+async function updateDictItemStatus(id: number, status: 0 | 1) {
+  return requestClient.put(`/system/dict/item/${id}/status`, undefined, {
+    params: { status },
+  });
+}
+
 /**
  * 删除字典数据项
  */
@@ -122,4 +134,6 @@ export {
   getDictTree,
   updateDict,
   updateDictItem,
+  updateDictItemStatus,
+  updateDictStatus,
 };

@@ -30,6 +30,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
     const { valid } = await formApi.validate();
     if (!valid) return;
     const values = await formApi.getValues();
+    if (formData.value?.id) delete values.status;
     drawerApi.lock();
     try {
       await (formData.value?.id
@@ -45,6 +46,12 @@ const [Drawer, drawerApi] = useVbenDrawer({
     if (isOpen) {
       const data = drawerApi.getData<SystemVersionLogApi.VersionLog>();
       formApi.resetForm();
+      formApi.updateSchema([
+        {
+          fieldName: 'status',
+          hide: Boolean(data?.id),
+        },
+      ]);
       if (data?.id) {
         const detail = await getVersionLogDetail(data.id);
         formData.value = detail;

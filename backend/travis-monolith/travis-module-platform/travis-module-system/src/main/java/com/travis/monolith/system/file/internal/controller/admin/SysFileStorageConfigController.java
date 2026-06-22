@@ -1,9 +1,11 @@
 package com.travis.monolith.system.file.internal.controller.admin;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.monolith.system.common.api.constant.SystemPermission;
+import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.file.api.request.SysFileStorageConfigCreateReq;
 import com.travis.monolith.system.file.api.request.SysFileStorageConfigUpdateReq;
 import com.travis.monolith.system.file.internal.entity.SysFileStorageConfig;
@@ -37,6 +39,15 @@ public class SysFileStorageConfigController {
     public ApiResponse<Void> update(
             @PathVariable Long id, @RequestBody @Valid SysFileStorageConfigUpdateReq req) {
         storageConfigService.update(id, req);
+        return ApiResponse.success();
+    }
+
+    @PutMapping("/{id}/status")
+    @SaCheckPermission(value = SystemPermission.FILE_UPLOAD, type = LoginType.ADMIN)
+    public ApiResponse<Void> updateStatus(
+            @PathVariable Long id,
+            @RequestParam @EnumValue(value = Status.class, message = "状态值错误") Integer status) {
+        storageConfigService.updateStatus(id, status);
         return ApiResponse.success();
     }
 }

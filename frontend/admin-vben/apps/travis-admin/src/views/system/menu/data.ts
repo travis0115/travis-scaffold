@@ -26,6 +26,7 @@ function flattenTree(nodes: SystemMenuApi.SysMenu[]): SystemMenuApi.SysMenu[] {
 export function useColumns(
   onActionClick: OnActionClickFn<SystemMenuApi.SysMenu>,
   gridData: Ref<SystemMenuApi.SysMenu[]>,
+  onStatusChange?: (newStatus: number, row: SystemMenuApi.SysMenu) => Promise<boolean>,
 ): VxeTableGridColumns<SystemMenuApi.SysMenu> {
   return [
     {
@@ -78,11 +79,14 @@ export function useColumns(
       width: 80,
     },
     {
-      cellRender: { attrs: { dictType: 'sys_status' }, name: 'CellTag' },
+      cellRender: {
+        attrs: { beforeChange: onStatusChange, dictType: 'sys_status' },
+        name: 'CellRadio',
+      },
       field: 'status',
       fixed: 'right',
       title: $t('system.menu.status'),
-      width: 100,
+      width: 140,
     },
     {
       align: 'center',

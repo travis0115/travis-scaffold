@@ -3,7 +3,6 @@ package com.travis.monolith.system.menu.api.request;
 import cn.hutool.core.util.StrUtil;
 import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.monolith.system.common.api.enums.MenuType;
-import com.travis.monolith.system.common.api.enums.Status;
 import jakarta.validation.constraints.*;
 import java.util.Objects;
 import lombok.Data;
@@ -37,10 +36,6 @@ public class SysMenuUpdateReq {
     @Min(value = 0, message = "排序号不能小于0")
     @Max(value = 9999, message = "排序号不能大于9999")
     private Integer sort;
-
-    @EnumValue(value = Status.class, message = "状态值错误")
-    @NotNull(message = "状态值不允许为空")
-    private Integer status;
 
     private String meta;
 

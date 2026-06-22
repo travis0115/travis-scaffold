@@ -51,6 +51,14 @@ public class SysDictItemServiceImpl extends ServiceImplX<SysDictItemMapper, SysD
         updateById(item);
     }
 
+    /** 修改字典数据项状态 */
+    @Override
+    public void updateStatus(Long id, Integer status) {
+        SysDictItem item = getByIdOrThrow(id);
+        item.setStatus(status);
+        updateById(item);
+    }
+
     /** 删除字典数据项 */
     @Override
     public void deleteById(Long id) {

@@ -54,6 +54,12 @@ async function updateDept(id: number, data: Partial<SystemDeptApi.SysDept>) {
   return requestClient.put(`/system/dept/${id}`, data);
 }
 
+async function updateDeptStatus(id: number, status: 0 | 1) {
+  return requestClient.put(`/system/dept/${id}/status`, undefined, {
+    params: { status },
+  });
+}
+
 /**
  * 删除部门
  */
@@ -68,4 +74,5 @@ export {
   getDeptTree,
   getEnabledDeptTree,
   updateDept,
+  updateDeptStatus,
 };

@@ -11,7 +11,7 @@ import { Plus } from '@vben/icons';
 import { App, Button, message } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { deleteRole, getRolePage, updateRole } from '#/api';
+import { deleteRole, getRolePage, updateRoleStatus } from '#/api';
 import { $t } from '#/locales';
 import { useAuthStore } from '#/store';
 import { getDictLabel } from '#/utils/dict';
@@ -104,7 +104,7 @@ async function onStatusChange(
       }),
       $t('system.role.switchStatus'),
     );
-    await updateRole(row.id, { status: newStatus as 0 | 1 });
+    await updateRoleStatus(row.id, newStatus as 0 | 1);
     await authStore.fetchAccessCodes();
     return true;
   } catch {

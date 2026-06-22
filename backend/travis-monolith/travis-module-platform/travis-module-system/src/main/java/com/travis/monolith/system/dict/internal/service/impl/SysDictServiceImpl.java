@@ -124,11 +124,7 @@ public class SysDictServiceImpl extends ServiceImplX<SysDictMapper, SysDict>
     /** 更新字典类型 */
     @Override
     @Transactional
-    @Caching(
-            evict = {
-                @CacheEvict(key = "'tree:all'"),
-                @CacheEvict(key = "'detail:'+#id")
-            })
+    @Caching(evict = {@CacheEvict(key = "'tree:all'"), @CacheEvict(key = "'detail:'+#id")})
     public void update(Long id, SysDictUpdateReq req) {
         SysDict dict = getByIdOrThrow(id);
         // 检查字典类型编码唯一性（排除自身）
@@ -141,6 +137,16 @@ public class SysDictServiceImpl extends ServiceImplX<SysDictMapper, SysDict>
             throw new BizException(SystemErrorCode.DICT_TYPE_EXISTS);
         }
         converter.update(req, dict);
+        updateById(dict);
+    }
+
+    /** 修改字典类型状态 */
+    @Override
+    @Transactional
+    @Caching(evict = {@CacheEvict(key = "'tree:all'"), @CacheEvict(key = "'detail:'+#id")})
+    public void updateStatus(Long id, Integer status) {
+        SysDict dict = getByIdOrThrow(id);
+        dict.setStatus(status);
         updateById(dict);
     }
 
@@ -192,6 +198,20 @@ public class SysDictServiceImpl extends ServiceImplX<SysDictMapper, SysDict>
             })
     public void updateItem(Long id, SysDictItemUpdateReq req) {
         dictItemService.update(id, req);
+    }
+
+    /** 修改字典数据项状态 */
+    @Override
+    public void updateItemStatus(Long id, Integer status) {
+        SysDictItem item = dictItemService.getById(id);
+        dictItemService.updateStatus(id, status);
+        if (item != null) {
+            var cache = cacheManager.getCache("system:dict");
+            if (cache != null) {
+                cache.evict("tree:all");
+                cache.evict("item-list:" + item.getDictId());
+            }
+        }
     }
 
     /** 删除字典数据项（委托给 {@link SysDictItemService}） */

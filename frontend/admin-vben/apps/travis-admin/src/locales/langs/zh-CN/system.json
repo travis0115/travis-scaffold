@@ -8,6 +8,7 @@
     "nickname": "昵称",
     "password": "密码",
     "generatePassword": "随机生成",
+    "copyPassword": "复制密码",
     "email": "邮箱",
     "mobile": "手机号",
     "contactInfo": "联系信息",

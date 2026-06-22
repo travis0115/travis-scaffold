@@ -13,7 +13,7 @@ import { Plus } from '@vben/icons';
 import { App, Button, Card, InputSearch, message } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { deleteUser, getDeptTree, getUserPage, updateUser } from '#/api';
+import { deleteUser, getDeptTree, getUserPage, updateUserStatus } from '#/api';
 import { isDeptEnabled } from '#/features';
 import { $t } from '#/locales';
 import { getDictLabel } from '#/utils/dict';
@@ -178,7 +178,7 @@ async function onStatusChange(
       }),
       $t('system.user.switchStatus'),
     );
-    await updateUser(row.id, { status: newStatus as 0 | 1 });
+    await updateUserStatus(row.id, newStatus as 0 | 1);
     return true;
   } catch {
     return false;

@@ -3,11 +3,13 @@ package com.travis.monolith.system.dict.internal.controller.admin;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.travis.infrastructure.common.logging.annotation.OperationLog;
 import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
+import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
 import com.travis.monolith.system.common.api.constant.SystemPermission;
+import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.dict.api.request.SysDictCreateReq;
 import com.travis.monolith.system.dict.api.request.SysDictItemCreateReq;
 import com.travis.monolith.system.dict.api.request.SysDictItemUpdateReq;
@@ -99,6 +101,18 @@ public class SysDictController {
         return ApiResponse.success();
     }
 
+    /** 修改字典状态 */
+    @OperationLog(action = "修改字典状态")
+    @NoRepeatSubmit
+    @PutMapping("/{id}/status")
+    @SaCheckPermission(value = SystemPermission.DICT_UPDATE, type = LoginType.ADMIN)
+    public ApiResponse<Void> updateStatus(
+            @PathVariable Long id,
+            @RequestParam @EnumValue(value = Status.class, message = "状态值错误") Integer status) {
+        dictService.updateStatus(id, status);
+        return ApiResponse.success();
+    }
+
     /**
      * 删除字典类型
      *
@@ -155,6 +169,18 @@ public class SysDictController {
     public ApiResponse<Void> updateItem(
             @PathVariable Long id, @RequestBody @Valid SysDictItemUpdateReq req) {
         dictService.updateItem(id, req);
+        return ApiResponse.success();
+    }
+
+    /** 修改字典数据项状态 */
+    @OperationLog(action = "修改字典项状态")
+    @NoRepeatSubmit
+    @PutMapping("/item/{id}/status")
+    @SaCheckPermission(value = SystemPermission.DICT_UPDATE, type = LoginType.ADMIN)
+    public ApiResponse<Void> updateItemStatus(
+            @PathVariable Long id,
+            @RequestParam @EnumValue(value = Status.class, message = "状态值错误") Integer status) {
+        dictService.updateItemStatus(id, status);
         return ApiResponse.success();
     }
 

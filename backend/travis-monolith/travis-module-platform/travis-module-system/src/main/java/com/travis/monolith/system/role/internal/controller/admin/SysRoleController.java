@@ -3,11 +3,13 @@ package com.travis.monolith.system.role.internal.controller.admin;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.travis.infrastructure.common.logging.annotation.OperationLog;
 import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
+import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
 import com.travis.monolith.system.common.api.constant.SystemPermission;
+import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.role.api.request.SysRoleCreateReq;
 import com.travis.monolith.system.role.api.request.SysRoleMenuReq;
 import com.travis.monolith.system.role.api.request.SysRolePageReq;
@@ -83,6 +85,18 @@ public class SysRoleController {
     public ApiResponse<Void> update(
             @PathVariable Long id, @RequestBody @Valid SysRoleUpdateReq req) {
         roleService.update(id, req);
+        return ApiResponse.success();
+    }
+
+    /** 修改角色状态 */
+    @OperationLog(action = "修改角色状态")
+    @NoRepeatSubmit
+    @PutMapping("/{id}/status")
+    @SaCheckPermission(value = SystemPermission.ROLE_UPDATE, type = LoginType.ADMIN)
+    public ApiResponse<Void> updateStatus(
+            @PathVariable Long id,
+            @RequestParam @EnumValue(value = Status.class, message = "状态值错误") Integer status) {
+        roleService.updateStatus(id, status);
         return ApiResponse.success();
     }
 

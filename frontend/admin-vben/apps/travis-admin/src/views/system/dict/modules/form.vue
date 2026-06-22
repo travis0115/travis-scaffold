@@ -31,6 +31,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
     const { valid } = await formApi.validate();
     if (!valid) return;
     const values = await formApi.getValues();
+    if (formData.value?.id) delete values.status;
     drawerApi.lock();
     try {
       await (formData.value?.id
@@ -47,6 +48,12 @@ const [Drawer, drawerApi] = useVbenDrawer({
     if (isOpen) {
       const data = drawerApi.getData<SystemDictApi.SysDict>();
       formApi.resetForm();
+      formApi.updateSchema([
+        {
+          fieldName: 'status',
+          hide: Boolean(data?.id),
+        },
+      ]);
       if (data?.id) {
         // 编辑时加载完整详情
         const detail = await getDictDetail(data.id);

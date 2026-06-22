@@ -45,6 +45,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
       if (id.value) {
         // 编辑：更新用户信息 + 分配角色（不允许修改密码）
         delete (userData as any).password;
+        delete (userData as any).status;
         await updateUser(id.value, userData);
         if (roleIds !== undefined) {
           await assignUserRoles({ userId: id.value, roleIds });
@@ -70,6 +71,10 @@ const [Drawer, drawerApi] = useVbenDrawer({
       formApi.updateSchema([
         {
           fieldName: 'password',
+          hide: Boolean(data?.id),
+        },
+        {
+          fieldName: 'status',
           hide: Boolean(data?.id),
         },
       ]);

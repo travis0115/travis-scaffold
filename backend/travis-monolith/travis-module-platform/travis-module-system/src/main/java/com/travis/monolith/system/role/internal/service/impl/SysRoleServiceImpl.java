@@ -130,6 +130,22 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
         updateById(role);
     }
 
+    /** 修改角色状态 */
+    @Override
+    @Transactional
+    @Caching(
+            evict = {
+                @CacheEvict(key = "'detail:'+#id"),
+                @CacheEvict(key = "'list:enabled'"),
+                @CacheEvict(value = "system:menu:tree:vben", allEntries = true)
+            })
+    public void updateStatus(Long id, Integer status) {
+        var role = getByIdOrThrow(id);
+        checkModifiable(role);
+        role.setStatus(status);
+        updateById(role);
+    }
+
     /** 删除角色，同时清除角色-菜单和用户-角色关联 */
     @Override
     @Transactional
@@ -343,7 +359,6 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
             list.forEach(userRoleMapper::insert);
         }
     }
-
 
     private void checkModifiable(SysRole role) {
         if (Modifiable.IMMUTABLE.getValue().equals(role.getModifiable())) {

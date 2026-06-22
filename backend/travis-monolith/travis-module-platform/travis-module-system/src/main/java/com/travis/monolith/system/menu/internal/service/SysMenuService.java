@@ -45,6 +45,9 @@ public interface SysMenuService extends IService<SysMenu> {
      */
     void update(Long id, SysMenuUpdateReq req);
 
+    /** 修改菜单状态 */
+    void updateStatus(Long id, Integer status);
+
     /**
      * 删除菜单及其所有子菜单
      *
@@ -73,7 +76,6 @@ public interface SysMenuService extends IService<SysMenu> {
      * @return Vben Admin 格式的菜单树
      */
     List<VbenMenuResp> getVbenMenuTree(Long userId);
-
 
     /**
      * 根据菜单ID查询已启用菜单的权限标识

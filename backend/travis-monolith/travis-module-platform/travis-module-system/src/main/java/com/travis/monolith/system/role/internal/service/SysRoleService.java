@@ -8,7 +8,6 @@ import com.travis.monolith.system.role.api.request.SysRolePageReq;
 import com.travis.monolith.system.role.api.request.SysRoleUpdateReq;
 import com.travis.monolith.system.role.api.response.SysRoleResp;
 import com.travis.monolith.system.role.internal.entity.SysRole;
-
 import java.util.List;
 
 /**
@@ -48,6 +47,9 @@ public interface SysRoleService extends IService<SysRole> {
      * @param req 角色信息请求参数
      */
     void update(Long id, SysRoleUpdateReq req);
+
+    /** 修改角色状态 */
+    void updateStatus(Long id, Integer status);
 
     /**
      * 删除角色
@@ -130,8 +132,6 @@ public interface SysRoleService extends IService<SysRole> {
      * @param roleIds 角色ID列表
      */
     void assignUserRoles(Long userId, List<Long> roleIds);
-
-
 
     /** 根据角色ID获取关联的用户ID列表 */
     List<Long> getUserIdsByRoleId(Long roleId);

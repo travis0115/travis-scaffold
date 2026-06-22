@@ -28,7 +28,4 @@ public class SysVersionLogUpdateReq {
 
     /** 发布时间 */
     private LocalDateTime publishTime;
-
-    /** 状态（0-草稿 1-已发布） */
-    private Integer status;
 }

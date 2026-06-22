@@ -53,6 +53,9 @@ public interface SysVersionLogService extends IService<SysVersionLog> {
      */
     void update(Long id, SysVersionLogUpdateReq req);
 
+    /** 修改版本日志状态 */
+    void updateStatus(Long id, Integer status);
+
     /**
      * 删除版本日志
      *

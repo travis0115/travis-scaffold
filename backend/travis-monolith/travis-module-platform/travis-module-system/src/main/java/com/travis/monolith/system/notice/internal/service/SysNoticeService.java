@@ -18,5 +18,7 @@ public interface SysNoticeService extends IService<SysNotice> {
 
     void update(Long id, SysNoticeUpdateReq req);
 
+    void updateStatus(Long id, Integer status);
+
     void delete(Long id);
 }

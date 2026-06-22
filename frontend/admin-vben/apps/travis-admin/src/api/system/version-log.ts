@@ -53,6 +53,12 @@ async function updateVersionLog(id: number, data: Partial<SystemVersionLogApi.Ve
   return requestClient.put(`/system/version-log/${id}`, data);
 }
 
+async function updateVersionLogStatus(id: number, status: 0 | 1) {
+  return requestClient.put(`/system/version-log/${id}/status`, undefined, {
+    params: { status },
+  });
+}
+
 /**
  * 删除版本日志
  */
@@ -76,4 +82,5 @@ export {
   getVersionLogDetail,
   getVersionLogPage,
   updateVersionLog,
+  updateVersionLogStatus,
 };

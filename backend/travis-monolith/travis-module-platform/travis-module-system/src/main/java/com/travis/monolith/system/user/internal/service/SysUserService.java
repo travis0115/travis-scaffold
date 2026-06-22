@@ -5,7 +5,6 @@ import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.user.api.request.*;
 import com.travis.monolith.system.user.api.response.SysUserResp;
 import com.travis.monolith.system.user.internal.entity.SysUser;
-
 import java.util.List;
 
 /**
@@ -52,6 +51,9 @@ public interface SysUserService extends IService<SysUser> {
      * @param req 用户信息请求参数
      */
     void update(Long id, SysUserUpdateReq req);
+
+    /** 修改用户状态 */
+    void updateStatus(Long id, Integer status);
 
     /**
      * 删除用户

@@ -3,11 +3,13 @@ package com.travis.monolith.system.user.internal.controller.admin;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.travis.infrastructure.common.logging.annotation.OperationLog;
 import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
+import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
 import com.travis.monolith.system.common.api.constant.SystemPermission;
+import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.user.api.request.*;
 import com.travis.monolith.system.user.api.response.SysUserResp;
 import com.travis.monolith.system.user.internal.service.SysUserService;
@@ -83,6 +85,18 @@ public class SysUserController {
     public ApiResponse<Void> update(
             @PathVariable Long id, @RequestBody @Valid SysUserUpdateReq req) {
         userService.update(id, req);
+        return ApiResponse.success();
+    }
+
+    /** 修改用户状态 */
+    @OperationLog(action = "修改用户状态")
+    @NoRepeatSubmit
+    @PutMapping("/{id}/status")
+    @SaCheckPermission(value = SystemPermission.USER_UPDATE, type = LoginType.ADMIN)
+    public ApiResponse<Void> updateStatus(
+            @PathVariable Long id,
+            @RequestParam @EnumValue(value = Status.class, message = "状态值错误") Integer status) {
+        userService.updateStatus(id, status);
         return ApiResponse.success();
     }
 

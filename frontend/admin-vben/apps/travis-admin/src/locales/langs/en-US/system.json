@@ -8,6 +8,7 @@
     "nickname": "Nickname",
     "password": "Password",
     "generatePassword": "Generate",
+    "copyPassword": "Copy Password",
     "email": "Email",
     "mobile": "Mobile",
     "contactInfo": "Contact Info",

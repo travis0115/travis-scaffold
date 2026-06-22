@@ -78,6 +78,7 @@ export function useSchema(
 
 export function useColumns(
   onActionClick?: OnActionClickFn<SystemDeptApi.SysDept>,
+  onStatusChange?: (newStatus: number, row: SystemDeptApi.SysDept) => Promise<boolean>,
 ): VxeTableGridColumns<SystemDeptApi.SysDept> {
   return [
     {
@@ -110,11 +111,14 @@ export function useColumns(
       formatter: 'formatDateTime',
     },
     {
-      cellRender: { attrs: { dictType: 'sys_status' }, name: 'CellTag' },
+      cellRender: {
+        attrs: { beforeChange: onStatusChange, dictType: 'sys_status' },
+        name: 'CellRadio',
+      },
       field: 'status',
       fixed: 'right',
       title: $t('system.dept.status'),
-      width: 100,
+      width: 140,
     },
     {
       align: 'center',

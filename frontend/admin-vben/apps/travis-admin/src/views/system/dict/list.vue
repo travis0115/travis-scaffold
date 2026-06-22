@@ -13,10 +13,10 @@ import { Plus } from '@vben/icons';
 import { Button, message } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { deleteDict, getDictPage } from '#/api';
+import { deleteDict, getDictPage, updateDictStatus } from '#/api';
 import { $t } from '#/locales';
 import { reloadDictOptions } from '#/utils/dict';
-import { SYSTEM_PERMS } from '#/utils/permissions';
+import { hasAccessCode, SYSTEM_PERMS } from '#/utils/permissions';
 
 import { useColumns, useGridFormSchema } from './data';
 import FormDrawerComponent from './modules/form.vue';
@@ -41,7 +41,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
     wrapperClass: 'grid-cols-2',
   },
   gridOptions: {
-    columns: useColumns(onActionClick),
+    columns: useColumns(
+      onActionClick,
+      hasAccessCode(SYSTEM_PERMS.dictUpdate) ? onStatusChange : undefined,
+    ),
     height: 'auto',
     keepSource: true,
     proxyConfig: {
@@ -130,6 +133,13 @@ function onDelete(row: SystemDictApi.SysDict) {
 
 function onRefresh() {
   gridApi.query();
+}
+
+async function onStatusChange(newStatus: number, row: SystemDictApi.SysDict) {
+  await updateDictStatus(row.id, newStatus as 0 | 1);
+  await reloadDictOptions();
+  onRefresh();
+  return true;
 }
 </script>
 <template>

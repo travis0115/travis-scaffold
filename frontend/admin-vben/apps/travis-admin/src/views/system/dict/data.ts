@@ -76,6 +76,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
 
 export function useColumns(
   onActionClick?: OnActionClickFn<SystemDictApi.SysDict>,
+  onStatusChange?: (newStatus: number, row: SystemDictApi.SysDict) => Promise<boolean>,
 ): VxeTableGridColumns<SystemDictApi.SysDict> {
   return [
     {
@@ -95,11 +96,14 @@ export function useColumns(
       title: $t('system.dict.remark'),
     },
     {
-      cellRender: { attrs: { dictType: 'sys_status' }, name: 'CellTag' },
+      cellRender: {
+        attrs: { beforeChange: onStatusChange, dictType: 'sys_status' },
+        name: 'CellRadio',
+      },
       field: 'status',
       fixed: 'right',
       title: $t('system.dict.status'),
-      width: 100,
+      width: 140,
     },
     {
       align: 'center',

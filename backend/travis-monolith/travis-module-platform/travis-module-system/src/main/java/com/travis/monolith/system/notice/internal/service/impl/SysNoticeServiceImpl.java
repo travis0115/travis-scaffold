@@ -20,19 +20,18 @@ import com.travis.monolith.system.notice.internal.mapper.SysUserMessageMapper;
 import com.travis.monolith.system.notice.internal.service.SysNoticeService;
 import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.api.SysUserApi;
-import org.springframework.beans.BeanUtils;
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @CacheConfig(cacheNames = "system:notice")
@@ -83,6 +82,18 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
         validateAudience(req.getAudienceType(), req.getTargetIds());
         var entity = converter.toEntity(req);
         save(entity);
+        if (Integer.valueOf(1).equals(entity.getStatus())) {
+            publish(entity);
+        }
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(key = "'detail:'+#id")
+    public void updateStatus(Long id, Integer status) {
+        var entity = getByIdOrThrow(id);
+        entity.setStatus(status);
+        updateById(entity);
         if (Integer.valueOf(1).equals(entity.getStatus())) {
             publish(entity);
         }

@@ -69,16 +69,6 @@ public class SysDeptServiceImpl extends ServiceImplX<SysDeptMapper, SysDept>
         return buildTree(deptRespList);
     }
 
-    /** 根据部门ID列表批量获取部门名称映射 */
-    @Override
-    public Map<Long, String> getDeptNameMapByIds(Collection<Long> ids) {
-        if (ids == null || ids.isEmpty()) {
-            return Map.of();
-        }
-        return listByIds(ids).stream()
-                .collect(Collectors.toMap(SysDept::getId, SysDept::getDeptName));
-    }
-
     /** 获取部门详情 */
     @Override
     @Cacheable(key = "'detail:'+#id")
@@ -154,6 +144,22 @@ public class SysDeptServiceImpl extends ServiceImplX<SysDeptMapper, SysDept>
             throw new BizException(SystemErrorCode.DEPT_PARENT_INVALID);
         }
         converter.update(req, dept);
+        updateById(dept);
+    }
+
+    /** 修改部门状态 */
+    @Override
+    @Transactional
+    @Caching(
+            evict = {
+                @CacheEvict(key = "'tree:all'"),
+                @CacheEvict(key = "'tree:enabled'"),
+                @CacheEvict(key = "'detail:'+#id"),
+                @CacheEvict(key = "'name:'+#id")
+            })
+    public void updateStatus(Long id, Integer status) {
+        var dept = getByIdOrThrow(id);
+        dept.setStatus(status);
         updateById(dept);
     }
 

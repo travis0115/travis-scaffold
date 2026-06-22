@@ -56,6 +56,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
     try {
       if (id.value) {
         const shouldRefreshAccess = isCurrentUserRole(roleValues.roleCode);
+        delete (roleValues as any).status;
         await updateRole(id.value, roleValues);
         await assignRoleMenus({ roleId: id.value, menuIds });
         if (shouldRefreshAccess) {
@@ -75,6 +76,12 @@ const [Drawer, drawerApi] = useVbenDrawer({
     if (isOpen) {
       const data = drawerApi.getData<SystemRoleApi.SysRole>();
       formApi.resetForm();
+      formApi.updateSchema([
+        {
+          fieldName: 'status',
+          hide: Boolean(data?.id),
+        },
+      ]);
       permissionAllChecked.value = false;
       permissionExpanded.value = false;
       permissionExpandedKeys.value = [];

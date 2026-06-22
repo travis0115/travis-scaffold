@@ -94,6 +94,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
 
 export function useColumns(
   onActionClick?: OnActionClickFn<SystemVersionLogApi.VersionLog>,
+  onStatusChange?: (newStatus: number, row: SystemVersionLogApi.VersionLog) => Promise<boolean>,
 ): VxeTableGridColumns<SystemVersionLogApi.VersionLog> {
   return [
     {
@@ -119,11 +120,20 @@ export function useColumns(
       formatter: 'formatDateTime',
     },
     {
-      cellRender: { name: 'CellTag' },
+      cellRender: {
+        attrs: {
+          beforeChange: onStatusChange,
+          options: [
+            { label: $t('system.versionLog.statusDraft'), value: 0 },
+            { label: $t('system.versionLog.statusPublished'), value: 1 },
+          ],
+        },
+        name: 'CellRadio',
+      },
       field: 'status',
       fixed: 'right',
       title: $t('system.versionLog.status'),
-      width: 100,
+      width: 140,
     },
     {
       align: 'center',

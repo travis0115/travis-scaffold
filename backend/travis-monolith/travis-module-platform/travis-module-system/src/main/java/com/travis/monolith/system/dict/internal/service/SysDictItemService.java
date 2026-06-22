@@ -38,6 +38,9 @@ public interface SysDictItemService extends IService<SysDictItem> {
      */
     void update(Long id, SysDictItemUpdateReq req);
 
+    /** 修改字典数据项状态 */
+    void updateStatus(Long id, Integer status);
+
     /**
      * 删除字典数据项
      *

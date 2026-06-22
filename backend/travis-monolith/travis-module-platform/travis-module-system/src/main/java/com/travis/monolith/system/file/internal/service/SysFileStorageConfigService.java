@@ -12,4 +12,6 @@ public interface SysFileStorageConfigService extends IService<SysFileStorageConf
     void create(SysFileStorageConfigCreateReq req);
 
     void update(Long id, SysFileStorageConfigUpdateReq req);
+
+    void updateStatus(Long id, Integer status);
 }

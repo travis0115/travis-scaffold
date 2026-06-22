@@ -11,9 +11,9 @@ import { Plus } from '@vben/icons';
 import { Button, message } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { deleteVersionLog, getVersionLogPage } from '#/api';
+import { deleteVersionLog, getVersionLogPage, updateVersionLogStatus } from '#/api';
 import { $t } from '#/locales';
-import { SYSTEM_PERMS } from '#/utils/permissions';
+import { hasAccessCode, SYSTEM_PERMS } from '#/utils/permissions';
 
 import { useColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
@@ -29,7 +29,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
     submitOnChange: false,
   },
   gridOptions: {
-    columns: useColumns(onActionClick),
+    columns: useColumns(
+      onActionClick,
+      hasAccessCode(SYSTEM_PERMS.versionUpdate) ? onStatusChange : undefined,
+    ),
     height: 'auto',
     keepSource: true,
     proxyConfig: {
@@ -98,6 +101,15 @@ function onRefresh() {
 
 function onCreate() {
   formDrawerApi.setData({}).open();
+}
+
+async function onStatusChange(
+  newStatus: number,
+  row: SystemVersionLogApi.VersionLog,
+) {
+  await updateVersionLogStatus(row.id, newStatus as 0 | 1);
+  onRefresh();
+  return true;
 }
 </script>
 <template>

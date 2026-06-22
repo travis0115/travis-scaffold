@@ -48,6 +48,15 @@ public class SysFileStorageConfigServiceImpl
         updateById(entity);
     }
 
+    @Override
+    @Transactional
+    @CacheEvict(key = "'list:all'")
+    public void updateStatus(Long id, Integer status) {
+        var entity = getByIdOrThrow(id);
+        entity.setStatus(status);
+        updateById(entity);
+    }
+
     private void resetDefault(Integer isDefault) {
         if (Integer.valueOf(1).equals(isDefault)) {
             lambdaUpdate()

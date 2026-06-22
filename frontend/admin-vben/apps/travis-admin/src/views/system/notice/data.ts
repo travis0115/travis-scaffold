@@ -84,7 +84,10 @@ export const useGridFormSchema = (): VbenFormSchema[] => [
   },
 ];
 
-export function useColumns<T>(onActionClick: OnActionClickFn<T>): VxeTableGridColumns {
+export function useColumns<T>(
+  onActionClick: OnActionClickFn<T>,
+  onStatusChange?: (newStatus: number, row: T) => Promise<boolean>,
+): VxeTableGridColumns {
   return [
     { field: 'title', minWidth: 220, title: '公告标题' },
     { field: 'noticeType', formatter: ({ cellValue }: any) => cellValue === 1 ? '通知' : '公告', title: '类型', width: 100 },
@@ -95,7 +98,19 @@ export function useColumns<T>(onActionClick: OnActionClickFn<T>): VxeTableGridCo
       width: 110,
     },
     { field: 'publishTime', formatter: 'formatDateTime', title: '发布时间', width: 180 },
-    { field: 'status', fixed: 'right', formatter: ({ cellValue }: any) => cellValue === 1 ? '已发布' : '草稿', title: '状态', width: 100 },
+    {
+      cellRender: {
+        attrs: {
+          beforeChange: onStatusChange,
+          options: [{ label: '草稿', value: 0 }, { label: '已发布', value: 1 }],
+        },
+        name: 'CellRadio',
+      },
+      field: 'status',
+      fixed: 'right',
+      title: '状态',
+      width: 140,
+    },
     {
       cellRender: {
         attrs: { nameField: 'title', onClick: onActionClick },

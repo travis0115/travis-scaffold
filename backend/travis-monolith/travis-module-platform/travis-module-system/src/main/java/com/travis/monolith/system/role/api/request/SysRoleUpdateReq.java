@@ -1,10 +1,7 @@
 package com.travis.monolith.system.role.api.request;
 
-import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.monolith.system.common.api.constant.ValidationPattern;
-import com.travis.monolith.system.common.api.enums.Status;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -23,8 +20,4 @@ public class SysRoleUpdateReq {
 
     @Size(max = 200, message = "备注长度不能超过200个字符")
     private String remark;
-
-    @EnumValue(value = Status.class, message = "状态值错误")
-    @NotNull(message = "状态值不允许为空")
-    private Integer status;
 }

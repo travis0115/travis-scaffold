@@ -3,10 +3,12 @@ package com.travis.monolith.system.menu.internal.controller.admin;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.travis.infrastructure.common.logging.annotation.OperationLog;
 import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
+import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
 import com.travis.monolith.system.common.api.constant.SystemPermission;
+import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.menu.api.request.SysMenuCreateReq;
 import com.travis.monolith.system.menu.api.request.SysMenuUpdateReq;
 import com.travis.monolith.system.menu.api.response.SysMenuResp;
@@ -84,6 +86,18 @@ public class SysMenuController {
     public ApiResponse<Void> update(
             @PathVariable Long id, @RequestBody @Valid SysMenuUpdateReq req) {
         menuService.update(id, req);
+        return ApiResponse.success();
+    }
+
+    /** 修改菜单状态 */
+    @OperationLog(action = "修改菜单状态")
+    @NoRepeatSubmit
+    @PutMapping("/{id}/status")
+    @SaCheckPermission(value = SystemPermission.MENU_UPDATE, type = LoginType.ADMIN)
+    public ApiResponse<Void> updateStatus(
+            @PathVariable Long id,
+            @RequestParam @EnumValue(value = Status.class, message = "状态值错误") Integer status) {
+        menuService.updateStatus(id, status);
         return ApiResponse.success();
     }
 

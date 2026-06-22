@@ -11,9 +11,9 @@ import { Plus } from '@vben/icons';
 import { Button, message, Modal } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { deleteDept, getDeptTree } from '#/api';
+import { deleteDept, getDeptTree, updateDeptStatus } from '#/api';
 import { $t } from '#/locales';
-import { SYSTEM_PERMS } from '#/utils/permissions';
+import { hasAccessCode, SYSTEM_PERMS } from '#/utils/permissions';
 
 import { useColumns } from './data';
 import Form from './modules/form.vue';
@@ -90,7 +90,10 @@ function onActionClick({
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
-    columns: useColumns(onActionClick),
+    columns: useColumns(
+      onActionClick,
+      hasAccessCode(SYSTEM_PERMS.deptUpdate) ? onStatusChange : undefined,
+    ),
     height: 'auto',
     keepSource: true,
     pagerConfig: {
@@ -122,6 +125,12 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 function refreshGrid() {
   gridApi.query();
+}
+
+async function onStatusChange(newStatus: number, row: SystemDeptApi.SysDept) {
+  await updateDeptStatus(row.id, newStatus as 0 | 1);
+  await refreshGrid();
+  return true;
 }
 </script>
 <template>

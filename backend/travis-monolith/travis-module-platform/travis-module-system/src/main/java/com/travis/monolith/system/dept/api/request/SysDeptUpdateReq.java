@@ -1,8 +1,6 @@
 package com.travis.monolith.system.dept.api.request;
 
-import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.common.validation.annotation.Mobile;
-import com.travis.monolith.system.common.api.enums.Status;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
@@ -28,9 +26,4 @@ public class SysDeptUpdateReq {
 
     /** 联系电话 */
     @Mobile private String mobile;
-
-    /** 状态（0-禁用 1-启用） */
-    @EnumValue(value = Status.class, message = "状态值错误")
-    @NotNull(message = "状态值不允许为空")
-    private Integer status;
 }

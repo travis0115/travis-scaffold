@@ -2,6 +2,7 @@
 import { h, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
+import { useClipboard } from '@vueuse/core';
 
 import { App, Button } from 'antdv-next';
 
@@ -11,7 +12,8 @@ import { $t } from '#/locales';
 
 const emit = defineEmits(['success']);
 
-const { modal: antdModal } = App.useApp();
+const { copy } = useClipboard({ legacy: true });
+const { message, modal: antdModal } = App.useApp();
 
 const userId = ref<number>();
 const nicknameVal = ref('');
@@ -22,11 +24,11 @@ function generateRandomPassword() {
     'ABCDEFGHJKLMNPQRSTUVWXYZ',
     'abcdefghjkmnpqrstuvwxyz',
     '23456789',
-    '~!@#$%^&*',
+    '~!@#',
   ];
   const chars = groups.join('');
   const password = groups.map((group) => pickChar(group));
-  for (let i = password.length; i < 12; i++) {
+  for (let i = password.length; i < 8; i++) {
     password.push(pickChar(chars));
   }
   return password.toSorted(() => Math.random() - 0.5).join('');
@@ -107,7 +109,21 @@ const [Modal, modalApi] = useVbenModal({
       emit('success');
       modalApi.close();
       antdModal.success({
-        content: $t('system.user.resetPasswordResult', { password: pwd }),
+        content: h('div', { class: 'flex items-center gap-2' }, [
+          h('span', $t('system.user.resetPasswordResult', { password: pwd })),
+          h(
+            Button,
+            {
+              size: 'small',
+              type: 'link',
+              onClick: async () => {
+                await copy(pwd);
+                message.success($t('ui.jsonViewer.copied'));
+              },
+            },
+            () => $t('system.user.copyPassword'),
+          ),
+        ]),
         title: $t('system.user.resetPassword'),
       });
     } catch {

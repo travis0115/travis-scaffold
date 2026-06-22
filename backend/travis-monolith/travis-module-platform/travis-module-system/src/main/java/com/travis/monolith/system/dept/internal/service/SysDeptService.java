@@ -5,9 +5,9 @@ import com.travis.monolith.system.dept.api.request.SysDeptCreateReq;
 import com.travis.monolith.system.dept.api.request.SysDeptUpdateReq;
 import com.travis.monolith.system.dept.api.response.SysDeptResp;
 import com.travis.monolith.system.dept.internal.entity.SysDept;
+
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 部门管理服务接口，提供部门树查询、增删改查
@@ -30,13 +30,6 @@ public interface SysDeptService extends IService<SysDept> {
      */
     List<SysDeptResp> listEnabledTree();
 
-    /**
-     * 根据部门ID列表批量获取部门名称映射
-     *
-     * @param ids 部门ID集合
-     * @return 部门ID -> 部门名称的映射
-     */
-    Map<Long, String> getDeptNameMapByIds(Collection<Long> ids);
 
     /**
      * 获取部门详情
@@ -59,6 +52,9 @@ public interface SysDeptService extends IService<SysDept> {
      * @param req 部门信息请求参数
      */
     void update(Long id, SysDeptUpdateReq req);
+
+    /** 修改部门状态 */
+    void updateStatus(Long id, Integer status);
 
     /**
      * 删除部门（存在子部门时禁止删除）

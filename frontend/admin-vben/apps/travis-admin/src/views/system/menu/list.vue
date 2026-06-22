@@ -15,12 +15,12 @@ import { useAccessStore, useUserStore } from '@vben/stores';
 import { Button, message, Modal } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { deleteMenu, getMenuTree, moveDownMenu, moveUpMenu } from '#/api';
+import { deleteMenu, getMenuTree, moveDownMenu, moveUpMenu, updateMenuStatus } from '#/api';
 import { $t } from '#/locales';
 import { generateAccess } from '#/router/access';
 import { accessRoutes } from '#/router/routes';
 import { useAuthStore } from '#/store';
-import { SYSTEM_PERMS } from '#/utils/permissions';
+import { hasAccessCode, SYSTEM_PERMS } from '#/utils/permissions';
 
 import { useColumns } from './data';
 import Form from './modules/form.vue';
@@ -34,7 +34,11 @@ const gridData = ref<SystemMenuApi.SysMenu[]>([]);
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
-    columns: useColumns(onActionClick, gridData),
+    columns: useColumns(
+      onActionClick,
+      gridData,
+      hasAccessCode(SYSTEM_PERMS.menuUpdate) ? onStatusChange : undefined,
+    ),
     height: 'auto',
     keepSource: true,
     pagerConfig: {
@@ -180,6 +184,12 @@ function onMoveDown(row: SystemMenuApi.SysMenu) {
     message.success(`「${row.menuName}」已下移`);
     void onRefresh();
   });
+}
+
+async function onStatusChange(newStatus: number, row: SystemMenuApi.SysMenu) {
+  await updateMenuStatus(row.id, newStatus as 0 | 1);
+  await refreshMenuAndAccessCodes();
+  return true;
 }
 </script>
 <template>

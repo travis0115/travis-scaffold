@@ -14,10 +14,10 @@ import { Plus } from '@vben/icons';
 import { Button, message } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { deleteDictItem, getDictItems } from '#/api';
+import { deleteDictItem, getDictItems, updateDictItemStatus } from '#/api';
 import { $t } from '#/locales';
 import { reloadDictOptions } from '#/utils/dict';
-import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
+import { filterAccessOptions, hasAccessCode, SYSTEM_PERMS } from '#/utils/permissions';
 
 import ItemModalComponent from './item-modal.vue';
 
@@ -53,11 +53,19 @@ const columns: VxeTableGridColumns<SystemDictApi.SysDictItem> = [
     title: $t('system.dict.item.remark'),
   },
   {
-    cellRender: { attrs: { dictType: 'sys_status' }, name: 'CellTag' },
+    cellRender: {
+      attrs: {
+        beforeChange: hasAccessCode(SYSTEM_PERMS.dictUpdate)
+          ? onStatusChange
+          : undefined,
+        dictType: 'sys_status',
+      },
+      name: 'CellRadio',
+    },
     field: 'status',
     fixed: 'right',
     title: $t('system.dict.item.status'),
-    width: 90,
+    width: 140,
   },
   {
     align: 'center',
@@ -156,6 +164,14 @@ async function onDeleteItem(record: SystemDictApi.SysDictItem) {
 async function refreshItems() {
   await nextTick();
   await gridApi.query();
+}
+
+async function onStatusChange(newStatus: number, row: SystemDictApi.SysDictItem) {
+  await updateDictItemStatus(row.id, newStatus as 0 | 1);
+  await reloadDictOptions();
+  await refreshItems();
+  emit('success');
+  return true;
 }
 
 function handleItemSuccess() {

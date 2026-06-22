@@ -56,6 +56,12 @@ async function updateUser(id: number, data: Partial<SystemUserApi.SysUser>) {
   return requestClient.put(`/system/user/${id}`, data);
 }
 
+async function updateUserStatus(id: number, status: 0 | 1) {
+  return requestClient.put(`/system/user/${id}/status`, undefined, {
+    params: { status },
+  });
+}
+
 /**
  * 删除用户
  */
@@ -91,4 +97,5 @@ export {
   getUserPage,
   resetUserPassword,
   updateUser,
+  updateUserStatus,
 };

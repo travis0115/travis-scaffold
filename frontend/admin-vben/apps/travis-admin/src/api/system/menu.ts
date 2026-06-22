@@ -56,6 +56,12 @@ async function updateMenu(id: number, data: Partial<SystemMenuApi.SysMenu>) {
   return requestClient.put(`/system/menu/${id}`, data);
 }
 
+async function updateMenuStatus(id: number, status: 0 | 1) {
+  return requestClient.put(`/system/menu/${id}/status`, undefined, {
+    params: { status },
+  });
+}
+
 /**
  * 删除菜单
  */
@@ -85,4 +91,5 @@ export {
   moveDownMenu,
   moveUpMenu,
   updateMenu,
+  updateMenuStatus,
 };

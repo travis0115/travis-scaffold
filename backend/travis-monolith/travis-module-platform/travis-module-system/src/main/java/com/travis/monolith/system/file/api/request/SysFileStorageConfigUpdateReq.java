@@ -1,7 +1,6 @@
 package com.travis.monolith.system.file.api.request;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
@@ -20,9 +19,6 @@ public class SysFileStorageConfigUpdateReq {
 
     private String domain;
     private Integer isDefault;
-
-    @NotNull(message = "状态不能为空")
-    private Integer status;
 
     private String remark;
 }

@@ -159,6 +159,16 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         updateById(user);
     }
 
+    /** 修改用户状态 */
+    @Override
+    @Transactional
+    @Caching(evict = {@CacheEvict(key = "'detail:'+#id")})
+    public void updateStatus(Long id, Integer status) {
+        var user = getByIdOrThrow(id);
+        user.setStatus(status);
+        updateById(user);
+    }
+
     /** 删除用户，同时清除用户-角色关联并使其会话失效 */
     @Override
     @Transactional

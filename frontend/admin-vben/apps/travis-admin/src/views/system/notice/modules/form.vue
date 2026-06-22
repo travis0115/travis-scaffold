@@ -33,6 +33,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
     delete data.userIds;
     delete data.roleIds;
     delete data.deptIds;
+    if (formData.value?.id) delete data.status;
     await (formData.value?.id ? updateNotice(formData.value.id, data) : createNotice(data));
     emit('success');
     drawerApi.close();
@@ -42,6 +43,12 @@ const [Drawer, drawerApi] = useVbenDrawer({
     const data = drawerApi.getData<SystemNoticeApi.Notice>();
     formApi.resetForm();
     formData.value = data;
+    formApi.updateSchema([
+      {
+        fieldName: 'status',
+        hide: Boolean(data?.id),
+      },
+    ]);
     const [userPage, roles, departments] = await Promise.all([
       getUserPage({ pageNum: 1, pageSize: 500, status: 1 }),
       getRoleList(),

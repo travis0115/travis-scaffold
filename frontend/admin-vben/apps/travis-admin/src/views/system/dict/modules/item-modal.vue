@@ -93,6 +93,7 @@ const [Modal, modalApi] = useVbenModal({
     modalApi.lock();
     try {
       const payload = { dictId: dictId.value, ...values };
+      if (formData.value?.itemId) delete (payload as any).status;
       const savePromise = formData.value?.itemId
         ? updateDictItem(formData.value.itemId, payload)
         : createDictItem(payload);
@@ -108,6 +109,12 @@ const [Modal, modalApi] = useVbenModal({
     if (isOpen) {
       const data = modalApi.getData<{ dictId: number; dictName: string; itemId?: number; label?: string; remark?: string; sort?: number; status?: number; tagStyle?: string; value?: string }>();
       formApi.resetForm();
+      formApi.updateSchema([
+        {
+          fieldName: 'status',
+          hide: Boolean(data?.itemId),
+        },
+      ]);
       if (data) {
         dictId.value = data.dictId;
         dictName.value = data.dictName;

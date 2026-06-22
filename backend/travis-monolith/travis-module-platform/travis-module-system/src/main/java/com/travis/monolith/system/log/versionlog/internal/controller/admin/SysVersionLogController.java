@@ -1,10 +1,12 @@
 package com.travis.monolith.system.log.versionlog.internal.controller.admin;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.common.api.constant.SystemPermission;
+import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.log.versionlog.api.request.SysVersionLogCreateReq;
 import com.travis.monolith.system.log.versionlog.api.request.SysVersionLogUpdateReq;
 import com.travis.monolith.system.log.versionlog.api.response.SysVersionLogDetailResp;
@@ -64,6 +66,16 @@ public class SysVersionLogController {
     public ApiResponse<Void> update(
             @PathVariable Long id, @RequestBody @Valid SysVersionLogUpdateReq req) {
         versionLogService.update(id, req);
+        return ApiResponse.success();
+    }
+
+    /** 修改版本日志状态 */
+    @PutMapping("/{id}/status")
+    @SaCheckPermission(value = SystemPermission.VERSION_UPDATE, type = LoginType.ADMIN)
+    public ApiResponse<Void> updateStatus(
+            @PathVariable Long id,
+            @RequestParam @EnumValue(value = Status.class, message = "状态值错误") Integer status) {
+        versionLogService.updateStatus(id, status);
         return ApiResponse.success();
     }
 
