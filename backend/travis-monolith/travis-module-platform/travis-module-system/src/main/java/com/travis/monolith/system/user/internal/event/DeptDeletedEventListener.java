@@ -6,6 +6,7 @@ import com.travis.monolith.system.common.api.event.SystemEventType;
 import com.travis.monolith.system.dept.api.SysDeptApi;
 import com.travis.monolith.system.dept.api.event.DeptDeletedPayload;
 import com.travis.monolith.system.user.internal.service.SysUserService;
+import java.util.LinkedHashSet;
 import lombok.RequiredArgsConstructor;
 import org.apache.rocketmq.client.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Component;
@@ -32,8 +33,12 @@ public class DeptDeletedEventListener extends AbstractEventListener<DeptDeletedP
         if (sysDeptApi.existsAnyByIds(payload.deptIds())) {
             return;
         }
+        var userIds = new LinkedHashSet<Long>();
         for (Long deptId : payload.deptIds()) {
-            sysUserService.resetDept(deptId);
+            userIds.addAll(sysUserService.listUserIdsByDeptId(deptId));
+        }
+        for (Long userId : userIds) {
+            sysUserService.resetDept(userId);
         }
     }
 }

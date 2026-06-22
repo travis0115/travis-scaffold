@@ -25,6 +25,8 @@ import com.travis.monolith.system.user.internal.converter.SysUserConverter;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.mapper.SysUserMapper;
 import com.travis.monolith.system.user.internal.service.SysUserService;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -32,9 +34,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * 用户管理服务实现，包含密码加密（BCrypt）、角色分配及部门名称关联查询
@@ -153,7 +152,8 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
             throw new BizException(SystemErrorCode.USER_USERNAME_EXISTS);
         }
         if (req.getDeptId() != null && !req.getDeptId().equals(user.getDeptId())) {
-            RedisUtil.delete("list:id:dept:" + user.getDeptId());
+            RedisUtil.delete("system:user:list:id:dept:" + user.getDeptId());
+            RedisUtil.delete("system:user:list:id:dept:" + req.getDeptId());
         }
         converter.update(req, user);
         updateById(user);
@@ -174,14 +174,14 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     @Transactional
     @Caching(
             evict = {
-                @CacheEvict(key = "'username:'+#id"),
-                @CacheEvict(key = "'detail:'+#id"),
-                @CacheEvict(key = "'list:id:all'")
+                    @CacheEvict(key = "'username:'+#id"),
+                    @CacheEvict(key = "'detail:'+#id"),
+                    @CacheEvict(key = "'list:id:all'")
             })
     public void deleteById(Long id) {
         var user = getByIdOrThrow(id);
         removeById(id);
-        RedisUtil.delete("list:id:dept:" + user.getDeptId());
+        RedisUtil.delete("system:user:list:id:dept:" + user.getDeptId());
         // 通过角色服务删除用户-角色关联
         roleApi.deleteUserRolesByUserId(id);
         // 使用户会话失效
@@ -196,8 +196,8 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         var originalDeptId = user.getDeptId();
         user.setDeptId(0L);
         updateById(user);
-        RedisUtil.delete("list:id:dept:" + originalDeptId);
-        RedisUtil.delete("list:id:dept:" + 0L);
+        RedisUtil.delete("system:user:list:id:dept:" + originalDeptId);
+        RedisUtil.delete("system:user:list:id:dept:" + 0L);
     }
 
     /** 分配用户角色：委托给角色服务 */
