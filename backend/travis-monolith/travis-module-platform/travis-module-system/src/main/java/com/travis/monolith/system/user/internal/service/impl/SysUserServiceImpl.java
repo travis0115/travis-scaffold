@@ -153,8 +153,10 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
             throw new BizException(SystemErrorCode.USER_USERNAME_EXISTS);
         }
         if (req.getDeptId() != null && !req.getDeptId().equals(user.getDeptId())) {
-            RedisUtil.delete("system:user:list:id:dept:" + user.getDeptId());
-            RedisUtil.delete("system:user:list:id:dept:" + req.getDeptId());
+            RedisUtil.deleteCacheKey(
+                    "system:user",
+                    "list:id:dept:" + user.getDeptId(),
+                    "list:id:dept:" + req.getDeptId());
         }
         converter.update(req, user);
         updateById(user);
@@ -175,14 +177,14 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     @Transactional
     @Caching(
             evict = {
-                    @CacheEvict(key = "'username:'+#id"),
-                    @CacheEvict(key = "'detail:'+#id"),
-                    @CacheEvict(key = "'list:id:all'")
+                @CacheEvict(key = "'username:'+#id"),
+                @CacheEvict(key = "'detail:'+#id"),
+                @CacheEvict(key = "'list:id:all'")
             })
     public void deleteById(Long id) {
         var user = getByIdOrThrow(id);
         removeById(id);
-        RedisUtil.delete("system:user:list:id:dept:" + user.getDeptId());
+        RedisUtil.deleteCacheKey("system:user", "list:id:dept:" + user.getDeptId());
         // 通过角色服务删除用户-角色关联
         roleApi.deleteUserRolesByUserId(id);
         // 使用户会话失效
@@ -197,8 +199,8 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         var originalDeptId = user.getDeptId();
         user.setDeptId(0L);
         updateById(user);
-        RedisUtil.delete("system:user:list:id:dept:" + originalDeptId);
-        RedisUtil.delete("system:user:list:id:dept:" + 0L);
+        RedisUtil.deleteCacheKey(
+                "system:user", "list:id:dept:" + originalDeptId, "list:id:dept:" + 0L);
     }
 
     /** 分配用户角色：委托给角色服务 */

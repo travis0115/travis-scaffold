@@ -107,7 +107,7 @@ export function useColumns<T = SystemRoleApi.SysRole>(
     {
       cellRender: {
         attrs: {
-          dictType: 'sys_role_type',
+          dictCode: 'sys_role_type',
         },
         name: 'CellTag',
       },
@@ -130,7 +130,7 @@ export function useColumns<T = SystemRoleApi.SysRole>(
       cellRender: {
         attrs: {
           beforeChange: onStatusChange,
-          dictType: 'sys_status',
+          dictCode: 'sys_status',
           disabled: isNotModifiable,
         },
         name: onStatusChange ? 'CellSwitch' : 'CellTag',

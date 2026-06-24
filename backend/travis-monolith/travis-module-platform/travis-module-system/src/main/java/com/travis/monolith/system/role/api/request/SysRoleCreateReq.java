@@ -28,7 +28,7 @@ public class SysRoleCreateReq {
     private String roleCode;
 
     /** 备注 */
-    @Size(max = 200, message = "备注长度不能超过200个字符")
+    @Size(max = 255, message = "备注长度不能超过255个字符")
     private String remark;
 
     /** 状态（0-禁用 1-启用） */

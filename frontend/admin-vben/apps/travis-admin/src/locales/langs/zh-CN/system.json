@@ -114,7 +114,7 @@
     "list": "字典列表",
     "name": "字典",
     "dictName": "字典名称",
-    "dictType": "字典编码",
+    "dictCode": "字典编码",
     "status": "状态",
     "remark": "备注",
     "createTime": "创建时间",

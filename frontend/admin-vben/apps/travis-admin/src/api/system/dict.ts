@@ -7,7 +7,7 @@ export namespace SystemDictApi {
     [key: string]: any;
     id: number;
     dictName: string;
-    dictType: string;
+    dictCode: string;
     status: 0 | 1;
     remark?: string;
     createTime?: string;
@@ -39,7 +39,7 @@ async function getDictTree() {
  */
 async function getDictPage(params: {
   dictName?: string;
-  dictType?: string;
+  dictCode?: string;
   pageNum: number;
   pageSize: number;
   status?: number;

@@ -40,7 +40,7 @@ export function useColumns(
     },
     {
       align: 'center',
-      cellRender: { attrs: { dictType: 'sys_menu_type' }, name: 'CellTag' },
+      cellRender: { attrs: { dictCode: 'sys_menu_type' }, name: 'CellTag' },
       field: 'menuType',
       title: $t('system.menu.type'),
       width: 100,
@@ -80,7 +80,7 @@ export function useColumns(
     },
     {
       cellRender: {
-        attrs: { beforeChange: onStatusChange, dictType: 'sys_status' },
+        attrs: { beforeChange: onStatusChange, dictCode: 'sys_status' },
         name: onStatusChange ? 'CellSwitch' : 'CellTag',
       },
       field: 'status',

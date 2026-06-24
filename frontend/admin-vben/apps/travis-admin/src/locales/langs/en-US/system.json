@@ -114,7 +114,7 @@
     "list": "Dictionary List",
     "name": "Dictionary",
     "dictName": "Dictionary Name",
-    "dictType": "Dictionary Code",
+    "dictCode": "Dictionary Code",
     "status": "Status",
     "remark": "Remark",
     "createTime": "Created At",

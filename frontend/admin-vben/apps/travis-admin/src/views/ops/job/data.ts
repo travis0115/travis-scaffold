@@ -229,7 +229,7 @@ export function useJobColumns(
     },
     {
       cellRender: {
-        attrs: { beforeChange: onStatusChange, dictType: 'sys_status' },
+        attrs: { beforeChange: onStatusChange, dictCode: 'sys_status' },
         name: onStatusChange ? 'CellSwitch' : 'CellTag',
       },
       field: 'status',

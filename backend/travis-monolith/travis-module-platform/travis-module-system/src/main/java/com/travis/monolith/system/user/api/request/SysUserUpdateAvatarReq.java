@@ -1,6 +1,6 @@
 package com.travis.monolith.system.user.api.request;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 /**
@@ -11,6 +11,6 @@ import lombok.Data;
 @Data
 public class SysUserUpdateAvatarReq {
     /** 头像地址 */
-    @NotBlank(message = "头像地址不能为空")
+    @Size(max = 500, message = "头像地址长度不能超过500个字符")
     private String avatar;
 }

@@ -131,8 +131,13 @@ function onDelete(row: SystemDictApi.SysDict) {
     });
 }
 
-function onRefresh() {
-  gridApi.query();
+async function onRefresh() {
+  await gridApi.query();
+}
+
+async function handleDictSuccess() {
+  await reloadDictOptions();
+  await onRefresh();
 }
 
 async function onStatusChange(newStatus: number, row: SystemDictApi.SysDict) {
@@ -152,7 +157,7 @@ async function onStatusChange(newStatus: number, row: SystemDictApi.SysDict) {
     split-handle
     split-line
   >
-    <FormDrawer @success="onRefresh" />
+    <FormDrawer @success="handleDictSuccess" />
     <template #left>
       <Grid :table-title="$t('system.dict.list')">
         <template #toolbar-tools>

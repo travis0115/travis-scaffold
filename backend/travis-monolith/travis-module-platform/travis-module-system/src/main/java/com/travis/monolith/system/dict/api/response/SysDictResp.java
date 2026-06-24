@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 public class SysDictResp {
     private Long id;
     private String dictName;
-    private String dictType;
+    private String dictCode;
     private Integer status;
     private String remark;
     private LocalDateTime createTime;

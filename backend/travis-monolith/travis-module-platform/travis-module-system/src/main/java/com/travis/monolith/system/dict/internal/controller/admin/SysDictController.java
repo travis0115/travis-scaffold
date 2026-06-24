@@ -10,18 +10,17 @@ import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
 import com.travis.monolith.system.common.api.constant.SystemPermission;
 import com.travis.monolith.system.common.api.enums.Status;
-import com.travis.monolith.system.dict.api.request.SysDictCreateReq;
-import com.travis.monolith.system.dict.api.request.SysDictItemCreateReq;
-import com.travis.monolith.system.dict.api.request.SysDictItemUpdateReq;
-import com.travis.monolith.system.dict.api.request.SysDictUpdateReq;
+import com.travis.monolith.system.dict.api.request.*;
 import com.travis.monolith.system.dict.api.response.SysDictItemResp;
-import com.travis.monolith.system.dict.internal.entity.SysDict;
+import com.travis.monolith.system.dict.api.response.SysDictResp;
+import com.travis.monolith.system.dict.internal.service.SysDictItemService;
 import com.travis.monolith.system.dict.internal.service.SysDictService;
 import jakarta.validation.Valid;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 字典管理控制器，提供字典类型及字典数据项的增删改查接口
@@ -38,23 +37,21 @@ public class SysDictController {
     /** 字典管理服务 */
     private final SysDictService dictService;
 
+    /** 字典数据项服务 */
+    private final SysDictItemService dictItemService;
+
     /** 获取字典树形数据（每个字典包含其下的数据项作为 children） */
     @GetMapping("/tree")
     @SaCheckPermission(value = SystemPermission.DICT_QUERY, type = LoginType.ADMIN)
-    public ApiResponse<List<SysDict>> getTree() {
+    public ApiResponse<List<SysDictResp>> getTree() {
         return ApiResponse.success(dictService.listTree());
     }
 
     /** 分页查询字典类型列表 */
     @GetMapping("/page")
     @SaCheckPermission(value = SystemPermission.DICT_QUERY, type = LoginType.ADMIN)
-    public ApiResponse<PageResp<SysDict>> page(
-            @RequestParam(required = false) String dictName,
-            @RequestParam(required = false) String dictType,
-            @RequestParam(required = false) Integer status,
-            @RequestParam(defaultValue = "1") Integer pageNum,
-            @RequestParam(defaultValue = "10") Integer pageSize) {
-        return ApiResponse.success(dictService.page(dictName, dictType, status, pageNum, pageSize));
+    public ApiResponse<PageResp<SysDictResp>> page(@Valid SysDictPageReq req) {
+        return ApiResponse.success(dictService.page(req));
     }
 
     /**
@@ -65,7 +62,7 @@ public class SysDictController {
      */
     @GetMapping("/{id}")
     @SaCheckPermission(value = SystemPermission.DICT_QUERY, type = LoginType.ADMIN)
-    public ApiResponse<SysDict> get(@PathVariable Long id) {
+    public ApiResponse<SysDictResp> get(@PathVariable Long id) {
         return ApiResponse.success(dictService.getById(id));
     }
 
@@ -137,7 +134,7 @@ public class SysDictController {
     @GetMapping("/items/{dictId}")
     @SaCheckPermission(value = SystemPermission.DICT_QUERY, type = LoginType.ADMIN)
     public ApiResponse<List<SysDictItemResp>> listItems(@PathVariable Long dictId) {
-        return ApiResponse.success(dictService.listItems(dictId));
+        return ApiResponse.success(dictItemService.listItemByDictId(dictId));
     }
 
     /**
@@ -151,7 +148,7 @@ public class SysDictController {
     @PostMapping("/item")
     @SaCheckPermission(value = SystemPermission.DICT_CREATE, type = LoginType.ADMIN)
     public ApiResponse<Void> createItem(@RequestBody @Valid SysDictItemCreateReq req) {
-        dictService.createItem(req);
+        dictItemService.create(req);
         return ApiResponse.success();
     }
 
@@ -168,7 +165,7 @@ public class SysDictController {
     @SaCheckPermission(value = SystemPermission.DICT_UPDATE, type = LoginType.ADMIN)
     public ApiResponse<Void> updateItem(
             @PathVariable Long id, @RequestBody @Valid SysDictItemUpdateReq req) {
-        dictService.updateItem(id, req);
+        dictItemService.update(id, req);
         return ApiResponse.success();
     }
 
@@ -180,7 +177,7 @@ public class SysDictController {
     public ApiResponse<Void> updateItemStatus(
             @PathVariable Long id,
             @RequestParam @EnumValue(value = Status.class, message = "状态值错误") Integer status) {
-        dictService.updateItemStatus(id, status);
+        dictItemService.updateStatus(id, status);
         return ApiResponse.success();
     }
 
@@ -195,7 +192,7 @@ public class SysDictController {
     @DeleteMapping("/item/{id}")
     @SaCheckPermission(value = SystemPermission.DICT_DELETE, type = LoginType.ADMIN)
     public ApiResponse<Void> deleteItemById(@PathVariable Long id) {
-        dictService.deleteItemById(id);
+        dictItemService.deleteById(id);
         return ApiResponse.success();
     }
 }

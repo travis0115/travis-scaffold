@@ -18,6 +18,6 @@ public class SysRoleUpdateReq {
     @Size(max = 50, message = "角色编码长度不能超过50个字符")
     private String roleCode;
 
-    @Size(max = 200, message = "备注长度不能超过200个字符")
+    @Size(max = 255, message = "备注长度不能超过255个字符")
     private String remark;
 }

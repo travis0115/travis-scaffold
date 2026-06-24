@@ -5,8 +5,9 @@ import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.monolith.system.common.api.enums.MenuType;
 import com.travis.monolith.system.common.api.enums.Status;
 import jakarta.validation.constraints.*;
-import java.util.Objects;
 import lombok.Data;
+
+import java.util.Objects;
 
 /**
  * 菜单新增请求参数
@@ -42,6 +43,7 @@ public class SysMenuCreateReq {
     private Integer menuType;
 
     /** 图标 */
+    @Size(max = 100, message = "图标长度不能超过100个字符")
     private String icon;
 
     /** 排序号 */
@@ -56,6 +58,7 @@ public class SysMenuCreateReq {
     private Integer status;
 
     /** 路由元信息JSON（Vben Admin RouteMeta 扩展字段） */
+    @Size(max = 10000, message = "扩展配置不能超过10000字符")
     private String meta;
 
     @AssertTrue(message = "目录和菜单的路由路径不能为空")

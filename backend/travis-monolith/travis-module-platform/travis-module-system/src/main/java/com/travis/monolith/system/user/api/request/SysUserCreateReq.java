@@ -41,7 +41,7 @@ public class SysUserCreateReq {
     @Mobile private String mobile;
 
     /** 所属部门ID */
-    private Long deptId = 0L;
+    private Long deptId;
 
     /** 状态（0-禁用 1-启用） */
     @EnumValue(value = Status.class, message = "状态值错误")

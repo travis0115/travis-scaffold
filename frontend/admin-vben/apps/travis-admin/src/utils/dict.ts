@@ -40,15 +40,15 @@ function buildDictOptions(dict?: SystemDictApi.SysDict) {
 function syncOptions(
   options: DictOption[],
   dicts: SystemDictApi.SysDict[],
-  dictType: string,
+  dictCode: string,
 ) {
-  const dict = dicts.find((item) => item.dictType === dictType);
+  const dict = dicts.find((item) => item.dictCode === dictCode);
   options.splice(0, options.length, ...buildDictOptions(dict));
 }
 
 function syncCachedOptions(dicts: SystemDictApi.SysDict[]) {
-  dictOptionsCache.forEach((options, dictType) => {
-    syncOptions(options, dicts, dictType);
+  dictOptionsCache.forEach((options, dictCode) => {
+    syncOptions(options, dicts, dictCode);
   });
 }
 
@@ -68,15 +68,15 @@ function loadDictTree(force = false) {
   return dictTreePromise;
 }
 
-export function getDictOptions(dictType: string) {
-  const cached = dictOptionsCache.get(dictType);
+export function getDictOptions(dictCode: string) {
+  const cached = dictOptionsCache.get(dictCode);
   if (cached) return cached;
 
   const options = reactive<DictOption[]>([]);
-  dictOptionsCache.set(dictType, options);
+  dictOptionsCache.set(dictCode, options);
 
   if (dictTreeCache) {
-    syncOptions(options, dictTreeCache, dictType);
+    syncOptions(options, dictTreeCache, dictCode);
   } else {
     loadDictTree();
   }
@@ -93,12 +93,12 @@ export async function reloadDictOptions() {
 }
 
 export function getDictLabel(
-  dictType: string,
+  dictCode: string,
   value: number | string | undefined,
 ) {
   if (value === null || value === undefined || value === '') {
     return '-';
   }
-  const option = getDictOptions(dictType).find((item) => item.value === value);
+  const option = getDictOptions(dictCode).find((item) => item.value === value);
   return option?.label ?? value;
 }

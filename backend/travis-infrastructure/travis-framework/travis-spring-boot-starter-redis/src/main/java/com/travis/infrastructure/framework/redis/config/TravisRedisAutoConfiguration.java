@@ -5,9 +5,11 @@ import com.travis.infrastructure.framework.jackson.core.LaissezFaireSubTypeValid
 import com.travis.infrastructure.framework.redis.core.RedisUtil;
 import com.travis.infrastructure.framework.redis.core.aop.DistributedLockAspect;
 import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.redis.cache.CacheKeyPrefix;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
@@ -71,9 +73,12 @@ public class TravisRedisAutoConfiguration {
 
     /** 创建 RedisUtils Bean，注入redisTemplate */
     @Bean
-    public RedisUtil redisUtil(RedisTemplate<String, Object> redisTemplate) {
+    public RedisUtil redisUtil(
+            RedisTemplate<String, Object> redisTemplate,
+            ObjectProvider<CacheKeyPrefix> cacheKeyPrefixProvider) {
         var util = new RedisUtil();
         util.setRedisTemplate(redisTemplate);
+        util.setCacheKeyPrefixProvider(cacheKeyPrefixProvider);
         return util;
     }
 

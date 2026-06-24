@@ -4,7 +4,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.dict.api.request.SysDictItemCreateReq;
 import com.travis.monolith.system.dict.api.request.SysDictItemUpdateReq;
+import com.travis.monolith.system.dict.api.response.SysDictItemResp;
 import com.travis.monolith.system.dict.internal.entity.SysDictItem;
+
+import java.util.List;
 
 /**
  * 字典数据项管理服务接口，提供字典子项的分页查询和增删改
@@ -22,6 +25,21 @@ public interface SysDictItemService extends IService<SysDictItem> {
      * @return 分页结果
      */
     PageResp<SysDictItem> page(Long dictId, Integer pageNum, Integer pageSize);
+
+    /**
+     * 查询所有字典数据项
+     *
+     * @return 所有字典数据项
+     */
+    List<SysDictItem> listEnabled();
+
+    /**
+     * 查询指定字典类型下的所有数据项
+     *
+     * @param dictId 字典类型ID
+     * @return 字典数据项视图列表
+     */
+    List<SysDictItemResp> listItemByDictId(Long dictId);
 
     /**
      * 新增字典数据项

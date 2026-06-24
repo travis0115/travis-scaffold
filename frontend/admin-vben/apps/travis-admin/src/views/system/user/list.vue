@@ -10,20 +10,17 @@ import { onMounted, ref, watch } from 'vue';
 import { Page, Tree, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
 
-import { App, Button, Card, InputSearch, message } from 'antdv-next';
+import { Button, Card, InputSearch, message } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteUser, getDeptTree, getUserPage, updateUserStatus } from '#/api';
 import { isDeptEnabled } from '#/features';
 import { $t } from '#/locales';
-import { getDictLabel } from '#/utils/dict';
 import { hasAccessCode, SYSTEM_PERMS } from '#/utils/permissions';
 
 import { useColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
 import ResetPasswordModal from './modules/reset-password-modal.vue';
-
-const { modal } = App.useApp();
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   connectedComponent: Form,
@@ -151,33 +148,11 @@ function onActionClick(e: OnActionClickParams<SystemUserApi.SysUser>) {
   }
 }
 
-function confirm(content: string, title: string) {
-  return new Promise((resolve, reject) => {
-    modal.confirm({
-      content,
-      onCancel() {
-        reject(new Error('已取消'));
-      },
-      onOk() {
-        resolve(true);
-      },
-      title,
-    });
-  });
-}
-
 async function onStatusChange(
   newStatus: number,
   row: SystemUserApi.SysUser,
 ) {
   try {
-    await confirm(
-      $t('system.user.confirmStatusChange', {
-        status: getDictLabel('sys_status', newStatus),
-        username: row.username,
-      }),
-      $t('system.user.switchStatus'),
-    );
     await updateUserStatus(row.id, newStatus as 0 | 1);
     return true;
   } catch {

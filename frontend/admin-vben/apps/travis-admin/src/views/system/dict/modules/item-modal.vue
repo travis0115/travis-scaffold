@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, h, ref } from 'vue';
 
-import { useVbenModal } from '@vben/common-ui';
+import { useVbenDrawer } from '@vben/common-ui';
 
 import { Tag } from 'antdv-next';
 
@@ -85,12 +85,12 @@ const [Form, formApi] = useVbenForm({
   showDefaultActions: false,
 });
 
-const [Modal, modalApi] = useVbenModal({
+const [Drawer, drawerApi] = useVbenDrawer({
   async onConfirm() {
     const { valid } = await formApi.validate();
     if (!valid) return;
     const values = await formApi.getValues();
-    modalApi.lock();
+    drawerApi.lock();
     try {
       const payload = { dictId: dictId.value, ...values };
       if (formData.value?.itemId) delete (payload as any).status;
@@ -100,14 +100,14 @@ const [Modal, modalApi] = useVbenModal({
       await savePromise;
       await reloadDictOptions();
       emit('success');
-      modalApi.close();
+      drawerApi.close();
     } catch {
-      modalApi.unlock();
+      drawerApi.unlock();
     }
   },
   onOpenChange(isOpen) {
     if (isOpen) {
-      const data = modalApi.getData<{ dictId: number; dictName: string; itemId?: number; label?: string; remark?: string; sort?: number; status?: number; tagStyle?: string; value?: string }>();
+      const data = drawerApi.getData<{ dictId: number; dictName: string; itemId?: number; label?: string; remark?: string; sort?: number; status?: number; tagStyle?: string; value?: string }>();
       formApi.resetForm();
       formApi.updateSchema([
         {
@@ -127,7 +127,7 @@ const [Modal, modalApi] = useVbenModal({
 </script>
 
 <template>
-  <Modal :title="getTitle">
+  <Drawer :title="getTitle">
     <Form />
-  </Modal>
+  </Drawer>
 </template>

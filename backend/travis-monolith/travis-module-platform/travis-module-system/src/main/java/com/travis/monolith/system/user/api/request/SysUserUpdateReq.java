@@ -32,5 +32,5 @@ public class SysUserUpdateReq {
     @Mobile private String mobile;
 
     /** 所属部门ID */
-    private Long deptId = 0L;
+    private Long deptId;
 }

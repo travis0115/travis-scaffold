@@ -6,6 +6,7 @@
   "prompt": "Prompt",
   "cancel": "Cancel",
   "confirm": "Confirm",
+  "confirmStatusChange": "Are you sure you want to switch the status to [{status}]?",
   "gotIt": "Got It",
   "reset": "Reset",
   "noData": "No Data",
@@ -22,6 +23,7 @@
   "no": "No",
   "showSearchPanel": "Show search panel",
   "hideSearchPanel": "Hide search panel",
+  "switchStatus": "Switch Status",
   "moveUp": "Move Up",
   "moveDown": "Move Down"
 }

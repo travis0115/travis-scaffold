@@ -8,19 +8,17 @@ import type { SystemRoleApi } from '#/api';
 import { Page, useVbenDrawer } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
 
-import { App, Button, message } from 'antdv-next';
+import { Button, message } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteRole, getRolePage, updateRoleStatus } from '#/api';
 import { $t } from '#/locales';
 import { useAuthStore } from '#/store';
-import { getDictLabel } from '#/utils/dict';
 import { hasAccessCode, SYSTEM_PERMS } from '#/utils/permissions';
 
 import { useColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
 
-const { modal } = App.useApp();
 const authStore = useAuthStore();
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
@@ -77,33 +75,11 @@ function onActionClick(e: OnActionClickParams<SystemRoleApi.SysRole>) {
   }
 }
 
-function confirm(content: string, title: string) {
-  return new Promise((resolve, reject) => {
-    modal.confirm({
-      content,
-      onCancel() {
-        reject(new Error('已取消'));
-      },
-      onOk() {
-        resolve(true);
-      },
-      title,
-    });
-  });
-}
-
 async function onStatusChange(
   newStatus: number,
   row: SystemRoleApi.SysRole,
 ) {
   try {
-    await confirm(
-      $t('system.role.confirmStatusChange', {
-        roleName: row.roleName,
-        status: getDictLabel('sys_status', newStatus),
-      }),
-      $t('system.role.switchStatus'),
-    );
     await updateRoleStatus(row.id, newStatus as 0 | 1);
     await authStore.fetchAccessCodes();
     return true;

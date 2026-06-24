@@ -15,7 +15,7 @@ import { preferences } from '@vben/preferences';
 import { get, isFunction, isString } from '@vben/utils';
 
 import { objectOmit } from '@vueuse/core';
-import { Button, Image, Popconfirm, Switch, Tag } from 'antdv-next';
+import { Button, Image, Modal, Popconfirm, Switch, Tag } from 'antdv-next';
 
 import { $t } from '#/locales';
 import { getDictOptions } from '#/utils/dict';
@@ -119,12 +119,12 @@ setupVbenVxeTable({
       value: any,
       options: any,
       props: Recordable<any>,
-      dictType?: string,
+      dictCode?: string,
     ) {
       if (value === null || value === undefined || value === '') {
         return h('span', {}, '-');
       }
-      const tagOptions = (dictType ? getDictOptions(dictType) : unref(options)) ?? [
+      const tagOptions = (dictCode ? getDictOptions(dictCode) : unref(options)) ?? [
         { color: 'success', label: $t('common.enabled'), value: 1 },
         { color: 'error', label: $t('common.disabled'), value: 0 },
       ];
@@ -143,7 +143,7 @@ setupVbenVxeTable({
     vxeUI.renderer.add('CellTag', {
       renderTableDefault({ attrs, options, props }, { column, row }) {
         const value = get(row, column.field);
-        return renderStatusTag(value, options, props ?? {}, attrs?.dictType);
+        return renderStatusTag(value, options, props ?? {}, attrs?.dictCode);
       },
     });
 
@@ -154,12 +154,12 @@ setupVbenVxeTable({
             get(row, column.field),
             options,
             props ?? {},
-            attrs?.dictType,
+            attrs?.dictCode,
           );
         }
         const loadingKey = `__loading_${column.field}`;
-        const tagOptions = attrs?.dictType
-          ? getDictOptions(attrs.dictType)
+        const tagOptions = attrs?.dictCode
+          ? getDictOptions(attrs.dictCode)
           : (unref(options) ?? []);
         const checkedOption = tagOptions.find((item: any) => item.value === 1);
         const uncheckedOption = tagOptions.find(
@@ -176,6 +176,10 @@ setupVbenVxeTable({
           'onUpdate:checked': onChange,
         };
         async function onChange(newVal: any) {
+          const confirmed = await confirmStatusChange(newVal);
+          if (!confirmed) {
+            return;
+          }
           row[loadingKey] = true;
           try {
             const result = await attrs?.beforeChange?.(newVal, row);
@@ -185,6 +189,22 @@ setupVbenVxeTable({
           } finally {
             row[loadingKey] = false;
           }
+        }
+        function confirmStatusChange(newVal: any) {
+          const targetOption = tagOptions.find(
+            (item: any) => item.value === newVal,
+          );
+          const status = targetOption?.label ?? newVal;
+          return new Promise<boolean>((resolve) => {
+            Modal.confirm({
+              cancelText: $t('common.cancel'),
+              content: $t('common.confirmStatusChange', { status }),
+              okText: $t('common.confirm'),
+              onCancel: () => resolve(false),
+              onOk: () => resolve(true),
+              title: $t('common.switchStatus'),
+            });
+          });
         }
         return h(Switch, finallyProps);
       },

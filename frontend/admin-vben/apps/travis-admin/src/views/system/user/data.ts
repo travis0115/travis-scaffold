@@ -277,7 +277,7 @@ export function useColumns<T = SystemUserApi.SysUser>(
     },
     {
       cellRender: {
-        attrs: { beforeChange: onStatusChange, dictType: 'sys_status' },
+        attrs: { beforeChange: onStatusChange, dictCode: 'sys_status' },
         name: onStatusChange ? 'CellSwitch' : 'CellTag',
       },
       field: 'status',

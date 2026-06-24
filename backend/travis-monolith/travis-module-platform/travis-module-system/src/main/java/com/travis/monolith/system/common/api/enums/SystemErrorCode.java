@@ -28,7 +28,7 @@ public enum SystemErrorCode implements ErrorCode {
     MENU_PARENT_INVALID("SYS_301", "上级菜单不能是当前菜单或其下级菜单"),
 
     /* dict模块 400-499 */
-    DICT_TYPE_EXISTS("SYS_400", "字典类型编码已存在"),
+    DICT_CODE_EXISTS("SYS_400", "字典编码已存在"),
 
     /* errorlog模块 500-599 */
     /* loginlog模块 600-699 */

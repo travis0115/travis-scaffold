@@ -23,12 +23,12 @@ export function useFormSchema(): VbenFormSchema[] {
     },
     {
       component: 'Input',
-      fieldName: 'dictType',
-      label: $t('system.dict.dictType'),
+      fieldName: 'dictCode',
+      label: $t('system.dict.dictCode'),
       rules: z
         .string()
-        .min(1, $t('ui.formRules.required', [$t('system.dict.dictType')]))
-        .max(50, $t('ui.formRules.maxLength', [$t('system.dict.dictType'), 50]))
+        .min(1, $t('ui.formRules.required', [$t('system.dict.dictCode')]))
+        .max(50, $t('ui.formRules.maxLength', [$t('system.dict.dictCode'), 50]))
         .regex(/^[a-zA-Z][a-zA-Z0-9_]+$/, '字典编码必须以字母开头，只能包含字母、数字和下划线'),
     },
     {
@@ -59,8 +59,8 @@ export function useGridFormSchema(): VbenFormSchema[] {
     },
     {
       component: 'Input',
-      fieldName: 'dictType',
-      label: $t('system.dict.dictType'),
+      fieldName: 'dictCode',
+      label: $t('system.dict.dictCode'),
     },
     {
       component: 'Select',
@@ -85,9 +85,9 @@ export function useColumns(
       title: $t('system.dict.dictName'),
     },
     {
-      field: 'dictType',
+      field: 'dictCode',
       minWidth: 160,
-      title: $t('system.dict.dictType'),
+      title: $t('system.dict.dictCode'),
     },
     {
       field: 'remark',
@@ -97,7 +97,7 @@ export function useColumns(
     },
     {
       cellRender: {
-        attrs: { beforeChange: onStatusChange, dictType: 'sys_status' },
+        attrs: { beforeChange: onStatusChange, dictCode: 'sys_status' },
         name: onStatusChange ? 'CellSwitch' : 'CellTag',
       },
       field: 'status',

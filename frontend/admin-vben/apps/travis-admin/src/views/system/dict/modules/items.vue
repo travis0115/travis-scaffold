@@ -8,7 +8,7 @@ import type { SystemDictApi } from '#/api';
 
 import { computed, nextTick, watch } from 'vue';
 
-import { useVbenModal } from '@vben/common-ui';
+import { useVbenDrawer } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
 
 import { Button, message } from 'antdv-next';
@@ -58,7 +58,7 @@ const columns: VxeTableGridColumns<SystemDictApi.SysDictItem> = [
         beforeChange: hasAccessCode(SYSTEM_PERMS.dictUpdate)
           ? onStatusChange
           : undefined,
-        dictType: 'sys_status',
+        dictCode: 'sys_status',
       },
       name: hasAccessCode(SYSTEM_PERMS.dictUpdate) ? 'CellSwitch' : 'CellTag',
     },
@@ -119,7 +119,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
   } as VxeTableGridOptions<SystemDictApi.SysDictItem>,
 });
 
-const [ItemModal, itemModalApi] = useVbenModal({
+const [ItemDrawer, itemDrawerApi] = useVbenDrawer({
   connectedComponent: ItemModalComponent,
   destroyOnClose: true,
 });
@@ -134,13 +134,13 @@ function onActionClick({
 
 function onAddItem() {
   if (!props.dict) return;
-  itemModalApi
+  itemDrawerApi
     .setData({ dictId: props.dict.id, dictName: props.dict.dictName })
     .open();
 }
 
 function onEditItem(record: SystemDictApi.SysDictItem) {
-  itemModalApi.setData({
+  itemDrawerApi.setData({
     itemId: record.id,
     dictId: props.dict?.id,
     dictName: props.dict?.dictName,
@@ -174,9 +174,10 @@ async function onStatusChange(newStatus: number, row: SystemDictApi.SysDictItem)
   return true;
 }
 
-function handleItemSuccess() {
-  itemModalApi.close();
-  refreshItems();
+async function handleItemSuccess() {
+  itemDrawerApi.close();
+  await reloadDictOptions();
+  await refreshItems();
   emit('success');
 }
 
@@ -190,7 +191,7 @@ watch(
 
 <template>
   <div class="h-full">
-    <ItemModal @success="handleItemSuccess" />
+    <ItemDrawer @success="handleItemSuccess" />
     <Grid :table-title="tableTitle">
       <template #toolbar-tools>
         <Button

@@ -6,6 +6,7 @@
   "prompt": "提示",
   "cancel": "取消",
   "confirm": "确认",
+  "confirmStatusChange": "确定将状态切换为【{status}】吗？",
   "gotIt": "知道了",
   "reset": "重置",
   "noData": "暂无数据",
@@ -22,6 +23,7 @@
   "no": "否",
   "showSearchPanel": "显示搜索面板",
   "hideSearchPanel": "隐藏搜索面板",
+  "switchStatus": "切换状态",
   "moveUp": "上移",
   "moveDown": "下移"
 }

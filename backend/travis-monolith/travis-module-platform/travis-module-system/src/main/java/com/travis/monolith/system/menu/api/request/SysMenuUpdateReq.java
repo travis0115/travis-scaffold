@@ -4,8 +4,9 @@ import cn.hutool.core.util.StrUtil;
 import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.monolith.system.common.api.enums.MenuType;
 import jakarta.validation.constraints.*;
-import java.util.Objects;
 import lombok.Data;
+
+import java.util.Objects;
 
 /** 菜单修改请求参数 */
 @Data
@@ -30,6 +31,7 @@ public class SysMenuUpdateReq {
     @EnumValue(value = MenuType.class, message = "菜单类型错误")
     private Integer menuType;
 
+    @Size(max = 100, message = "图标长度不能超过100个字符")
     private String icon;
 
     @NotNull(message = "排序号不能为空")
@@ -37,6 +39,7 @@ public class SysMenuUpdateReq {
     @Max(value = 9999, message = "排序号不能大于9999")
     private Integer sort;
 
+    @Size(max = 10000, message = "扩展配置不能超过10000字符")
     private String meta;
 
     @AssertTrue(message = "目录和菜单的路由路径不能为空")

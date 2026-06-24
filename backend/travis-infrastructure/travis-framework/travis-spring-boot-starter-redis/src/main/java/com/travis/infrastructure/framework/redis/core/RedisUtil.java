@@ -1,11 +1,14 @@
 package com.travis.infrastructure.framework.redis.core;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.data.redis.cache.CacheKeyPrefix;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.util.CollectionUtils;
+
 import java.util.Arrays;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.util.CollectionUtils;
 
 /**
  * 基于 RedisTemplate 的 Redis 工具类，提供静态方法封装常用操作。
@@ -17,8 +20,14 @@ public class RedisUtil {
 
     private static RedisTemplate<String, Object> redisTemplate;
 
+    private static ObjectProvider<CacheKeyPrefix> cacheKeyPrefixProvider;
+
     public void setRedisTemplate(RedisTemplate<String, Object> redisTemplate) {
         RedisUtil.redisTemplate = redisTemplate;
+    }
+
+    public void setCacheKeyPrefixProvider(ObjectProvider<CacheKeyPrefix> cacheKeyPrefixProvider) {
+        RedisUtil.cacheKeyPrefixProvider = cacheKeyPrefixProvider;
     }
 
     /**
@@ -84,6 +93,36 @@ public class RedisUtil {
             log.warn("redis delete failed, keys={}", key, e);
             throw new IllegalStateException("redis delete failed", e);
         }
+    }
+
+    /**
+     * 删除 Spring Cache 生成的 Redis key，会自动套用当前 CacheKeyPrefix 配置。
+     *
+     * @param cacheName 缓存名称
+     * @param key 缓存 key，可多个
+     */
+    public static void deleteCacheKey(String cacheName, String... key) {
+        try {
+            if (key != null && key.length > 0) {
+                var cacheKeys =
+                        Arrays.stream(key).map(item -> buildCacheKey(cacheName, item)).toList();
+                if (cacheKeys.size() == 1) {
+                    redisTemplate.delete(cacheKeys.getFirst());
+                } else {
+                    redisTemplate.delete(cacheKeys);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("redis delete cache key failed, cacheName={}, keys={}", cacheName, key, e);
+            throw new IllegalStateException("redis delete cache key failed", e);
+        }
+    }
+
+    private static String buildCacheKey(String cacheName, String key) {
+        var cacheKeyPrefix =
+                cacheKeyPrefixProvider == null ? null : cacheKeyPrefixProvider.getIfAvailable();
+        var prefix = cacheKeyPrefix == null ? cacheName + ":" : cacheKeyPrefix.compute(cacheName);
+        return prefix + key;
     }
 
     /**

@@ -50,7 +50,7 @@ export function useColumns<T = SystemConfigApi.SystemConfig>(
     {
       cellRender: {
         attrs: {
-          dictType: 'sys_config_type',
+          dictCode: 'sys_config_type',
         },
         name: 'CellTag',
       },
