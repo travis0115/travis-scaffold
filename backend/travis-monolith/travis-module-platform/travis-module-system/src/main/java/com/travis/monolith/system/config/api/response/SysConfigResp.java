@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SysConfigDetailResp {
+public class SysConfigResp {
 
     /** 主键ID */
     private Long id;

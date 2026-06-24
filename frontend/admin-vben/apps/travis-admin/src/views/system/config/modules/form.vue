@@ -33,9 +33,13 @@ const [Drawer, drawerApi] = useVbenDrawer({
     const values = await formApi.getValues();
     drawerApi.lock();
     try {
-      await (formData.value?.id
-        ? updateConfig(formData.value.id, values)
-        : createConfig(values));
+      if (formData.value?.id) {
+        const submitValues = { ...values };
+        delete submitValues.configKey;
+        await updateConfig(formData.value.id, submitValues);
+      } else {
+        await createConfig(values);
+      }
       emit('success');
       drawerApi.close();
     } catch {

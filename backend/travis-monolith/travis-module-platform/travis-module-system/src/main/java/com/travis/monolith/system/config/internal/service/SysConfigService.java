@@ -5,8 +5,7 @@ import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.config.api.request.SysConfigCreateReq;
 import com.travis.monolith.system.config.api.request.SysConfigPageReq;
 import com.travis.monolith.system.config.api.request.SysConfigUpdateReq;
-import com.travis.monolith.system.config.api.response.SysConfigDetailResp;
-import com.travis.monolith.system.config.api.response.SysConfigPageResp;
+import com.travis.monolith.system.config.api.response.SysConfigResp;
 import com.travis.monolith.system.config.internal.entity.SysConfig;
 
 /**
@@ -17,13 +16,13 @@ import com.travis.monolith.system.config.internal.entity.SysConfig;
 public interface SysConfigService extends IService<SysConfig> {
 
     /** 分页查询系统配置 */
-    PageResp<SysConfigPageResp> page(SysConfigPageReq req);
+    PageResp<SysConfigResp> page(SysConfigPageReq req);
 
     /** 获取配置详情 */
-    SysConfigDetailResp getById(Long id);
+    SysConfigResp getById(Long id);
 
     /** 根据配置键获取配置值 */
-    String getValueByKey(String configKey);
+    SysConfigResp getByKey(String configKey);
 
     /** 新增配置 */
     void create(SysConfigCreateReq req);

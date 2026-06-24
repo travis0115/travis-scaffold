@@ -4,6 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.redis.cache.CacheKeyPrefix;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.CollectionUtils;
 
 import java.util.Arrays;
@@ -102,15 +104,31 @@ public class RedisUtil {
      * @param key 缓存 key，可多个
      */
     public static void deleteCacheKey(String cacheName, String... key) {
+        if (key == null || key.length == 0) {
+            return;
+        }
+        Runnable deleteTask = () -> doDeleteCacheKey(cacheName, key);
+        if (TransactionSynchronizationManager.isActualTransactionActive()
+                && TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(
+                    new TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            deleteTask.run();
+                        }
+                    });
+            return;
+        }
+        deleteTask.run();
+    }
+
+    private static void doDeleteCacheKey(String cacheName, String... key) {
         try {
-            if (key != null && key.length > 0) {
-                var cacheKeys =
-                        Arrays.stream(key).map(item -> buildCacheKey(cacheName, item)).toList();
-                if (cacheKeys.size() == 1) {
-                    redisTemplate.delete(cacheKeys.getFirst());
-                } else {
-                    redisTemplate.delete(cacheKeys);
-                }
+            var cacheKeys = Arrays.stream(key).map(item -> buildCacheKey(cacheName, item)).toList();
+            if (cacheKeys.size() == 1) {
+                redisTemplate.delete(cacheKeys.getFirst());
+            } else {
+                redisTemplate.delete(cacheKeys);
             }
         } catch (Exception e) {
             log.warn("redis delete cache key failed, cacheName={}, keys={}", cacheName, key, e);

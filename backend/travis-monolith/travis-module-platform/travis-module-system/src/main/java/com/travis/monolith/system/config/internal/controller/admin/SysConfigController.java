@@ -11,8 +11,7 @@ import com.travis.monolith.system.common.api.constant.SystemPermission;
 import com.travis.monolith.system.config.api.request.SysConfigCreateReq;
 import com.travis.monolith.system.config.api.request.SysConfigPageReq;
 import com.travis.monolith.system.config.api.request.SysConfigUpdateReq;
-import com.travis.monolith.system.config.api.response.SysConfigDetailResp;
-import com.travis.monolith.system.config.api.response.SysConfigPageResp;
+import com.travis.monolith.system.config.api.response.SysConfigResp;
 import com.travis.monolith.system.config.internal.service.SysConfigService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -36,14 +35,14 @@ public class SysConfigController {
     /** 分页查询系统配置 */
     @GetMapping("/page")
     @SaCheckPermission(value = SystemPermission.CONFIG_QUERY, type = LoginType.ADMIN)
-    public ApiResponse<PageResp<SysConfigPageResp>> page(SysConfigPageReq req) {
+    public ApiResponse<PageResp<SysConfigResp>> page(SysConfigPageReq req) {
         return ApiResponse.success(sysConfigService.page(req));
     }
 
     /** 获取配置详情 */
     @GetMapping("/{id}")
     @SaCheckPermission(value = SystemPermission.CONFIG_QUERY, type = LoginType.ADMIN)
-    public ApiResponse<SysConfigDetailResp> getById(@PathVariable Long id) {
+    public ApiResponse<SysConfigResp> getById(@PathVariable Long id) {
         return ApiResponse.success(sysConfigService.getById(id));
     }
 
@@ -51,7 +50,8 @@ public class SysConfigController {
     @GetMapping("/key/{configKey}/value")
     @SaCheckPermission(value = SystemPermission.CONFIG_QUERY, type = LoginType.ADMIN)
     public ApiResponse<String> getValue(@PathVariable String configKey) {
-        return ApiResponse.success(sysConfigService.getValueByKey(configKey));
+        var config = sysConfigService.getByKey(configKey);
+        return ApiResponse.success(config.getConfigValue());
     }
 
     /** 新增配置 */

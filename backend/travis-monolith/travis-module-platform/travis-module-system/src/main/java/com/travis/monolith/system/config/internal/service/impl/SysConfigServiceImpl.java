@@ -1,18 +1,17 @@
 package com.travis.monolith.system.config.internal.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
+import com.travis.infrastructure.framework.redis.core.RedisUtil;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.config.api.request.SysConfigCreateReq;
 import com.travis.monolith.system.config.api.request.SysConfigPageReq;
 import com.travis.monolith.system.config.api.request.SysConfigUpdateReq;
-import com.travis.monolith.system.config.api.response.SysConfigDetailResp;
-import com.travis.monolith.system.config.api.response.SysConfigPageResp;
+import com.travis.monolith.system.config.api.response.SysConfigResp;
 import com.travis.monolith.system.config.internal.converter.SysConfigConverter;
 import com.travis.monolith.system.config.internal.entity.SysConfig;
 import com.travis.monolith.system.config.internal.mapper.SysConfigMapper;
@@ -37,16 +36,12 @@ import java.util.Map;
 public class SysConfigServiceImpl extends ServiceImplX<SysConfigMapper, SysConfig>
         implements SysConfigService {
 
-    private static final Map<String, SFunction<SysConfig, ?>> SORT_COLUMNS =
-            Map.of(
-                    "configKey", SysConfig::getConfigKey,
-                    "createTime", SysConfig::getCreateTime,
-                    "updateTime", SysConfig::getUpdateTime);
+    private static final Map<String, SFunction<SysConfig, ?>> SORT_COLUMNS = Map.of();
 
     private final SysConfigConverter converter;
 
     @Override
-    public PageResp<SysConfigPageResp> page(SysConfigPageReq req) {
+    public PageResp<SysConfigResp> page(SysConfigPageReq req) {
         var wrapper =
                 new LambdaQueryWrapperX<SysConfig>()
                         .likeIfPresent(SysConfig::getConfigKey, req.getConfigKey())
@@ -55,61 +50,59 @@ public class SysConfigServiceImpl extends ServiceImplX<SysConfigMapper, SysConfi
                                 req.getAsc(),
                                 SORT_COLUMNS,
                                 true,
-                                SysConfig::getConfigKey);
-        Page<SysConfig> page = page(req.getPageNum(), req.getPageSize(), wrapper);
+                                SysConfig::getCreateTime);
+        var page = page(req.getPageNum(), req.getPageSize(), wrapper);
         return PageConverter.toResp(page.convert(converter::toResp));
     }
 
     @Override
-    @Cacheable(key = "'detail:'+#id")
-    public SysConfigDetailResp getById(Long id) {
-        return converter.toDetailResp(getByIdOrThrow(id));
+    @Cacheable(key = "'detail:id:'+#id")
+    public SysConfigResp getById(Long id) {
+        return converter.toResp(getByIdOrThrow(id));
     }
 
     @Override
-    @Cacheable(key = "'value:'+#configKey")
-    public String getValueByKey(String configKey) {
+    @Cacheable(key = "'detail:key:'+#configKey")
+    public SysConfigResp getByKey(String configKey) {
         var config =
-                getOne(new LambdaQueryWrapperX<SysConfig>().eq(SysConfig::getConfigKey, configKey));
-        return config != null ? config.getConfigValue() : null;
+                getOneOrThrow(
+                        new LambdaQueryWrapperX<SysConfig>()
+                                .eq(SysConfig::getConfigKey, configKey));
+        return converter.toResp(config);
     }
 
     @Override
     @Transactional
-    @CacheEvict(allEntries = true)
     public void create(SysConfigCreateReq req) {
-        SysConfig entity = converter.toEntity(req);
+        var count =
+                count(
+                        new LambdaQueryWrapperX<SysConfig>()
+                                .eq(SysConfig::getConfigKey, req.getConfigKey()));
+        if (count > 0) {
+            throw new BizException(SystemErrorCode.CONFIG_KEY_EXISTS);
+        }
+        var entity = converter.toEntity(req);
         save(entity);
     }
 
     @Override
     @Transactional
-    @CacheEvict(allEntries = true)
+    @CacheEvict(key = "'detail:id:'+#id")
     public void update(Long id, SysConfigUpdateReq req) {
-        SysConfig entity = getConfigOrThrow(id);
-        checkBuiltinKey(entity, req);
+        var entity = getByIdOrThrow(id);
         converter.update(req, entity);
         updateById(entity);
+        RedisUtil.deleteCacheKey("system:config", "detail:key:" + entity.getConfigKey());
     }
 
     @Override
     @Transactional
-    @CacheEvict(allEntries = true)
+    @CacheEvict(key = "'detail:id:'+#id")
     public void deleteById(Long id) {
-        SysConfig entity = getConfigOrThrow(id);
+        var entity = getByIdOrThrow(id);
         checkDeletable(entity);
         removeById(id);
-    }
-
-    private SysConfig getConfigOrThrow(Long id) {
-        return getByIdOrThrow(id);
-    }
-
-    private void checkBuiltinKey(SysConfig entity, SysConfigUpdateReq req) {
-        if (Integer.valueOf(1).equals(entity.getIsBuiltin())
-                && !entity.getConfigKey().equals(req.getConfigKey())) {
-            throw new BizException(SystemErrorCode.CONFIG_BUILTIN_KEY_NOT_MODIFIABLE);
-        }
+        RedisUtil.deleteCacheKey("system:config", "detail:key:" + entity.getConfigKey());
     }
 
     private void checkDeletable(SysConfig entity) {

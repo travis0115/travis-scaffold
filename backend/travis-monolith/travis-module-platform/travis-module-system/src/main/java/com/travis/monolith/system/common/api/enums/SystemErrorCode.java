@@ -39,7 +39,7 @@ public enum SystemErrorCode implements ErrorCode {
 
     /* config模块 1100-1199 */
     CONFIG_BUILTIN_NOT_DELETABLE("SYS_1100", "系统内置配置不允许删除"),
-    CONFIG_BUILTIN_KEY_NOT_MODIFIABLE("SYS_1101", "系统内置配置不允许修改配置键"),
+    CONFIG_KEY_EXISTS("SYS_1101", "配置键已存在"),
     ;
 
     private final String code;

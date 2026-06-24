@@ -1,6 +1,7 @@
 package com.travis.monolith.system.config.api.request;
 
 import com.travis.infrastructure.common.web.model.PageRequest;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -13,5 +14,6 @@ import lombok.EqualsAndHashCode;
 @Data
 public class SysConfigPageReq extends PageRequest {
     /** 配置键（模糊匹配） */
+    @Size(max = 200, message = "配置键长度不能超过200个字符")
     private String configKey;
 }

@@ -17,6 +17,7 @@ public class SysConfigCreateReq {
     private String configKey;
 
     /** 配置值 */
+    @Size(max = 1000, message = "配置值长度不能超过1000个字符")
     private String configValue;
 
     /** 备注 */
