@@ -17,13 +17,13 @@ public class SysMenuUpdateReq {
     @Size(max = 50, message = "菜单名称长度不能超过50个字符")
     private String menuName;
 
-    @Size(max = 200, message = "路由路径长度不能超过200个字符")
+    @Size(max = 255, message = "路由路径长度不能超过255个字符")
     private String path;
 
-    @Size(max = 200, message = "组件路径长度不能超过200个字符")
+    @Size(max = 255, message = "组件路径长度不能超过255个字符")
     private String component;
 
-    @Size(max = 200, message = "权限标识长度不能超过200个字符")
+    @Size(max = 255, message = "权限标识长度不能超过255个字符")
     private String perms;
 
     @NotNull(message = "菜单类型不能为空")

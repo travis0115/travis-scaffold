@@ -58,12 +58,14 @@ function onActionClick({
   code,
   row,
 }: OnActionClickParams<SystemNoticeApi.Notice>) {
-  if (code === 'preview') {
-    previewRow.value = row;
-    previewOpen.value = true;
-  }
+  if (code === 'preview') onPreview(row);
   if (code === 'edit') formDrawerApi.setData(row).open();
   if (code === 'delete') deleteNotice(row.id).then(() => gridApi.query());
+}
+
+function onPreview(row: SystemNoticeApi.Notice) {
+  previewRow.value = row;
+  previewOpen.value = true;
 }
 
 async function onStatusChange(newStatus: number, row: SystemNoticeApi.Notice) {
@@ -85,6 +87,15 @@ async function onStatusChange(newStatus: number, row: SystemNoticeApi.Notice) {
         >
           新增公告
         </Button>
+      </template>
+      <template #title="{ row }">
+        <button
+          class="text-foreground hover:text-primary block w-full cursor-pointer border-0 bg-transparent p-0 text-center"
+          type="button"
+          @click="onPreview(row)"
+        >
+          {{ row.title }}
+        </button>
       </template>
     </Grid>
     <Modal

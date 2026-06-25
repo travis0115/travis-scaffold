@@ -19,7 +19,7 @@ public class SysVersionPageReq extends PageRequest {
     @Size(max = 50, message = "版本号长度不能超过50个字符")
     private String version;
 
-    @Size(max = 200, message = "标题长度不能超过200个字符")
+    @Size(max = 255, message = "标题长度不能超过255个字符")
     private String title;
 
     @EnumValue(value = Status.class, message = "状态值错误")

@@ -106,7 +106,12 @@ export function useColumns(
   ) => Promise<boolean>,
 ): VxeTableGridColumns<SystemNoticeApi.Notice> {
   return [
-    { field: 'title', minWidth: 220, title: '公告标题' },
+    {
+      field: 'title',
+      minWidth: 220,
+      slots: { default: 'title' },
+      title: '公告标题',
+    },
     {
       field: 'publishTime',
       formatter: 'formatDateTime',

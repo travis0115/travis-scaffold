@@ -48,6 +48,7 @@ setupVbenVxeTable({
           sort: true,
         },
         rowConfig: {
+          isCurrent: true,
           isHover: true,
         },
         round: true,
@@ -56,7 +57,7 @@ setupVbenVxeTable({
         },
         showOverflow: true,
         size: 'small',
-        stripe: true,
+        stripe: false,
       } as VxeTableGridOptions,
     });
 

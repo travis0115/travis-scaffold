@@ -25,15 +25,15 @@ public class SysMenuCreateReq {
     private String menuName;
 
     /** 路由路径 */
-    @Size(max = 200, message = "路由路径长度不能超过200个字符")
+    @Size(max = 255, message = "路由路径长度不能超过255个字符")
     private String path;
 
     /** 前端组件路径 */
-    @Size(max = 200, message = "组件路径长度不能超过200个字符")
+    @Size(max = 255, message = "组件路径长度不能超过255个字符")
     private String component;
 
     /** 权限标识（如 system:user:add） */
-    @Size(max = 200, message = "权限标识长度不能超过200个字符")
+    @Size(max = 255, message = "权限标识长度不能超过255个字符")
     private String perms;
 
     /** 菜单类型（0-目录 1-菜单 2-按钮） */

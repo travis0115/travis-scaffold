@@ -12,6 +12,7 @@ import com.travis.monolith.system.message.api.request.SysUserMessagePageReq;
 import com.travis.monolith.system.message.api.response.SysUserMessageBaseResp;
 import com.travis.monolith.system.message.api.response.SysUserMessagePageResp;
 import com.travis.monolith.system.message.api.response.SysUserMessageRecentResp;
+import com.travis.monolith.system.message.internal.converter.SysMessageReceiverConverter;
 import com.travis.monolith.system.message.internal.entity.SysMessage;
 import com.travis.monolith.system.message.internal.entity.SysMessageReceiver;
 import com.travis.monolith.system.message.internal.mapper.SysMessageMapper;
@@ -21,8 +22,8 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,9 +35,12 @@ public class SysMessageReceiverServiceImpl
     private static final String RECEIVER_TYPE_ADMIN = LoginType.ADMIN;
 
     private final SysMessageMapper messageMapper;
+    private final SysMessageReceiverConverter converter;
 
-    public SysMessageReceiverServiceImpl(SysMessageMapper messageMapper) {
+    public SysMessageReceiverServiceImpl(
+            SysMessageMapper messageMapper, SysMessageReceiverConverter converter) {
         this.messageMapper = messageMapper;
+        this.converter = converter;
     }
 
     @Override
@@ -46,7 +50,7 @@ public class SysMessageReceiverServiceImpl
                 page(
                         new Page<>(1, actualLimit),
                         baseWrapper(userId).orderByDesc(SysMessageReceiver::getCreateTime));
-        return toResponses(page.getRecords(), SysUserMessageRecentResp::new);
+        return toResponses(page.getRecords(), converter::toRecentResp);
     }
 
     @Override
@@ -75,7 +79,7 @@ public class SysMessageReceiverServiceImpl
                         wrapper.orderByDesc(SysMessageReceiver::getCreateTime));
         Page<SysUserMessagePageResp> responsePage =
                 new Page<>(page.getCurrent(), page.getSize(), page.getTotal());
-        responsePage.setRecords(toResponses(page.getRecords(), SysUserMessagePageResp::new));
+        responsePage.setRecords(toResponses(page.getRecords(), converter::toPageResp));
         return PageConverter.toResp(responsePage);
     }
 
@@ -131,7 +135,8 @@ public class SysMessageReceiverServiceImpl
     }
 
     private <T extends SysUserMessageBaseResp> List<T> toResponses(
-            List<SysMessageReceiver> messages, Supplier<T> responseFactory) {
+            List<SysMessageReceiver> messages,
+            BiFunction<SysMessageReceiver, SysMessage, T> responseConverter) {
         if (messages.isEmpty()) {
             return List.of();
         }
@@ -144,24 +149,8 @@ public class SysMessageReceiverServiceImpl
                 .filter(message -> messageMap.containsKey(message.getMessageId()))
                 .map(
                         message ->
-                                toResponse(
-                                        message,
-                                        messageMap.get(message.getMessageId()),
-                                        responseFactory.get()))
+                                responseConverter.apply(
+                                        message, messageMap.get(message.getMessageId())))
                 .toList();
-    }
-
-    private <T extends SysUserMessageBaseResp> T toResponse(
-            SysMessageReceiver receiver, SysMessage message, T response) {
-        response.setId(receiver.getId());
-        response.setMessageId(message.getId());
-        response.setTitle(message.getTitle());
-        response.setContent(message.getContent());
-        response.setMessageType(message.getMessageType());
-        response.setReadStatus(receiver.getReadStatus());
-        response.setReadTime(receiver.getReadTime());
-        response.setPublishTime(message.getPublishTime());
-        response.setCreateTime(receiver.getCreateTime());
-        return response;
     }
 }

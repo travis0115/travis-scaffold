@@ -22,12 +22,10 @@ import com.travis.monolith.system.message.internal.service.SysMessageService;
 import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.api.SysUserApi;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.springframework.beans.BeanUtils;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -69,13 +67,13 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                         .eqIfPresent(SysMessage::getStatus, req.getStatus())
                         .orderByDesc(SysMessage::getCreateTime);
         Page<SysMessage> page = page(req.getPageNum(), req.getPageSize(), wrapper);
-        return PageConverter.toResp(page.convert(this::toPageResp));
+        return PageConverter.toResp(page.convert(converter::toPageResp));
     }
 
     @Override
     @Cacheable(key = "'detail:'+#id")
     public SysMessageDetailResp get(Long id) {
-        return toDetailResp(getByIdOrThrow(id));
+        return converter.toDetailResp(getByIdOrThrow(id));
     }
 
     @Override
@@ -157,7 +155,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     }
 
     private List<Long> resolveRecipients(SysMessage message) {
-        List<Long> targetIds = parseTargetIds(message.getTargetIds());
+        List<Long> targetIds = converter.parseTargetIds(message.getTargetIds());
         return switch (message.getAudienceType()) {
             case AUDIENCE_ALL -> userApi.listUserIds();
             case AUDIENCE_USER -> targetIds;
@@ -174,29 +172,5 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         if (audienceType != AUDIENCE_ALL && (targetIds == null || targetIds.isEmpty())) {
             throw new BizException(CommonErrorCode.BAD_REQUEST);
         }
-    }
-
-    private SysMessagePageResp toPageResp(SysMessage message) {
-        var response = new SysMessagePageResp();
-        BeanUtils.copyProperties(message, response, "targetIds");
-        response.setTargetIds(parseTargetIds(message.getTargetIds()));
-        return response;
-    }
-
-    private SysMessageDetailResp toDetailResp(SysMessage message) {
-        var response = new SysMessageDetailResp();
-        BeanUtils.copyProperties(message, response, "targetIds");
-        response.setTargetIds(parseTargetIds(message.getTargetIds()));
-        return response;
-    }
-
-    private List<Long> parseTargetIds(String targetIds) {
-        if (targetIds == null || targetIds.isBlank()) {
-            return List.of();
-        }
-        return Arrays.stream(targetIds.split(","))
-                .filter(value -> !value.isBlank())
-                .map(Long::valueOf)
-                .toList();
     }
 }

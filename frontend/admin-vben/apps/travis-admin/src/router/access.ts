@@ -46,6 +46,15 @@ const hiddenRoutes: RouteRecordStringComponent[] = [
       title: '更新日志',
     },
   },
+  {
+    name: 'Notice',
+    path: '/notice',
+    component: '_core/notice/index',
+    meta: {
+      hideInMenu: true,
+      title: '系统公告',
+    },
+  },
 ];
 
 async function generateAccess(options: GenerateMenuAndRoutesOptions) {

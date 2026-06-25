@@ -6,12 +6,11 @@ import com.travis.monolith.system.common.api.enums.Status;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import java.time.LocalDateTime;
 import lombok.Data;
 
-import java.time.LocalDateTime;
-
 /**
- * 系统版本日志请求参数
+ * 系统版本请求参数
  *
  * @author travis
  */
@@ -22,14 +21,14 @@ public class SysVersionCreateReq {
     @Size(max = 50, message = "版本号长度不能超过50个字符")
     private String version;
 
-    /** 更新标题 */
-    @NotBlank(message = "更新标题不能为空")
-    @Size(max = 200, message = "更新标题长度不能超过200个字符")
+    /** 版本标题 */
+    @NotBlank(message = "版本标题不能为空")
+    @Size(max = 255, message = "版本标题长度不能超过255个字符")
     private String title;
 
-    /** 更新内容 */
-    @NotBlank(message = "更新内容不能为空")
-    @Size(max = 5000, message = "更新内容长度不能超过5000个字符")
+    /** 版本内容 */
+    @NotBlank(message = "版本内容不能为空")
+    @Size(max = 5000, message = "版本内容长度不能超过5000个字符")
     @SanitizeHtml
     private String content;
 

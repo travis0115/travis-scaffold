@@ -11,7 +11,7 @@ import lombok.Data;
 @Data
 public class SysMessageCreateReq {
     @NotBlank(message = "消息标题不能为空")
-    @Size(max = 200, message = "消息标题长度不能超过200个字符")
+    @Size(max = 255, message = "消息标题长度不能超过255个字符")
     private String title;
 
     @NotBlank(message = "消息内容不能为空")

@@ -165,6 +165,15 @@ async function onStatusChange(
           {{ $t('ui.actionTitle.create', [$t('system.version.name')]) }}
         </Button>
       </template>
+      <template #title="{ row }">
+        <button
+          class="text-foreground hover:text-primary block w-full cursor-pointer border-0 bg-transparent p-0 text-center"
+          type="button"
+          @click="onPreview(row)"
+        >
+          {{ row.title }}
+        </button>
+      </template>
     </Grid>
     <Modal
       v-model:open="previewOpen"

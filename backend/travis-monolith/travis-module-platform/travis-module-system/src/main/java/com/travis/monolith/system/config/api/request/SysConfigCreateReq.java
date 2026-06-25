@@ -13,7 +13,7 @@ import lombok.Data;
 public class SysConfigCreateReq {
     /** 配置键 */
     @NotBlank(message = "配置键不能为空")
-    @Size(max = 200, message = "配置键长度不能超过200个字符")
+    @Size(max = 255, message = "配置键长度不能超过255个字符")
     private String configKey;
 
     /** 配置值 */
@@ -21,6 +21,6 @@ public class SysConfigCreateReq {
     private String configValue;
 
     /** 备注 */
-    @Size(max = 500, message = "备注长度不能超过500个字符")
+    @Size(max = 255, message = "备注长度不能超过255个字符")
     private String remark;
 }

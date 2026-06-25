@@ -16,6 +16,6 @@ public class SysConfigUpdateReq {
     private String configValue;
 
     /** 备注 */
-    @Size(max = 500, message = "备注长度不能超过500个字符")
+    @Size(max = 255, message = "备注长度不能超过255个字符")
     private String remark;
 }

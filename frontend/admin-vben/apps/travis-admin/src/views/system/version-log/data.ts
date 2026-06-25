@@ -1,8 +1,5 @@
 import type { VbenFormSchema } from '#/adapter/form';
-import type {
-  OnActionClickFn,
-  VxeTableGridColumns,
-} from '#/adapter/vxe-table';
+import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { SystemVersionLogApi } from '#/api';
 
 import { z } from '#/adapter/form';
@@ -16,11 +13,13 @@ function formatVersion(value?: null | string) {
 
 function hasRichTextContent(value?: string) {
   if (!value) return false;
-  return value
-    .replaceAll('&nbsp;', ' ')
-    .replaceAll(/<br\s*\/?>/gi, '')
-    .replaceAll(/<[^>]*>/g, '')
-    .trim().length > 0;
+  return (
+    value
+      .replaceAll('&nbsp;', ' ')
+      .replaceAll(/<br\s*\/?>/gi, '')
+      .replaceAll(/<[^>]*>/g, '')
+      .trim().length > 0
+  );
 }
 
 export function useFormSchema(): VbenFormSchema[] {
@@ -32,7 +31,10 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: z
         .string()
         .min(1, $t('ui.formRules.required', [$t('system.version.version')]))
-        .max(50, $t('ui.formRules.maxLength', [$t('system.version.version'), 50])),
+        .max(
+          50,
+          $t('ui.formRules.maxLength', [$t('system.version.version'), 50]),
+        ),
     },
     {
       component: 'Input',
@@ -41,7 +43,10 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: z
         .string()
         .min(1, $t('ui.formRules.required', [$t('system.version.titleField')]))
-        .max(200, $t('ui.formRules.maxLength', [$t('system.version.titleField'), 200])),
+        .max(
+          200,
+          $t('ui.formRules.maxLength', [$t('system.version.titleField'), 200]),
+        ),
     },
     {
       component: 'RichEditor',
@@ -120,7 +125,10 @@ export function useGridFormSchema(): VbenFormSchema[] {
 
 export function useColumns(
   onActionClick?: OnActionClickFn<SystemVersionLogApi.VersionLog>,
-  onStatusChange?: (newStatus: number, row: SystemVersionLogApi.VersionLog) => Promise<boolean>,
+  onStatusChange?: (
+    newStatus: number,
+    row: SystemVersionLogApi.VersionLog,
+  ) => Promise<boolean>,
 ): VxeTableGridColumns<SystemVersionLogApi.VersionLog> {
   return [
     {
@@ -131,8 +139,9 @@ export function useColumns(
     },
     {
       field: 'title',
-      title: $t('system.version.titleField'),
       minWidth: 200,
+      slots: { default: 'title' },
+      title: $t('system.version.titleField'),
     },
     {
       field: 'publishTime',
@@ -173,10 +182,13 @@ export function useColumns(
           onClick: onActionClick,
         },
         name: 'CellOperation',
-        options: filterAccessOptions([{ code: 'preview', text: '预览' }, 'edit', 'delete'], {
-          delete: SYSTEM_PERMS.versionDelete,
-          edit: SYSTEM_PERMS.versionUpdate,
-        }),
+        options: filterAccessOptions(
+          [{ code: 'preview', text: '预览' }, 'edit', 'delete'],
+          {
+            delete: SYSTEM_PERMS.versionDelete,
+            edit: SYSTEM_PERMS.versionUpdate,
+          },
+        ),
       },
       field: 'operation',
       fixed: 'right',

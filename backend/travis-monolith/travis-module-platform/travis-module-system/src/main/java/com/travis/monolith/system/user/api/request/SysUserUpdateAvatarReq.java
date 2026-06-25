@@ -11,6 +11,6 @@ import lombok.Data;
 @Data
 public class SysUserUpdateAvatarReq {
     /** 头像地址 */
-    @Size(max = 500, message = "头像地址长度不能超过500个字符")
+    @Size(max = 255, message = "头像地址长度不能超过255个字符")
     private String avatar;
 }
