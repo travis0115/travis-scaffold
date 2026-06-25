@@ -46,14 +46,104 @@
 
 .vben-tiptap-content img,
 .vben-tiptap-content .vben-tiptap__image {
-  max-width: min(100%, 640px);
+  max-width: 100%;
+  height: auto;
+}
+
+.vben-tiptap-preview img {
+  cursor: zoom-in;
+}
+
+.vben-tiptap-image-resizer {
+  position: relative;
+  display: inline-block;
+  max-width: calc(100% - 16px);
+  margin: 1rem 8px;
+  line-height: 0;
+}
+
+.vben-tiptap-image-resizer .vben-tiptap__image {
+  display: block;
+  margin: 0;
+}
+
+.vben-tiptap-image-resizer.is-selected {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+.vben-tiptap-image-resizer__handle {
+  position: absolute;
+  display: none;
+  width: 12px;
+  height: 12px;
+  background-color: hsl(var(--primary));
+  border: 2px solid hsl(var(--card));
+  border-radius: 999px;
+}
+
+.vben-tiptap-image-resizer__handle--n {
+  top: -6px;
+  left: 50%;
+  cursor: ns-resize;
+  transform: translateX(-50%);
+}
+
+.vben-tiptap-image-resizer__handle--ne {
+  top: -6px;
+  right: -6px;
+  cursor: nesw-resize;
+}
+
+.vben-tiptap-image-resizer__handle--e {
+  top: 50%;
+  right: -6px;
+  cursor: ew-resize;
+  transform: translateY(-50%);
+}
+
+.vben-tiptap-image-resizer__handle--se {
+  right: -6px;
+  bottom: -6px;
+  cursor: nwse-resize;
+}
+
+.vben-tiptap-image-resizer__handle--s {
+  bottom: -6px;
+  left: 50%;
+  cursor: ns-resize;
+  transform: translateX(-50%);
+}
+
+.vben-tiptap-image-resizer__handle--sw {
+  bottom: -6px;
+  left: -6px;
+  cursor: nesw-resize;
+}
+
+.vben-tiptap-image-resizer__handle--w {
+  top: 50%;
+  left: -6px;
+  cursor: ew-resize;
+  transform: translateY(-50%);
+}
+
+.vben-tiptap-image-resizer__handle--nw {
+  top: -6px;
+  left: -6px;
+  cursor: nwse-resize;
+}
+
+.vben-tiptap-image-resizer.is-selected .vben-tiptap-image-resizer__handle,
+.vben-tiptap-image-resizer:hover .vben-tiptap-image-resizer__handle {
+  display: block;
 }
 
 /* Image upload states */
 .vben-tiptap-upload-wrapper {
   position: relative;
   display: inline-block;
-  max-width: min(100%, 640px);
+  max-width: 100%;
   margin: 1rem 0;
 }
 

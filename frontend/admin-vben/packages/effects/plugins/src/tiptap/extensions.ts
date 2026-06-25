@@ -1,4 +1,4 @@
-import type { Editor as CoreEditor } from '@tiptap/core';
+import type { Editor as CoreEditor, NodeViewRendererProps } from '@tiptap/core';
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
 import type { EditorView } from '@tiptap/pm/view';
 import type { Extensions } from '@tiptap/vue-3';
@@ -74,6 +74,217 @@ function findPlaceholderPos(doc: ProseMirrorNode, blobUrl: string): number {
 interface UploadContext {
   blobUrl: string;
   pos: number;
+}
+
+const IMAGE_RESIZE_HANDLES = [
+  'n',
+  'ne',
+  'e',
+  'se',
+  's',
+  'sw',
+  'w',
+  'nw',
+] as const;
+type ImageResizeDirection = (typeof IMAGE_RESIZE_HANDLES)[number];
+
+function getImageWidth(element: HTMLElement): null | number {
+  const widthAttr = Number(element.getAttribute('width'));
+  if (Number.isFinite(widthAttr) && widthAttr > 0) {
+    return Math.round(widthAttr);
+  }
+  const styleWidth = Number.parseFloat(element.style.width);
+  return Number.isFinite(styleWidth) && styleWidth > 0
+    ? Math.round(styleWidth)
+    : null;
+}
+
+function getImageResizeAttributes() {
+  return {
+    width: {
+      default: null,
+      parseHTML: (element: HTMLElement) => getImageWidth(element),
+      renderHTML: (attributes: { width?: null | number }) => {
+        if (!attributes.width) return {};
+        return {
+          style: `width: ${attributes.width}px; height: auto;`,
+          width: attributes.width,
+        };
+      },
+    },
+  };
+}
+
+function createResizableImageNodeView({
+  editor,
+  getPos,
+  node,
+}: NodeViewRendererProps) {
+  let currentNode = node;
+  let resizeDirection: ImageResizeDirection = 'se';
+  let startHeight = 0;
+  let startWidth = 0;
+  let startX = 0;
+  let startY = 0;
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'vben-tiptap-image-resizer';
+  wrapper.contentEditable = 'false';
+
+  const img = document.createElement('img');
+  img.className = 'vben-tiptap__image';
+  img.draggable = false;
+  wrapper.append(img);
+
+  const handles = IMAGE_RESIZE_HANDLES.map((direction) => {
+    const handle = document.createElement('span');
+    handle.className = `vben-tiptap-image-resizer__handle vben-tiptap-image-resizer__handle--${direction}`;
+    handle.dataset.direction = direction;
+    wrapper.append(handle);
+    return handle;
+  });
+
+  const syncImage = (nextNode: ProseMirrorNode) => {
+    currentNode = nextNode;
+    img.src = nextNode.attrs.src;
+    img.alt = nextNode.attrs.alt || '';
+    img.title = nextNode.attrs.title || '';
+    if (nextNode.attrs.width) {
+      img.style.width = `${nextNode.attrs.width}px`;
+      img.setAttribute('width', String(nextNode.attrs.width));
+    } else {
+      img.style.removeProperty('width');
+      img.removeAttribute('width');
+    }
+  };
+
+  const updateWidth = (width: number) => {
+    if (typeof getPos !== 'function') return;
+    const pos = getPos();
+    if (pos === undefined) return;
+    const nextAttrs = {
+      ...currentNode.attrs,
+      width: Math.round(width),
+    };
+    const transaction = editor.state.tr.setNodeMarkup(
+      pos,
+      undefined,
+      nextAttrs,
+    );
+    editor.view.dispatch(transaction);
+  };
+
+  const stopResize = () => {
+    document.removeEventListener('mousemove', resize);
+    document.removeEventListener('mouseup', stopResize);
+    document.body.style.removeProperty('cursor');
+    document.body.style.removeProperty('user-select');
+  };
+
+  const getResizeDelta = (event: MouseEvent) => {
+    const deltaX = event.clientX - startX;
+    const deltaY = event.clientY - startY;
+    const ratio = startHeight > 0 ? startWidth / startHeight : 1;
+    const verticalDelta = deltaY * ratio;
+
+    switch (resizeDirection) {
+      case 'e': {
+        return deltaX;
+      }
+      case 'n': {
+        return -verticalDelta;
+      }
+      case 'ne': {
+        return Math.abs(deltaX) > Math.abs(verticalDelta)
+          ? deltaX
+          : -verticalDelta;
+      }
+      case 'nw': {
+        return Math.abs(deltaX) > Math.abs(verticalDelta)
+          ? -deltaX
+          : -verticalDelta;
+      }
+      case 's': {
+        return verticalDelta;
+      }
+      case 'se': {
+        return Math.abs(deltaX) > Math.abs(verticalDelta)
+          ? deltaX
+          : verticalDelta;
+      }
+      case 'sw': {
+        return Math.abs(deltaX) > Math.abs(verticalDelta)
+          ? -deltaX
+          : verticalDelta;
+      }
+      case 'w': {
+        return -deltaX;
+      }
+    }
+  };
+
+  const resize = (event: MouseEvent) => {
+    const editorWidth = editor.view.dom.clientWidth;
+    const maxWidth = Math.max(80, editorWidth - 32);
+    const nextWidth = Math.min(
+      maxWidth,
+      Math.max(80, startWidth + getResizeDelta(event)),
+    );
+    updateWidth(nextWidth);
+  };
+
+  handles.forEach((handle) => {
+    handle.addEventListener('mousedown', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const rect = img.getBoundingClientRect();
+      resizeDirection = handle.dataset.direction as ImageResizeDirection;
+      startX = event.clientX;
+      startY = event.clientY;
+      startWidth = rect.width;
+      startHeight = rect.height;
+      document.body.style.cursor = getComputedStyle(handle).cursor;
+      document.body.style.userSelect = 'none';
+      document.addEventListener('mousemove', resize);
+      document.addEventListener('mouseup', stopResize);
+    });
+  });
+
+  syncImage(node);
+
+  return {
+    destroy() {
+      stopResize();
+    },
+    deselectNode() {
+      wrapper.classList.remove('is-selected');
+    },
+    dom: wrapper,
+    selectNode() {
+      wrapper.classList.add('is-selected');
+    },
+    update(nextNode: ProseMirrorNode) {
+      if (nextNode.type !== currentNode.type) return false;
+      if (nextNode.attrs['data-uploading'] === 'true') return false;
+      syncImage(nextNode);
+      return true;
+    },
+  };
+}
+
+function createResizableImage() {
+  return Image.extend({
+    addAttributes() {
+      return {
+        ...this.parent?.(),
+        ...getImageResizeAttributes(),
+      };
+    },
+
+    addNodeView() {
+      return createResizableImageNodeView;
+    },
+  });
 }
 
 function createUploadProcess(
@@ -183,6 +394,7 @@ function createCustomImage(
     addAttributes() {
       return {
         ...this.parent?.(),
+        ...getImageResizeAttributes(),
         'data-upload-progress': {
           default: null,
           parseHTML: (element) => element.dataset.uploadProgress,
@@ -201,11 +413,12 @@ function createCustomImage(
     },
 
     addNodeView() {
-      return ({ node }) => {
+      return (props) => {
+        const { node } = props;
         const isUploading = node.attrs['data-uploading'] === 'true';
 
         if (!isUploading) {
-          return null as any;
+          return createResizableImageNodeView(props);
         }
 
         const wrapper = document.createElement('div');
@@ -437,7 +650,7 @@ export function createDefaultTiptapExtensions(
             class: 'vben-tiptap__image',
           },
         })
-      : Image.configure({
+      : createResizableImage().configure({
           allowBase64: true,
           HTMLAttributes: {
             class: 'vben-tiptap__image',

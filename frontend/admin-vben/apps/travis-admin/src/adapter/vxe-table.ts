@@ -96,20 +96,27 @@ setupVbenVxeTable({
         const { props } = renderOpts;
         const { column, row } = params;
         const rawSrc = row[column.field];
-        const src = rawSrc && rawSrc.trim() !== ''
-          ? rawSrc
-          : preferences.app.defaultAvatar;
+        const src =
+          rawSrc && rawSrc.trim() !== ''
+            ? rawSrc
+            : preferences.app.defaultAvatar;
         return h(
           'div',
           { class: 'flex w-full justify-center' },
           h(Image, {
-            class: 'cursor-zoom-in rounded-full object-cover',
+            ...props,
+            class: ['rounded-full object-cover', props?.class],
             fallback: preferences.app.defaultAvatar,
             height: 32,
             preview: { src },
             src,
+            styles: {
+              ...props?.styles,
+              cover: { ...props?.styles?.cover, cursor: 'zoom-in' },
+              image: { ...props?.styles?.image, cursor: 'zoom-in' },
+              root: { ...props?.styles?.root, cursor: 'zoom-in' },
+            },
             width: 32,
-            ...props,
           }),
         );
       },

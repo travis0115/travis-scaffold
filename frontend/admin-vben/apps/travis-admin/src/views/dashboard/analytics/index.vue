@@ -6,7 +6,6 @@ import { useRouter } from 'vue-router';
 
 import { useAccess } from '@vben/access';
 import { IconifyIcon } from '@vben/icons';
-import { VbenTiptapPreview } from '@vben/plugins/tiptap';
 import { formatDate, formatDateTime } from '@vben/utils';
 
 import { Button, Card, Empty, Skeleton, Spin, Tag } from 'antdv-next';
@@ -16,6 +15,7 @@ import {
   getPublishedVersionLogs,
   getRecentMessages,
 } from '#/api';
+import RichTextPreview from '#/components/rich-text-preview/index.vue';
 import { OPS_PERMS } from '#/utils/permissions';
 
 const router = useRouter();
@@ -242,7 +242,7 @@ onMounted(async () => {
                   {{ log.title }}
                 </h3>
                 <div class="mt-3 max-h-36 overflow-hidden">
-                  <VbenTiptapPreview :content="log.content" :min-height="0" />
+                  <RichTextPreview :content="log.content" :min-height="0" />
                 </div>
               </article>
               <div v-if="versionLoading" class="flex justify-center py-3">

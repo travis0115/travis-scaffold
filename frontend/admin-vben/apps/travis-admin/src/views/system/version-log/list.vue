@@ -9,7 +9,6 @@ import { ref } from 'vue';
 
 import { Page, useVbenDrawer } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
-import { VbenTiptapPreview } from '@vben/plugins/tiptap';
 import { formatDate } from '@vben/utils';
 
 import { Button, message, Modal, Tag } from 'antdv-next';
@@ -20,6 +19,7 @@ import {
   getVersionLogPage,
   updateVersionLogStatus,
 } from '#/api';
+import RichTextPreview from '#/components/rich-text-preview/index.vue';
 import { $t } from '#/locales';
 import { hasAccessCode, SYSTEM_PERMS } from '#/utils/permissions';
 
@@ -186,7 +186,7 @@ async function onStatusChange(
         <h3 class="text-foreground text-lg font-semibold">
           {{ previewRow?.title || $t('system.version.content') }}
         </h3>
-        <VbenTiptapPreview :content="previewRow?.content" :min-height="320" />
+        <RichTextPreview :content="previewRow?.content" :min-height="320" />
       </div>
     </Modal>
   </Page>
