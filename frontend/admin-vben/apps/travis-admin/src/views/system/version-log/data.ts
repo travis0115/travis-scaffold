@@ -9,39 +9,65 @@ import { z } from '#/adapter/form';
 import { $t } from '#/locales';
 import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
 
+function formatVersion(value?: null | string) {
+  if (!value) return '-';
+  return value.toLowerCase().startsWith('v') ? value : `v${value}`;
+}
+
+function hasRichTextContent(value?: string) {
+  if (!value) return false;
+  return value
+    .replaceAll('&nbsp;', ' ')
+    .replaceAll(/<br\s*\/?>/gi, '')
+    .replaceAll(/<[^>]*>/g, '')
+    .trim().length > 0;
+}
+
 export function useFormSchema(): VbenFormSchema[] {
   return [
     {
       component: 'Input',
       fieldName: 'version',
-      label: $t('system.versionLog.version'),
+      label: $t('system.version.version'),
       rules: z
         .string()
-        .min(1, $t('ui.formRules.required', [$t('system.versionLog.version')]))
-        .max(50, $t('ui.formRules.maxLength', [$t('system.versionLog.version'), 50])),
+        .min(1, $t('ui.formRules.required', [$t('system.version.version')]))
+        .max(50, $t('ui.formRules.maxLength', [$t('system.version.version'), 50])),
     },
     {
       component: 'Input',
       fieldName: 'title',
-      label: $t('system.versionLog.titleField'),
+      label: $t('system.version.titleField'),
       rules: z
         .string()
-        .min(1, $t('ui.formRules.required', [$t('system.versionLog.titleField')]))
-        .max(200, $t('ui.formRules.maxLength', [$t('system.versionLog.titleField'), 200])),
+        .min(1, $t('ui.formRules.required', [$t('system.version.titleField')]))
+        .max(200, $t('ui.formRules.maxLength', [$t('system.version.titleField'), 200])),
     },
     {
-      component: 'Textarea',
+      component: 'RichEditor',
       fieldName: 'content',
-      label: $t('system.versionLog.content'),
-      rules: z.string().min(1, $t('ui.formRules.required', [$t('system.versionLog.content')])),
+      label: $t('system.version.content'),
+      rules: z
+        .string()
+        .refine(
+          hasRichTextContent,
+          $t('ui.formRules.required', [$t('system.version.content')]),
+        ),
+      formFieldProps: {
+        validateOnBlur: false,
+        validateOnChange: false,
+        validateOnInput: false,
+        validateOnModelUpdate: false,
+      },
       componentProps: {
-        rows: 8,
+        maxHeight: 520,
+        minHeight: 280,
       },
     },
     {
       component: 'DatePicker',
       fieldName: 'publishTime',
-      label: $t('system.versionLog.publishTime'),
+      label: $t('system.version.publishTime'),
       componentProps: {
         showTime: true,
         valueFormat: 'YYYY-MM-DD HH:mm:ss',
@@ -53,14 +79,14 @@ export function useFormSchema(): VbenFormSchema[] {
       componentProps: {
         buttonStyle: 'solid',
         options: [
-          { label: $t('system.versionLog.statusDraft'), value: 0 },
-          { label: $t('system.versionLog.statusPublished'), value: 1 },
+          { label: $t('system.version.statusDraft'), value: 0 },
+          { label: $t('system.version.statusPublished'), value: 1 },
         ],
         optionType: 'button',
       },
       defaultValue: 0,
       fieldName: 'status',
-      label: $t('system.versionLog.status'),
+      label: $t('system.version.status'),
     },
   ];
 }
@@ -70,24 +96,24 @@ export function useGridFormSchema(): VbenFormSchema[] {
     {
       component: 'Input',
       fieldName: 'version',
-      label: $t('system.versionLog.version'),
+      label: $t('system.version.version'),
     },
     {
       component: 'Input',
       fieldName: 'title',
-      label: $t('system.versionLog.titleField'),
+      label: $t('system.version.titleField'),
     },
     {
       component: 'Select',
       componentProps: {
         allowClear: true,
         options: [
-          { label: $t('system.versionLog.statusDraft'), value: 0 },
-          { label: $t('system.versionLog.statusPublished'), value: 1 },
+          { label: $t('system.version.statusDraft'), value: 0 },
+          { label: $t('system.version.statusPublished'), value: 1 },
         ],
       },
       fieldName: 'status',
-      label: $t('system.versionLog.status'),
+      label: $t('system.version.status'),
     },
   ];
 }
@@ -99,25 +125,28 @@ export function useColumns(
   return [
     {
       field: 'version',
-      title: $t('system.versionLog.version'),
+      title: $t('system.version.version'),
+      formatter: ({ cellValue }) => formatVersion(cellValue),
       width: 120,
     },
     {
       field: 'title',
-      title: $t('system.versionLog.titleField'),
+      title: $t('system.version.titleField'),
       minWidth: 200,
     },
     {
       field: 'publishTime',
-      title: $t('system.versionLog.publishTime'),
+      title: $t('system.version.publishTime'),
       width: 180,
       formatter: 'formatDateTime',
+      sortable: true,
     },
     {
       field: 'createTime',
-      title: $t('system.versionLog.createTime'),
+      title: $t('system.version.createTime'),
       width: 180,
       formatter: 'formatDateTime',
+      sortable: true,
     },
     {
       cellRender: {
@@ -126,13 +155,13 @@ export function useColumns(
         },
         name: onStatusChange ? 'CellSwitch' : 'CellTag',
         options: [
-          { label: $t('system.versionLog.statusDraft'), value: 0 },
-          { label: $t('system.versionLog.statusPublished'), value: 1 },
+          { label: $t('system.version.statusDraft'), value: 0 },
+          { label: $t('system.version.statusPublished'), value: 1 },
         ],
       },
       field: 'status',
       fixed: 'right',
-      title: $t('system.versionLog.status'),
+      title: $t('system.version.status'),
       width: 100,
     },
     {
@@ -140,19 +169,19 @@ export function useColumns(
       cellRender: {
         attrs: {
           nameField: 'title',
-          nameTitle: $t('system.versionLog.titleField'),
+          nameTitle: $t('system.version.name'),
           onClick: onActionClick,
         },
         name: 'CellOperation',
-        options: filterAccessOptions(['edit', 'delete'], {
+        options: filterAccessOptions([{ code: 'preview', text: '预览' }, 'edit', 'delete'], {
           delete: SYSTEM_PERMS.versionDelete,
           edit: SYSTEM_PERMS.versionUpdate,
         }),
       },
       field: 'operation',
       fixed: 'right',
-      title: $t('system.versionLog.operation'),
-      width: 160,
+      title: $t('system.version.operation'),
+      width: 220,
     },
   ];
 }

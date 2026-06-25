@@ -133,7 +133,7 @@
   },
   "config": {
     "title": "系统配置",
-    "list": "配置列表",
+    "list": "参数列表",
     "name": "配置",
     "configKey": "配置键",
     "configType": "参数类型",
@@ -160,10 +160,10 @@
     "success": "成功",
     "fail": "失败"
   },
-  "versionLog": {
-    "title": "版本日志管理",
-    "list": "版本日志列表",
-    "name": "版本日志",
+  "version": {
+    "title": "版本管理",
+    "list": "版本列表",
+    "name": "版本",
     "version": "版本号",
     "titleField": "标题",
     "content": "更新内容",

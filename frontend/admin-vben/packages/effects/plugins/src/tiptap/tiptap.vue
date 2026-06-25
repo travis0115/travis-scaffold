@@ -176,13 +176,14 @@ onBeforeUnmount(() => {
         class="flex items-center gap-1"
       >
         <template v-for="action in group" :key="action.label">
-          <VbenPopover
-            v-if="action.menu || action.palette"
-            :open="action.menu ? getMenuOpen(action) : undefined"
-            :content-props="{ align: 'start', side: 'bottom', sideOffset: 8 }"
-            content-class="w-auto p-2"
-            @update:open="action.menu ? setMenuOpen(action, $event) : undefined"
-          >
+            <VbenPopover
+              v-if="action.menu || action.palette"
+              :open="action.menu ? getMenuOpen(action) : undefined"
+              :content-props="{ align: 'start', side: 'bottom', sideOffset: 8 }"
+              content-class="w-auto p-2"
+              trigger-as-child
+              @update:open="action.menu ? setMenuOpen(action, $event) : undefined"
+            >
             <template #trigger>
               <VbenIconButton
                 :aria-label="action.label"
@@ -190,6 +191,7 @@ onBeforeUnmount(() => {
                 :disabled="!canRunAction(action)"
                 :tooltip="action.label"
                 tooltip-side="top"
+                type="button"
                 variant="ghost"
               >
                 <template v-if="action.triggerText">
@@ -268,6 +270,7 @@ onBeforeUnmount(() => {
             :disabled="!canRunAction(action)"
             :tooltip="action.label"
             tooltip-side="top"
+            type="button"
             @click="runAction(action)"
           >
             <component :is="action.icon" class="size-4" />
@@ -294,6 +297,7 @@ onBeforeUnmount(() => {
           "
           :tooltip="$t('ui.tiptap.toolbar.preview')"
           tooltip-side="top"
+          type="button"
           variant="ghost"
           @click="openPreviewModal"
         >

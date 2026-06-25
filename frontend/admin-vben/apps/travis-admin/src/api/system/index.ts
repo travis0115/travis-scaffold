@@ -10,4 +10,4 @@ export * from './notice';
 export * from './operation-log';
 export * from './role';
 export * from './user';
-export * from './version-log';
+export * from './version';

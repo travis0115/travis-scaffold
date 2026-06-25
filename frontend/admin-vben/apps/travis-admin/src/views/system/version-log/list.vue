@@ -5,13 +5,21 @@ import type {
 } from '#/adapter/vxe-table';
 import type { SystemVersionLogApi } from '#/api';
 
+import { ref } from 'vue';
+
 import { Page, useVbenDrawer } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
+import { VbenTiptapPreview } from '@vben/plugins/tiptap';
+import { formatDate } from '@vben/utils';
 
-import { Button, message } from 'antdv-next';
+import { Button, message, Modal, Tag } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { deleteVersionLog, getVersionLogPage, updateVersionLogStatus } from '#/api';
+import {
+  deleteVersionLog,
+  getVersionLogPage,
+  updateVersionLogStatus,
+} from '#/api';
 import { $t } from '#/locales';
 import { hasAccessCode, SYSTEM_PERMS } from '#/utils/permissions';
 
@@ -22,6 +30,18 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   connectedComponent: Form,
   destroyOnClose: true,
 });
+const previewOpen = ref(false);
+const previewRow = ref<SystemVersionLogApi.VersionLog>();
+const versionTagStyle = {
+  backgroundColor: 'hsl(var(--primary) / 10%)',
+  borderColor: 'hsl(var(--primary) / 20%)',
+  color: 'hsl(var(--primary))',
+};
+
+function formatVersion(value?: null | string) {
+  if (!value) return '-';
+  return value.toLowerCase().startsWith('v') ? value : `v${value}`;
+}
 
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
@@ -37,10 +57,17 @@ const [Grid, gridApi] = useVbenVxeGrid({
     keepSource: true,
     proxyConfig: {
       ajax: {
-        query: async ({ page }, formValues) => {
+        query: async ({ page, sort }, formValues) => {
+          const orderParams = sort?.order
+            ? {
+                asc: sort.order === 'asc',
+                orderBy: sort.field || sort.property,
+              }
+            : {};
           return await getVersionLogPage({
             pageNum: page.currentPage,
             pageSize: page.pageSize,
+            ...orderParams,
             ...formValues,
           });
         },
@@ -48,6 +75,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     rowConfig: {
       keyField: 'id',
+    },
+    sortConfig: {
+      remote: true,
     },
     toolbarConfig: {
       custom: true,
@@ -67,6 +97,10 @@ function onActionClick(e: OnActionClickParams<SystemVersionLogApi.VersionLog>) {
     }
     case 'edit': {
       onEdit(e.row);
+      break;
+    }
+    case 'preview': {
+      onPreview(e.row);
       break;
     }
   }
@@ -95,6 +129,11 @@ function onDelete(row: SystemVersionLogApi.VersionLog) {
     });
 }
 
+function onPreview(row: SystemVersionLogApi.VersionLog) {
+  previewRow.value = row;
+  previewOpen.value = true;
+}
+
 function onRefresh() {
   gridApi.query();
 }
@@ -115,7 +154,7 @@ async function onStatusChange(
 <template>
   <Page auto-content-height>
     <FormDrawer @success="onRefresh" />
-    <Grid :table-title="$t('system.versionLog.list')">
+    <Grid :table-title="$t('system.version.list')">
       <template #toolbar-tools>
         <Button
           v-access:code="SYSTEM_PERMS.versionCreate"
@@ -123,9 +162,32 @@ async function onStatusChange(
           @click="onCreate"
         >
           <Plus class="size-5" />
-          {{ $t('ui.actionTitle.create', [$t('system.versionLog.name')]) }}
+          {{ $t('ui.actionTitle.create', [$t('system.version.name')]) }}
         </Button>
       </template>
     </Grid>
+    <Modal
+      v-model:open="previewOpen"
+      :footer="null"
+      title="版本预览"
+      width="860px"
+    >
+      <div class="space-y-4">
+        <div class="border-t pt-4">
+          <div class="flex items-center gap-3 text-gray-400 text-xs">
+            <Tag :style="versionTagStyle">
+              {{ formatVersion(previewRow?.version) }}
+            </Tag>
+            <span>{{
+              formatDate(previewRow?.publishTime || previewRow?.createTime)
+            }}</span>
+          </div>
+        </div>
+        <h3 class="text-foreground text-lg font-semibold">
+          {{ previewRow?.title || $t('system.version.content') }}
+        </h3>
+        <VbenTiptapPreview :content="previewRow?.content" :min-height="320" />
+      </div>
+    </Modal>
   </Page>
 </template>

@@ -29,7 +29,7 @@
         <!-- 项目版本 -->
         <revision>1.0.0</revision>
         <java.version>25</java.version>
-        <spring-boot-maven-plugin.version>4.0.2</spring-boot-maven-plugin.version>
+        <spring-boot-maven-plugin.version>4.1.0</spring-boot-maven-plugin.version>
         <travis-infrastructure.version>1.0.0</travis-infrastructure.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>

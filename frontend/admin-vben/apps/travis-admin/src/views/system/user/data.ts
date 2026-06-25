@@ -290,7 +290,7 @@ export function useColumns<T = SystemUserApi.SysUser>(
       cellRender: {
         attrs: {
           nameField: 'username',
-          nameTitle: $t('system.user.username'),
+          nameTitle: $t('system.user.name'),
           onClick: onActionClick,
         },
         name: 'CellOperation',

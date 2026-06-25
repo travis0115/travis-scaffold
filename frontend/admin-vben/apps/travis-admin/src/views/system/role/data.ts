@@ -145,7 +145,7 @@ export function useColumns<T = SystemRoleApi.SysRole>(
       cellRender: {
         attrs: {
           nameField: 'roleName',
-          nameTitle: $t('system.role.roleName'),
+          nameTitle: $t('system.role.name'),
           onClick: onActionClick,
         },
         name: 'CellOperation',

@@ -160,10 +160,10 @@
     "success": "Success",
     "fail": "Failed"
   },
-  "versionLog": {
-    "title": "Update Log Management",
-    "list": "Update Log List",
-    "name": "Update Log",
+  "version": {
+    "title": "Version Management",
+    "list": "Version List",
+    "name": "Version",
     "version": "Version",
     "titleField": "Title",
     "content": "Content",

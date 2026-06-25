@@ -168,7 +168,7 @@ function onDelete(row: SystemMenuApi.SysMenu) {
     okText: '确认删除',
     okType: 'danger',
     onOk: () => deleteMenuRow(row),
-    title: `删除菜单「${row.menuName}」`,
+    title: '删除菜单',
   });
 }
 

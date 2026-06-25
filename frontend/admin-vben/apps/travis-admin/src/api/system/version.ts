@@ -27,7 +27,7 @@ async function getVersionLogPage(params: {
   version?: string;
 }) {
   return requestClient.get<PageResp<SystemVersionLogApi.VersionLog>>(
-    '/system/version-log/page',
+    '/system/version/page',
     { params },
   );
 }
@@ -36,25 +36,25 @@ async function getVersionLogPage(params: {
  * 获取版本日志详情
  */
 async function getVersionLogDetail(id: number) {
-  return requestClient.get<SystemVersionLogApi.VersionLog>(`/system/version-log/${id}`);
+  return requestClient.get<SystemVersionLogApi.VersionLog>(`/system/version/${id}`);
 }
 
 /**
  * 新增版本日志
  */
 async function createVersionLog(data: Partial<SystemVersionLogApi.VersionLog>) {
-  return requestClient.post('/system/version-log', data);
+  return requestClient.post('/system/version', data);
 }
 
 /**
  * 更新版本日志
  */
 async function updateVersionLog(id: number, data: Partial<SystemVersionLogApi.VersionLog>) {
-  return requestClient.put(`/system/version-log/${id}`, data);
+  return requestClient.put(`/system/version/${id}`, data);
 }
 
 async function updateVersionLogStatus(id: number, status: 0 | 1) {
-  return requestClient.put(`/system/version-log/${id}/status`, undefined, {
+  return requestClient.put(`/system/version/${id}/status`, undefined, {
     params: { status },
   });
 }
@@ -63,16 +63,20 @@ async function updateVersionLogStatus(id: number, status: 0 | 1) {
  * 删除版本日志
  */
 async function deleteVersionLog(id: number) {
-  return requestClient.delete(`/system/version-log/${id}`);
+  return requestClient.delete(`/system/version/${id}`);
 }
 
 /**
- * 获取已发布的版本日志列表
+ * 分页获取已发布的版本日志列表
  */
-async function getPublishedVersionLogs(limit: number = 10) {
-  return requestClient.get<SystemVersionLogApi.VersionLog[]>('/system/version-log/published', {
-    params: { limit },
-  });
+async function getPublishedVersionLogs(params: {
+  pageNum: number;
+  pageSize: number;
+}) {
+  return requestClient.get<PageResp<SystemVersionLogApi.VersionLog>>(
+    '/system/version/published',
+    { params },
+  );
 }
 
 export {

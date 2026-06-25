@@ -93,6 +93,7 @@ export function useColumns(
       cellRender: {
         attrs: {
           nameField: 'menuName',
+          nameTitle: $t('system.menu.name'),
           onClick: onActionClick,
         },
         name: 'CellOperation',

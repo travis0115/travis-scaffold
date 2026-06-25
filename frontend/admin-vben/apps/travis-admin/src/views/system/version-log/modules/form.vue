@@ -4,6 +4,7 @@ import type { SystemVersionLogApi } from '#/api';
 import { computed, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
+import { formatDateTime } from '@vben/utils';
 
 import { useVbenForm } from '#/adapter/form';
 import { createVersionLog, getVersionLogDetail, updateVersionLog } from '#/api';
@@ -16,8 +17,8 @@ const formData = ref<SystemVersionLogApi.VersionLog>();
 
 const getTitle = computed(() => {
   return formData.value?.id
-    ? $t('ui.actionTitle.edit', [$t('system.versionLog.name')])
-    : $t('ui.actionTitle.create', [$t('system.versionLog.name')]);
+    ? $t('ui.actionTitle.edit', [$t('system.version.name')])
+    : $t('ui.actionTitle.create', [$t('system.version.name')]);
 });
 
 const [Form, formApi] = useVbenForm({
@@ -58,6 +59,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
         formApi.setValues(detail);
       } else {
         formData.value = undefined;
+        formApi.setValues({ publishTime: formatDateTime(new Date()) });
       }
     }
   },
@@ -65,7 +67,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
 </script>
 
 <template>
-  <Drawer :title="getTitle">
+  <Drawer class="w-full max-w-220" :title="getTitle">
     <Form />
   </Drawer>
 </template>

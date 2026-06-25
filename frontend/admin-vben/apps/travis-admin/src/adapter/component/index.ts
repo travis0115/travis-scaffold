@@ -38,6 +38,7 @@ import type {
   BaseFormComponentType,
   IconPickerProps,
 } from '@vben/common-ui';
+import type { TipTapProps } from '@vben/plugins/tiptap';
 import type { Recordable } from '@vben/types';
 
 import {
@@ -59,6 +60,7 @@ import {
 } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 import { $t } from '@vben/locales';
+import { VbenTiptap } from '@vben/plugins/tiptap';
 import { isEmpty } from '@vben/utils';
 
 import { message, Modal, notification } from 'antdv-next';
@@ -663,6 +665,7 @@ export type ComponentType =
   | 'RadioGroup'
   | 'RangePicker'
   | 'Rate'
+  | 'RichEditor'
   | 'Select'
   | 'Space'
   | 'Switch'
@@ -696,6 +699,7 @@ export interface ComponentPropsMap {
   RadioGroup: RadioGroupProps;
   RangePicker: RangePickerProps;
   Rate: RateProps;
+  RichEditor: TipTapProps;
   Select: SelectProps;
   Space: SpaceProps;
   Switch: SwitchProps;
@@ -772,6 +776,7 @@ async function initComponentAdapter() {
       style: { width: '100%' },
     }),
     Rate,
+    RichEditor: withDefaultPlaceholder(VbenTiptap, 'input'),
     Select: withDefaultPlaceholder(Select, 'select', {
       style: { width: '100%' },
     }),

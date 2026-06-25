@@ -1,4 +1,4 @@
-package com.travis.monolith.system.log.versionlog.internal.entity;
+package com.travis.monolith.system.version.internal.entity;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
@@ -15,7 +15,7 @@ import lombok.Data;
  * @author travis
  */
 @Data
-public class SysVersionLog implements Serializable {
+public class SysVersion implements Serializable {
     @Serial private static final long serialVersionUID = 1L;
 
     /** 主键ID（雪花算法生成） */

@@ -110,7 +110,7 @@ export function useColumns(
       cellRender: {
         attrs: {
           nameField: 'dictName',
-          nameTitle: $t('system.dict.dictName'),
+          nameTitle: $t('system.dict.name'),
           onClick: onActionClick,
         },
         name: 'CellOperation',

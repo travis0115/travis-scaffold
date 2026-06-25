@@ -1,4 +1,4 @@
-package com.travis.monolith.system.log.versionlog.api.response;
+package com.travis.monolith.system.version.api.response;
 
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SysVersionLogPageResp {
+public class SysVersionResp {
     private Long id;
     private String version;
     private String title;

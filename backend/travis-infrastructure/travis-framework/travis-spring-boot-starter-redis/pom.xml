@@ -33,6 +33,16 @@
         <dependency>
             <groupId>org.redisson</groupId>
             <artifactId>redisson-spring-boot-starter</artifactId>
+            <exclusions>
+                <!-- 排除 redisson-spring-data-41: 其 RedissonConnection 未完整实现 -->
+                <!-- Spring Data Redis 4.1.0 的 set() 方法,导致 DefaultedRedisConnection 无限递归 -->
+                <!-- 改用 Lettuce 作为 RedisTemplate 的连接工厂,RedissonClient 仍可用于分布式锁 -->
+                <!-- 注意：需配合 application.yml 中的 spring.autoconfigure.exclude 排除 RedissonAutoConfigurationV4 -->
+                <exclusion>
+                    <groupId>org.redisson</groupId>
+                    <artifactId>redisson-spring-data-41</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

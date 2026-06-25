@@ -26,12 +26,6 @@
             <artifactId>travis-module-ops</artifactId>
         </dependency>
 
-        <!-- 消息队列（提供 MessagePublisher 的 RocketMQ 实现） -->
-        <dependency>
-            <groupId>com.travis</groupId>
-            <artifactId>travis-spring-boot-starter-rocketmq</artifactId>
-        </dependency>
-
         <!-- spring 过时配置检测 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

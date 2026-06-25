@@ -16,6 +16,7 @@ interface Props extends VbenButtonProps {
   tooltip?: string;
   tooltipDelayDuration?: number;
   tooltipSide?: 'bottom' | 'left' | 'right' | 'top';
+  type?: 'button' | 'reset' | 'submit';
   variant?: ButtonVariants;
 }
 
@@ -37,6 +38,7 @@ const showTooltip = computed(() => !!slots.tooltip || !!props.tooltip);
     v-if="!showTooltip"
     :class="cn('rounded-full', props.class)"
     :disabled="disabled"
+    :type="type"
     :variant="variant"
     size="icon"
     @click="onClick"
@@ -53,6 +55,7 @@ const showTooltip = computed(() => !!slots.tooltip || !!props.tooltip);
       <VbenButton
         :class="cn('rounded-full', props.class)"
         :disabled="disabled"
+        :type="type"
         :variant="variant"
         size="icon"
         @click="onClick"

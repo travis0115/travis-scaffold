@@ -1,16 +1,21 @@
 <script lang="ts" setup>
-import type { OpsJobApi, SystemNoticeApi } from '#/api';
+import type { OpsJobApi, SystemNoticeApi, SystemVersionLogApi } from '#/api';
 
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 import { useAccess } from '@vben/access';
 import { IconifyIcon } from '@vben/icons';
-import { formatDateTime } from '@vben/utils';
+import { VbenTiptapPreview } from '@vben/plugins/tiptap';
+import { formatDate, formatDateTime } from '@vben/utils';
 
-import { Button, Card, Empty, Skeleton } from 'antdv-next';
+import { Button, Card, Empty, Skeleton, Spin, Tag } from 'antdv-next';
 
-import { getJobDashboard, getRecentMessages } from '#/api';
+import {
+  getJobDashboard,
+  getPublishedVersionLogs,
+  getRecentMessages,
+} from '#/api';
 import { OPS_PERMS } from '#/utils/permissions';
 
 const router = useRouter();
@@ -19,7 +24,14 @@ const canViewJobDashboard = hasAccessByCodes([OPS_PERMS.jobQuery]);
 
 const dashboard = ref<OpsJobApi.Dashboard>();
 const messages = ref<SystemNoticeApi.UserMessage[]>([]);
+const versionLogs = ref<SystemVersionLogApi.VersionLog[]>([]);
 const loading = ref(true);
+const versionLoading = ref(false);
+const versionTagStyle = {
+  backgroundColor: 'hsl(var(--primary) / 10%)',
+  borderColor: 'hsl(var(--primary) / 20%)',
+  color: 'hsl(var(--primary))',
+};
 
 const metricItems = computed(() => [
   {
@@ -61,11 +73,31 @@ const metricItems = computed(() => [
   },
 ]);
 
+function formatVersion(value?: null | string) {
+  if (!value) return '-';
+  return value.toLowerCase().startsWith('v') ? value : `v${value}`;
+}
+
+async function fetchVersionLogs() {
+  if (versionLoading.value) return;
+  versionLoading.value = true;
+  try {
+    const page = await getPublishedVersionLogs({
+      pageNum: 1,
+      pageSize: 3,
+    });
+    versionLogs.value = page.records;
+  } finally {
+    versionLoading.value = false;
+  }
+}
+
 onMounted(async () => {
   const requests: Promise<unknown>[] = [
     getRecentMessages(4).then((data) => {
       messages.value = data;
     }),
+    fetchVersionLogs(),
   ];
 
   if (canViewJobDashboard) {
@@ -86,7 +118,13 @@ onMounted(async () => {
     <Skeleton v-if="loading" active :paragraph="{ rows: 8 }" />
 
     <div v-else class="flex flex-col gap-5">
-      <Card v-if="canViewJobDashboard" title="任务调度" variant="borderless">
+      <Card v-if="canViewJobDashboard" variant="borderless">
+        <template #title>
+          <div class="flex items-center gap-2">
+            <span class="h-5 w-1.5 rounded-full bg-primary"></span>
+            <span>任务调度</span>
+          </div>
+        </template>
         <template #extra>
           <div class="flex gap-2">
             <Button type="link" @click="router.push('/ops/job/list')">
@@ -122,48 +160,98 @@ onMounted(async () => {
         </div>
       </Card>
 
-      <Card variant="borderless">
-        <template #title>
-          <div class="flex items-center gap-2">
-            <IconifyIcon class="size-5 text-blue-500" icon="lucide:bell" />
-            <span>最近通知</span>
-          </div>
-        </template>
-        <template #extra>
-          <Button type="link" @click="router.push('/message')">
-            查看全部
-          </Button>
-        </template>
+      <div class="grid gap-5 xl:grid-cols-2">
+        <Card variant="borderless">
+          <template #title>
+            <div class="flex items-center gap-2">
+              <span class="h-5 w-1.5 rounded-full bg-primary"></span>
+              <span>最近通知</span>
+            </div>
+          </template>
+          <template #extra>
+            <Button type="link" @click="router.push('/message')">
+              查看全部
+            </Button>
+          </template>
 
-        <Empty v-if="messages.length === 0" description="暂无通知" />
-        <div v-else class="space-y-3">
-          <button
-            v-for="item in messages"
-            :key="item.id"
-            class="flex w-full items-start gap-3 rounded-lg border border-border/60 bg-muted/30 p-3 text-left transition-colors hover:bg-muted/70"
-            type="button"
-            @click="router.push('/message')"
-          >
-            <span
-              class="mt-1 size-2 shrink-0 rounded-full"
-              :class="item.readStatus === 0 ? 'bg-blue-500' : 'bg-slate-300'"
-            ></span>
-            <span class="min-w-0 flex-1">
-              <span class="flex items-center justify-between gap-3">
-                <strong class="truncate text-sm font-medium">
-                  {{ item.title }}
-                </strong>
-                <span class="shrink-0 text-xs text-muted-foreground">
-                  {{ formatDateTime(item.publishTime || item.createTime) }}
+          <Empty v-if="messages.length === 0" description="暂无通知" />
+          <div v-else class="space-y-3">
+            <button
+              v-for="item in messages"
+              :key="item.id"
+              class="flex w-full items-start gap-3 rounded-lg border border-border/60 bg-muted/30 p-3 text-left transition-colors hover:bg-muted/70"
+              type="button"
+              @click="router.push('/message')"
+            >
+              <span
+                class="mt-1 size-2 shrink-0 rounded-full"
+                :class="item.readStatus === 0 ? 'bg-blue-500' : 'bg-slate-300'"
+              ></span>
+              <span class="min-w-0 flex-1">
+                <span class="flex items-center justify-between gap-3">
+                  <strong class="truncate text-sm font-medium">
+                    {{ item.title }}
+                  </strong>
+                  <span class="shrink-0 text-xs text-muted-foreground">
+                    {{ formatDateTime(item.publishTime || item.createTime) }}
+                  </span>
+                </span>
+                <span class="mt-1 block truncate text-sm text-muted-foreground">
+                  {{ item.content }}
                 </span>
               </span>
-              <span class="mt-1 block truncate text-sm text-muted-foreground">
-                {{ item.content }}
-              </span>
-            </span>
-          </button>
-        </div>
-      </Card>
+            </button>
+          </div>
+        </Card>
+
+        <Card variant="borderless">
+          <template #title>
+            <div class="flex items-center gap-2">
+              <span class="h-5 w-1.5 rounded-full bg-primary"></span>
+              <span>更新日志</span>
+            </div>
+          </template>
+          <template #extra>
+            <Button type="link" @click="router.push({ name: 'Version' })">
+              查看全部
+            </Button>
+          </template>
+
+          <div>
+            <Empty
+              v-if="!versionLoading && versionLogs.length === 0"
+              description="暂无更新日志"
+            />
+            <div v-else class="space-y-4">
+              <article
+                v-for="log in versionLogs"
+                :key="log.id"
+                class="rounded-lg border border-border/60 bg-muted/20 p-4"
+              >
+                <div
+                  class="flex items-center gap-3 text-muted-foreground text-xs"
+                >
+                  <Tag :style="versionTagStyle">
+                    {{ formatVersion(log.version) }}
+                  </Tag>
+                  <span>{{
+                    formatDate(log.publishTime || log.createTime)
+                  }}</span>
+                </div>
+                <h3 class="mt-3 text-foreground text-base font-semibold">
+                  {{ log.title }}
+                </h3>
+                <div class="mt-3 max-h-36 overflow-hidden">
+                  <VbenTiptapPreview :content="log.content" :min-height="0" />
+                </div>
+              </article>
+              <div v-if="versionLoading" class="flex justify-center py-3">
+                <Spin size="small" />
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
     </div>
   </div>
 </template>

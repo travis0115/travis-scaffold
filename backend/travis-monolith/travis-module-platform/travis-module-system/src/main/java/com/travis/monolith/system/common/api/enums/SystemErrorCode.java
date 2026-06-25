@@ -34,6 +34,8 @@ public enum SystemErrorCode implements ErrorCode {
     /* loginlog模块 600-699 */
     /* operationlog模块 700-799 */
     /* versionlog模块 800-899 */
+    VERSION_EXISTS("SYS_800", "版本号已存在"),
+
     /* notice模块 900-999 */
     /* file模块 1000-1099 */
 

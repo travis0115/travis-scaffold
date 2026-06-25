@@ -72,7 +72,7 @@ const columns: VxeTableGridColumns<SystemDictApi.SysDictItem> = [
     cellRender: {
       attrs: {
         nameField: 'label',
-        nameTitle: $t('system.dict.item.label'),
+        nameTitle: $t('system.dict.items'),
         onClick: onActionClick,
       },
       name: 'CellOperation',

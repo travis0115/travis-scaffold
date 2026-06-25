@@ -26,7 +26,7 @@
         <druid.version>1.2.28</druid.version>
 
         <!-- 缓存 -->
-        <redisson.version>4.4.0</redisson.version>
+        <redisson.version>4.6.1</redisson.version>
 
         <!-- 消息队列 -->
         <rocketmq.version>2.3.6</rocketmq.version>

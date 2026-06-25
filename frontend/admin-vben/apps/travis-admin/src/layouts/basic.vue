@@ -45,7 +45,15 @@ const menus = computed(() => [
     handler: () => {
       router.push({ name: 'Profile' });
     },
+    icon: 'mdi:account-circle-outline',
     text: $t('page.auth.profile'),
+  },
+  {
+    handler: () => {
+      router.push({ name: 'Version' });
+    },
+    icon: 'mdi:sticker-text-outline',
+    text: '更新日志',
   },
 ]);
 
