@@ -34,46 +34,47 @@ export namespace SystemMessageApi {
   }
 }
 
-const getMessagePushPage = (params: Recordable<any>) =>
-  requestClient.get<PageResp<SystemMessageApi.Message>>('/system/message/push/page', { params });
-const getMessagePushDetail = (id: number) =>
-  requestClient.get<SystemMessageApi.Message>(`/system/message/push/${id}`);
-const createMessagePush = (data: Partial<SystemMessageApi.Message>) =>
-  requestClient.post('/system/message/push', data);
-const updateMessagePush = (id: number, data: Partial<SystemMessageApi.Message>) =>
-  requestClient.put(`/system/message/push/${id}`, data);
-const updateMessagePushStatus = (id: number, status: number) =>
-  requestClient.put(`/system/message/push/${id}/status`, undefined, { params: { status } });
-const deleteMessagePush = (id: number) => requestClient.delete(`/system/message/push/${id}`);
+const getMessagePage = (params: Recordable<any>) =>
+  requestClient.get<PageResp<SystemMessageApi.Message>>('/system/message/page', { params });
+const getMessageDetail = (id: number) =>
+  requestClient.get<SystemMessageApi.Message>(`/system/message/${id}`);
+const createMessage = (data: Partial<SystemMessageApi.Message>) =>
+  requestClient.post('/system/message', data);
+const updateMessage = (id: number, data: Partial<SystemMessageApi.Message>) =>
+  requestClient.put(`/system/message/${id}`, data);
+const updateMessageStatus = (id: number, status: number) =>
+  requestClient.put(`/system/message/${id}/status`, undefined, { params: { status } });
+const deleteMessage = (id: number) => requestClient.delete(`/system/message/${id}`);
 
 const getRecentMessages = (limit = 10) =>
-  requestClient.get<SystemMessageApi.UserMessage[]>('/system/message/recent', {
+  requestClient.get<SystemMessageApi.UserMessage[]>('/system/message/inbox/recent', {
     params: { limit },
   });
-const getMessagePage = (params: Recordable<any>) =>
-  requestClient.get<PageResp<SystemMessageApi.UserMessage>>('/system/message/page', {
+const getInboxMessagePage = (params: Recordable<any>) =>
+  requestClient.get<PageResp<SystemMessageApi.UserMessage>>('/system/message/inbox/page', {
     params,
   });
 const getUnreadMessageCount = () =>
-  requestClient.get<{ count: number }>('/system/message/unread-count');
+  requestClient.get<{ count: number }>('/system/message/inbox/unread-count');
 const markMessageRead = (id: number | string) =>
-  requestClient.put(`/system/message/${id}/read`);
-const markAllMessagesRead = () => requestClient.put('/system/message/read-all');
-const deleteMessage = (id: number | string) => requestClient.delete(`/system/message/${id}`);
-const clearMessages = () => requestClient.delete('/system/message/clear');
+  requestClient.put(`/system/message/inbox/${id}/read`);
+const markAllMessagesRead = () => requestClient.put('/system/message/inbox/read-all');
+const deleteInboxMessage = (id: number | string) =>
+  requestClient.delete(`/system/message/inbox/${id}`);
+const clearMessages = () => requestClient.delete('/system/message/inbox/clear');
 
 export {
   clearMessages,
-  createMessagePush,
+  createMessage,
+  deleteInboxMessage,
   deleteMessage,
-  deleteMessagePush,
+  getInboxMessagePage,
+  getMessageDetail,
   getMessagePage,
-  getMessagePushDetail,
-  getMessagePushPage,
   getRecentMessages,
   getUnreadMessageCount,
   markAllMessagesRead,
   markMessageRead,
-  updateMessagePush,
-  updateMessagePushStatus,
+  updateMessage,
+  updateMessageStatus,
 };

@@ -18,7 +18,7 @@ import { formatDateTime } from '@vben/utils';
 
 import {
   clearMessages,
-  deleteMessage,
+  deleteInboxMessage,
   getRecentMessages,
   getUnreadMessageCount,
   markAllMessagesRead,
@@ -117,7 +117,7 @@ async function markRead(id: number | string) {
 }
 
 async function remove(id: number | string) {
-  await deleteMessage(id);
+  await deleteInboxMessage(id);
   await loadNotifications();
 }
 

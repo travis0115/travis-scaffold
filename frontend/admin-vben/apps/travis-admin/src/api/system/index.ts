@@ -1,4 +1,4 @@
-export * from './announcement';
+export * from './notice';
 export * from './config';
 export * from './dept';
 export * from './dict';

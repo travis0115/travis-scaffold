@@ -134,16 +134,16 @@ public class SystemPermission {
      ──────────────────────────────────────────────────────────────── *
     */
     /** 系统公告查询权限 */
-    public static final String ANNOUNCEMENT_QUERY = "system:announcement:query";
+    public static final String NOTICE_QUERY = "system:notice:query";
 
     /** 系统公告创建权限 */
-    public static final String ANNOUNCEMENT_CREATE = "system:announcement:create";
+    public static final String NOTICE_CREATE = "system:notice:create";
 
     /** 系统公告更新权限 */
-    public static final String ANNOUNCEMENT_UPDATE = "system:announcement:update";
+    public static final String NOTICE_UPDATE = "system:notice:update";
 
     /** 系统公告删除权限 */
-    public static final String ANNOUNCEMENT_DELETE = "system:announcement:delete";
+    public static final String NOTICE_DELETE = "system:notice:delete";
 
     /*
      ──────────────────────────────────────────────────────────────── *

@@ -9,8 +9,8 @@ import { Button } from 'antdv-next';
 import { useVbenVxeGrid } from '../../../adapter/vxe-table';
 import {
   clearMessages,
-  deleteMessage,
-  getMessagePage,
+  deleteInboxMessage,
+  getInboxMessagePage,
   markAllMessagesRead,
   markMessageRead,
 } from '../../../api';
@@ -25,7 +25,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     proxyConfig: {
       ajax: {
         query: ({ page }, values) =>
-          getMessagePage({ pageNum: page.currentPage, pageSize: page.pageSize, ...values }),
+          getInboxMessagePage({ pageNum: page.currentPage, pageSize: page.pageSize, ...values }),
       },
     },
     rowConfig: { keyField: 'id' },
@@ -35,7 +35,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 async function onActionClick({ code, row }: OnActionClickParams<SystemMessageApi.UserMessage>) {
   if (code === 'read') await markMessageRead(row.id);
-  if (code === 'delete') await deleteMessage(row.id);
+  if (code === 'delete') await deleteInboxMessage(row.id);
   await gridApi.query();
 }
 

@@ -6,7 +6,7 @@ import com.travis.monolith.ops.job.internal.entity.OpsJob;
 import com.travis.monolith.ops.job.internal.entity.OpsJobLog;
 import com.travis.monolith.ops.job.internal.mapper.OpsJobMapper;
 import com.travis.monolith.ops.job.internal.service.OpsJobLogService;
-import com.travis.monolith.system.notice.api.SysMessageApi;
+import com.travis.monolith.system.message.api.SysMessageApi;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.LocalDateTime;

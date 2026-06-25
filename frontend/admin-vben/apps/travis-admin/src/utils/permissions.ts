@@ -42,9 +42,9 @@ export const SYSTEM_PERMS = {
   versionUpdate: 'system:version:update',
 
   // 系统公告
-  announcementCreate: 'system:announcement:create',
-  announcementDelete: 'system:announcement:delete',
-  announcementUpdate: 'system:announcement:update',
+  noticeCreate: 'system:notice:create',
+  noticeDelete: 'system:notice:delete',
+  noticeUpdate: 'system:notice:update',
 
   // 消息推送
   messageCreate: 'system:message:create',
