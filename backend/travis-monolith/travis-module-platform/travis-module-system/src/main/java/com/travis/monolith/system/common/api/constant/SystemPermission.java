@@ -130,20 +130,37 @@ public class SystemPermission {
 
     /*
      ──────────────────────────────────────────────────────────────── *
-     ============================ 通知公告模块 ========================== *
+     ============================ 系统公告模块 ========================== *
      ──────────────────────────────────────────────────────────────── *
     */
-    /** 通知公告查询权限 */
-    public static final String NOTICE_QUERY = "system:notice:query";
+    /** 系统公告查询权限 */
+    public static final String ANNOUNCEMENT_QUERY = "system:announcement:query";
 
-    /** 通知公告创建权限 */
-    public static final String NOTICE_CREATE = "system:notice:create";
+    /** 系统公告创建权限 */
+    public static final String ANNOUNCEMENT_CREATE = "system:announcement:create";
 
-    /** 通知公告更新权限 */
-    public static final String NOTICE_UPDATE = "system:notice:update";
+    /** 系统公告更新权限 */
+    public static final String ANNOUNCEMENT_UPDATE = "system:announcement:update";
 
-    /** 通知公告删除权限 */
-    public static final String NOTICE_DELETE = "system:notice:delete";
+    /** 系统公告删除权限 */
+    public static final String ANNOUNCEMENT_DELETE = "system:announcement:delete";
+
+    /*
+     ──────────────────────────────────────────────────────────────── *
+     ============================ 消息推送模块 ========================== *
+     ──────────────────────────────────────────────────────────────── *
+    */
+    /** 消息推送查询权限 */
+    public static final String MESSAGE_QUERY = "system:message:query";
+
+    /** 消息推送创建权限 */
+    public static final String MESSAGE_CREATE = "system:message:create";
+
+    /** 消息推送更新权限 */
+    public static final String MESSAGE_UPDATE = "system:message:update";
+
+    /** 消息推送删除权限 */
+    public static final String MESSAGE_DELETE = "system:message:delete";
 
     /*
      ──────────────────────────────────────────────────────────────── *

@@ -5,10 +5,9 @@ import com.travis.monolith.system.dict.api.request.SysDictCreateReq;
 import com.travis.monolith.system.dict.api.request.SysDictUpdateReq;
 import com.travis.monolith.system.dict.api.response.SysDictResp;
 import com.travis.monolith.system.dict.internal.entity.SysDict;
+import java.util.List;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
-
-import java.util.List;
 
 @Mapper(config = BaseMapperConfig.class)
 public interface SysDictConverter {

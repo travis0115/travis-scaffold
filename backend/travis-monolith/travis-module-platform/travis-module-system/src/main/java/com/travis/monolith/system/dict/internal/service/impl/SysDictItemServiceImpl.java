@@ -13,6 +13,7 @@ import com.travis.monolith.system.dict.internal.converter.SysDictItemConverter;
 import com.travis.monolith.system.dict.internal.entity.SysDictItem;
 import com.travis.monolith.system.dict.internal.mapper.SysDictItemMapper;
 import com.travis.monolith.system.dict.internal.service.SysDictItemService;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -20,8 +21,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 /**
  * 字典数据项管理服务实现，处理字典子项的增删改查

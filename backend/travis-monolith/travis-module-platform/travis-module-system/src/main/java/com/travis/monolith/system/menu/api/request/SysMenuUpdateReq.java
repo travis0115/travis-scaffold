@@ -4,9 +4,8 @@ import cn.hutool.core.util.StrUtil;
 import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.monolith.system.common.api.enums.MenuType;
 import jakarta.validation.constraints.*;
-import lombok.Data;
-
 import java.util.Objects;
+import lombok.Data;
 
 /** 菜单修改请求参数 */
 @Data

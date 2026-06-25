@@ -6,7 +6,7 @@ import com.travis.monolith.ops.job.internal.entity.OpsJob;
 import com.travis.monolith.ops.job.internal.entity.OpsJobLog;
 import com.travis.monolith.ops.job.internal.mapper.OpsJobMapper;
 import com.travis.monolith.ops.job.internal.service.OpsJobLogService;
-import com.travis.monolith.system.notice.api.SysNoticeApi;
+import com.travis.monolith.system.notice.api.SysMessageApi;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
@@ -27,7 +27,7 @@ public class OpsQuartzExecutionObserver implements QuartzJobExecutionObserver {
 
     private final OpsJobMapper jobMapper;
     private final OpsJobLogService logService;
-    private final SysNoticeApi noticeApi;
+    private final SysMessageApi messageApi;
     private final Map<String, Long> executingLogs = new ConcurrentHashMap<>();
 
     @Override
@@ -103,7 +103,7 @@ public class OpsQuartzExecutionObserver implements QuartzJobExecutionObserver {
         try {
             List<Long> recipients =
                     Arrays.stream(job.getAlertUserIds().split(",")).map(Long::valueOf).toList();
-            noticeApi.publishToUsers(
+            messageApi.publishToUsers(
                     "任务执行失败：" + job.getJobName(),
                     "任务处理器："
                             + job.getHandlerName()
@@ -111,7 +111,9 @@ public class OpsQuartzExecutionObserver implements QuartzJobExecutionObserver {
                             + logId
                             + "\n异常："
                             + throwable.getMessage(),
-                    recipients);
+                    recipients,
+                    "OPS_JOB",
+                    String.valueOf(logId));
             var update = new OpsJobLog();
             update.setId(logId);
             update.setJobId(jobId);

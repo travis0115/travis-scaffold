@@ -6,10 +6,10 @@ import lombok.Data;
 @Data
 public class SysUserMessageBaseResp {
     private Long id;
-    private Long noticeId;
+    private Long messageId;
     private String title;
     private String content;
-    private Integer noticeType;
+    private Integer messageType;
     private Integer readStatus;
     private LocalDateTime readTime;
     private LocalDateTime publishTime;

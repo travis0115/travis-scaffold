@@ -3,10 +3,9 @@ package com.travis.monolith.system.menu.internal.api;
 import com.travis.monolith.system.menu.api.SysMenuApi;
 import com.travis.monolith.system.menu.api.response.VbenMenuResp;
 import com.travis.monolith.system.menu.internal.service.SysMenuService;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 /**
  * 菜单模块对外 API 实现，委托调用内部 Service
@@ -35,5 +34,4 @@ public class SysMenuApiImpl implements SysMenuApi {
                 .distinct()
                 .toList();
     }
-
 }

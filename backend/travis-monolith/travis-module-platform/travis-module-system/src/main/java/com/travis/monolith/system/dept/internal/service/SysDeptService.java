@@ -5,7 +5,6 @@ import com.travis.monolith.system.dept.api.request.SysDeptCreateReq;
 import com.travis.monolith.system.dept.api.request.SysDeptUpdateReq;
 import com.travis.monolith.system.dept.api.response.SysDeptResp;
 import com.travis.monolith.system.dept.internal.entity.SysDept;
-
 import java.util.Collection;
 import java.util.List;
 
@@ -29,7 +28,6 @@ public interface SysDeptService extends IService<SysDept> {
      * @return 启用部门树
      */
     List<SysDeptResp> listEnabledTree();
-
 
     /**
      * 获取部门详情

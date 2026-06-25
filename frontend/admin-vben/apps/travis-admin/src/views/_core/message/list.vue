@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import type { OnActionClickParams, VxeTableGridOptions } from '../../../adapter/vxe-table';
-import type { SystemNoticeApi } from '../../../api';
+import type { SystemMessageApi } from '../../../api';
 
 import { Page } from '@vben/common-ui';
 
@@ -30,10 +30,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     rowConfig: { keyField: 'id' },
     toolbarConfig: { custom: true, refresh: true, search: true, zoom: true },
-  } as VxeTableGridOptions<SystemNoticeApi.UserMessage>,
+  } as VxeTableGridOptions<SystemMessageApi.UserMessage>,
 });
 
-async function onActionClick({ code, row }: OnActionClickParams<SystemNoticeApi.UserMessage>) {
+async function onActionClick({ code, row }: OnActionClickParams<SystemMessageApi.UserMessage>) {
   if (code === 'read') await markMessageRead(row.id);
   if (code === 'delete') await deleteMessage(row.id);
   await gridApi.query();

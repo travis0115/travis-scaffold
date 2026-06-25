@@ -1,6 +1,6 @@
 import type { VbenFormSchema } from '#/adapter/form';
 import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
-import type { SystemNoticeApi } from '#/api';
+import type { SystemMessageApi } from '#/api';
 
 export const useGridFormSchema = (): VbenFormSchema[] => [
   { component: 'Input', fieldName: 'title', label: '消息标题' },
@@ -19,14 +19,14 @@ export const useGridFormSchema = (): VbenFormSchema[] => [
 ];
 
 export function useColumns(
-  onActionClick: OnActionClickFn<SystemNoticeApi.UserMessage>,
-): VxeTableGridColumns<SystemNoticeApi.UserMessage> {
+  onActionClick: OnActionClickFn<SystemMessageApi.UserMessage>,
+): VxeTableGridColumns<SystemMessageApi.UserMessage> {
   return [
     { field: 'title', minWidth: 200, title: '消息标题' },
     { field: 'content', minWidth: 300, showOverflow: true, title: '消息内容' },
     {
-      field: 'noticeType',
-      formatter: ({ cellValue }: any) => (cellValue === 1 ? '通知' : '公告'),
+      field: 'messageType',
+      formatter: ({ cellValue }: any) => (cellValue === 1 ? '系统消息' : '业务消息'),
       title: '类型',
       width: 90,
     },
@@ -42,7 +42,7 @@ export function useColumns(
         attrs: { onClick: onActionClick },
         name: 'CellOperation',
         options: [
-          { code: 'read', show: (row: SystemNoticeApi.UserMessage) => row.readStatus === 0, text: '标记已读' },
+          { code: 'read', show: (row: SystemMessageApi.UserMessage) => row.readStatus === 0, text: '标记已读' },
           'delete',
         ],
       },

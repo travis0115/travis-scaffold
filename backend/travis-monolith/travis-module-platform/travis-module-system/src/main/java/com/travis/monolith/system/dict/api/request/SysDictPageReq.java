@@ -25,7 +25,4 @@ public class SysDictPageReq extends PageRequest {
     /** 状态（0-禁用 1-启用） */
     @EnumValue(value = Status.class, message = "状态值错误")
     private Integer status;
-
-
-
 }

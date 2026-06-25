@@ -25,5 +25,4 @@ public interface SysMenuApi {
      * @return 权限标识列表（去重）
      */
     List<String> getPermissionsByMenuIds(List<Long> menuIds);
-
 }

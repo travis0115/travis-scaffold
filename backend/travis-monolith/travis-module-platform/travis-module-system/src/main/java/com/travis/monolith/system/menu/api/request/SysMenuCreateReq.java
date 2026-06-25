@@ -5,9 +5,8 @@ import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.monolith.system.common.api.enums.MenuType;
 import com.travis.monolith.system.common.api.enums.Status;
 import jakarta.validation.constraints.*;
-import lombok.Data;
-
 import java.util.Objects;
+import lombok.Data;
 
 /**
  * 菜单新增请求参数

@@ -1,11 +1,11 @@
 package com.travis.monolith.system.version.api.request;
 
+import com.travis.infrastructure.framework.web.core.annotation.SanitizeHtml;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
-
 import java.time.LocalDateTime;
+import lombok.Data;
 
 /**
  * 系统版本日志修改请求参数
@@ -27,6 +27,7 @@ public class SysVersionUpdateReq {
     /** 更新内容 */
     @NotBlank(message = "更新内容不能为空")
     @Size(max = 5000, message = "更新内容长度不能超过5000个字符")
+    @SanitizeHtml
     private String content;
 
     /** 发布时间 */

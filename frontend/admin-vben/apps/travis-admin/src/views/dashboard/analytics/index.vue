@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { OpsJobApi, SystemNoticeApi, SystemVersionLogApi } from '#/api';
+import type { OpsJobApi, SystemMessageApi, SystemVersionLogApi } from '#/api';
 
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
@@ -23,7 +23,7 @@ const { hasAccessByCodes } = useAccess();
 const canViewJobDashboard = hasAccessByCodes([OPS_PERMS.jobQuery]);
 
 const dashboard = ref<OpsJobApi.Dashboard>();
-const messages = ref<SystemNoticeApi.UserMessage[]>([]);
+const messages = ref<SystemMessageApi.UserMessage[]>([]);
 const versionLogs = ref<SystemVersionLogApi.VersionLog[]>([]);
 const loading = ref(true);
 const versionLoading = ref(false);

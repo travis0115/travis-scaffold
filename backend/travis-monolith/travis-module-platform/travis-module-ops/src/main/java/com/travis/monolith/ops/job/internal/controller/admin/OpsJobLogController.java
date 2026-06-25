@@ -12,10 +12,9 @@ import com.travis.monolith.ops.job.api.response.OpsJobLogDetailResp;
 import com.travis.monolith.ops.job.api.response.OpsJobLogExportResp;
 import com.travis.monolith.ops.job.api.response.OpsJobLogPageResp;
 import com.travis.monolith.ops.job.internal.service.OpsJobLogService;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/ops/job-log")

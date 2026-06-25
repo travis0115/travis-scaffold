@@ -1,3 +1,4 @@
+export * from './announcement';
 export * from './config';
 export * from './dept';
 export * from './dict';
@@ -6,7 +7,7 @@ export * from './file';
 export * from './file-management';
 export * from './login-log';
 export * from './menu';
-export * from './notice';
+export * from './message';
 export * from './operation-log';
 export * from './role';
 export * from './user';

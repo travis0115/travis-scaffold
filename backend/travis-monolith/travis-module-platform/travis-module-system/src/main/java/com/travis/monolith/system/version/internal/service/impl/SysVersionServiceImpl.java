@@ -17,14 +17,13 @@ import com.travis.monolith.system.version.internal.converter.SysVersionConverter
 import com.travis.monolith.system.version.internal.entity.SysVersion;
 import com.travis.monolith.system.version.internal.mapper.SysVersionMapper;
 import com.travis.monolith.system.version.internal.service.SysVersionService;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Map;
 
 /**
  * 系统版本日志服务实现

@@ -41,10 +41,15 @@ export const SYSTEM_PERMS = {
   versionDelete: 'system:version:delete',
   versionUpdate: 'system:version:update',
 
-  // 通知公告
-  noticeCreate: 'system:notice:create',
-  noticeDelete: 'system:notice:delete',
-  noticeUpdate: 'system:notice:update',
+  // 系统公告
+  announcementCreate: 'system:announcement:create',
+  announcementDelete: 'system:announcement:delete',
+  announcementUpdate: 'system:announcement:update',
+
+  // 消息推送
+  messageCreate: 'system:message:create',
+  messageDelete: 'system:message:delete',
+  messageUpdate: 'system:message:update',
 
   // 文件管理
   fileDelete: 'system:file:delete',

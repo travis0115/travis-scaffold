@@ -6,7 +6,6 @@ import com.travis.monolith.system.dict.api.request.SysDictItemCreateReq;
 import com.travis.monolith.system.dict.api.request.SysDictItemUpdateReq;
 import com.travis.monolith.system.dict.api.response.SysDictItemResp;
 import com.travis.monolith.system.dict.internal.entity.SysDictItem;
-
 import java.util.List;
 
 /**

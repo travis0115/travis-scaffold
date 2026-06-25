@@ -2,11 +2,10 @@ package com.travis.monolith.system.role.internal.api;
 
 import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.role.internal.service.SysRoleService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.Objects;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 /**
  * 角色模块对外 API 实现，委托调用内部 Service

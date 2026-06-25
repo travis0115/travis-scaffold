@@ -16,11 +16,10 @@ import com.travis.monolith.system.dict.api.response.SysDictResp;
 import com.travis.monolith.system.dict.internal.service.SysDictItemService;
 import com.travis.monolith.system.dict.internal.service.SysDictService;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * 字典管理控制器，提供字典类型及字典数据项的增删改查接口

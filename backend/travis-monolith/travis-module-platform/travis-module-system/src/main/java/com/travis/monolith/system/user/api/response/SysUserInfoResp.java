@@ -1,12 +1,11 @@
 package com.travis.monolith.system.user.api.response;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * 当前登录用户信息视图，用于前端展示用户资料和权限信息

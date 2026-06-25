@@ -3,10 +3,9 @@ package com.travis.monolith.ops.job.internal.service;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.monolith.ops.job.api.OpsJobErrorCode;
-import tools.jackson.databind.JsonNode;
-
 import java.util.Iterator;
 import java.util.Map;
+import tools.jackson.databind.JsonNode;
 
 /** 校验 JSON 参数及项目当前支持的 JSON Schema 常用子集。 */
 public final class OpsJobParamValidator {
@@ -35,8 +34,7 @@ public final class OpsJobParamValidator {
         }
     }
 
-    private static void validateNode(
-            JsonNode value, JsonNode schema, String path) {
+    private static void validateNode(JsonNode value, JsonNode schema, String path) {
         String type = schema.path("type").asString("");
         if (!type.isBlank() && !matchesType(value, type)) {
             throw invalid(path + " 类型必须为 " + type);
@@ -58,15 +56,13 @@ public final class OpsJobParamValidator {
                     validateNode(
                             value.path(field.getKey()),
                             field.getValue(),
-                            path + "." + field.getKey()
-                    );
+                            path + "." + field.getKey());
                 }
             }
         }
         if (value.isArray() && schema.has("items")) {
             for (int index = 0; index < value.size(); index++) {
-                validateNode(
-                        value.get(index), schema.path("items"), path + "[" + index + "]");
+                validateNode(value.get(index), schema.path("items"), path + "[" + index + "]");
             }
         }
     }

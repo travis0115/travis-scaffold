@@ -8,11 +8,10 @@ import com.travis.monolith.system.user.api.request.SysUserUpdateReq;
 import com.travis.monolith.system.user.api.response.SysUserInfoResp;
 import com.travis.monolith.system.user.api.response.SysUserResp;
 import com.travis.monolith.system.user.internal.entity.SysUser;
+import java.util.List;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
-
-import java.util.List;
 
 /**
  * 用户对象转换器
