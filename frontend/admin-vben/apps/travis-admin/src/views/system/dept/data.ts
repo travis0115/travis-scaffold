@@ -125,6 +125,7 @@ export function useColumns(
       cellRender: {
         attrs: {
           nameField: 'deptName',
+          nameTitle: $t('system.dept.name'),
           onClick: onActionClick,
         },
         name: 'CellOperation',

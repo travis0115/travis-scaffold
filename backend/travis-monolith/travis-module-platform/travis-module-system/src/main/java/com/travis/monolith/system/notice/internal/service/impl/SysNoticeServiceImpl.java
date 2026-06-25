@@ -79,6 +79,4 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
     public void delete(Long id) {
         removeById(id);
     }
-
-
 }

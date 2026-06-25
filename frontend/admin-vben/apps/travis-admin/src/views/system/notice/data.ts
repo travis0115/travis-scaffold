@@ -16,12 +16,18 @@ function hasRichTextContent(value?: string) {
   );
 }
 
+const requiredNumber = (message: string) =>
+  z.number({ invalid_type_error: message, required_error: message });
+
 export const useFormSchema = (): VbenFormSchema[] => [
   {
     component: 'Input',
     fieldName: 'title',
     label: '公告标题',
-    rules: z.string().min(1),
+    rules: z
+      .string({ required_error: '公告标题不能为空' })
+      .min(1, '公告标题不能为空')
+      .max(255, '公告标题长度不能超过255个字符'),
   },
   {
     component: 'RichEditor',
@@ -37,7 +43,10 @@ export const useFormSchema = (): VbenFormSchema[] => [
       validateOnModelUpdate: false,
     },
     label: '公告内容',
-    rules: z.string().refine(hasRichTextContent, '公告内容不能为空'),
+    rules: z
+      .string({ required_error: '公告内容不能为空' })
+      .max(5000, '公告内容长度不能超过5000个字符')
+      .refine(hasRichTextContent, '公告内容不能为空'),
   },
   {
     component: 'RadioGroup',
@@ -52,12 +61,19 @@ export const useFormSchema = (): VbenFormSchema[] => [
     defaultValue: 0,
     fieldName: 'status',
     label: '状态',
+    rules: requiredNumber('公告状态不能为空').refine(
+      (value) => [0, 1].includes(value),
+      '状态值错误',
+    ),
   },
   {
     component: 'DatePicker',
     componentProps: { showTime: true, valueFormat: 'YYYY-MM-DD HH:mm:ss' },
     fieldName: 'publishTime',
     label: '发布时间',
+    rules: z
+      .string({ required_error: '发布时间不能为空' })
+      .min(1, '发布时间不能为空'),
   },
   {
     component: 'RadioGroup',
@@ -70,16 +86,32 @@ export const useFormSchema = (): VbenFormSchema[] => [
       ],
     },
     defaultValue: 0,
-    fieldName: 'pinned',
+    fieldName: 'isPinned',
     label: '置顶',
+    rules: requiredNumber('置顶值不允许为空').refine(
+      (value) => [0, 1].includes(value),
+      '置顶值错误',
+    ),
   },
   {
     component: 'InputNumber',
     defaultValue: 0,
     fieldName: 'sort',
     label: '排序',
+    rules: requiredNumber('排序号不能为空')
+      .min(0, '排序号不能小于0')
+      .max(9999, '排序号不能大于9999'),
   },
-  { component: 'Textarea', fieldName: 'remark', label: '备注' },
+  {
+    component: 'Textarea',
+    fieldName: 'remark',
+    label: '备注',
+    rules: z
+      .string()
+      .max(255, '备注长度不能超过255个字符')
+      .optional()
+      .or(z.literal('')),
+  },
 ];
 
 export const useGridFormSchema = (): VbenFormSchema[] => [
@@ -119,8 +151,13 @@ export function useColumns(
       width: 180,
     },
     {
-      field: 'pinned',
-      formatter: ({ cellValue }: any) => (cellValue === 1 ? '是' : '否'),
+      cellRender: {
+        attrs: {
+          dictCode: 'sys_pinned',
+        },
+        name: 'CellTag',
+      },
+      field: 'isPinned',
       title: '置顶',
       width: 80,
     },
@@ -143,7 +180,11 @@ export function useColumns(
     },
     {
       cellRender: {
-        attrs: { nameField: 'title', onClick: onActionClick },
+        attrs: {
+          nameField: 'title',
+          nameTitle: '公告',
+          onClick: onActionClick,
+        },
         name: 'CellOperation',
         options: filterAccessOptions(
           [{ code: 'preview', text: '预览' }, 'edit', 'delete'],

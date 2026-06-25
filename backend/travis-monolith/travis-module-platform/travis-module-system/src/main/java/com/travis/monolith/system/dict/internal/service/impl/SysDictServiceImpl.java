@@ -18,8 +18,6 @@ import com.travis.monolith.system.dict.internal.entity.SysDictItem;
 import com.travis.monolith.system.dict.internal.mapper.SysDictMapper;
 import com.travis.monolith.system.dict.internal.service.SysDictItemService;
 import com.travis.monolith.system.dict.internal.service.SysDictService;
-import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -27,6 +25,9 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 字典管理服务实现
@@ -87,7 +88,7 @@ public class SysDictServiceImpl extends ServiceImplX<SysDictMapper, SysDict>
                         .likeIfPresent(SysDict::getDictName, req.getDictName())
                         .likeIfPresent(SysDict::getDictCode, req.getDictCode())
                         .eqIfPresent(SysDict::getStatus, req.getStatus())
-                        .orderByDesc(SysDict::getCreateTime);
+                        .orderByAsc(SysDict::getCreateTime);
         var page = page(req.getPageNum(), req.getPageSize(), wrapper);
         return PageConverter.toResp(page.convert(converter::toResp));
     }

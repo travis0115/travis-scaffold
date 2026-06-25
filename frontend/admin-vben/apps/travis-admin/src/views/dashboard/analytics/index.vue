@@ -5,13 +5,14 @@ import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 import { useAccess } from '@vben/access';
-import { IconifyIcon } from '@vben/icons';
+import { EmptyIcon, IconifyIcon } from '@vben/icons';
 import { formatDate } from '@vben/utils';
 
-import { Button, Card, Empty, Skeleton, Spin, Tag } from 'antdv-next';
+import { Button, Card, Skeleton, Spin, Tag } from 'antdv-next';
 
 import { getJobDashboard, getNoticePage, getPublishedVersionLogs } from '#/api';
 import RichTextPreview from '#/components/rich-text-preview/index.vue';
+import { $t } from '#/locales';
 import { OPS_PERMS } from '#/utils/permissions';
 
 const router = useRouter();
@@ -220,10 +221,13 @@ onMounted(async () => {
           </template>
 
           <div class="h-[460px] overflow-y-auto pr-1" @scroll="onNoticeScroll">
-            <Empty
+            <div
               v-if="!noticeLoading && notices.length === 0"
-              description="暂无系统公告"
-            />
+              class="flex h-full flex-col items-center justify-center text-muted-foreground"
+            >
+              <EmptyIcon class="mx-auto" />
+              <div class="mt-2 text-sm">{{ $t('common.noData') }}</div>
+            </div>
             <div v-else class="space-y-4">
               <article
                 v-for="notice in notices"
@@ -231,15 +235,15 @@ onMounted(async () => {
                 class="rounded-lg border border-border/60 bg-muted/20 p-4"
               >
                 <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <Tag v-if="notice.isPinned === 1" :style="versionTagStyle">
+                    置顶
+                  </Tag>
                   <h3 class="text-foreground text-base font-semibold">
                     {{ notice.title }}
                   </h3>
                   <span class="text-muted-foreground text-xs">{{
                     formatDate(notice.publishTime || notice.createTime)
                   }}</span>
-                  <Tag v-if="notice.pinned === 1" :style="versionTagStyle">
-                    置顶
-                  </Tag>
                 </div>
                 <div class="mt-3">
                   <RichTextPreview :content="notice.content" :min-height="0" />
@@ -272,10 +276,13 @@ onMounted(async () => {
           </template>
 
           <div class="h-[460px] overflow-y-auto pr-1" @scroll="onVersionScroll">
-            <Empty
+            <div
               v-if="!versionLoading && versionLogs.length === 0"
-              description="暂无更新日志"
-            />
+              class="flex h-full flex-col items-center justify-center text-muted-foreground"
+            >
+              <EmptyIcon class="mx-auto" />
+              <div class="mt-2 text-sm">{{ $t('common.noData') }}</div>
+            </div>
             <div v-else class="space-y-4">
               <article
                 v-for="log in versionLogs"

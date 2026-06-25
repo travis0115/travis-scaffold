@@ -106,18 +106,18 @@ async function onStatusChange(newStatus: number, row: SystemNoticeApi.Notice) {
     >
       <div class="space-y-4">
         <div class="border-t pt-4">
-          <div class="flex items-center gap-3 text-gray-400 text-xs">
-            <Tag v-if="previewRow?.pinned === 1" :style="pinnedTagStyle">
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <Tag v-if="previewRow?.isPinned === 1" :style="pinnedTagStyle">
               置顶
             </Tag>
-            <span>{{
+            <h3 class="text-foreground text-lg font-semibold">
+              {{ previewRow?.title || '公告内容' }}
+            </h3>
+            <span class="text-gray-400 text-xs">{{
               formatDate(previewRow?.publishTime || previewRow?.createTime)
             }}</span>
           </div>
         </div>
-        <h3 class="text-foreground text-lg font-semibold">
-          {{ previewRow?.title || '公告内容' }}
-        </h3>
         <RichTextPreview :content="previewRow?.content" :min-height="320" />
       </div>
     </Modal>

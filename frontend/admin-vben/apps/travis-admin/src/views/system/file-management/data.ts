@@ -25,7 +25,11 @@ export function useColumns<T>(onActionClick: OnActionClickFn<T>): VxeTableGridCo
     { field: 'createTime', formatter: 'formatDateTime', title: '上传时间', width: 180 },
     {
       cellRender: {
-        attrs: { onClick: onActionClick },
+        attrs: {
+          nameField: 'fileName',
+          nameTitle: '文件',
+          onClick: onActionClick,
+        },
         name: 'CellOperation',
         options: filterAccessOptions(['delete'], {
           delete: SYSTEM_PERMS.fileDelete,

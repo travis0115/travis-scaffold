@@ -5,10 +5,9 @@ import com.travis.monolith.system.notice.api.request.SysNoticeCreateReq;
 import com.travis.monolith.system.notice.api.request.SysNoticeUpdateReq;
 import com.travis.monolith.system.notice.api.response.SysNoticeResp;
 import com.travis.monolith.system.notice.internal.entity.SysNotice;
+import java.util.List;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
-
-import java.util.List;
 
 /**
  * 系统公告对象转换器

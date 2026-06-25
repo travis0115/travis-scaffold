@@ -4,12 +4,14 @@ import type { SystemVersionLogApi } from '#/api';
 import { computed, onMounted, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
+import { EmptyIcon } from '@vben/icons';
 import { formatDate } from '@vben/utils';
 
-import { Card, Empty, Spin, Tag } from 'antdv-next';
+import { Card, Spin, Tag } from 'antdv-next';
 
 import { getPublishedVersionLogs } from '#/api';
 import RichTextPreview from '#/components/rich-text-preview/index.vue';
+import { $t } from '#/locales';
 
 const logs = ref<SystemVersionLogApi.VersionLog[]>([]);
 const loading = ref(false);
@@ -75,10 +77,13 @@ onMounted(() => {
         class="h-[calc(100vh-15rem)] overflow-y-auto pr-2"
         @scroll="onScroll"
       >
-        <Empty
+        <div
           v-if="!loading && logs.length === 0"
-          description="暂无更新日志"
-        />
+          class="flex h-full flex-col items-center justify-center text-muted-foreground"
+        >
+          <EmptyIcon class="mx-auto" />
+          <div class="mt-2 text-sm">{{ $t('common.noData') }}</div>
+        </div>
         <div v-else class="space-y-4">
           <article
             v-for="log in logs"

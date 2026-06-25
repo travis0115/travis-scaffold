@@ -55,6 +55,13 @@ const menus = computed(() => [
     icon: 'mdi:sticker-text-outline',
     text: '更新日志',
   },
+  {
+    handler: () => {
+      router.push({ name: 'Notice' });
+    },
+    icon: 'mdi:bullhorn-variant-outline',
+    text: '系统公告',
+  },
 ]);
 
 const avatar = computed(() => {

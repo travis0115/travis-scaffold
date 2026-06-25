@@ -1,7 +1,8 @@
 package com.travis.monolith.system.notice.api.response;
 
-import java.time.LocalDateTime;
 import lombok.Data;
+
+import java.time.LocalDateTime;
 
 @Data
 public class SysNoticeResp {
@@ -10,7 +11,7 @@ public class SysNoticeResp {
     private String content;
     private Integer status;
     private LocalDateTime publishTime;
-    private Integer pinned;
+    private Integer isPinned;
     private Integer sort;
     private String remark;
     private LocalDateTime createTime;

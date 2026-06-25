@@ -39,7 +39,11 @@ export function useColumns(
     { field: 'publishTime', formatter: 'formatDateTime', title: '发布时间', width: 180 },
     {
       cellRender: {
-        attrs: { onClick: onActionClick },
+        attrs: {
+          nameField: 'title',
+          nameTitle: '消息',
+          onClick: onActionClick,
+        },
         name: 'CellOperation',
         options: [
           { code: 'read', show: (row: SystemMessageApi.UserMessage) => row.readStatus === 0, text: '标记已读' },

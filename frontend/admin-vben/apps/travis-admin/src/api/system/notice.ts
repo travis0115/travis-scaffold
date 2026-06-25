@@ -9,7 +9,7 @@ export namespace SystemNoticeApi {
     content: string;
     createTime?: string;
     id: number;
-    pinned?: number;
+    isPinned?: number;
     publishTime?: string;
     remark?: string;
     sort?: number;

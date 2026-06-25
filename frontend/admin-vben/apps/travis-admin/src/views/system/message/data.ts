@@ -4,16 +4,41 @@ import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import { z } from '#/adapter/form';
 import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
 
+const requiredNumber = (message: string) =>
+  z.number({ invalid_type_error: message, required_error: message });
+
+const requiredIdList = (message: string) =>
+  z
+    .array(z.number(), { invalid_type_error: message, required_error: message })
+    .min(1, message);
+
 export const useFormSchema = (): VbenFormSchema[] => [
-  { component: 'Input', fieldName: 'title', label: '消息标题', rules: z.string().min(1) },
+  {
+    component: 'Input',
+    fieldName: 'title',
+    label: '消息标题',
+    rules: z
+      .string({ required_error: '消息标题不能为空' })
+      .min(1, '消息标题不能为空')
+      .max(255, '消息标题长度不能超过255个字符'),
+  },
   {
     component: 'Select',
     componentProps: { options: [{ label: '系统消息', value: 1 }, { label: '业务消息', value: 2 }] },
     defaultValue: 1,
     fieldName: 'messageType',
     label: '消息类型',
+    rules: requiredNumber('消息类型不能为空'),
   },
-  { component: 'Textarea', fieldName: 'content', label: '消息内容', rules: z.string().min(1) },
+  {
+    component: 'Textarea',
+    fieldName: 'content',
+    label: '消息内容',
+    rules: z
+      .string({ required_error: '消息内容不能为空' })
+      .min(1, '消息内容不能为空')
+      .max(5000, '消息内容长度不能超过5000个字符'),
+  },
   {
     component: 'Input',
     componentProps: { placeholder: '例如 SYSTEM、OPS_JOB' },
@@ -46,6 +71,10 @@ export const useFormSchema = (): VbenFormSchema[] => [
     defaultValue: 0,
     fieldName: 'audienceType',
     label: '接收范围',
+    rules: requiredNumber('接收范围不能为空').refine(
+      (value) => [0, 1, 2, 3].includes(value),
+      '接收范围错误',
+    ),
   },
   {
     component: 'Select',
@@ -53,6 +82,7 @@ export const useFormSchema = (): VbenFormSchema[] => [
     dependencies: { show: (values) => values.audienceType === 1, triggerFields: ['audienceType'] },
     fieldName: 'userIds',
     label: '接收用户',
+    rules: requiredIdList('请选择接收用户'),
   },
   {
     component: 'Select',
@@ -60,6 +90,7 @@ export const useFormSchema = (): VbenFormSchema[] => [
     dependencies: { show: (values) => values.audienceType === 2, triggerFields: ['audienceType'] },
     fieldName: 'roleIds',
     label: '接收角色',
+    rules: requiredIdList('请选择接收角色'),
   },
   {
     component: 'TreeSelect',
@@ -73,6 +104,7 @@ export const useFormSchema = (): VbenFormSchema[] => [
     dependencies: { show: (values) => values.audienceType === 3, triggerFields: ['audienceType'] },
     fieldName: 'deptIds',
     label: '接收部门',
+    rules: requiredIdList('请选择接收部门'),
   },
   {
     component: 'RadioGroup',
@@ -80,6 +112,7 @@ export const useFormSchema = (): VbenFormSchema[] => [
     defaultValue: 0,
     fieldName: 'status',
     label: '状态',
+    rules: requiredNumber('消息状态不能为空'),
   },
   {
     component: 'DatePicker',
@@ -137,7 +170,11 @@ export function useColumns<T>(
     },
     {
       cellRender: {
-        attrs: { nameField: 'title', onClick: onActionClick },
+        attrs: {
+          nameField: 'title',
+          nameTitle: '消息',
+          onClick: onActionClick,
+        },
         name: 'CellOperation',
         options: filterAccessOptions(['edit', 'delete'], {
           delete: SYSTEM_PERMS.messageDelete,

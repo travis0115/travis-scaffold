@@ -209,7 +209,7 @@ const schema: VbenFormSchema[] = [
   {
     component: 'IconPicker',
     componentProps: {
-      prefix: 'mdi',
+      prefix: 'ic',
     },
     dependencies: {
       show: (values) => [0, 1].includes(values.menuType),
