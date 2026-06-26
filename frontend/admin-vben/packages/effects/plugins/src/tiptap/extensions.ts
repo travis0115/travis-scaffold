@@ -51,11 +51,13 @@ function validateFile(
 
 function handleUploadError(error: unknown, options: ImageUploadOptions): void {
   if (options.onUploadError) {
-    options.onUploadError(error);
-  } else {
-    const message = error instanceof Error ? error.message : String(error);
-    alert(message, $t('ui.tiptap.upload.uploadFailed')).catch(() => {});
+    const handled = options.onUploadError(error);
+    if (handled !== true) {
+      return;
+    }
   }
+  const message = error instanceof Error ? error.message : String(error);
+  alert(message, $t('ui.tiptap.upload.uploadFailed')).catch(() => {});
 }
 
 function findPlaceholderPos(doc: ProseMirrorNode, blobUrl: string): number {

@@ -19,6 +19,19 @@ export const FILE_FOLDER_IDS = {
   VERSION: 5,
 } as const;
 
+export const UPLOAD_FILE_MAX_SIZE_MB =
+  Number(import.meta.env.VITE_UPLOAD_FILE_MAX_SIZE) || 20;
+
+export const UPLOAD_FILE_MAX_SIZE_BYTES =
+  UPLOAD_FILE_MAX_SIZE_MB * 1024 * 1024;
+
+export const UPLOAD_FILE_MAX_SIZE_TEXT =
+  UPLOAD_FILE_MAX_SIZE_MB >= 1
+    ? String(Math.floor(UPLOAD_FILE_MAX_SIZE_MB))
+    : (UPLOAD_FILE_MAX_SIZE_MB >= 0.01
+      ? UPLOAD_FILE_MAX_SIZE_MB.toFixed(2)
+      : '0.01');
+
 /**
  * 上传文件
  * @param file 文件对象

@@ -28,8 +28,8 @@ export interface ImageUploadOptions {
   accept?: string;
   /** 最大文件大小(字节)，默认 5MB */
   maxSize?: number;
-  /** 上传失败回调，未提供时使用 alert 弹窗提示 */
-  onUploadError?: (error: unknown) => void;
+  /** 上传失败回调，返回 true 时继续使用内置 alert 弹窗提示 */
+  onUploadError?: (error: unknown) => boolean | undefined;
   /** 从已上传文件中选择图片 */
   select?: () => Promise<ImageSelectResult | undefined>;
   /** 上传函数，返回图片 URL，可选 onProgress 回调报告上传进度 */

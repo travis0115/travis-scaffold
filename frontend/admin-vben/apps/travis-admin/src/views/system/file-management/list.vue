@@ -24,6 +24,8 @@ import {
   getFilePage,
   getStorageConfigs,
   updateFileFolder,
+  UPLOAD_FILE_MAX_SIZE_BYTES,
+  UPLOAD_FILE_MAX_SIZE_TEXT,
   uploadFileApi,
 } from '#/api';
 import { SYSTEM_PERMS } from '#/utils/permissions';
@@ -36,6 +38,7 @@ type TreeExpose = {
   expandNodes: (value: FolderId | FolderId[]) => void;
 };
 type UploadTask = {
+  errorMessage?: string;
   name: string;
   percent: number;
   status: 'error' | 'success' | 'uploading';
@@ -463,8 +466,33 @@ function upsertUploadTask(file: any, values: Partial<UploadTask>) {
   );
 }
 
+function getUploadErrorMessage(error: unknown) {
+  const uploadError = error as {
+    message?: string;
+    response?: { data?: { error?: string; message?: string; msg?: string } };
+  };
+  return (
+    uploadError?.response?.data?.msg ||
+    uploadError?.response?.data?.error ||
+    uploadError?.response?.data?.message ||
+    uploadError?.message ||
+    '上传失败'
+  );
+}
+
 async function customRequest({ file, onError, onProgress, onSuccess }: any) {
-  upsertUploadTask(file, { percent: 0, status: 'uploading' });
+  upsertUploadTask(file, {
+    errorMessage: undefined,
+    percent: 0,
+    status: 'uploading',
+  });
+  if ((file.size || 0) > UPLOAD_FILE_MAX_SIZE_BYTES) {
+    const errorMessage = `文件大小不能超过 ${UPLOAD_FILE_MAX_SIZE_TEXT}MB`;
+    const error = new Error(errorMessage);
+    upsertUploadTask(file, { errorMessage, status: 'error' });
+    onError?.(error);
+    throw error;
+  }
   try {
     await uploadFileApi(file, getSelectedFolderId(), (event) => {
       const percent = event.total
@@ -477,7 +505,10 @@ async function customRequest({ file, onError, onProgress, onSuccess }: any) {
     onSuccess?.();
     gridApi.query();
   } catch (error) {
-    upsertUploadTask(file, { status: 'error' });
+    upsertUploadTask(file, {
+      errorMessage: getUploadErrorMessage(error),
+      status: 'error',
+    });
     onError?.(error);
     throw error;
   }
@@ -821,9 +852,12 @@ onMounted(loadOptions);
             </div>
             <Progress
               :percent="task.percent"
-              :status="task.status === 'error' ? 'exception' : undefined"
+              :status="task.status === 'error' ? 'exception' : 'normal'"
               size="small"
             />
+            <div v-if="task.errorMessage" class="upload-progress-error">
+              {{ task.errorMessage }}
+            </div>
           </div>
           <div
             v-if="uploadTasks.length === 0"
@@ -1047,12 +1081,19 @@ onMounted(loadOptions);
   color: hsl(var(--destructive));
 }
 
+.upload-progress-error {
+  margin-top: 6px;
+  color: hsl(var(--destructive));
+  font-size: 12px;
+  line-height: 18px;
+}
+
 .upload-progress-item :deep(.ant-progress-bg) {
-  background-color: hsl(var(--primary));
+  background-color: hsl(var(--primary)) !important;
 }
 
 .upload-progress-item-error :deep(.ant-progress-bg) {
-  background-color: hsl(var(--destructive));
+  background-color: hsl(var(--destructive)) !important;
 }
 
 .file-preview-cell {

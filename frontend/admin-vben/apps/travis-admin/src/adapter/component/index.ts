@@ -69,7 +69,7 @@ import { isEmpty } from '@vben/utils';
 
 import { message, Modal, notification } from 'antdv-next';
 
-import { uploadFileApi } from '#/api';
+import { UPLOAD_FILE_MAX_SIZE_BYTES, uploadFileApi } from '#/api';
 import { getFileFolders, getFilePage } from '#/api/system/file-management';
 
 type AdapterUploadProps = UploadProps & {
@@ -188,6 +188,25 @@ const withDefaultPlaceholder = (
 const toNumber = (value: unknown) => {
   const numberValue = Number(value);
   return Number.isFinite(numberValue) ? numberValue : undefined;
+};
+
+const isRequestError = (error: unknown) => {
+  const requestError = error as {
+    code?: string;
+    config?: unknown;
+    isAxiosError?: boolean;
+    message?: string;
+    request?: unknown;
+    response?: unknown;
+  };
+  return Boolean(
+    requestError?.isAxiosError ||
+      requestError?.config ||
+      requestError?.request ||
+      requestError?.response ||
+      requestError?.code === 'ERR_NETWORK' ||
+      requestError?.message === 'Network Error',
+  );
 };
 
 const buildFolderTree = (items: SystemFileApi.Folder[]) => {
@@ -811,9 +830,20 @@ const createRichEditorImageUpload = (
   folderId?: number | string,
   imageUpload?: TipTapProps['imageUpload'],
 ): NonNullable<TipTapProps['imageUpload']> => ({
-  maxSize: 5 * 1024 * 1024,
+  maxSize: UPLOAD_FILE_MAX_SIZE_BYTES,
   select: selectRichEditorImage,
   ...imageUpload,
+  onUploadError: (error: unknown) => {
+    const hasCustomHandler = Boolean(imageUpload?.onUploadError);
+    const handled = imageUpload?.onUploadError?.(error);
+    if (handled !== undefined) {
+      return handled;
+    }
+    if (isRequestError(error)) {
+      return false;
+    }
+    return hasCustomHandler ? false : true;
+  },
   upload:
     imageUpload?.upload ??
     (async (file: File, onProgress?: (percent: number) => void) => {

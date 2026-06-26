@@ -13,7 +13,13 @@ import { useUserStore } from '@vben/stores';
 
 import { message } from 'antdv-next';
 
-import { FILE_FOLDER_IDS, updateAvatarApi, uploadFileApi } from '#/api';
+import {
+  FILE_FOLDER_IDS,
+  updateAvatarApi,
+  UPLOAD_FILE_MAX_SIZE_MB,
+  UPLOAD_FILE_MAX_SIZE_TEXT,
+  uploadFileApi,
+} from '#/api';
 
 import ProfileBase from './base-setting.vue';
 import ProfileLoginLog from './login-log.vue';
@@ -87,16 +93,8 @@ function onFileChange(event: Event) {
     return;
   }
   // 校验文件大小
-  const maxSizeMB = Number(import.meta.env.VITE_UPLOAD_FILE_MAX_SIZE) || 20;
-  // 格式化显示：>=1 不显示小数，<1 且 >=0.01 显示两位小数，<0.01 显示 0.01
-  const displaySize =
-    maxSizeMB >= 1
-      ? Math.floor(maxSizeMB)
-      : (maxSizeMB >= 0.01
-        ? maxSizeMB.toFixed(2)
-        : '0.01');
-  if (file.size / (1024 * 1024) > maxSizeMB) {
-    message.error(`图片大小不能超过 ${displaySize}MB`);
+  if (file.size / (1024 * 1024) > UPLOAD_FILE_MAX_SIZE_MB) {
+    message.error(`图片大小不能超过 ${UPLOAD_FILE_MAX_SIZE_TEXT}MB`);
     return;
   }
 
