@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   formatDate,
   formatDateTime,
+  formatLocalDateToUtc,
   getCurrentTimezone,
   getSystemTimezone,
   isDate,
@@ -177,6 +178,22 @@ describe('dateUtils', () => {
       setCurrentTimezone('Asia/Shanghai');
       const result = formatDateTime('2024-10-30 04:34:56');
       expect(result).toBe('2024-10-30 12:34:56');
+    });
+  });
+
+  describe('local date to UTC string', () => {
+    it('should convert local datetime string to UTC backend string', () => {
+      setCurrentTimezone('Asia/Shanghai');
+      const result = formatLocalDateToUtc('2024-10-30 12:34:56');
+      expect(result).toBe('2024-10-30 04:34:56');
+    });
+
+    it('should convert local dayjs value to UTC backend string', () => {
+      setCurrentTimezone('Asia/Shanghai');
+      const result = formatLocalDateToUtc(
+        dayjs.tz('2024-10-30 12:34:56', 'Asia/Shanghai'),
+      );
+      expect(result).toBe('2024-10-30 04:34:56');
     });
   });
 });

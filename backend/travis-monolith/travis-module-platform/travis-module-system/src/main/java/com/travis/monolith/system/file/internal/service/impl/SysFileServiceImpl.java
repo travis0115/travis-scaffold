@@ -78,11 +78,16 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
     public PageResp<SysFileResp> page(SysFilePageReq req) {
         var wrapper =
                 new LambdaQueryWrapperX<SysFile>()
-                        .eqIfPresent(SysFile::getFolderId, req.getFolderId())
                         .likeIfPresent(SysFile::getOriginalName, req.getFileName())
                         .likeIfPresent(SysFile::getMimeType, req.getMimeType())
                         .eqIfPresent(SysFile::getStorageConfigId, req.getStorageConfigId())
                         .orderByDesc(SysFile::getCreateTime);
+        if (Boolean.TRUE.equals(req.getUnclassified())
+                || Long.valueOf(0).equals(req.getFolderId())) {
+            wrapper.and(item -> item.isNull(SysFile::getFolderId).or().eq(SysFile::getFolderId, 0));
+        } else {
+            wrapper.eqIfPresent(SysFile::getFolderId, req.getFolderId());
+        }
         Page<SysFile> page = page(req.getPageNum(), req.getPageSize(), wrapper);
         if (page.getRecords().isEmpty()) {
             return PageConverter.toResp(

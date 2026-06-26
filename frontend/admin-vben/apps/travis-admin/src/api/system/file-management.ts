@@ -12,7 +12,7 @@ export namespace SystemFileApi {
     creatorName?: string;
     extension?: string;
     fileName: string;
-    id: number;
+    id: number | string;
     mimeType?: string;
     originalName: string;
     path: string;
@@ -24,9 +24,11 @@ export namespace SystemFileApi {
   }
 
   export interface Folder {
+    children?: Folder[];
     folderName: string;
-    id: number;
-    parentId?: number;
+    id: number | string;
+    isBuiltin?: 0 | 1;
+    parentId?: number | string;
     sort?: number;
   }
 
@@ -35,7 +37,7 @@ export namespace SystemFileApi {
     basePath: string;
     configName: string;
     domain?: string;
-    id: number;
+    id: number | string;
     isDefault: number;
     status: number;
     storageType: string;
@@ -43,12 +45,21 @@ export namespace SystemFileApi {
 }
 
 const getFilePage = (params: Recordable<any>) =>
-  requestClient.get<PageResp<SystemFileApi.FileInfo>>('/system/file/page', { params });
-const deleteFile = (id: number) => requestClient.delete(`/system/file/${id}`);
+  requestClient.get<PageResp<SystemFileApi.FileInfo>>('/system/file/page', {
+    params,
+  });
+const deleteFile = (id: number | string) =>
+  requestClient.delete(`/system/file/${id}`);
 const getFileFolders = () =>
   requestClient.get<SystemFileApi.Folder[]>('/system/file-folder/list');
 const createFileFolder = (data: Partial<SystemFileApi.Folder>) =>
   requestClient.post('/system/file-folder', data);
+const updateFileFolder = (
+  id: number | string,
+  data: Partial<SystemFileApi.Folder>,
+) => requestClient.put(`/system/file-folder/${id}`, data);
+const deleteFileFolder = (id: number | string) =>
+  requestClient.delete(`/system/file-folder/${id}`);
 const getStorageConfigs = () =>
   requestClient.get<SystemFileApi.StorageConfig[]>('/system/file-storage/list');
 const createStorageConfig = (data: Partial<SystemFileApi.StorageConfig>) =>
@@ -57,8 +68,10 @@ const createStorageConfig = (data: Partial<SystemFileApi.StorageConfig>) =>
 export {
   createFileFolder,
   createStorageConfig,
+  deleteFileFolder,
   deleteFile,
   getFileFolders,
   getFilePage,
   getStorageConfigs,
+  updateFileFolder,
 };

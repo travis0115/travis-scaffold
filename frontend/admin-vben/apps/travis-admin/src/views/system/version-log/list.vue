@@ -7,11 +7,11 @@ import type { SystemVersionLogApi } from '#/api';
 
 import { ref } from 'vue';
 
-import { Page, useVbenDrawer } from '@vben/common-ui';
+import { Page, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
 import { formatDate } from '@vben/utils';
 
-import { Button, message, Modal, Tag } from 'antdv-next';
+import { Button, message, Tag } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
@@ -30,7 +30,6 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   connectedComponent: Form,
   destroyOnClose: true,
 });
-const previewOpen = ref(false);
 const previewRow = ref<SystemVersionLogApi.VersionLog>();
 const versionTagStyle = {
   backgroundColor: 'hsl(var(--primary) / 10%)',
@@ -89,6 +88,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
   } as VxeTableGridOptions<SystemVersionLogApi.VersionLog>,
 });
 
+const [PreviewModal, previewModalApi] = useVbenModal({
+  footer: false,
+});
+
 function onActionClick(e: OnActionClickParams<SystemVersionLogApi.VersionLog>) {
   switch (e.code) {
     case 'delete': {
@@ -131,7 +134,7 @@ function onDelete(row: SystemVersionLogApi.VersionLog) {
 
 function onPreview(row: SystemVersionLogApi.VersionLog) {
   previewRow.value = row;
-  previewOpen.value = true;
+  previewModalApi.open();
 }
 
 function onRefresh() {
@@ -175,14 +178,9 @@ async function onStatusChange(
         </button>
       </template>
     </Grid>
-    <Modal
-      v-model:open="previewOpen"
-      :footer="null"
-      title="版本预览"
-      width="860px"
-    >
+    <PreviewModal class="w-[860px]" :fullscreen-button="false" title="版本预览">
       <div class="space-y-4">
-        <div class="border-t pt-4">
+        <div>
           <div class="flex items-center gap-3 text-gray-400 text-xs">
             <Tag :style="versionTagStyle">
               {{ formatVersion(previewRow?.version) }}
@@ -197,6 +195,6 @@ async function onStatusChange(
         </h3>
         <RichTextPreview :content="previewRow?.content" :min-height="320" />
       </div>
-    </Modal>
+    </PreviewModal>
   </Page>
 </template>

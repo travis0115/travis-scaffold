@@ -28,6 +28,8 @@ export type AlertProps = {
   centered?: boolean;
   /** 确认按钮的标题 */
   confirmText?: string;
+  /** 确认按钮属性 */
+  confirmButtonProps?: Recordable<any>;
   /** 弹窗容器的额外样式 */
   containerClass?: string;
   /** 弹窗提示内容 */

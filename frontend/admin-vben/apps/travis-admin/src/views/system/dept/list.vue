@@ -5,10 +5,10 @@ import type {
 } from '#/adapter/vxe-table';
 import type { SystemDeptApi } from '#/api';
 
-import { Page, useVbenDrawer } from '@vben/common-ui';
+import { confirm as vbenConfirm, Page, useVbenDrawer } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
 
-import { Button, message, Modal } from 'antdv-next';
+import { Button, message } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteDept, getDeptTree, updateDeptStatus } from '#/api';
@@ -54,14 +54,16 @@ async function deleteDeptRow(row: SystemDeptApi.SysDept) {
 }
 
 function onDelete(row: SystemDeptApi.SysDept) {
-  Modal.confirm({
+  vbenConfirm({
     cancelText: $t('common.cancel'),
     content: `该部门下存在下级部门，删除「${row.deptName}」后将同时删除所有下级部门，请确认是否继续？`,
-    okText: '确认删除',
-    okType: 'danger',
-    onOk: () => deleteDeptRow(row),
+    confirmButtonProps: { danger: true },
+    confirmText: '确认删除',
+    icon: 'warning',
     title: `删除部门「${row.deptName}」`,
-  });
+  })
+    .then(() => deleteDeptRow(row))
+    .catch(() => {});
 }
 
 function onActionClick({

@@ -8,6 +8,7 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 public class SysFilePageReq extends PageRequest {
     private Long folderId;
+    private Boolean unclassified;
     private String fileName;
     private String mimeType;
     private Long storageConfigId;

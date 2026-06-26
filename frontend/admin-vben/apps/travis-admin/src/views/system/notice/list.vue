@@ -7,10 +7,10 @@ import type { SystemNoticeApi } from '#/api';
 
 import { ref } from 'vue';
 
-import { Page, useVbenDrawer } from '@vben/common-ui';
+import { Page, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { formatDate } from '@vben/utils';
 
-import { Button, Modal, Tag } from 'antdv-next';
+import { Button, Tag } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteNotice, getNoticePage, updateNoticeStatus } from '#/api';
@@ -24,7 +24,6 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   connectedComponent: Form,
   destroyOnClose: true,
 });
-const previewOpen = ref(false);
 const previewRow = ref<SystemNoticeApi.Notice>();
 const pinnedTagStyle = {
   backgroundColor: 'hsl(var(--primary) / 10%)',
@@ -54,6 +53,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
   } as VxeTableGridOptions<SystemNoticeApi.Notice>,
 });
 
+const [PreviewModal, previewModalApi] = useVbenModal({
+  footer: false,
+});
+
 function onActionClick({
   code,
   row,
@@ -65,7 +68,7 @@ function onActionClick({
 
 function onPreview(row: SystemNoticeApi.Notice) {
   previewRow.value = row;
-  previewOpen.value = true;
+  previewModalApi.open();
 }
 
 async function onStatusChange(newStatus: number, row: SystemNoticeApi.Notice) {
@@ -98,14 +101,9 @@ async function onStatusChange(newStatus: number, row: SystemNoticeApi.Notice) {
         </button>
       </template>
     </Grid>
-    <Modal
-      v-model:open="previewOpen"
-      :footer="null"
-      title="公告预览"
-      width="860px"
-    >
+    <PreviewModal class="w-[860px]" :fullscreen-button="false" title="公告预览">
       <div class="space-y-4">
-        <div class="border-t pt-4">
+        <div>
           <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
             <Tag v-if="previewRow?.isPinned === 1" :style="pinnedTagStyle">
               置顶
@@ -120,6 +118,6 @@ async function onStatusChange(newStatus: number, row: SystemNoticeApi.Notice) {
         </div>
         <RichTextPreview :content="previewRow?.content" :min-height="320" />
       </div>
-    </Modal>
+    </PreviewModal>
   </Page>
 </template>

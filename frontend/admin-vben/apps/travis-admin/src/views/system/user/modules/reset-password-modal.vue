@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { h, ref } from 'vue';
 
-import { useVbenModal } from '@vben/common-ui';
+import { alert as vbenAlert, useVbenModal } from '@vben/common-ui';
 import { useClipboard } from '@vueuse/core';
 
 import { App, Button } from 'antdv-next';
@@ -13,7 +13,7 @@ import { $t } from '#/locales';
 const emit = defineEmits(['success']);
 
 const { copy } = useClipboard({ legacy: true });
-const { message, modal: antdModal } = App.useApp();
+const { message } = App.useApp();
 
 const userId = ref<number>();
 const nicknameVal = ref('');
@@ -84,7 +84,8 @@ const [Form, formApi] = useVbenForm({
         };
       },
       rules: z.string().refine(isValidPassword, {
-        message: '密码需为8-32位，并包含大写字母、小写字母、数字、特殊符号中的至少3种',
+        message:
+          '密码需为8-32位，并包含大写字母、小写字母、数字、特殊符号中的至少3种',
       }),
     },
   ],
@@ -101,29 +102,28 @@ const [Modal, modalApi] = useVbenModal({
     const { password } = await formApi.getValues();
     modalApi.lock();
     try {
-      const result = await resetUserPassword(
-        userId.value,
-        password.trim(),
-      );
+      const result = await resetUserPassword(userId.value, password.trim());
       const pwd = typeof result === 'string' ? result : String(result ?? '');
       emit('success');
       modalApi.close();
-      antdModal.success({
-        content: h('div', { class: 'flex items-center gap-2' }, [
-          h('span', $t('system.user.resetPasswordResult', { password: pwd })),
-          h(
-            Button,
-            {
-              size: 'small',
-              type: 'link',
-              onClick: async () => {
-                await copy(pwd);
-                message.success($t('ui.jsonViewer.copied'));
+      await vbenAlert({
+        content: () =>
+          h('div', { class: 'flex items-center gap-2' }, [
+            h('span', $t('system.user.resetPasswordResult', { password: pwd })),
+            h(
+              Button,
+              {
+                size: 'small',
+                type: 'link',
+                onClick: async () => {
+                  await copy(pwd);
+                  message.success($t('ui.jsonViewer.copied'));
+                },
               },
-            },
-            () => $t('system.user.copyPassword'),
-          ),
-        ]),
+              () => $t('system.user.copyPassword'),
+            ),
+          ]),
+        icon: 'success',
         title: $t('system.user.resetPassword'),
       });
     } catch {

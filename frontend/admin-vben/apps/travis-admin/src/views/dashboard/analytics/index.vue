@@ -6,14 +6,16 @@ import { useRouter } from 'vue-router';
 
 import { useAccess } from '@vben/access';
 import { EmptyIcon, IconifyIcon } from '@vben/icons';
-import { formatDate } from '@vben/utils';
 
-import { Button, Card, Skeleton, Spin, Tag } from 'antdv-next';
+import { Button, Card, Skeleton } from 'antdv-next';
 
 import { getJobDashboard, getPublishedNoticePage, getPublishedVersionLogs } from '#/api';
-import RichTextPreview from '#/components/rich-text-preview/index.vue';
 import { $t } from '#/locales';
 import { OPS_PERMS } from '#/utils/permissions';
+
+import NoticeList from '../../_core/notice/components/notice-list.vue';
+import NoticePreviewModal from '../../_core/notice/components/notice-preview-modal.vue';
+import VersionLogTimeline from '../../_core/version/components/version-log-timeline.vue';
 
 const router = useRouter();
 const { hasAccessByCodes } = useAccess();
@@ -30,11 +32,9 @@ const loading = ref(true);
 const noticeLoading = ref(false);
 const versionLoading = ref(false);
 const homePageSize = 10;
-const versionTagStyle = {
-  backgroundColor: 'hsl(var(--primary) / 10%)',
-  borderColor: 'hsl(var(--primary) / 20%)',
-  color: 'hsl(var(--primary))',
-};
+const noticePreviewRef = ref<{
+  open: (notice: SystemNoticeApi.Notice) => void;
+}>();
 
 const metricItems = computed(() => [
   {
@@ -81,9 +81,8 @@ const versionHasMore = computed(
   () => versionLogs.value.length < versionTotal.value,
 );
 
-function formatVersion(value?: null | string) {
-  if (!value) return '-';
-  return value.toLowerCase().startsWith('v') ? value : `v${value}`;
+function onNoticePreview(notice: SystemNoticeApi.Notice) {
+  noticePreviewRef.value?.open(notice);
 }
 
 async function fetchVersionLogs() {
@@ -161,6 +160,7 @@ onMounted(async () => {
 
 <template>
   <div class="p-5">
+    <NoticePreviewModal ref="noticePreviewRef" />
     <Skeleton v-if="loading" active :paragraph="{ rows: 8 }" />
 
     <div v-else class="flex flex-col gap-5">
@@ -228,37 +228,14 @@ onMounted(async () => {
               <EmptyIcon class="mx-auto" />
               <div class="mt-2 text-sm">{{ $t('common.noData') }}</div>
             </div>
-            <div v-else class="space-y-4">
-              <article
-                v-for="notice in notices"
-                :key="notice.id"
-                class="rounded-lg border border-border/60 bg-muted/20 p-4"
-              >
-                <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <Tag v-if="notice.isPinned === 1" :style="versionTagStyle">
-                    置顶
-                  </Tag>
-                  <h3 class="text-foreground text-base font-semibold">
-                    {{ notice.title }}
-                  </h3>
-                  <span class="text-muted-foreground text-xs">{{
-                    formatDate(notice.publishTime || notice.createTime)
-                  }}</span>
-                </div>
-                <div class="mt-3">
-                  <RichTextPreview :content="notice.content" :min-height="0" />
-                </div>
-              </article>
-              <div v-if="noticeLoading" class="flex justify-center py-3">
-                <Spin size="small" />
-              </div>
-              <div
-                v-if="!noticeLoading && !noticeHasMore"
-                class="py-3 text-center text-muted-foreground text-xs"
-              >
-                已加载全部系统公告
-              </div>
-            </div>
+            <NoticeList
+              v-else
+              compact
+              :has-more="noticeHasMore"
+              :loading="noticeLoading"
+              :notices="notices"
+              @preview="onNoticePreview"
+            />
           </div>
         </Card>
 
@@ -283,39 +260,13 @@ onMounted(async () => {
               <EmptyIcon class="mx-auto" />
               <div class="mt-2 text-sm">{{ $t('common.noData') }}</div>
             </div>
-            <div v-else class="space-y-4">
-              <article
-                v-for="log in versionLogs"
-                :key="log.id"
-                class="rounded-lg border border-border/60 bg-muted/20 p-4"
-              >
-                <div
-                  class="flex items-center gap-3 text-muted-foreground text-xs"
-                >
-                  <Tag :style="versionTagStyle">
-                    {{ formatVersion(log.version) }}
-                  </Tag>
-                  <span>{{
-                    formatDate(log.publishTime || log.createTime)
-                  }}</span>
-                </div>
-                <h3 class="mt-3 text-foreground text-base font-semibold">
-                  {{ log.title }}
-                </h3>
-                <div class="mt-3">
-                  <RichTextPreview :content="log.content" :min-height="0" />
-                </div>
-              </article>
-              <div v-if="versionLoading" class="flex justify-center py-3">
-                <Spin size="small" />
-              </div>
-              <div
-                v-if="!versionLoading && !versionHasMore"
-                class="py-3 text-center text-muted-foreground text-xs"
-              >
-                已加载全部更新日志
-              </div>
-            </div>
+            <VersionLogTimeline
+              v-else
+              compact
+              :has-more="versionHasMore"
+              :loading="versionLoading"
+              :logs="versionLogs"
+            />
           </div>
         </Card>
       </div>

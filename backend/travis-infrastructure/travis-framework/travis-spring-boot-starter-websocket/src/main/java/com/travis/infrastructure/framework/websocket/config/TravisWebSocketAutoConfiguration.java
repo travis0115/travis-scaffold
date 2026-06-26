@@ -1,10 +1,6 @@
 package com.travis.infrastructure.framework.websocket.config;
 
-import com.travis.infrastructure.framework.websocket.core.LocalWebSocketSessionManager;
-import com.travis.infrastructure.framework.websocket.core.RedisWebSocketMessageDispatcher;
-import com.travis.infrastructure.framework.websocket.core.WebSocketMessageSender;
-import com.travis.infrastructure.framework.websocket.core.WebSocketSessionListener;
-import com.travis.infrastructure.framework.websocket.core.WebSocketSessionManager;
+import com.travis.infrastructure.framework.websocket.core.*;
 import com.travis.infrastructure.framework.websocket.interceptor.WebSocketAuthInterceptor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
@@ -18,6 +14,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
@@ -128,6 +125,7 @@ public class TravisWebSocketAutoConfiguration {
      * <p>拆为独立 {@link Configuration} 类，通过构造器注入已创建好的 Bean，避免与外层 {@code @Bean} 工厂方法产生循环依赖。
      */
     @Configuration
+    @EnableWebSocket
     static class WebSocketEndpointConfigurer implements WebSocketConfigurer {
 
         private final WebSocketProperties properties;

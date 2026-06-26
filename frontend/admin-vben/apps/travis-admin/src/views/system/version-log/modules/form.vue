@@ -4,7 +4,6 @@ import type { SystemVersionLogApi } from '#/api';
 import { computed, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
-import { formatDateTime } from '@vben/utils';
 
 import { useVbenForm } from '#/adapter/form';
 import { createVersionLog, getVersionLogDetail, updateVersionLog } from '#/api';
@@ -59,7 +58,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
         formApi.setValues(detail);
       } else {
         formData.value = undefined;
-        formApi.setValues({ publishTime: formatDateTime(new Date()) });
+        formApi.setValues({ publishTime: new Date() });
       }
     }
   },

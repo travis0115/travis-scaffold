@@ -8,14 +8,20 @@ import type { SystemMenuApi } from '#/api';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
-import { Page, useVbenDrawer } from '@vben/common-ui';
+import { confirm as vbenConfirm, Page, useVbenDrawer } from '@vben/common-ui';
 import { IconifyIcon, Plus } from '@vben/icons';
 import { useAccessStore, useUserStore } from '@vben/stores';
 
-import { Button, message, Modal } from 'antdv-next';
+import { Button, message } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { deleteMenu, getMenuTree, moveDownMenu, moveUpMenu, updateMenuStatus } from '#/api';
+import {
+  deleteMenu,
+  getMenuTree,
+  moveDownMenu,
+  moveUpMenu,
+  updateMenuStatus,
+} from '#/api';
 import { $t } from '#/locales';
 import { generateAccess } from '#/router/access';
 import { accessRoutes } from '#/router/routes';
@@ -114,12 +120,11 @@ async function refreshMenuAccess() {
   const userStore = useUserStore();
 
   // 重新生成菜单和路由
-  const { accessibleMenus, accessibleRoutes } =
-    await generateAccess({
-      roles: userStore.userInfo?.roles ?? [],
-      router,
-      routes: accessRoutes,
-    });
+  const { accessibleMenus, accessibleRoutes } = await generateAccess({
+    roles: userStore.userInfo?.roles ?? [],
+    router,
+    routes: accessRoutes,
+  });
 
   accessStore.setAccessMenus(accessibleMenus);
   accessStore.setAccessRoutes(accessibleRoutes);
@@ -128,10 +133,7 @@ async function refreshMenuAccess() {
 
 async function refreshMenuAndAccessCodes() {
   const authStore = useAuthStore();
-  await Promise.all([
-    authStore.fetchUserInfo(),
-    authStore.fetchAccessCodes(),
-  ]);
+  await Promise.all([authStore.fetchUserInfo(), authStore.fetchAccessCodes()]);
   await onRefresh();
 }
 
@@ -162,14 +164,16 @@ async function deleteMenuRow(row: SystemMenuApi.SysMenu) {
 }
 
 function onDelete(row: SystemMenuApi.SysMenu) {
-  Modal.confirm({
+  vbenConfirm({
     cancelText: $t('common.cancel'),
     content: `该菜单下存在下级菜单，删除「${row.menuName}」后将同时删除所有下级菜单，请确认是否继续？`,
-    okText: '确认删除',
-    okType: 'danger',
-    onOk: () => deleteMenuRow(row),
+    confirmButtonProps: { danger: true },
+    confirmText: '确认删除',
+    icon: 'warning',
     title: '删除菜单',
-  });
+  })
+    .then(() => deleteMenuRow(row))
+    .catch(() => {});
 }
 
 function onMoveUp(row: SystemMenuApi.SysMenu) {

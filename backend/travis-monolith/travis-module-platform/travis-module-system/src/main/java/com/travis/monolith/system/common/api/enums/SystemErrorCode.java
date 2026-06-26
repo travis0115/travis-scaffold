@@ -38,6 +38,7 @@ public enum SystemErrorCode implements ErrorCode {
 
     /* notice模块 900-999 */
     /* file模块 1000-1099 */
+    FILE_FOLDER_BUILTIN_NOT_DELETABLE("SYS_1000", "系统内置文件夹不允许删除"),
 
     /* config模块 1100-1199 */
     CONFIG_BUILTIN_NOT_DELETABLE("SYS_1100", "系统内置配置不允许删除"),

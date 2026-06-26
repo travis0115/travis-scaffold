@@ -1,11 +1,17 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-import { Profile, VbenAvatar, VbenButton, VCropper } from '@vben/common-ui';
+import {
+  Profile,
+  useVbenModal,
+  VbenAvatar,
+  VbenButton,
+  VCropper,
+} from '@vben/common-ui';
 import { preferences } from '@vben/preferences';
 import { useUserStore } from '@vben/stores';
 
-import { message, Modal } from 'antdv-next';
+import { message } from 'antdv-next';
 
 import { updateAvatarApi, uploadFileApi } from '#/api';
 
@@ -16,8 +22,6 @@ import ProfilePasswordSetting from './password-setting.vue';
 const userStore = useUserStore();
 
 const tabsValue = ref<string>('basic');
-const uploading = ref(false);
-const modalOpen = ref(false);
 const cropperRef = ref<InstanceType<typeof VCropper> | null>(null);
 const selectedFileUrl = ref('');
 const selectedFile = ref<File | null>(null);
@@ -46,9 +50,24 @@ const avatarUrl = ref(
     : preferences.app.defaultAvatar,
 );
 
+const [AvatarModal, avatarModalApi] = useVbenModal({
+  centered: true,
+  class: 'w-full max-w-160',
+  closeOnClickModal: false,
+  closeOnPressEscape: false,
+  confirmText: '确定',
+  cancelText: '取消',
+  async onConfirm() {
+    await onConfirm();
+  },
+  onOpenChange(open) {
+    if (!open) onModalCancel();
+  },
+});
+
 /** 打开修改头像弹窗 */
 function openAvatarModal() {
-  modalOpen.value = true;
+  avatarModalApi.open();
 }
 
 /** 触发文件选择 */
@@ -70,11 +89,12 @@ function onFileChange(event: Event) {
   // 校验文件大小
   const maxSizeMB = Number(import.meta.env.VITE_UPLOAD_FILE_MAX_SIZE) || 20;
   // 格式化显示：>=1 不显示小数，<1 且 >=0.01 显示两位小数，<0.01 显示 0.01
-  const displaySize = maxSizeMB >= 1
-    ? Math.floor(maxSizeMB)
-    : (maxSizeMB >= 0.01
-      ? maxSizeMB.toFixed(2)
-      : '0.01');
+  const displaySize =
+    maxSizeMB >= 1
+      ? Math.floor(maxSizeMB)
+      : maxSizeMB >= 0.01
+        ? maxSizeMB.toFixed(2)
+        : '0.01';
   if (file.size / (1024 * 1024) > maxSizeMB) {
     message.error(`图片大小不能超过 ${displaySize}MB`);
     return;
@@ -139,7 +159,7 @@ async function onConfirm() {
     }
     const uploadFile = new File([u8arr], 'avatar.jpg', { type: mime });
 
-    uploading.value = true;
+    avatarModalApi.lock();
     const result = await uploadFileApi(uploadFile);
     await updateAvatarApi({ avatar: result.path });
     avatarUrl.value = result.url;
@@ -147,7 +167,7 @@ async function onConfirm() {
       userStore.setUserInfo({ ...userStore.userInfo, avatar: result.url });
     }
     message.success('头像更新成功');
-    modalOpen.value = false;
+    avatarModalApi.close();
     // 重置上传状态
     if (selectedFileUrl.value) {
       URL.revokeObjectURL(selectedFileUrl.value);
@@ -160,9 +180,9 @@ async function onConfirm() {
       previewTimer = null;
     }
   } catch {
+    avatarModalApi.unlock();
     // 错误由全局拦截器统一处理
   } finally {
-    uploading.value = false;
     if (previewTimer) {
       clearTimeout(previewTimer);
       previewTimer = null;
@@ -172,7 +192,6 @@ async function onConfirm() {
 
 /** 关闭弹窗 */
 function onModalCancel() {
-  modalOpen.value = false;
   if (selectedFileUrl.value) {
     URL.revokeObjectURL(selectedFileUrl.value);
     selectedFileUrl.value = '';
@@ -184,7 +203,6 @@ function onModalCancel() {
     }
   }
 }
-
 </script>
 <template>
   <div>
@@ -220,19 +238,7 @@ function onModalCancel() {
     </Profile>
 
     <!-- 修改头像弹窗 -->
-    <Modal
-      v-model:open="modalOpen"
-      title="修改头像"
-      centered
-      :width="640"
-      :keyboard="false"
-      :mask-closable="false"
-      ok-text="确定"
-      cancel-text="取消"
-      :confirm-loading="uploading"
-      @ok="onConfirm"
-      @cancel="onModalCancel"
-    >
+    <AvatarModal title="修改头像">
       <input
         ref="fileInputRef"
         type="file"
@@ -244,9 +250,7 @@ function onModalCancel() {
       <div class="flex gap-6 px-2 pt-2">
         <!-- 左：裁剪区域 -->
         <div class="flex-shrink-0">
-          <div
-            v-if="selectedFileUrl"
-          >
+          <div v-if="selectedFileUrl">
             <VCropper
               ref="cropperRef"
               :img="selectedFileUrl"
@@ -291,6 +295,6 @@ function onModalCancel() {
           重新上传图片
         </VbenButton>
       </div>
-    </Modal>
+    </AvatarModal>
   </div>
 </template>

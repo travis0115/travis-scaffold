@@ -12,4 +12,6 @@ public interface SysFileFolderService extends IService<SysFileFolder> {
     void create(SysFileFolderCreateReq req);
 
     void update(Long id, SysFileFolderUpdateReq req);
+
+    void deleteById(Long id);
 }

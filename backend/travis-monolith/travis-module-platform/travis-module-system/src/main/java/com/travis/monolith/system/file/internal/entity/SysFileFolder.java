@@ -10,4 +10,5 @@ public class SysFileFolder extends BaseEntity {
     private Long parentId;
     private String folderName;
     private Integer sort;
+    private Integer isBuiltin;
 }

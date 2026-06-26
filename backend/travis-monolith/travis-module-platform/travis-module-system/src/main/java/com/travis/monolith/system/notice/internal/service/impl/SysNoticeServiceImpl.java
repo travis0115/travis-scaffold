@@ -4,6 +4,7 @@ import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
+import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.notice.api.request.SysNoticeCreateReq;
 import com.travis.monolith.system.notice.api.request.SysNoticePageReq;
 import com.travis.monolith.system.notice.api.request.SysNoticeUpdateReq;
@@ -12,13 +13,14 @@ import com.travis.monolith.system.notice.internal.converter.SysNoticeConverter;
 import com.travis.monolith.system.notice.internal.entity.SysNotice;
 import com.travis.monolith.system.notice.internal.mapper.SysNoticeMapper;
 import com.travis.monolith.system.notice.internal.service.SysNoticeService;
-import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -47,7 +49,7 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
     public PageResp<SysNoticeResp> pagePublished(SysNoticePageReq req) {
         var wrapper = new LambdaQueryWrapperX<SysNotice>();
         wrapper.likeIfPresent(SysNotice::getTitle, req.getTitle())
-                .eq(SysNotice::getStatus, 1)
+                .eq(SysNotice::getStatus, Status.ENABLED.getValue())
                 .le(SysNotice::getPublishTime, LocalDateTime.now())
                 .orderByDesc(SysNotice::getIsPinned)
                 .orderByAsc(SysNotice::getSort)

@@ -7,6 +7,7 @@ import { h, unref } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
 import { $te } from '@vben/locales';
+import { confirm as vbenConfirm } from '@vben/common-ui';
 import {
   setupVbenVxeTable,
   useVbenVxeGrid as useGrid,
@@ -15,7 +16,7 @@ import { preferences } from '@vben/preferences';
 import { get, isFunction, isString } from '@vben/utils';
 
 import { objectOmit } from '@vueuse/core';
-import { Button, Image, Modal, Popconfirm, Switch, Tag } from 'antdv-next';
+import { Button, Image, Popconfirm, Switch, Tag } from 'antdv-next';
 
 import { $t } from '#/locales';
 import { getDictOptions } from '#/utils/dict';
@@ -132,7 +133,9 @@ setupVbenVxeTable({
       if (value === null || value === undefined || value === '') {
         return h('span', {}, '-');
       }
-      const tagOptions = (dictCode ? getDictOptions(dictCode) : unref(options)) ?? [
+      const tagOptions = (dictCode
+        ? getDictOptions(dictCode)
+        : unref(options)) ?? [
         { color: 'success', label: $t('common.enabled'), value: 1 },
         { color: 'error', label: $t('common.disabled'), value: 0 },
       ];
@@ -198,21 +201,23 @@ setupVbenVxeTable({
             row[loadingKey] = false;
           }
         }
-        function confirmStatusChange(newVal: any) {
+        async function confirmStatusChange(newVal: any) {
           const targetOption = tagOptions.find(
             (item: any) => item.value === newVal,
           );
           const status = targetOption?.label ?? newVal;
-          return new Promise<boolean>((resolve) => {
-            Modal.confirm({
+          try {
+            await vbenConfirm({
               cancelText: $t('common.cancel'),
               content: $t('common.confirmStatusChange', { status }),
-              okText: $t('common.confirm'),
-              onCancel: () => resolve(false),
-              onOk: () => resolve(true),
+              confirmText: $t('common.confirm'),
+              icon: 'warning',
               title: $t('common.switchStatus'),
             });
-          });
+            return true;
+          } catch {
+            return false;
+          }
         }
         return h(Switch, finallyProps);
       },
@@ -382,7 +387,9 @@ setupVbenVxeTable({
     if (!vxeUI.formats.get('emptyPlaceholder')) {
       vxeUI.formats.add('emptyPlaceholder', {
         tableCellFormatMethod: ({ cellValue }) => {
-          return cellValue === null || cellValue === undefined || cellValue === ''
+          return cellValue === null ||
+            cellValue === undefined ||
+            cellValue === ''
             ? '-'
             : cellValue;
         },

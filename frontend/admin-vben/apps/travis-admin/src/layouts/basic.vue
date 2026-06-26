@@ -104,26 +104,37 @@ onUnmounted(() => {
 });
 
 async function loadNotifications() {
-  const [messages, unread] = await Promise.all([
-    getRecentMessages(),
-    getUnreadMessageCount(),
-  ]);
-  notifications.value = messages.map((item) => ({
-    id: item.id,
-    avatar: preferences.app.defaultAvatar,
-    date: formatDateTime(item.publishTime || item.createTime),
-    isRead: item.readStatus === 1,
-    link: '/message',
-    message: item.content,
-    title: item.title,
-  }));
-  unreadCount.value = unread.count;
+  try {
+    const [messages, unread] = await Promise.all([
+      getRecentMessages(),
+      getUnreadMessageCount(),
+    ]);
+    notifications.value = messages.map((item) => ({
+      id: item.id,
+      avatar: preferences.app.defaultAvatar,
+      date: formatDateTime(item.publishTime || item.createTime),
+      isRead: item.readStatus === 1,
+      link: '/message',
+      message: item.content,
+      title: item.title,
+    }));
+    unreadCount.value = unread.count;
+  } catch {
+    notifications.value = [];
+    unreadCount.value = 0;
+  }
 }
 
 function buildNotificationSocketUrl() {
   const wsUrl = import.meta.env.VITE_GLOB_WS_URL;
   if (!wsUrl) return '';
   const url = new URL(wsUrl, window.location.origin);
+  if (url.protocol === 'http:') {
+    url.protocol = 'ws:';
+  }
+  if (url.protocol === 'https:') {
+    url.protocol = 'wss:';
+  }
   url.search = '';
   url.searchParams.set('loginType', 'admin');
   url.searchParams.set('token', accessStore.accessToken || '');

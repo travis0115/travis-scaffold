@@ -12,6 +12,11 @@ export default defineConfig(async () => {
             target: 'http://localhost',
             ws: true,
           },
+          '/ws': {
+            changeOrigin: true,
+            target: 'http://localhost',
+            ws: true,
+          },
         },
       },
     },

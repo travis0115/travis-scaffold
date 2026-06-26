@@ -3,9 +3,7 @@ import type { VbenFormSchema } from '#/adapter/form';
 
 import { computed } from 'vue';
 
-import { ProfilePasswordSetting, z } from '@vben/common-ui';
-
-import { Modal } from 'antdv-next';
+import { alert as vbenAlert, ProfilePasswordSetting, z } from '@vben/common-ui';
 
 import { changePasswordApi } from '#/api';
 import { useAuthStore } from '#/store/auth';
@@ -40,13 +38,11 @@ const formSchema = computed((): VbenFormSchema[] => {
             if (/[a-z]/.test(value)) types++;
             if (/[A-Z]/.test(value)) types++;
             if (/\d/.test(value)) types++;
-            if (/[~!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value))
-              types++;
+            if (/[~!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value)) types++;
             return types >= 3;
           },
           {
-            message:
-              '密码需包含大写字母、小写字母、数字、特殊符号中的至少3种',
+            message: '密码需包含大写字母、小写字母、数字、特殊符号中的至少3种',
           },
         ),
     },
@@ -79,17 +75,14 @@ async function handleSubmit(values: Record<string, any>) {
       oldPassword: values.oldPassword,
       newPassword: values.newPassword,
     });
-    Modal.success({
-      title: '密码修改成功',
+    await vbenAlert({
       content: '请重新登录',
-      okText: '确定',
-      cancelText: '取消',
-      centered: true,
-      onOk: async () => {
-        const authStore = useAuthStore();
-        await authStore.logout();
-      },
+      confirmText: '确定',
+      icon: 'success',
+      title: '密码修改成功',
     });
+    const authStore = useAuthStore();
+    await authStore.logout();
   } catch {
     // 错误由全局拦截器统一处理
   }
@@ -97,10 +90,7 @@ async function handleSubmit(values: Record<string, any>) {
 </script>
 <template>
   <div class="password-form w-2/3">
-    <ProfilePasswordSetting
-      :form-schema="formSchema"
-      @submit="handleSubmit"
-    />
+    <ProfilePasswordSetting :form-schema="formSchema" @submit="handleSubmit" />
   </div>
 </template>
 

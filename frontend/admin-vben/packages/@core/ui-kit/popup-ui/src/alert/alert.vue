@@ -43,6 +43,13 @@ const open = defineModel<boolean>('open', { default: false });
 const { $t } = useSimpleLocale();
 const components = globalShareState.getComponents();
 const isConfirm = ref(false);
+const finalConfirmButtonProps = computed(() => {
+  const { danger, variant, ...rest } = props.confirmButtonProps ?? {};
+  return {
+    ...rest,
+    variant: variant ?? (danger ? 'destructive' : 'default'),
+  };
+});
 
 function onAlertClosed() {
   emits('closed', isConfirm.value);
@@ -204,13 +211,13 @@ async function handleOpenChange(val: boolean) {
             </component>
           </AlertDialogCancel>
           <AlertDialogAction as-child>
-            <component
-              :is="components.PrimaryButton || VbenButton"
+            <VbenButton
+              v-bind="finalConfirmButtonProps"
               :loading="loading"
               @click="handleConfirm"
             >
               {{ confirmText || $t('confirm') }}
-            </component>
+            </VbenButton>
           </AlertDialogAction>
         </div>
       </div>

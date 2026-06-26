@@ -53,6 +53,32 @@ export function formatDateTime(time?: FormatDate) {
   return formatDate(time, 'YYYY-MM-DD HH:mm:ss');
 }
 
+export function formatLocalDateToUtc(
+  time?: FormatDate,
+  format: Format = 'YYYY-MM-DD HH:mm:ss',
+) {
+  if (time === undefined || time === null || time === '') {
+    return '';
+  }
+  try {
+    let date: dayjs.Dayjs;
+    if (dayjs.isDayjs(time)) {
+      date = time;
+    } else if (typeof time === 'string' && !TIMEZONE_REGEX.test(time)) {
+      date = dayjs.tz(time, currentTimezone);
+    } else {
+      date = dayjs(time);
+    }
+    if (!date.isValid()) {
+      throw new Error('Invalid date');
+    }
+    return date.utc().format(format);
+  } catch (error) {
+    console.error(`Error formatting date to UTC: ${error}`);
+    return String(time ?? '');
+  }
+}
+
 export function isDate(value: any): value is Date {
   return value instanceof Date;
 }

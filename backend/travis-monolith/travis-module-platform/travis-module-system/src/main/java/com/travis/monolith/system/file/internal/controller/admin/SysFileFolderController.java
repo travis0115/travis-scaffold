@@ -43,7 +43,7 @@ public class SysFileFolderController {
     @DeleteMapping("/{id}")
     @SaCheckPermission(value = SystemPermission.FILE_DELETE, type = LoginType.ADMIN)
     public ApiResponse<Void> delete(@PathVariable Long id) {
-        folderService.removeById(id);
+        folderService.deleteById(id);
         return ApiResponse.success();
     }
 }

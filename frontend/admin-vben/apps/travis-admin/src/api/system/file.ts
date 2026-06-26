@@ -15,15 +15,11 @@ export interface FileUploadResult {
  * @param file 文件对象
  * @returns 文件上传结果（含path和url）
  */
-export function uploadFileApi(file: File, folderId?: number) {
+export function uploadFileApi(file: File, folderId?: number | string) {
   const formData = new FormData();
   formData.append('file', file);
   if (folderId) formData.append('folderId', String(folderId));
-  return requestClient.post<FileUploadResult>(
-    '/system/file/upload',
-    formData,
-    {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    },
-  );
+  return requestClient.post<FileUploadResult>('/system/file/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
 }

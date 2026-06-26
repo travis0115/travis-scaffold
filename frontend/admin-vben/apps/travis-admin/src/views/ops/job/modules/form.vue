@@ -3,7 +3,11 @@ import type { OpsJobApi } from '#/api';
 
 import { computed, reactive, ref } from 'vue';
 
-import { useVbenDrawer } from '@vben/common-ui';
+import {
+  confirm as vbenConfirm,
+  useVbenDrawer,
+  useVbenModal,
+} from '@vben/common-ui';
 
 import { useDebounceFn } from '@vueuse/core';
 import {
@@ -12,7 +16,6 @@ import {
   FormItem,
   Input,
   message,
-  Modal,
   Select,
   Space,
 } from 'antdv-next';
@@ -37,7 +40,6 @@ const previewTimes = ref<string[]>([]);
 const userOptions = ref<Array<{ label: string; value: number }>>([]);
 const userOptionsLoading = ref(false);
 let userSearchSequence = 0;
-const cronVisible = ref(false);
 const cronModel = reactive({
   frequency: 'DAY',
   hour: 0,
@@ -124,6 +126,12 @@ const [Drawer, drawerApi] = useVbenDrawer({
         scheduleType: 'CRON',
       });
     }
+  },
+});
+
+const [CronModal, cronModalApi] = useVbenModal({
+  onConfirm() {
+    generateCron();
   },
 });
 
@@ -235,18 +243,20 @@ function generateCron() {
     WEEK: `${second} ${minute} ${hour} ? * ${weekday}`,
   }[frequency];
   formApi.setFieldValue('cronExpression', expression);
-  cronVisible.value = false;
+  cronModalApi.close();
 }
 
-function confirmUpdate() {
-  return new Promise<boolean>((resolve) => {
-    Modal.confirm({
+async function confirmUpdate() {
+  try {
+    await vbenConfirm({
       content: '修改运行中的任务会立即重建 Quartz 调度配置，确认继续吗？',
-      onCancel: () => resolve(false),
-      onOk: () => resolve(true),
+      icon: 'warning',
       title: '确认修改任务',
     });
-  });
+    return true;
+  } catch {
+    return false;
+  }
 }
 </script>
 
@@ -254,7 +264,7 @@ function confirmUpdate() {
   <Drawer class="w-full max-w-220" :title="title">
     <JobForm />
     <Space class="mb-4 ml-30">
-      <Button @click="cronVisible = true">Cron 生成器</Button>
+      <Button @click="cronModalApi.open()">Cron 生成器</Button>
       <Button v-access:code="OPS_PERMS.jobQuery" @click="onPreview">
         预览执行时间
       </Button>
@@ -265,7 +275,7 @@ function confirmUpdate() {
     </div>
   </Drawer>
 
-  <Modal v-model:open="cronVisible" title="Cron 可视化生成" @ok="generateCron">
+  <CronModal title="Cron 可视化生成">
     <Form layout="vertical">
       <FormItem label="执行频率">
         <Select
@@ -314,5 +324,5 @@ function confirmUpdate() {
         <Input value="生成后仍会由后端 Quartz 再次校验" disabled />
       </FormItem>
     </Form>
-  </Modal>
+  </CronModal>
 </template>

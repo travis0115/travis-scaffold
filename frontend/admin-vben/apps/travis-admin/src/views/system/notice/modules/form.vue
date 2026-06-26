@@ -4,7 +4,6 @@ import type { SystemNoticeApi } from '#/api';
 import { computed, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
-import { formatDateTime } from '@vben/utils';
 
 import { useVbenForm } from '#/adapter/form';
 import { createNotice, getNoticeDetail, updateNotice } from '#/api';
@@ -57,7 +56,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
       await formApi.setValues(detail);
     } else {
       formData.value = undefined;
-      await formApi.setValues({ publishTime: formatDateTime(new Date()) });
+      await formApi.setValues({ publishTime: new Date() });
     }
   },
 });

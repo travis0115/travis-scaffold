@@ -4,6 +4,7 @@
 import type { RequestClientOptions } from '@vben/request';
 
 import { useAppConfig } from '@vben/hooks';
+import { alert as vbenAlert } from '@vben/common-ui';
 import { preferences } from '@vben/preferences';
 import {
   authenticateResponseInterceptor,
@@ -14,7 +15,7 @@ import {
 import { useAccessStore, useRequestLoadingStore } from '@vben/stores';
 import { startProgress, stopProgress } from '@vben/utils';
 
-import { message, Modal } from 'antdv-next';
+import { message } from 'antdv-next';
 
 import { $t } from '#/locales';
 import { useAuthStore } from '#/store';
@@ -62,15 +63,13 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
       ) {
         accessStore.setLoginExpired(true);
       } else {
-        // 提示用户登录已失效，点击确定后跳转登录页
-        Modal.warning({
+        await vbenAlert({
           title: '登录失效',
           content: '登录信息已失效，请重新登录',
-          okText: $t('common.gotIt'),
-          async onOk() {
-            await authStore.logout();
-          },
+          confirmText: $t('common.gotIt'),
+          icon: 'warning',
         });
+        await authStore.logout();
       }
     } finally {
       isReAuthenticating = false;
@@ -149,10 +148,7 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
 
       // 后端返回 HTTP 200 但响应体 code 为 "401" 时，也视为认证失败
       const responseData = error?.response?.data ?? error?.data;
-      if (
-        error?.response?.status !== 401 &&
-        responseData?.code === '401'
-      ) {
+      if (error?.response?.status !== 401 && responseData?.code === '401') {
         await doReAuthenticate();
         throw error;
       }
@@ -190,19 +186,21 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
         return;
       }
 
-      // 默认使用 Modal 弹窗
+      // 默认使用统一弹窗
       if (isErrorModalOpen) {
         return;
       }
       isErrorModalOpen = true;
-      Modal.error({
+      vbenAlert({
         title: '操作失败',
         content: finalMessage,
-        okText: $t('common.gotIt'),
-        afterClose() {
+        confirmText: $t('common.gotIt'),
+        icon: 'error',
+      })
+        .catch(() => {})
+        .finally(() => {
           isErrorModalOpen = false;
-        },
-      });
+        });
     }),
   );
 

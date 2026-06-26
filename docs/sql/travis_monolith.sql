@@ -583,6 +583,7 @@ CREATE TABLE `sys_file_folder` (
   `parent_id` bigint NOT NULL DEFAULT '0' COMMENT '父文件夹ID',
   `folder_name` varchar(100) NOT NULL COMMENT '文件夹名称',
   `sort` int NOT NULL DEFAULT '0' COMMENT '排序',
+  `is_builtin` tinyint unsigned NOT NULL DEFAULT '0' COMMENT '是否系统内置 0-否 1-是',
   `is_deleted` tinyint NOT NULL DEFAULT '0' COMMENT '是否删除',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `create_by` bigint NOT NULL COMMENT '创建人ID',
@@ -596,7 +597,7 @@ CREATE TABLE `sys_file_folder` (
 -- Records of sys_file_folder
 -- ----------------------------
 BEGIN;
-INSERT INTO `sys_file_folder` (`id`, `parent_id`, `folder_name`, `sort`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (2065023419594207234, 0, '测试', 0, 0, '2026-06-11 10:48:44', 1, NULL, NULL);
+INSERT INTO `sys_file_folder` (`id`, `parent_id`, `folder_name`, `sort`, `is_builtin`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (2065023419594207234, 0, '测试', 0, 0, 0, '2026-06-11 10:48:44', 1, NULL, NULL);
 COMMIT;
 
 -- ----------------------------

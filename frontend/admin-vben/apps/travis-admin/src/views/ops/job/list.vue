@@ -7,7 +7,7 @@ import type { OpsJobApi } from '#/api';
 
 import { ref } from 'vue';
 
-import { Page, useVbenDrawer } from '@vben/common-ui';
+import { Page, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { ArrowUpToLine, Download, Plus } from '@vben/icons';
 
 import {
@@ -15,7 +15,6 @@ import {
   Col,
   Input,
   message,
-  Modal,
   Progress,
   Row,
   Space,
@@ -39,10 +38,8 @@ import { hasAccessCode, OPS_PERMS } from '#/utils/permissions';
 import { useJobColumns, useJobGridFormSchema } from './data';
 import JobForm from './modules/form.vue';
 
-const runVisible = ref(false);
 const runTarget = ref<OpsJobApi.Job>();
 const runParams = ref('{}');
-const statsVisible = ref(false);
 const statsTarget = ref<OpsJobApi.Job>();
 const stats = ref<OpsJobApi.Stats>();
 const importInput = ref<HTMLInputElement>();
@@ -50,6 +47,16 @@ const importInput = ref<HTMLInputElement>();
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   connectedComponent: JobForm,
   destroyOnClose: true,
+});
+
+const [RunModal, runModalApi] = useVbenModal({
+  async onConfirm() {
+    await confirmRun();
+  },
+});
+
+const [StatsModal, statsModalApi] = useVbenModal({
+  footer: false,
 });
 
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -106,7 +113,7 @@ async function onCopy(row: OpsJobApi.Job) {
 function openRun(row: OpsJobApi.Job) {
   runTarget.value = row;
   runParams.value = row.params || '{}';
-  runVisible.value = true;
+  runModalApi.open();
 }
 
 async function confirmRun() {
@@ -116,15 +123,20 @@ async function confirmRun() {
     message.error('本次执行参数不是有效的 JSON');
     return;
   }
-  await runJob(runTarget.value!.id, runParams.value);
-  message.success('任务已提交执行');
-  runVisible.value = false;
+  runModalApi.lock();
+  try {
+    await runJob(runTarget.value!.id, runParams.value);
+    message.success('任务已提交执行');
+    runModalApi.close();
+  } catch {
+    runModalApi.unlock();
+  }
 }
 
 async function openStats(row: OpsJobApi.Job) {
   statsTarget.value = row;
   stats.value = await getJobStats(row.id);
-  statsVisible.value = true;
+  statsModalApi.open();
 }
 
 function downloadJson(filename: string, value: unknown) {
@@ -203,16 +215,14 @@ async function onImportFile(event: Event) {
       </template>
     </Grid>
 
-    <Modal v-model:open="runVisible" title="立即执行任务" @ok="confirmRun">
+    <RunModal title="立即执行任务">
       <p class="mb-3">立即执行不会改变原调度计划。请确认本次执行参数。</p>
       <Input.TextArea v-model:value="runParams" :rows="10" />
-    </Modal>
+    </RunModal>
 
-    <Modal
-      v-model:open="statsVisible"
-      :footer="null"
+    <StatsModal
       :title="`执行统计 - ${statsTarget?.jobName ?? ''}`"
-      width="760px"
+      class="w-full max-w-190"
     >
       <Row v-if="stats" :gutter="12">
         <Col :span="6">
@@ -263,6 +273,6 @@ async function onImportFile(event: Event) {
           ms
         </div>
       </div>
-    </Modal>
+    </StatsModal>
   </Page>
 </template>

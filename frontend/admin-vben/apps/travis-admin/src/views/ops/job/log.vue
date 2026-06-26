@@ -7,15 +7,15 @@ import type { OpsJobApi } from '#/api';
 
 import { ref } from 'vue';
 
-import { Page } from '@vben/common-ui';
+import { confirm as vbenConfirm, Page, useVbenModal } from '@vben/common-ui';
 import { Download } from '@vben/icons';
+import { formatDateTime } from '@vben/utils';
 
 import {
   Button,
   Descriptions,
   DescriptionsItem,
   message,
-  Modal,
   Space,
 } from 'antdv-next';
 
@@ -30,7 +30,6 @@ import { OPS_PERMS } from '#/utils/permissions';
 
 import { useLogColumns, useLogGridFormSchema } from './data';
 
-const detailVisible = ref(false);
 const detail = ref<OpsJobApi.JobLog>();
 
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -53,9 +52,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
   } as VxeTableGridOptions<OpsJobApi.JobLog>,
 });
 
+const [DetailModal, detailModalApi] = useVbenModal({
+  footer: false,
+});
+
 async function onActionClick({ row }: OnActionClickParams<OpsJobApi.JobLog>) {
   detail.value = await getJobLogDetail(row.id);
-  detailVisible.value = true;
+  detailModalApi.open();
 }
 
 function downloadJson(filename: string, value: unknown) {
@@ -75,15 +78,18 @@ async function onExport() {
 }
 
 function onClean() {
-  Modal.confirm({
+  vbenConfirm({
     content: '该操作会清理全部任务执行日志，并使统计缓存重新计算。',
-    onOk: async () => {
+    confirmText: '确认清理',
+    icon: 'warning',
+    title: '确认清理执行日志',
+  })
+    .then(async () => {
       await cleanJobLogs();
       message.success('执行日志已清理');
       await gridApi.query();
-    },
-    title: '确认清理执行日志',
-  });
+    })
+    .catch(() => {});
 }
 </script>
 
@@ -96,19 +102,18 @@ function onClean() {
             <Download class="size-4" />
             导出
           </Button>
-          <Button danger v-access:code="OPS_PERMS.jobOperation" @click="onClean">
+          <Button
+            danger
+            v-access:code="OPS_PERMS.jobOperation"
+            @click="onClean"
+          >
             清理日志
           </Button>
         </Space>
       </template>
     </Grid>
 
-    <Modal
-      v-model:open="detailVisible"
-      :footer="null"
-      title="执行日志详情"
-      width="900px"
-    >
+    <DetailModal class="w-full max-w-225" title="执行日志详情">
       <Descriptions v-if="detail" bordered :column="2">
         <DescriptionsItem label="任务名称">
           {{ detail.jobName }}
@@ -117,7 +122,7 @@ function onClean() {
           {{ detail.schedulerInstanceId }}
         </DescriptionsItem>
         <DescriptionsItem label="开始时间">
-          {{ detail.startTime }}
+          {{ formatDateTime(detail.startTime) }}
         </DescriptionsItem>
         <DescriptionsItem label="耗时">
           {{ detail.durationMillis }} ms
@@ -137,6 +142,6 @@ function onClean() {
           }}</pre>
         </DescriptionsItem>
       </Descriptions>
-    </Modal>
+    </DetailModal>
   </Page>
 </template>
