@@ -14,4 +14,12 @@ public interface SysFileApi {
      * @return 完整访问URL
      */
     String getFileUrl(String path);
+
+    /**
+     * 根据文件ID拼接完整访问URL
+     *
+     * @param fileId 文件ID
+     * @return 完整访问URL
+     */
+    String getFileUrlById(Long fileId);
 }

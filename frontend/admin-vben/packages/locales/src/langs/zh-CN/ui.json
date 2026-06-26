@@ -87,6 +87,7 @@
       "unlink": "移除链接",
       "image": "图片",
       "imageUrl": "图片URL",
+      "imageSelect": "从文件库选择",
       "imageUpload": "从本地上传",
       "textColor": "文字颜色",
       "highlightColor": "高亮颜色",

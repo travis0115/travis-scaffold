@@ -29,6 +29,9 @@ public class SysUserResp {
     /** 头像地址 */
     private String avatar;
 
+    /** 头像文件ID */
+    private Long avatarFileId;
+
     /** 邮箱 */
     private String email;
 

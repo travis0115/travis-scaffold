@@ -29,7 +29,7 @@ export async function updateProfileApi(
  */
 export async function updateAvatarApi(
   data: {
-    avatar: string;
+    avatarFileId: number | string;
   },
   config?: RequestClientConfig,
 ) {

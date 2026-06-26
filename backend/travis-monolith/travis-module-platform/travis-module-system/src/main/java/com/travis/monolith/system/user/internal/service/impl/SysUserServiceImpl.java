@@ -1,7 +1,6 @@
 package com.travis.monolith.system.user.internal.service.impl;
 
 import cn.hutool.core.util.RandomUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.BCrypt;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
@@ -14,10 +13,9 @@ import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.redis.core.RedisUtil;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.util.Ip2RegionUtil;
-import com.travis.monolith.system.common.api.constant.SysConfigKey;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
-import com.travis.monolith.system.config.api.SysConfigApi;
 import com.travis.monolith.system.dept.api.SysDeptApi;
+import com.travis.monolith.system.file.api.SysFileApi;
 import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.api.request.*;
 import com.travis.monolith.system.user.api.response.SysUserResp;
@@ -25,11 +23,11 @@ import com.travis.monolith.system.user.internal.converter.SysUserConverter;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.mapper.SysUserMapper;
 import com.travis.monolith.system.user.internal.service.SysUserService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,7 +40,6 @@ import java.util.Map;
  * @author travis
  */
 @Service
-@RequiredArgsConstructor
 @CacheConfig(cacheNames = "system:user")
 public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         implements SysUserService {
@@ -58,11 +55,22 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     /** 角色 API */
     private final SysRoleApi roleApi;
 
-    /** 系统配置 API */
-    private final SysConfigApi configApi;
+    /** 文件 API */
+    private final SysFileApi fileApi;
 
     /** 对象转换器 */
     private final SysUserConverter converter;
+
+    public SysUserServiceImpl(
+            SysDeptApi deptApi,
+            SysRoleApi roleApi,
+            @Lazy SysFileApi fileApi,
+            SysUserConverter converter) {
+        this.deptApi = deptApi;
+        this.roleApi = roleApi;
+        this.fileApi = fileApi;
+        this.converter = converter;
+    }
 
     /** 分页查询用户列表 */
     @Override
@@ -298,32 +306,15 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
 
     private SysUserResp toResp(SysUser user) {
         var resp = converter.toResp(user);
-        resp.setAvatar(buildAvatarUrl(user.getAvatar()));
+        resp.setAvatar(fileApi.getFileUrlById(user.getAvatarFileId()));
         if (user.getDeptId() != null && user.getDeptId() != 0) {
-            var deptMap = deptApi.getDeptNameMapByIds(List.of(user.getDeptId()));
-            var deptName = deptMap.get(user.getDeptId());
-            if (deptName != null) {
-                resp.setDeptName(deptName);
-            }
+            var deptName = deptApi.getDeptNameById(user.getDeptId());
+            resp.setDeptName(deptName);
         }
         resp.setRoleNames(roleApi.getRoleNamesByUserId(user.getId()));
         if (user.getLastLoginIp() != null && !user.getLastLoginIp().isEmpty()) {
             resp.setLastLoginLocation(Ip2RegionUtil.getRegionByIP(user.getLastLoginIp()));
         }
         return resp;
-    }
-
-    private String buildAvatarUrl(String avatar) {
-        if (StrUtil.isBlank(avatar)
-                || avatar.startsWith("http://")
-                || avatar.startsWith("https://")
-                || avatar.startsWith("//")) {
-            return avatar;
-        }
-        var baseUrl = configApi.getValue(SysConfigKey.APP_RESOURCE_BASE_URL);
-        if (StrUtil.isBlank(baseUrl)) {
-            return avatar;
-        }
-        return baseUrl + (avatar.startsWith("/") ? avatar : "/" + avatar);
     }
 }

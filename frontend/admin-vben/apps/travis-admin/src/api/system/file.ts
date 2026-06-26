@@ -6,14 +6,14 @@ export interface FileUploadResult {
   id: number;
   /** 相对路径（用于数据库存储） */
   path: string;
-  /** 完整访问URL（用于前端展示） */
+  /** 当前访问URL（用于前端展示） */
   url: string;
 }
 
 /**
  * 上传文件
  * @param file 文件对象
- * @returns 文件上传结果（含path和url）
+ * @returns 文件上传结果（含文件ID、path和当前url）
  */
 export function uploadFileApi(file: File, folderId?: number | string) {
   const formData = new FormData();

@@ -9,6 +9,7 @@ import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
+import com.travis.monolith.system.file.internal.service.RichTextFileReferenceService;
 import com.travis.monolith.system.version.api.request.SysVersionCreateReq;
 import com.travis.monolith.system.version.api.request.SysVersionPageReq;
 import com.travis.monolith.system.version.api.request.SysVersionUpdateReq;
@@ -22,7 +23,6 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +38,8 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
         implements SysVersionService {
 
     private final SysVersionConverter converter;
+
+    private final RichTextFileReferenceService richTextFileReferenceService;
 
     private static final Map<String, SFunction<SysVersion, ?>> SORT_COLUMNS =
             Map.of(
@@ -60,13 +62,12 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
                                 false,
                                 SysVersion::getCreateTime);
         var page = page(req.getPageNum(), req.getPageSize(), wrapper);
-        return PageConverter.toResp(page.convert(converter::toResp));
+        return PageConverter.toResp(page.convert(this::toResp));
     }
 
     @Override
-    @Cacheable(key = "'detail:'+#id")
     public SysVersionResp getById(Long id) {
-        return converter.toResp(getByIdOrThrow(id));
+        return toResp(getByIdOrThrow(id));
     }
 
     @Override
@@ -80,6 +81,8 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
             throw new BizException(SystemErrorCode.VERSION_EXISTS);
         }
         var entity = converter.toEntity(req);
+        entity.setContent(
+                richTextFileReferenceService.stripManagedImageSources(entity.getContent()));
         save(entity);
     }
 
@@ -97,6 +100,8 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
             throw new BizException(SystemErrorCode.VERSION_EXISTS);
         }
         converter.update(req, entity);
+        entity.setContent(
+                richTextFileReferenceService.stripManagedImageSources(entity.getContent()));
         updateById(entity);
     }
 
@@ -117,7 +122,7 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
                 .orderByDesc(SysVersion::getPublishTime)
                 .orderByDesc(SysVersion::getCreateTime);
         var page = page(req.getPageNum(), req.getPageSize(), wrapper);
-        return PageConverter.toResp(page.convert(converter::toResp));
+        return PageConverter.toResp(page.convert(this::toResp));
     }
 
     @Override
@@ -125,5 +130,11 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
     @CacheEvict(key = "'detail:'+#id")
     public void deleteById(Long id) {
         removeById(id);
+    }
+
+    private SysVersionResp toResp(SysVersion entity) {
+        var resp = converter.toResp(entity);
+        resp.setContent(richTextFileReferenceService.resolveManagedImageSources(resp.getContent()));
+        return resp;
     }
 }

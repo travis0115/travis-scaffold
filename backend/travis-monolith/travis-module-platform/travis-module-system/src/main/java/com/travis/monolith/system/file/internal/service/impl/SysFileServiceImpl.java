@@ -64,12 +64,13 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
         entity.setFileName(result.fileName());
         entity.setOriginalName(file.getOriginalFilename());
         entity.setPath(result.path());
-        entity.setUrl(buildUrl(config.getDomain(), result.path()));
         entity.setMimeType(file.getContentType());
         entity.setSize(file.getSize());
         entity.setExtension(extension(file.getOriginalFilename()));
         save(entity);
-        var response = new FileUploadResp(entity.getPath(), entity.getUrl());
+        var response =
+                new FileUploadResp(
+                        entity.getPath(), buildUrl(config.getDomain(), entity.getPath()));
         response.setId(entity.getId());
         return response;
     }
@@ -124,7 +125,39 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
         if (path == null || path.isEmpty()) {
             return path;
         }
-        return path;
+        if (isAbsoluteUrl(path)) {
+            return path;
+        }
+        var config = getDefaultStorageConfig();
+        return config == null ? path : buildUrl(config.getDomain(), path);
+    }
+
+    @Override
+    public String getFileUrlById(Long fileId) {
+        if (fileId == null) {
+            return null;
+        }
+        var file = getById(fileId);
+        if (file == null) {
+            return null;
+        }
+        var config =
+                file.getStorageConfigId() == null
+                        ? getDefaultStorageConfig()
+                        : storageConfigMapper.selectById(file.getStorageConfigId());
+        return config == null ? file.getPath() : buildUrl(config.getDomain(), file.getPath());
+    }
+
+    private SysFileStorageConfig getDefaultStorageConfig() {
+        return storageConfigMapper.selectOne(
+                new LambdaQueryWrapperX<SysFileStorageConfig>()
+                        .eq(SysFileStorageConfig::getIsDefault, 1)
+                        .eq(SysFileStorageConfig::getStatus, 1)
+                        .last("LIMIT 1"));
+    }
+
+    private boolean isAbsoluteUrl(String url) {
+        return url.startsWith("http://") || url.startsWith("https://") || url.startsWith("//");
     }
 
     private String buildUrl(String domain, String path) {
@@ -147,7 +180,10 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
         response.setFileName(file.getFileName());
         response.setOriginalName(file.getOriginalName());
         response.setPath(file.getPath());
-        response.setUrl(file.getUrl());
+        response.setUrl(
+                storageConfig == null
+                        ? file.getPath()
+                        : buildUrl(storageConfig.getDomain(), file.getPath()));
         response.setExtension(file.getExtension());
         response.setMimeType(file.getMimeType());
         response.setSize(file.getSize());

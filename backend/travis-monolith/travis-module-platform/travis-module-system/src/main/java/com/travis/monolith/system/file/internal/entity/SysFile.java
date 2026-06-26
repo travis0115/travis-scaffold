@@ -12,7 +12,6 @@ public class SysFile extends BaseEntity {
     private String fileName;
     private String originalName;
     private String path;
-    private String url;
     private String extension;
     private String mimeType;
     private Long size;

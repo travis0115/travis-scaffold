@@ -46,6 +46,7 @@ import {
   defineAsyncComponent,
   defineComponent,
   h,
+  onMounted,
   ref,
   render,
   unref,
@@ -64,6 +65,9 @@ import { VbenTiptap } from '@vben/plugins/tiptap';
 import { isEmpty } from '@vben/utils';
 
 import { message, Modal, notification } from 'antdv-next';
+
+import { uploadFileApi } from '#/api';
+import { getFilePage } from '#/api/system/file-management';
 
 type AdapterUploadProps = UploadProps & {
   aspectRatio?: string;
@@ -175,6 +179,103 @@ const withDefaultPlaceholder = (
 const toNumber = (value: unknown) => {
   const numberValue = Number(value);
   return Number.isFinite(numberValue) ? numberValue : undefined;
+};
+
+const selectRichEditorImage = () => {
+  return new Promise<undefined | { id?: number | string; url: string }>(
+    (resolve) => {
+      const FilePicker = defineComponent({
+        name: 'RichEditorFilePicker',
+        setup() {
+          const files = ref<any[]>([]);
+          const loading = ref(false);
+
+          onMounted(async () => {
+            loading.value = true;
+            try {
+              const result = await getFilePage({
+                mimeType: 'image/',
+                pageNum: 1,
+                pageSize: 24,
+              });
+              files.value = result.records ?? [];
+            } finally {
+              loading.value = false;
+            }
+          });
+
+          const select = (file: any) => {
+            resolve({ id: file.id, url: file.url });
+            modal.destroy();
+          };
+
+          const renderContent = () => {
+            if (loading.value) {
+              return h(
+                'div',
+                { class: 'py-10 text-center text-muted-foreground' },
+                '加载中...',
+              );
+            }
+            if (files.value.length === 0) {
+              return h(
+                'div',
+                { class: 'py-10 text-center text-muted-foreground' },
+                '暂无图片',
+              );
+            }
+            return h(
+              'div',
+              {
+                class:
+                  'grid max-h-[420px] grid-cols-3 gap-3 overflow-auto pr-1',
+              },
+              files.value.map((file) =>
+                h(
+                  'button',
+                  {
+                    class:
+                      'group overflow-hidden rounded-md border border-border bg-background text-left transition hover:border-primary',
+                    onClick: () => select(file),
+                    type: 'button',
+                  },
+                  [
+                    h('img', {
+                      alt: file.originalName,
+                      class: 'aspect-square w-full object-cover',
+                      src: file.url,
+                    }),
+                    h(
+                      'div',
+                      {
+                        class:
+                          'truncate px-2 py-1 text-xs text-muted-foreground group-hover:text-primary',
+                        title: file.originalName,
+                      },
+                      file.originalName,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          };
+
+          return () =>
+            h('div', { class: 'min-h-48' }, [renderContent()]);
+        },
+      });
+
+      const modal = Modal.confirm({
+        centered: true,
+        content: h(FilePicker),
+        footer: null,
+        icon: null,
+        onCancel: () => resolve(undefined),
+        title: '选择图片',
+        width: 720,
+      });
+    },
+  );
 };
 
 const getDecimalLength = (value: number) => {
@@ -776,7 +877,16 @@ async function initComponentAdapter() {
       style: { width: '100%' },
     }),
     Rate,
-    RichEditor: withDefaultPlaceholder(VbenTiptap, 'input'),
+    RichEditor: withDefaultPlaceholder(VbenTiptap, 'input', {
+      imageUpload: {
+        maxSize: 5 * 1024 * 1024,
+        select: selectRichEditorImage,
+        upload: async (file: File) => {
+          const result = await uploadFileApi(file);
+          return { id: result.id, url: result.url };
+        },
+      },
+    }),
     Select: withDefaultPlaceholder(Select, 'select', {
       style: { width: '100%' },
     }),

@@ -6,9 +6,15 @@ import type { Component } from 'vue';
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     imageUpload: {
+      selectImage: () => ReturnType;
       uploadImage: () => ReturnType;
     };
   }
+}
+
+export interface ImageUploadResult {
+  id?: number | string;
+  url: string;
 }
 
 export interface ImageUploadOptions {
@@ -18,11 +24,13 @@ export interface ImageUploadOptions {
   maxSize?: number;
   /** 上传失败回调，未提供时使用 alert 弹窗提示 */
   onUploadError?: (error: unknown) => void;
+  /** 从已上传文件中选择图片 */
+  select?: () => Promise<ImageUploadResult | string | undefined>;
   /** 上传函数，返回图片 URL，可选 onProgress 回调报告上传进度 */
   upload: (
     file: File,
     onProgress?: (percent: number) => void,
-  ) => Promise<string>;
+  ) => Promise<ImageUploadResult | string>;
 }
 
 export interface TipTapProps {

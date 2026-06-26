@@ -15,8 +15,6 @@ import com.travis.monolith.system.dept.internal.converter.SysDeptConverter;
 import com.travis.monolith.system.dept.internal.entity.SysDept;
 import com.travis.monolith.system.dept.internal.mapper.SysDeptMapper;
 import com.travis.monolith.system.dept.internal.service.SysDeptService;
-import java.util.*;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheConfig;
@@ -27,6 +25,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 部门管理服务实现，支持树形部门结构的构建
@@ -80,7 +81,7 @@ public class SysDeptServiceImpl extends ServiceImplX<SysDeptMapper, SysDept>
     @Override
     @Cacheable(key = "'name:'+#deptId")
     public String getDeptNameById(Long deptId) {
-        if (deptId == null) {
+        if (deptId == null || deptId == 0) {
             return null;
         }
         var dept = getByIdOrThrow(deptId);

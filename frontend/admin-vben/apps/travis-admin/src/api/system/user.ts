@@ -11,6 +11,7 @@ export namespace SystemUserApi {
     username: string;
     nickname: string;
     avatar?: string;
+    avatarFileId?: number | string;
     email?: string;
     mobile?: string;
     deptId?: number;

@@ -161,7 +161,7 @@ async function onConfirm() {
 
     avatarModalApi.lock();
     const result = await uploadFileApi(uploadFile);
-    await updateAvatarApi({ avatar: result.path });
+    await updateAvatarApi({ avatarFileId: result.id });
     avatarUrl.value = result.url;
     if (userStore.userInfo) {
       userStore.setUserInfo({ ...userStore.userInfo, avatar: result.url });

@@ -5,6 +5,7 @@ import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.monolith.system.common.api.enums.Status;
+import com.travis.monolith.system.file.internal.service.RichTextFileReferenceService;
 import com.travis.monolith.system.notice.api.request.SysNoticeCreateReq;
 import com.travis.monolith.system.notice.api.request.SysNoticePageReq;
 import com.travis.monolith.system.notice.api.request.SysNoticeUpdateReq;
@@ -16,7 +17,6 @@ import com.travis.monolith.system.notice.internal.service.SysNoticeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +31,8 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
     /** 对象转换器 */
     private final SysNoticeConverter converter;
 
+    private final RichTextFileReferenceService richTextFileReferenceService;
+
     @Override
     public PageResp<SysNoticeResp> page(SysNoticePageReq req) {
         var wrapper =
@@ -42,7 +44,7 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
                         .orderByDesc(SysNotice::getPublishTime)
                         .orderByDesc(SysNotice::getCreateTime);
         var page = page(req.getPageNum(), req.getPageSize(), wrapper);
-        return PageConverter.toResp(page.convert(converter::toResp));
+        return PageConverter.toResp(page.convert(this::toResp));
     }
 
     @Override
@@ -56,19 +58,20 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
                 .orderByDesc(SysNotice::getPublishTime)
                 .orderByDesc(SysNotice::getCreateTime);
         var page = page(req.getPageNum(), req.getPageSize(), wrapper);
-        return PageConverter.toResp(page.convert(converter::toResp));
+        return PageConverter.toResp(page.convert(this::toResp));
     }
 
     @Override
-    @Cacheable(key = "'detail:'+#id")
     public SysNoticeResp get(Long id) {
-        return converter.toResp(getByIdOrThrow(id));
+        return toResp(getByIdOrThrow(id));
     }
 
     @Override
     @Transactional
     public void create(SysNoticeCreateReq req) {
         var entity = converter.toEntity(req);
+        entity.setContent(
+                richTextFileReferenceService.stripManagedImageSources(entity.getContent()));
         save(entity);
     }
 
@@ -78,6 +81,8 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
     public void update(Long id, SysNoticeUpdateReq req) {
         var entity = getByIdOrThrow(id);
         converter.update(req, entity);
+        entity.setContent(
+                richTextFileReferenceService.stripManagedImageSources(entity.getContent()));
         updateById(entity);
     }
 
@@ -95,5 +100,11 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
     @CacheEvict(key = "'detail:'+#id")
     public void delete(Long id) {
         removeById(id);
+    }
+
+    private SysNoticeResp toResp(SysNotice entity) {
+        var resp = converter.toResp(entity);
+        resp.setContent(richTextFileReferenceService.resolveManagedImageSources(resp.getContent()));
+        return resp;
     }
 }

@@ -32,4 +32,12 @@ public interface SysFileService extends IService<SysFile> {
      * @return 完整访问URL，如 http://127.0.0.1/files/2026-06-02/abc.jpg
      */
     String getFileUrl(String path);
+
+    /**
+     * 根据文件ID拼接完整访问URL
+     *
+     * @param fileId 文件ID
+     * @return 完整访问URL
+     */
+    String getFileUrlById(Long fileId);
 }

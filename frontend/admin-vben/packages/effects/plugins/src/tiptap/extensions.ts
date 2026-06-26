@@ -3,7 +3,11 @@ import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
 import type { EditorView } from '@tiptap/pm/view';
 import type { Extensions } from '@tiptap/vue-3';
 
-import type { ImageUploadOptions, VbenTiptapExtensionOptions } from './types';
+import type {
+  ImageUploadOptions,
+  ImageUploadResult,
+  VbenTiptapExtensionOptions,
+} from './types';
 
 import { $t } from '@vben/locales';
 
@@ -76,6 +80,10 @@ interface UploadContext {
   pos: number;
 }
 
+function normalizeUploadResult(result: ImageUploadResult | string) {
+  return typeof result === 'string' ? { url: result } : result;
+}
+
 const IMAGE_RESIZE_HANDLES = [
   'n',
   'ne',
@@ -101,6 +109,16 @@ function getImageWidth(element: HTMLElement): null | number {
 
 function getImageResizeAttributes() {
   return {
+    'data-file-id': {
+      default: null,
+      parseHTML: (element: HTMLElement) => element.dataset.fileId,
+      renderHTML: (attributes: { 'data-file-id'?: null | number | string }) => {
+        if (!attributes['data-file-id']) return {};
+        return {
+          'data-file-id': String(attributes['data-file-id']),
+        };
+      },
+    },
     width: {
       default: null,
       parseHTML: (element: HTMLElement) => getImageWidth(element),
@@ -331,7 +349,7 @@ function createUploadProcess(
       });
       editor.view.dispatch(transaction);
     })
-    .then((url: string) => {
+    .then((uploadResult) => {
       if (editor.isDestroyed) {
         URL.revokeObjectURL(blobUrl);
         return;
@@ -352,11 +370,13 @@ function createUploadProcess(
         return;
       }
 
+      const result = normalizeUploadResult(uploadResult);
       const transaction = editor.state.tr.setNodeMarkup(currentPos, undefined, {
         ...node.attrs,
+        'data-file-id': result.id ?? null,
         'data-upload-progress': null,
         'data-uploading': null,
-        src: url,
+        src: result.url,
       });
       editor.view.dispatch(transaction);
       blobUrlTracker?.delete(blobUrl);
@@ -484,6 +504,31 @@ function createCustomImage(
     addCommands() {
       return {
         ...this.parent?.(),
+        selectImage:
+          () =>
+          ({ editor: cmdEditor }: { editor: CoreEditor }) => {
+            if (!imageUpload.select) {
+              return false;
+            }
+            imageUpload
+              .select()
+              .then((selectResult) => {
+                if (!selectResult || cmdEditor.isDestroyed) {
+                  return;
+                }
+                const result = normalizeUploadResult(selectResult);
+                cmdEditor
+                  .chain()
+                  .focus()
+                  .setImage({
+                    'data-file-id': result.id ?? null,
+                    src: result.url,
+                  } as any)
+                  .run();
+              })
+              .catch((error: unknown) => handleUploadError(error, imageUpload));
+            return true;
+          },
         uploadImage:
           () =>
           ({ editor: cmdEditor }: { editor: CoreEditor }) => {

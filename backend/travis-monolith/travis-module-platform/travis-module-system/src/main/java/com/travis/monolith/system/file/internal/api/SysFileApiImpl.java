@@ -20,4 +20,9 @@ public class SysFileApiImpl implements SysFileApi {
     public String getFileUrl(String path) {
         return fileService.getFileUrl(path);
     }
+
+    @Override
+    public String getFileUrlById(Long fileId) {
+        return fileService.getFileUrlById(fileId);
+    }
 }

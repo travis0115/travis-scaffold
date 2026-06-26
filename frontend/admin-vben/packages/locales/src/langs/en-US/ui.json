@@ -87,6 +87,7 @@
       "unlink": "Unlink",
       "image": "Image",
       "imageUrl": "Image URL",
+      "imageSelect": "Select from Files",
       "imageUpload": "Upload Image",
       "textColor": "Text Color",
       "highlightColor": "Highlight Color",

@@ -289,6 +289,21 @@ export function createToolbarGroups(
               action: () => {},
               menu: {
                 items: [
+                  ...(imageUpload.select
+                    ? ([
+                        {
+                          action: (editor: Editor) => {
+                            if (
+                              typeof editor.commands.selectImage === 'function'
+                            ) {
+                              editor.commands.selectImage();
+                            }
+                          },
+                          label: $t('ui.tiptap.toolbar.imageSelect'),
+                          shortLabel: 'LIB',
+                        },
+                      ] satisfies ToolbarMenuItem[])
+                    : []),
                   {
                     action: (editor) => {
                       if (typeof editor.commands.uploadImage === 'function') {
