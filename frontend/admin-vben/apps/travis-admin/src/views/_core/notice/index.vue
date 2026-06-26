@@ -9,7 +9,7 @@ import { formatDate } from '@vben/utils';
 
 import { Card, Spin, Tag } from 'antdv-next';
 
-import { getNoticePage } from '#/api';
+import { getPublishedNoticePage } from '#/api';
 import RichTextPreview from '#/components/rich-text-preview/index.vue';
 import { $t } from '#/locales';
 
@@ -31,7 +31,7 @@ async function fetchNotices() {
   if (pageNum.value > 1 && !hasMore.value) return;
   loading.value = true;
   try {
-    const page = await getNoticePage({
+    const page = await getPublishedNoticePage({
       pageNum: pageNum.value,
       pageSize,
       status: 1,

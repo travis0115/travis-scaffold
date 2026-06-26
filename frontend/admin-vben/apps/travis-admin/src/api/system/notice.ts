@@ -22,6 +22,10 @@ const getNoticePage = (params: Recordable<any>) =>
   requestClient.get<PageResp<SystemNoticeApi.Notice>>('/system/notice/page', {
     params,
   });
+const getPublishedNoticePage = (params: Recordable<any>) =>
+  requestClient.get<PageResp<SystemNoticeApi.Notice>>('/system/notice/published', {
+    params,
+  });
 const getNoticeDetail = (id: number) =>
   requestClient.get<SystemNoticeApi.Notice>(`/system/notice/${id}`);
 const createNotice = (data: Partial<SystemNoticeApi.Notice>) =>
@@ -40,6 +44,7 @@ export {
   deleteNotice,
   getNoticeDetail,
   getNoticePage,
+  getPublishedNoticePage,
   updateNotice,
   updateNoticeStatus,
 };

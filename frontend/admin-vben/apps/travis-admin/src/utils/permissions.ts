@@ -51,6 +51,11 @@ export const SYSTEM_PERMS = {
   messageDelete: 'system:message:delete',
   messageUpdate: 'system:message:update',
 
+  // 消息模板
+  messageTemplateCreate: 'system:message:template:create',
+  messageTemplateDelete: 'system:message:template:delete',
+  messageTemplateUpdate: 'system:message:template:update',
+
   // 文件管理
   fileDelete: 'system:file:delete',
   fileUpload: 'system:file:upload',

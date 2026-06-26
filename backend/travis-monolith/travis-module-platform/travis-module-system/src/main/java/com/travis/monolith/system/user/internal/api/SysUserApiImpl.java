@@ -7,6 +7,7 @@ import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.dept.api.SysDeptApi;
 import com.travis.monolith.system.user.api.SysUserApi;
 import com.travis.monolith.system.user.api.response.SysUserOptionResp;
+import com.travis.monolith.system.user.api.response.SysUserResp;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.service.SysUserService;
 import java.util.*;
@@ -33,6 +34,20 @@ public class SysUserApiImpl implements SysUserApi {
         var userIdList = new ArrayList<Long>();
         deptIds.forEach(id -> userIdList.addAll(userService.listUserIdsByDeptId(id)));
         return userIdList;
+    }
+
+    @Override
+    public Long getDeptIdByUserId(Long userId) {
+        if (userId == null) {
+            return null;
+        }
+        SysUserResp user;
+        try {
+            user = userService.getById(userId);
+        } catch (Exception e) {
+            return null;
+        }
+        return user.getDeptId();
     }
 
     @Override

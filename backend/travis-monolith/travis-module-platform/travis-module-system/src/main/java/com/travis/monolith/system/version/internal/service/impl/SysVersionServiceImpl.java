@@ -17,6 +17,7 @@ import com.travis.monolith.system.version.internal.converter.SysVersionConverter
 import com.travis.monolith.system.version.internal.entity.SysVersion;
 import com.travis.monolith.system.version.internal.mapper.SysVersionMapper;
 import com.travis.monolith.system.version.internal.service.SysVersionService;
+import java.time.LocalDateTime;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
@@ -110,11 +111,11 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
 
     @Override
     public PageResp<SysVersionResp> pagePublished(PageRequest req) {
-        var wrapper =
-                new LambdaQueryWrapperX<SysVersion>()
-                        .eq(SysVersion::getStatus, Status.ENABLED.getValue())
-                        .orderByDesc(SysVersion::getPublishTime)
-                        .orderByDesc(SysVersion::getCreateTime);
+        var wrapper = new LambdaQueryWrapperX<SysVersion>();
+        wrapper.eq(SysVersion::getStatus, Status.ENABLED.getValue())
+                .le(SysVersion::getPublishTime, LocalDateTime.now())
+                .orderByDesc(SysVersion::getPublishTime)
+                .orderByDesc(SysVersion::getCreateTime);
         var page = page(req.getPageNum(), req.getPageSize(), wrapper);
         return PageConverter.toResp(page.convert(converter::toResp));
     }

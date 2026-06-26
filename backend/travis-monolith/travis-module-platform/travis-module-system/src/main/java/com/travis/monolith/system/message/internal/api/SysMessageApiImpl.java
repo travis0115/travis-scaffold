@@ -3,7 +3,6 @@ package com.travis.monolith.system.message.internal.api;
 import com.travis.monolith.system.message.api.SysMessageApi;
 import com.travis.monolith.system.message.api.request.SysMessageCreateReq;
 import com.travis.monolith.system.message.internal.service.SysMessageService;
-import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -34,13 +33,13 @@ public class SysMessageApiImpl implements SysMessageApi {
         request.setTitle(title);
         request.setContent(content);
         request.setMessageType(1);
+        request.setPushType(0);
         request.setSourceType(sourceType);
         request.setSourceId(sourceId);
         request.setChannels("IN_APP");
-        request.setStatus(1);
         request.setAudienceType(1);
         request.setTargetIds(List.copyOf(userIds));
-        request.setPublishTime(LocalDateTime.now());
-        messageService.create(request);
+        Long messageId = messageService.create(request);
+        messageService.push(messageId);
     }
 }

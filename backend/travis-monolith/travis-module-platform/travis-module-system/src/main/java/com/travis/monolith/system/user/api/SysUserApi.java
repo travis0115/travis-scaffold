@@ -14,6 +14,9 @@ public interface SysUserApi {
     /** 根据部门ID查询所有可用的用户ID。 */
     List<Long> listUserIdsByDeptIds(Collection<Long> deptIds);
 
+    /** 根据用户ID查询部门ID，不存在则返回 null。 */
+    Long getDeptIdByUserId(Long userId);
+
     /** 根据用户ID查询用户名，不存在则返回 null */
     String getUsernameById(Long userId);
 

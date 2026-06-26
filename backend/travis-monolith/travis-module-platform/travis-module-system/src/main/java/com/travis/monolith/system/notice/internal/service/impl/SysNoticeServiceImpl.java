@@ -12,6 +12,7 @@ import com.travis.monolith.system.notice.internal.converter.SysNoticeConverter;
 import com.travis.monolith.system.notice.internal.entity.SysNotice;
 import com.travis.monolith.system.notice.internal.mapper.SysNoticeMapper;
 import com.travis.monolith.system.notice.internal.service.SysNoticeService;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -38,6 +39,20 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
                         .orderByAsc(SysNotice::getSort)
                         .orderByDesc(SysNotice::getPublishTime)
                         .orderByDesc(SysNotice::getCreateTime);
+        var page = page(req.getPageNum(), req.getPageSize(), wrapper);
+        return PageConverter.toResp(page.convert(converter::toResp));
+    }
+
+    @Override
+    public PageResp<SysNoticeResp> pagePublished(SysNoticePageReq req) {
+        var wrapper = new LambdaQueryWrapperX<SysNotice>();
+        wrapper.likeIfPresent(SysNotice::getTitle, req.getTitle())
+                .eq(SysNotice::getStatus, 1)
+                .le(SysNotice::getPublishTime, LocalDateTime.now())
+                .orderByDesc(SysNotice::getIsPinned)
+                .orderByAsc(SysNotice::getSort)
+                .orderByDesc(SysNotice::getPublishTime)
+                .orderByDesc(SysNotice::getCreateTime);
         var page = page(req.getPageNum(), req.getPageSize(), wrapper);
         return PageConverter.toResp(page.convert(converter::toResp));
     }

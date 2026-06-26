@@ -22,18 +22,19 @@ public class SysMessageCreateReq {
     @NotNull(message = "消息类型不能为空")
     private Integer messageType;
 
+    @NotNull(message = "推送方式不能为空")
+    private Integer pushType;
+
     private String sourceType;
     private String sourceId;
     private String channels;
-
-    @NotNull(message = "消息状态不能为空")
-    private Integer status;
 
     /** 接收范围：0-全部用户 1-指定用户 2-指定角色 3-指定部门 */
     @NotNull(message = "接收范围不能为空")
     private Integer audienceType;
 
     private List<Long> targetIds;
+    private List<SysMessageChannelContentReq> channelContents;
 
     private LocalDateTime publishTime;
     private String remark;

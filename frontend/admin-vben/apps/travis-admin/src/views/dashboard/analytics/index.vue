@@ -10,7 +10,7 @@ import { formatDate } from '@vben/utils';
 
 import { Button, Card, Skeleton, Spin, Tag } from 'antdv-next';
 
-import { getJobDashboard, getNoticePage, getPublishedVersionLogs } from '#/api';
+import { getJobDashboard, getPublishedNoticePage, getPublishedVersionLogs } from '#/api';
 import RichTextPreview from '#/components/rich-text-preview/index.vue';
 import { $t } from '#/locales';
 import { OPS_PERMS } from '#/utils/permissions';
@@ -111,7 +111,7 @@ async function fetchNotices() {
   if (noticePageNum.value > 1 && !noticeHasMore.value) return;
   noticeLoading.value = true;
   try {
-    const page = await getNoticePage({
+    const page = await getPublishedNoticePage({
       pageNum: noticePageNum.value,
       pageSize: homePageSize,
       status: 1,

@@ -7,7 +7,7 @@ import { Page, useVbenDrawer } from '@vben/common-ui';
 import { Button } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { deleteMessage, getMessagePage, pushMessage, revokeMessage } from '#/api';
+import { deleteMessageTemplate, getMessageTemplatePage } from '#/api';
 import { SYSTEM_PERMS } from '#/utils/permissions';
 
 import { useColumns, useGridFormSchema } from './data';
@@ -19,31 +19,38 @@ const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useColumns(onActionClick),
     height: 'auto',
-    proxyConfig: { ajax: { query: ({ page }, values) => getMessagePage({ pageNum: page.currentPage, pageSize: page.pageSize, ...values }) } },
+    proxyConfig: {
+      ajax: {
+        query: ({ page }, values) =>
+          getMessageTemplatePage({
+            pageNum: page.currentPage,
+            pageSize: page.pageSize,
+            ...values,
+          }),
+      },
+    },
     rowConfig: { keyField: 'id' },
     toolbarConfig: { custom: true, refresh: true, search: true, zoom: true },
-  } as VxeTableGridOptions<SystemMessageApi.Message>,
+  } as VxeTableGridOptions<SystemMessageApi.MessageTemplate>,
 });
 
-function onActionClick({ code, row }: OnActionClickParams<SystemMessageApi.Message>) {
+function onActionClick({ code, row }: OnActionClickParams<SystemMessageApi.MessageTemplate>) {
   if (code === 'edit') formDrawerApi.setData(row).open();
-  if (code === 'delete') deleteMessage(row.id).then(() => gridApi.query());
-  if (code === 'push') pushMessage(row.id).then(() => gridApi.query());
-  if (code === 'revoke') revokeMessage(row.id).then(() => gridApi.query());
+  if (code === 'delete') deleteMessageTemplate(row.id).then(() => gridApi.query());
 }
 </script>
 
 <template>
   <Page auto-content-height>
     <FormDrawer @success="gridApi.query()" />
-    <Grid table-title="消息推送">
+    <Grid table-title="消息模板">
       <template #toolbar-tools>
         <Button
-          v-access:code="SYSTEM_PERMS.messageCreate"
+          v-access:code="SYSTEM_PERMS.messageTemplateCreate"
           type="primary"
           @click="formDrawerApi.setData({}).open()"
         >
-          新增消息
+          新增模板
         </Button>
       </template>
     </Grid>

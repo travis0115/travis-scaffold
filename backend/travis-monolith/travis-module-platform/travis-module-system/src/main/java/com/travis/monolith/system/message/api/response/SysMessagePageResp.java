@@ -10,6 +10,7 @@ public class SysMessagePageResp {
     private String title;
     private String content;
     private Integer messageType;
+    private Integer pushType;
     private String sourceType;
     private String sourceId;
     private String channels;

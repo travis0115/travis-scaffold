@@ -12,25 +12,35 @@ import org.mapstruct.Mapping;
 @Mapper(config = BaseMapperConfig.class)
 public interface SysMessageReceiverConverter {
 
-    @Mapping(target = "id", source = "receiver.id")
+    @Mapping(target = "id", source = "message.id")
     @Mapping(target = "messageId", source = "message.id")
     @Mapping(target = "title", source = "message.title")
     @Mapping(target = "content", source = "message.content")
     @Mapping(target = "messageType", source = "message.messageType")
-    @Mapping(target = "readStatus", source = "receiver.readStatus")
-    @Mapping(target = "readTime", source = "receiver.readTime")
+    @Mapping(
+            target = "readStatus",
+            expression =
+                    "java(receiver == null || receiver.getReadStatus() == null ? 0 : receiver.getReadStatus())")
+    @Mapping(
+            target = "readTime",
+            expression = "java(receiver == null ? null : receiver.getReadTime())")
     @Mapping(target = "publishTime", source = "message.publishTime")
-    @Mapping(target = "createTime", source = "receiver.createTime")
-    SysUserMessagePageResp toPageResp(SysMessageReceiver receiver, SysMessage message);
+    @Mapping(target = "createTime", source = "message.createTime")
+    SysUserMessagePageResp toPageResp(SysMessage message, SysMessageReceiver receiver);
 
-    @Mapping(target = "id", source = "receiver.id")
+    @Mapping(target = "id", source = "message.id")
     @Mapping(target = "messageId", source = "message.id")
     @Mapping(target = "title", source = "message.title")
     @Mapping(target = "content", source = "message.content")
     @Mapping(target = "messageType", source = "message.messageType")
-    @Mapping(target = "readStatus", source = "receiver.readStatus")
-    @Mapping(target = "readTime", source = "receiver.readTime")
+    @Mapping(
+            target = "readStatus",
+            expression =
+                    "java(receiver == null || receiver.getReadStatus() == null ? 0 : receiver.getReadStatus())")
+    @Mapping(
+            target = "readTime",
+            expression = "java(receiver == null ? null : receiver.getReadTime())")
     @Mapping(target = "publishTime", source = "message.publishTime")
-    @Mapping(target = "createTime", source = "receiver.createTime")
-    SysUserMessageRecentResp toRecentResp(SysMessageReceiver receiver, SysMessage message);
+    @Mapping(target = "createTime", source = "message.createTime")
+    SysUserMessageRecentResp toRecentResp(SysMessage message, SysMessageReceiver receiver);
 }

@@ -14,11 +14,17 @@ public interface SysMessageService extends IService<SysMessage> {
 
     SysMessageDetailResp get(Long id);
 
-    void create(SysMessageCreateReq req);
+    Long create(SysMessageCreateReq req);
 
     void update(Long id, SysMessageUpdateReq req);
 
     void updateStatus(Long id, Integer status);
+
+    void push(Long id);
+
+    void revoke(Long id);
+
+    int pushDueScheduledMessages();
 
     void delete(Long id);
 }

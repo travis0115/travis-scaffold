@@ -32,6 +32,11 @@ public class SysNoticeController {
         return ApiResponse.success(noticeService.page(req));
     }
 
+    @GetMapping("/published")
+    public ApiResponse<PageResp<SysNoticeResp>> pagePublished(SysNoticePageReq req) {
+        return ApiResponse.success(noticeService.pagePublished(req));
+    }
+
     @GetMapping("/{id}")
     @SaCheckPermission(value = SystemPermission.NOTICE_QUERY, type = LoginType.ADMIN)
     public ApiResponse<SysNoticeResp> getById(@PathVariable Long id) {

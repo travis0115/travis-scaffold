@@ -6,9 +6,9 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class SysMessagePageReq extends PageRequest {
-    private String title;
-    private Integer messageType;
-    private Integer pushType;
+public class SysMessageTemplatePageReq extends PageRequest {
+    private String templateCode;
+    private String templateName;
+    private String channel;
     private Integer status;
 }

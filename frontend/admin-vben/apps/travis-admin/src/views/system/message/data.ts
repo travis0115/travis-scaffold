@@ -1,5 +1,6 @@
 import type { VbenFormSchema } from '#/adapter/form';
 import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
+import type { SystemMessageApi } from '#/api';
 
 import { z } from '#/adapter/form';
 import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
@@ -11,6 +12,46 @@ const requiredIdList = (message: string) =>
   z
     .array(z.number(), { invalid_type_error: message, required_error: message })
     .min(1, message);
+
+function hasRichTextContent(value?: string) {
+  if (!value) return false;
+  return (
+    value
+      .replaceAll('&nbsp;', ' ')
+      .replaceAll(/<br\s*\/?>/gi, '')
+      .replaceAll(/<[^>]*>/g, '')
+      .trim().length > 0
+  );
+}
+
+export const messageChannelOptions = [
+  { label: '站内信', value: 'IN_APP' },
+  { label: 'App推送', value: 'APP_PUSH' },
+  { label: '短信', value: 'SMS' },
+  { label: '微信小程序', value: 'WECHAT_MP' },
+  { label: '抖音小程序', value: 'DOUYIN_MP' },
+];
+
+export const messageStatusOptions = [
+  { label: '待推送', value: 0 },
+  { label: '定时推送', value: 1 },
+  { label: '已推送', value: 2 },
+  { label: '已撤回', value: 3 },
+];
+
+export const messagePushTypeOptions = [
+  { label: '手动推送', value: 0 },
+  { label: '定时推送', value: 1 },
+];
+
+export const messageSourceTypeOptions = [
+  { label: '后台人工推送', value: 'MANUAL' },
+  { label: '系统触发', value: 'SYSTEM' },
+  { label: '订单', value: 'ORDER' },
+  { label: '用户', value: 'USER' },
+  { label: '定时任务', value: 'OPS_JOB' },
+  { label: '运营活动', value: 'ACTIVITY' },
+];
 
 export const useFormSchema = (): VbenFormSchema[] => [
   {
@@ -24,43 +65,47 @@ export const useFormSchema = (): VbenFormSchema[] => [
   },
   {
     component: 'Select',
-    componentProps: { options: [{ label: '系统消息', value: 1 }, { label: '业务消息', value: 2 }] },
+    componentProps: {
+      options: [
+        { label: '系统消息', value: 1 },
+        { label: '业务消息', value: 2 },
+      ],
+    },
     defaultValue: 1,
     fieldName: 'messageType',
     label: '消息类型',
     rules: requiredNumber('消息类型不能为空'),
   },
   {
-    component: 'Textarea',
-    fieldName: 'content',
-    label: '消息内容',
-    rules: z
-      .string({ required_error: '消息内容不能为空' })
-      .min(1, '消息内容不能为空')
-      .max(5000, '消息内容长度不能超过5000个字符'),
-  },
-  {
-    component: 'Input',
-    componentProps: { placeholder: '例如 SYSTEM、OPS_JOB' },
+    component: 'Select',
+    componentProps: { options: messageSourceTypeOptions },
+    defaultValue: 'MANUAL',
     fieldName: 'sourceType',
     label: '来源类型',
   },
   {
     component: 'Input',
     componentProps: { placeholder: '业务来源ID，可为空' },
+    dependencies: {
+      show: (values) => values.sourceType && values.sourceType !== 'MANUAL',
+      triggerFields: ['sourceType'],
+    },
     fieldName: 'sourceId',
     label: '来源ID',
   },
   {
-    component: 'Select',
-    componentProps: { disabled: true, options: [{ label: '站内信', value: 'IN_APP' }] },
-    defaultValue: 'IN_APP',
+    component: 'CheckboxGroup',
+    componentProps: { options: messageChannelOptions },
+    defaultValue: ['IN_APP'],
     fieldName: 'channels',
     label: '推送通道',
+    rules: z.array(z.string()).min(1, '请至少选择一个推送通道'),
   },
   {
     component: 'RadioGroup',
     componentProps: {
+      buttonStyle: 'solid',
+      optionType: 'button',
       options: [
         { label: '全部用户', value: 0 },
         { label: '指定用户', value: 1 },
@@ -108,11 +153,15 @@ export const useFormSchema = (): VbenFormSchema[] => [
   },
   {
     component: 'RadioGroup',
-    componentProps: { options: [{ label: '草稿', value: 0 }, { label: '发布', value: 1 }] },
+    componentProps: {
+      buttonStyle: 'solid',
+      optionType: 'button',
+      options: messagePushTypeOptions,
+    },
     defaultValue: 0,
-    fieldName: 'status',
-    label: '状态',
-    rules: requiredNumber('消息状态不能为空'),
+    fieldName: 'pushType',
+    label: '推送方式',
+    rules: requiredNumber('推送方式不能为空'),
   },
   {
     component: 'DatePicker',
@@ -120,8 +169,70 @@ export const useFormSchema = (): VbenFormSchema[] => [
       showTime: true,
       valueFormat: 'YYYY-MM-DD HH:mm:ss',
     },
+    dependencies: { show: (values) => values.pushType === 1, triggerFields: ['pushType'] },
     fieldName: 'publishTime',
     label: '发布时间',
+    rules: z
+      .string({ required_error: '发布时间不能为空' })
+      .min(1, '发布时间不能为空'),
+  },
+  {
+    component: 'RichEditor',
+    componentProps: { maxHeight: 420, minHeight: 240 },
+    dependencies: { show: (values) => values.channels?.includes('IN_APP'), triggerFields: ['channels'] },
+    fieldName: 'inAppContent',
+    formFieldProps: {
+      validateOnBlur: false,
+      validateOnChange: false,
+      validateOnInput: false,
+      validateOnModelUpdate: false,
+    },
+    label: '站内信内容',
+    rules: z
+      .string({ required_error: '站内信内容不能为空' })
+      .max(5000, '站内信内容长度不能超过5000个字符')
+      .refine(hasRichTextContent, '站内信内容不能为空'),
+  },
+  {
+    component: 'Input',
+    dependencies: { show: (values) => values.channels?.includes('APP_PUSH'), triggerFields: ['channels'] },
+    fieldName: 'appPushTitle',
+    label: 'App主标题',
+    rules: z.string().max(255, 'App主标题长度不能超过255个字符').optional().or(z.literal('')),
+  },
+  {
+    component: 'Input',
+    dependencies: { show: (values) => values.channels?.includes('APP_PUSH'), triggerFields: ['channels'] },
+    fieldName: 'appPushSubtitle',
+    label: 'App副标题',
+  },
+  {
+    component: 'Input',
+    dependencies: { show: (values) => values.channels?.includes('APP_PUSH'), triggerFields: ['channels'] },
+    fieldName: 'appPushImageUrl',
+    label: 'App大图URL',
+  },
+  {
+    component: 'Input',
+    dependencies: { show: (values) => values.channels?.includes('APP_PUSH'), triggerFields: ['channels'] },
+    fieldName: 'appPushJumpUrl',
+    label: 'App跳转链接',
+  },
+  {
+    component: 'Textarea',
+    componentProps: { rows: 4 },
+    dependencies: { show: (values) => values.channels?.includes('SMS'), triggerFields: ['channels'] },
+    fieldName: 'smsContent',
+    label: '短信内容',
+  },
+  {
+    component: 'Input',
+    dependencies: {
+      show: (values) => values.channels?.includes('WECHAT_MP') || values.channels?.includes('DOUYIN_MP'),
+      triggerFields: ['channels'],
+    },
+    fieldName: 'miniProgramTemplateParams',
+    label: '小程序参数',
   },
   { component: 'Textarea', fieldName: 'remark', label: '备注' },
 ];
@@ -130,7 +241,13 @@ export const useGridFormSchema = (): VbenFormSchema[] => [
   { component: 'Input', fieldName: 'title', label: '消息标题' },
   {
     component: 'Select',
-    componentProps: { allowClear: true, options: [{ label: '草稿', value: 0 }, { label: '已发布', value: 1 }] },
+    componentProps: { allowClear: true, options: messagePushTypeOptions },
+    fieldName: 'pushType',
+    label: '推送方式',
+  },
+  {
+    component: 'Select',
+    componentProps: { allowClear: true, options: messageStatusOptions },
     fieldName: 'status',
     label: '状态',
   },
@@ -138,8 +255,7 @@ export const useGridFormSchema = (): VbenFormSchema[] => [
 
 export function useColumns<T>(
   onActionClick: OnActionClickFn<T>,
-  onStatusChange?: (newStatus: number, row: T) => Promise<boolean>,
-): VxeTableGridColumns {
+): VxeTableGridColumns<SystemMessageApi.Message> {
   return [
     { field: 'title', minWidth: 220, title: '消息标题' },
     {
@@ -154,14 +270,17 @@ export function useColumns<T>(
       title: '接收范围',
       width: 110,
     },
+    {
+      field: 'pushType',
+      formatter: ({ cellValue }: any) => (cellValue === 1 ? '定时推送' : '手动推送'),
+      title: '推送方式',
+      width: 110,
+    },
     { field: 'publishTime', formatter: 'formatDateTime', title: '发布时间', width: 180 },
     {
       cellRender: {
-        attrs: {
-          beforeChange: onStatusChange,
-        },
-        name: onStatusChange ? 'CellSwitch' : 'CellTag',
-        options: [{ label: '草稿', value: 0 }, { label: '已发布', value: 1 }],
+        attrs: { dictCode: 'sys_message_status' },
+        name: 'CellTag',
       },
       field: 'status',
       fixed: 'right',
@@ -176,15 +295,39 @@ export function useColumns<T>(
           onClick: onActionClick,
         },
         name: 'CellOperation',
-        options: filterAccessOptions(['edit', 'delete'], {
+        options: filterAccessOptions([
+          {
+            code: 'push',
+            show: (row: SystemMessageApi.Message) => row.status === 0,
+            text: '推送',
+          },
+          {
+            code: 'push',
+            show: (row: SystemMessageApi.Message) => row.status === 1,
+            text: '手动推送',
+          },
+          {
+            code: 'revoke',
+            danger: true,
+            show: (row: SystemMessageApi.Message) => row.status === 2,
+            text: '撤回',
+          },
+          {
+            code: 'edit',
+            show: (row: SystemMessageApi.Message) => row.status !== 2,
+          },
+          'delete',
+        ], {
           delete: SYSTEM_PERMS.messageDelete,
           edit: SYSTEM_PERMS.messageUpdate,
+          push: SYSTEM_PERMS.messageUpdate,
+          revoke: SYSTEM_PERMS.messageUpdate,
         }),
       },
       field: 'operation',
       fixed: 'right',
       title: '操作',
-      width: 130,
+      width: 210,
     },
   ];
 }

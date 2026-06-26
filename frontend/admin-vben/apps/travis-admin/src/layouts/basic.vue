@@ -31,6 +31,11 @@ import LoginForm from '#/views/_core/authentication/login.vue';
 const notifications = ref<NotificationItem[]>([]);
 const unreadCount = ref(0);
 let notificationTimer: ReturnType<typeof setInterval> | undefined;
+let notificationSocket: WebSocket | undefined;
+let notificationSocketReconnectTimer: ReturnType<typeof setTimeout> | undefined;
+let notificationSocketClosedByClient = false;
+let notificationSocketConnectedOnce = false;
+let notificationSocketReconnectDelay = 5000;
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -86,6 +91,7 @@ onMounted(async () => {
   );
   await loadNotifications();
   notificationTimer = setInterval(loadNotifications, 60_000);
+  connectNotificationSocket();
 });
 
 onUnmounted(() => {
@@ -94,6 +100,7 @@ onUnmounted(() => {
     handleClearPreferencesLogout,
   );
   if (notificationTimer) clearInterval(notificationTimer);
+  closeNotificationSocket();
 });
 
 async function loadNotifications() {
@@ -111,6 +118,75 @@ async function loadNotifications() {
     title: item.title,
   }));
   unreadCount.value = unread.count;
+}
+
+function buildNotificationSocketUrl() {
+  const wsUrl = import.meta.env.VITE_GLOB_WS_URL;
+  if (!wsUrl) return '';
+  const url = new URL(wsUrl, window.location.origin);
+  url.search = '';
+  url.searchParams.set('loginType', 'admin');
+  url.searchParams.set('token', accessStore.accessToken || '');
+  return url.toString();
+}
+
+function connectNotificationSocket() {
+  if (!accessStore.accessToken || notificationSocket) return;
+  const socketUrl = buildNotificationSocketUrl();
+  if (!socketUrl) return;
+  notificationSocketClosedByClient = false;
+  notificationSocket = new WebSocket(socketUrl);
+  notificationSocket.onopen = () => {
+    notificationSocketConnectedOnce = true;
+    notificationSocketReconnectDelay = 5000;
+  };
+  notificationSocket.onmessage = (event) => {
+    try {
+      const message = JSON.parse(event.data);
+      if (message?.content?.event === 'SYSTEM_MESSAGE_PUBLISHED') {
+        void loadNotifications();
+      }
+    } catch {
+      // 忽略非 JSON WebSocket 消息，保留轮询兜底。
+    }
+  };
+  notificationSocket.onclose = () => {
+    notificationSocket = undefined;
+    if (
+      notificationSocketClosedByClient ||
+      !accessStore.accessToken ||
+      !notificationSocketConnectedOnce
+    ) {
+      return;
+    }
+    notificationSocketReconnectTimer = setTimeout(
+      connectNotificationSocket,
+      notificationSocketReconnectDelay,
+    );
+    notificationSocketReconnectDelay = Math.min(
+      notificationSocketReconnectDelay * 2,
+      30_000,
+    );
+  };
+  notificationSocket.onerror = () => {
+    notificationSocket?.close();
+  };
+}
+
+function closeNotificationSocket() {
+  notificationSocketClosedByClient = true;
+  notificationSocketConnectedOnce = false;
+  notificationSocketReconnectDelay = 5000;
+  if (notificationSocketReconnectTimer) {
+    clearTimeout(notificationSocketReconnectTimer);
+    notificationSocketReconnectTimer = undefined;
+  }
+  if (notificationSocket) {
+    notificationSocket.onclose = null;
+    notificationSocket.onmessage = null;
+    notificationSocket.close();
+  }
+  notificationSocket = undefined;
 }
 
 async function handleNoticeClear() {
@@ -196,6 +272,14 @@ watch(
   },
   {
     immediate: true,
+  },
+);
+
+watch(
+  () => accessStore.accessToken,
+  (token) => {
+    closeNotificationSocket();
+    if (token) connectNotificationSocket();
   },
 );
 </script>

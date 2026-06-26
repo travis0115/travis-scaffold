@@ -1,8 +1,7 @@
 package com.travis.monolith.system.notice.api.response;
 
-import lombok.Data;
-
 import java.time.LocalDateTime;
+import lombok.Data;
 
 @Data
 public class SysNoticeResp {

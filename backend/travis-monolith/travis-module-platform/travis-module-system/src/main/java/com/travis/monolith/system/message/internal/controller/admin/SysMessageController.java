@@ -3,13 +3,11 @@ package com.travis.monolith.system.message.internal.controller.admin;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.travis.infrastructure.common.logging.annotation.OperationLog;
 import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
-import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
 import com.travis.monolith.system.common.api.constant.SystemPermission;
-import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.message.api.request.SysMessageCreateReq;
 import com.travis.monolith.system.message.api.request.SysMessagePageReq;
 import com.travis.monolith.system.message.api.request.SysMessageUpdateReq;
@@ -58,14 +56,21 @@ public class SysMessageController {
         return ApiResponse.success();
     }
 
-    @OperationLog(action = "修改消息状态")
+    @OperationLog(action = "推送消息")
     @NoRepeatSubmit
-    @PutMapping("/{id}/status")
+    @PutMapping("/{id}/push")
     @SaCheckPermission(value = SystemPermission.MESSAGE_UPDATE, type = LoginType.ADMIN)
-    public ApiResponse<Void> updateStatus(
-            @PathVariable Long id,
-            @RequestParam @EnumValue(value = Status.class, message = "状态值错误") Integer status) {
-        messageService.updateStatus(id, status);
+    public ApiResponse<Void> push(@PathVariable Long id) {
+        messageService.push(id);
+        return ApiResponse.success();
+    }
+
+    @OperationLog(action = "撤回消息")
+    @NoRepeatSubmit
+    @PutMapping("/{id}/revoke")
+    @SaCheckPermission(value = SystemPermission.MESSAGE_UPDATE, type = LoginType.ADMIN)
+    public ApiResponse<Void> revoke(@PathVariable Long id) {
+        messageService.revoke(id);
         return ApiResponse.success();
     }
 

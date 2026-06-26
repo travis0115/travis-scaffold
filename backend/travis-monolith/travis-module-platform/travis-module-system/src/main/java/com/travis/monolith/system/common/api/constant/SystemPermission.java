@@ -162,6 +162,18 @@ public class SystemPermission {
     /** 消息推送删除权限 */
     public static final String MESSAGE_DELETE = "system:message:delete";
 
+    /** 消息模板查询权限 */
+    public static final String MESSAGE_TEMPLATE_QUERY = "system:message:template:query";
+
+    /** 消息模板创建权限 */
+    public static final String MESSAGE_TEMPLATE_CREATE = "system:message:template:create";
+
+    /** 消息模板更新权限 */
+    public static final String MESSAGE_TEMPLATE_UPDATE = "system:message:template:update";
+
+    /** 消息模板删除权限 */
+    public static final String MESSAGE_TEMPLATE_DELETE = "system:message:template:delete";
+
     /*
      ──────────────────────────────────────────────────────────────── *
      ============================ 日志模块 ========================== *
