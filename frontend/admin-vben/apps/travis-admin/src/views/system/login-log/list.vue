@@ -6,7 +6,6 @@ import { Page } from '@vben/common-ui';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getLoginLogList } from '#/api';
-import { $t } from '#/locales';
 
 import { useColumns, useGridFormSchema } from './data';
 
@@ -45,6 +44,6 @@ const [Grid] = useVbenVxeGrid({
 </script>
 <template>
   <Page auto-content-height>
-    <Grid :table-title="$t('system.loginLog.list')" />
+    <Grid table-title="登录日志" />
   </Page>
 </template>

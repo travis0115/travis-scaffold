@@ -99,13 +99,13 @@ const [Drawer, drawerApi] = useVbenDrawer({
     const { valid } = await formApi.validate();
     if (!valid) return;
     const values = await formApi.getValues();
-    const targetField = ['', 'userIds', 'roleIds', 'deptIds'][values.audienceType];
+    const receiverField = ['', 'userIds', 'roleIds', 'deptIds'][values.receiverScope];
     const data: Record<string, any> = {
       ...values,
       channelContents: buildChannelContents(values),
       channels: values.channels?.join(','),
       content: values.inAppContent || values.smsContent || values.title,
-      targetIds: targetField ? values[targetField] : [],
+      receiverValues: receiverField ? values[receiverField] : [],
     };
     if (values.pushType === 0) {
       delete data.publishTime;
@@ -146,14 +146,20 @@ const [Drawer, drawerApi] = useVbenDrawer({
     ]);
     if (data?.id) {
       const detail = await getMessageDetail(data.id);
-      const targetField = ['', 'userIds', 'roleIds', 'deptIds'][detail.audienceType];
+      const receiverField = ['', 'userIds', 'roleIds', 'deptIds'][detail.receiverScope];
       await formApi.setValues({
         ...toFormValues(detail),
-        ...(targetField ? { [targetField]: detail.targetIds } : {}),
+        ...(receiverField ? { [receiverField]: detail.receiverValues } : {}),
       });
     } else {
       formData.value = undefined;
-      await formApi.setValues({ channels: ['IN_APP'], pushType: 0, sourceType: 'MANUAL' });
+      await formApi.setValues({
+        channels: ['IN_APP'],
+        pushType: 0,
+        receiverScope: 0,
+        receiverType: 'admin',
+        sourceType: 'MANUAL',
+      });
     }
   },
 });

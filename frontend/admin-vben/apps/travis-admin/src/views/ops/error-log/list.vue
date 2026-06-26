@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-import type { SystemErrorLogApi } from '#/api';
+import type { OpsErrorLogApi } from '#/api';
 
 import { Page } from '@vben/common-ui';
 
@@ -22,7 +22,7 @@ const [Grid] = useVbenVxeGrid({
     },
     rowConfig: { keyField: 'id' },
     toolbarConfig: { custom: true, refresh: true, search: true, zoom: true },
-  } as VxeTableGridOptions<SystemErrorLogApi.ErrorLog>,
+  } as VxeTableGridOptions<OpsErrorLogApi.ErrorLog>,
 });
 </script>
 

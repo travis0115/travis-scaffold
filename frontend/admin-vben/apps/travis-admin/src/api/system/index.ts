@@ -2,7 +2,6 @@ export * from './notice';
 export * from './config';
 export * from './dept';
 export * from './dict';
-export * from './error-log';
 export * from './file';
 export * from './file-management';
 export * from './login-log';

@@ -1,4 +1,4 @@
-package com.travis.monolith.system.log.errorlog.internal.entity;
+package com.travis.monolith.ops.errorlog.internal.entity;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;

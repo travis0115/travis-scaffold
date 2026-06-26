@@ -23,6 +23,7 @@ public interface SysMessageMapper extends BaseMapperX<SysMessage> {
              AND r.is_deleted = 0
             WHERE m.is_deleted = 0
               AND m.status = 2
+              AND m.receiver_type = #{receiverType}
               AND m.publish_time &lt;= NOW()
               AND (r.id IS NULL OR r.read_status != 2)
               <if test="readStatus != null">
@@ -39,42 +40,28 @@ public interface SysMessageMapper extends BaseMapperX<SysMessage> {
                 AND m.title LIKE CONCAT('%', #{title}, '%')
               </if>
               AND (
-                m.audience_type = 0
+                m.receiver_scope = 0
                 OR (
-                  m.audience_type = 1
-                  AND EXISTS (
-                    SELECT 1 FROM sys_message_target mt
-                    WHERE mt.message_id = m.id
-                      AND mt.target_type = 1
-                      AND mt.target_id = #{userId}
-                      AND mt.is_deleted = 0
-                  )
+                  m.receiver_scope = 1
+                  AND JSON_CONTAINS(m.receiver_values, CAST(#{userId} AS CHAR))
                 )
                 <if test="roleIds != null and roleIds.size() > 0">
                   OR (
-                    m.audience_type = 2
-                    AND EXISTS (
-                      SELECT 1 FROM sys_message_target mt
-                      WHERE mt.message_id = m.id
-                        AND mt.target_type = 2
-                        AND mt.target_id IN
-                        <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">
+                    m.receiver_scope = 2
+                    AND JSON_OVERLAPS(
+                      m.receiver_values,
+                      JSON_ARRAY(
+                        <foreach collection="roleIds" item="roleId" separator=",">
                           #{roleId}
                         </foreach>
-                        AND mt.is_deleted = 0
+                      )
                     )
                   )
                 </if>
                 <if test="deptId != null">
                   OR (
-                    m.audience_type = 3
-                    AND EXISTS (
-                      SELECT 1 FROM sys_message_target mt
-                      WHERE mt.message_id = m.id
-                        AND mt.target_type = 3
-                        AND mt.target_id = #{deptId}
-                        AND mt.is_deleted = 0
-                    )
+                    m.receiver_scope = 3
+                    AND JSON_CONTAINS(m.receiver_values, CAST(#{deptId} AS CHAR))
                   )
                 </if>
               )
@@ -102,45 +89,32 @@ public interface SysMessageMapper extends BaseMapperX<SysMessage> {
              AND r.is_deleted = 0
             WHERE m.is_deleted = 0
               AND m.status = 2
+              AND m.receiver_type = #{receiverType}
               AND m.publish_time &lt;= NOW()
               AND (r.id IS NULL OR r.read_status = 0)
               AND (
-                m.audience_type = 0
+                m.receiver_scope = 0
                 OR (
-                  m.audience_type = 1
-                  AND EXISTS (
-                    SELECT 1 FROM sys_message_target mt
-                    WHERE mt.message_id = m.id
-                      AND mt.target_type = 1
-                      AND mt.target_id = #{userId}
-                      AND mt.is_deleted = 0
-                  )
+                  m.receiver_scope = 1
+                  AND JSON_CONTAINS(m.receiver_values, CAST(#{userId} AS CHAR))
                 )
                 <if test="roleIds != null and roleIds.size() > 0">
                   OR (
-                    m.audience_type = 2
-                    AND EXISTS (
-                      SELECT 1 FROM sys_message_target mt
-                      WHERE mt.message_id = m.id
-                        AND mt.target_type = 2
-                        AND mt.target_id IN
-                        <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">
+                    m.receiver_scope = 2
+                    AND JSON_OVERLAPS(
+                      m.receiver_values,
+                      JSON_ARRAY(
+                        <foreach collection="roleIds" item="roleId" separator=",">
                           #{roleId}
                         </foreach>
-                        AND mt.is_deleted = 0
+                      )
                     )
                   )
                 </if>
                 <if test="deptId != null">
                   OR (
-                    m.audience_type = 3
-                    AND EXISTS (
-                      SELECT 1 FROM sys_message_target mt
-                      WHERE mt.message_id = m.id
-                        AND mt.target_type = 3
-                        AND mt.target_id = #{deptId}
-                        AND mt.is_deleted = 0
-                    )
+                    m.receiver_scope = 3
+                    AND JSON_CONTAINS(m.receiver_values, CAST(#{deptId} AS CHAR))
                   )
                 </if>
               )
@@ -164,6 +138,7 @@ public interface SysMessageMapper extends BaseMapperX<SysMessage> {
              AND r.is_deleted = 0
             WHERE m.is_deleted = 0
               AND m.status = 2
+              AND m.receiver_type = #{receiverType}
               AND m.publish_time &lt;= NOW()
               AND (r.id IS NULL OR r.read_status != 2)
               <if test="readStatus != null">
@@ -177,42 +152,28 @@ public interface SysMessageMapper extends BaseMapperX<SysMessage> {
                 </choose>
               </if>
               AND (
-                m.audience_type = 0
+                m.receiver_scope = 0
                 OR (
-                  m.audience_type = 1
-                  AND EXISTS (
-                    SELECT 1 FROM sys_message_target mt
-                    WHERE mt.message_id = m.id
-                      AND mt.target_type = 1
-                      AND mt.target_id = #{userId}
-                      AND mt.is_deleted = 0
-                  )
+                  m.receiver_scope = 1
+                  AND JSON_CONTAINS(m.receiver_values, CAST(#{userId} AS CHAR))
                 )
                 <if test="roleIds != null and roleIds.size() > 0">
                   OR (
-                    m.audience_type = 2
-                    AND EXISTS (
-                      SELECT 1 FROM sys_message_target mt
-                      WHERE mt.message_id = m.id
-                        AND mt.target_type = 2
-                        AND mt.target_id IN
-                        <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">
+                    m.receiver_scope = 2
+                    AND JSON_OVERLAPS(
+                      m.receiver_values,
+                      JSON_ARRAY(
+                        <foreach collection="roleIds" item="roleId" separator=",">
                           #{roleId}
                         </foreach>
-                        AND mt.is_deleted = 0
+                      )
                     )
                   )
                 </if>
                 <if test="deptId != null">
                   OR (
-                    m.audience_type = 3
-                    AND EXISTS (
-                      SELECT 1 FROM sys_message_target mt
-                      WHERE mt.message_id = m.id
-                        AND mt.target_type = 3
-                        AND mt.target_id = #{deptId}
-                        AND mt.is_deleted = 0
-                    )
+                    m.receiver_scope = 3
+                    AND JSON_CONTAINS(m.receiver_values, CAST(#{deptId} AS CHAR))
                   )
                 </if>
               )

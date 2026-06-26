@@ -1,4 +1,4 @@
-package com.travis.monolith.system.log.errorlog.api.request;
+package com.travis.monolith.ops.errorlog.api.request;
 
 import com.travis.infrastructure.common.web.model.PageRequest;
 import java.time.LocalDateTime;

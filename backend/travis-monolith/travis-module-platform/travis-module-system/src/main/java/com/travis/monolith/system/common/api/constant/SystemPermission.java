@@ -185,9 +185,6 @@ public class SystemPermission {
     /** 操作日志查询权限 */
     public static final String OPERATION_LOG_QUERY = "system:log:operation:query";
 
-    /** 错误日志查询权限 */
-    public static final String ERROR_LOG_QUERY = "system:log:error:query";
-
     /*
      ──────────────────────────────────────────────────────────────── *
      ============================ 文件模块 ========================== *

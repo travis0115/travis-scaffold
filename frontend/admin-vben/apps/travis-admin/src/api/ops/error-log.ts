@@ -4,7 +4,7 @@ import type { PageResp } from '#/api/types';
 
 import { requestClient } from '#/api/request';
 
-export namespace SystemErrorLogApi {
+export namespace OpsErrorLogApi {
   export interface ErrorLog {
     [key: string]: any;
     controllerMethod: string;
@@ -20,6 +20,8 @@ export namespace SystemErrorLogApi {
 }
 
 const getErrorLogPage = (params: Recordable<any>) =>
-  requestClient.get<PageResp<SystemErrorLogApi.ErrorLog>>('/system/error-log/page', { params });
+  requestClient.get<PageResp<OpsErrorLogApi.ErrorLog>>('/ops/error-log/page', {
+    params,
+  });
 
 export { getErrorLogPage };

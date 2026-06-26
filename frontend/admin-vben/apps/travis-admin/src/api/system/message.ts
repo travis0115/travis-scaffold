@@ -7,7 +7,6 @@ import { requestClient } from '#/api/request';
 export namespace SystemMessageApi {
   export interface Message {
     [key: string]: any;
-    audienceType: number;
     channelContents?: MessageChannelContent[];
     channels?: string;
     content: string;
@@ -15,11 +14,13 @@ export namespace SystemMessageApi {
     messageType: number;
     pushType: number;
     publishTime?: string;
+    receiverScope: number;
+    receiverType: string;
+    receiverValues?: number[];
     remark?: string;
     sourceId?: string;
     sourceType?: string;
     status: number;
-    targetIds?: number[];
     title: string;
   }
 

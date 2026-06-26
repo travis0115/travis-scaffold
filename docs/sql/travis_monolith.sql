@@ -11,7 +11,7 @@
  Target Server Version : 90600 (9.6.0)
  File Encoding         : 65001
 
- Date: 26/06/2026 10:09:34
+ Date: 26/06/2026 11:07:00
 */
 
 SET NAMES utf8mb4;
@@ -266,7 +266,7 @@ CREATE TABLE `qrtz_scheduler_state` (
 -- Records of qrtz_scheduler_state
 -- ----------------------------
 BEGIN;
-INSERT INTO `qrtz_scheduler_state` (`sched_name`, `instance_name`, `last_checkin_time`, `checkin_interval`) VALUES ('travisScheduler', 'Mac1782439441211', 1782439773720, 10000);
+INSERT INTO `qrtz_scheduler_state` (`sched_name`, `instance_name`, `last_checkin_time`, `checkin_interval`) VALUES ('travisScheduler', 'Mac1782439441211', 1782443215716, 10000);
 COMMIT;
 
 -- ----------------------------
@@ -360,8 +360,8 @@ CREATE TABLE `qrtz_triggers` (
 -- Records of qrtz_triggers
 -- ----------------------------
 BEGIN;
-INSERT INTO `qrtz_triggers` (`sched_name`, `trigger_name`, `trigger_group`, `job_name`, `job_group`, `description`, `next_fire_time`, `prev_fire_time`, `priority`, `trigger_state`, `trigger_type`, `start_time`, `end_time`, `calendar_name`, `misfire_instr`, `job_data`) VALUES ('travisScheduler', 'log-cleanup-trigger', 'ops-internal', 'log-cleanup', 'ops-internal', NULL, 1782442800000, 1782356400000, 5, 'WAITING', 'CRON', 1781254743000, 0, NULL, 0, '');
-INSERT INTO `qrtz_triggers` (`sched_name`, `trigger_name`, `trigger_group`, `job_name`, `job_group`, `description`, `next_fire_time`, `prev_fire_time`, `priority`, `trigger_state`, `trigger_type`, `start_time`, `end_time`, `calendar_name`, `misfire_instr`, `job_data`) VALUES ('travisScheduler', 'scheduled-message-push-trigger', 'system-message', 'scheduled-message-push', 'system-message', NULL, 1782439800000, 1782439740000, 5, 'WAITING', 'CRON', 1782439443000, 0, NULL, 0, '');
+INSERT INTO `qrtz_triggers` (`sched_name`, `trigger_name`, `trigger_group`, `job_name`, `job_group`, `description`, `next_fire_time`, `prev_fire_time`, `priority`, `trigger_state`, `trigger_type`, `start_time`, `end_time`, `calendar_name`, `misfire_instr`, `job_data`) VALUES ('travisScheduler', 'log-cleanup-trigger', 'ops-internal', 'log-cleanup', 'ops-internal', NULL, 1782529200000, 1782442800000, 5, 'WAITING', 'CRON', 1781254743000, 0, NULL, 0, '');
+INSERT INTO `qrtz_triggers` (`sched_name`, `trigger_name`, `trigger_group`, `job_name`, `job_group`, `description`, `next_fire_time`, `prev_fire_time`, `priority`, `trigger_state`, `trigger_type`, `start_time`, `end_time`, `calendar_name`, `misfire_instr`, `job_data`) VALUES ('travisScheduler', 'scheduled-message-push-trigger', 'system-message', 'scheduled-message-push', 'system-message', NULL, 1782443280000, 1782443220000, 5, 'WAITING', 'CRON', 1782439443000, 0, NULL, 0, '');
 COMMIT;
 
 -- ----------------------------
@@ -736,7 +736,7 @@ CREATE TABLE `sys_menu` (
 -- ----------------------------
 BEGIN;
 INSERT INTO `sys_menu` (`id`, `parent_id`, `menu_name`, `menu_type`, `path`, `component`, `perms`, `icon`, `sort`, `status`, `create_time`, `create_by`, `update_time`, `update_by`, `meta`, `is_deleted`) VALUES (1, 0, '主页', 1, '/dashboard', 'dashboard/analytics/index', NULL, 'carbon:home', 1, 1, '2026-05-27 09:40:25', 1, '2026-06-15 16:11:10', 0, '{\"affixTab\": true}', 0);
-INSERT INTO `sys_menu` (`id`, `parent_id`, `menu_name`, `menu_type`, `path`, `component`, `perms`, `icon`, `sort`, `status`, `create_time`, `create_by`, `update_time`, `update_by`, `meta`, `is_deleted`) VALUES (3, 0, '系统设置', 0, '/system', '', NULL, 'lucide:settings', 3, 1, '2026-05-27 09:40:25', 1, '2026-06-02 20:17:21', 1, '{}', 0);
+INSERT INTO `sys_menu` (`id`, `parent_id`, `menu_name`, `menu_type`, `path`, `component`, `perms`, `icon`, `sort`, `status`, `create_time`, `create_by`, `update_time`, `update_by`, `meta`, `is_deleted`) VALUES (3, 0, '系统设置', 0, '/system', '', NULL, 'lucide:settings', 4, 1, '2026-05-27 09:40:25', 1, '2026-06-02 20:17:21', 1, '{}', 0);
 INSERT INTO `sys_menu` (`id`, `parent_id`, `menu_name`, `menu_type`, `path`, `component`, `perms`, `icon`, `sort`, `status`, `create_time`, `create_by`, `update_time`, `update_by`, `meta`, `is_deleted`) VALUES (4, 3, '菜单管理', 1, '/system/menu', 'system/menu/list', 'system:menu:query', 'lucide:menu', 4, 1, '2026-05-27 09:40:25', 1, '2026-06-15 18:23:42', 1, '{}', 0);
 INSERT INTO `sys_menu` (`id`, `parent_id`, `menu_name`, `menu_type`, `path`, `component`, `perms`, `icon`, `sort`, `status`, `create_time`, `create_by`, `update_time`, `update_by`, `meta`, `is_deleted`) VALUES (5, 3, '角色管理', 1, '/system/role', 'system/role/list', 'system:role:query', 'lucide:shield', 2, 1, '2026-05-27 09:40:25', 1, '2026-06-15 18:23:56', 1, '{}', 0);
 INSERT INTO `sys_menu` (`id`, `parent_id`, `menu_name`, `menu_type`, `path`, `component`, `perms`, `icon`, `sort`, `status`, `create_time`, `create_by`, `update_time`, `update_by`, `meta`, `is_deleted`) VALUES (6, 3, '用户管理', 1, '/system/user', 'system/user/list', 'system:user:query', 'lucide:user', 1, 1, '2026-05-27 09:40:25', 1, '2026-06-15 18:23:55', 1, '{}', 0);
@@ -776,7 +776,7 @@ INSERT INTO `sys_menu` (`id`, `parent_id`, `menu_name`, `menu_type`, `path`, `co
 INSERT INTO `sys_menu` (`id`, `parent_id`, `menu_name`, `menu_type`, `path`, `component`, `perms`, `icon`, `sort`, `status`, `create_time`, `create_by`, `update_time`, `update_by`, `meta`, `is_deleted`) VALUES (1930000000001015, 1930000000001014, '新增', 2, NULL, NULL, 'system:message:create', NULL, 1, 1, '2026-06-25 20:00:07', 1, '2026-06-25 21:34:16', 1, NULL, 0);
 INSERT INTO `sys_menu` (`id`, `parent_id`, `menu_name`, `menu_type`, `path`, `component`, `perms`, `icon`, `sort`, `status`, `create_time`, `create_by`, `update_time`, `update_by`, `meta`, `is_deleted`) VALUES (1930000000001016, 1930000000001014, '修改', 2, NULL, NULL, 'system:message:update', NULL, 2, 1, '2026-06-25 20:00:07', 1, '2026-06-25 21:34:16', 1, NULL, 0);
 INSERT INTO `sys_menu` (`id`, `parent_id`, `menu_name`, `menu_type`, `path`, `component`, `perms`, `icon`, `sort`, `status`, `create_time`, `create_by`, `update_time`, `update_by`, `meta`, `is_deleted`) VALUES (1930000000001017, 1930000000001014, '删除', 2, NULL, NULL, 'system:message:delete', NULL, 3, 1, '2026-06-25 20:00:07', 1, '2026-06-25 21:34:16', 1, NULL, 0);
-INSERT INTO `sys_menu` (`id`, `parent_id`, `menu_name`, `menu_type`, `path`, `component`, `perms`, `icon`, `sort`, `status`, `create_time`, `create_by`, `update_time`, `update_by`, `meta`, `is_deleted`) VALUES (1930000000001020, 9, '错误日志', 1, '/system/log/error', 'system/error-log/list', 'system:log:error:query', 'ion:bug-outline', 3, 1, '2026-06-11 16:38:41', 1, '2026-06-15 18:24:23', 1, '{}', 0);
+INSERT INTO `sys_menu` (`id`, `parent_id`, `menu_name`, `menu_type`, `path`, `component`, `perms`, `icon`, `sort`, `status`, `create_time`, `create_by`, `update_time`, `update_by`, `meta`, `is_deleted`) VALUES (1930000000001020, 2066431140185759745, '错误日志', 1, '/ops/error-log', 'ops/error-log/list', 'ops:error-log:query', 'ion:bug-outline', 2, 1, '2026-06-11 16:38:41', 1, '2026-06-15 18:24:23', 1, '{}', 0);
 INSERT INTO `sys_menu` (`id`, `parent_id`, `menu_name`, `menu_type`, `path`, `component`, `perms`, `icon`, `sort`, `status`, `create_time`, `create_by`, `update_time`, `update_by`, `meta`, `is_deleted`) VALUES (1930000000001030, 3, '文件管理', 1, '/system/file-management', 'system/file-management/list', 'system:file:query', 'ion:folder-open-outline', 10, 1, '2026-06-11 16:38:41', 1, '2026-06-25 21:34:16', 1, '{}', 0);
 INSERT INTO `sys_menu` (`id`, `parent_id`, `menu_name`, `menu_type`, `path`, `component`, `perms`, `icon`, `sort`, `status`, `create_time`, `create_by`, `update_time`, `update_by`, `meta`, `is_deleted`) VALUES (1930000000001031, 1930000000001030, '上传', 2, NULL, NULL, 'system:file:upload', NULL, 1, 1, '2026-06-11 16:38:41', 1, '2026-06-15 00:08:45', NULL, NULL, 0);
 INSERT INTO `sys_menu` (`id`, `parent_id`, `menu_name`, `menu_type`, `path`, `component`, `perms`, `icon`, `sort`, `status`, `create_time`, `create_by`, `update_time`, `update_by`, `meta`, `is_deleted`) VALUES (1930000000001032, 1930000000001030, '删除', 2, NULL, NULL, 'system:file:delete', NULL, 2, 1, '2026-06-11 16:38:41', 1, '2026-06-15 00:08:49', NULL, NULL, 0);
@@ -786,12 +786,12 @@ INSERT INTO `sys_menu` (`id`, `parent_id`, `menu_name`, `menu_type`, `path`, `co
 INSERT INTO `sys_menu` (`id`, `parent_id`, `menu_name`, `menu_type`, `path`, `component`, `perms`, `icon`, `sort`, `status`, `create_time`, `create_by`, `update_time`, `update_by`, `meta`, `is_deleted`) VALUES (1930000000001044, 1930000000001051, '执行', 2, '', '', 'ops:job:operation', '', 1, 1, '2026-06-12 17:02:59', 1, '2026-06-15 19:31:07', 1, '{}', 0);
 INSERT INTO `sys_menu` (`id`, `parent_id`, `menu_name`, `menu_type`, `path`, `component`, `perms`, `icon`, `sort`, `status`, `create_time`, `create_by`, `update_time`, `update_by`, `meta`, `is_deleted`) VALUES (1930000000001051, 1930000000001040, '任务管理', 1, '/ops/job/list', 'ops/job/list', 'ops:job:query', 'carbon:document-tasks', 1, 1, '2026-06-12 17:32:13', 1, '2026-06-15 19:30:29', 1, '{}', 0);
 INSERT INTO `sys_menu` (`id`, `parent_id`, `menu_name`, `menu_type`, `path`, `component`, `perms`, `icon`, `sort`, `status`, `create_time`, `create_by`, `update_time`, `update_by`, `meta`, `is_deleted`) VALUES (1930000000001052, 1930000000001040, '执行日志', 1, '/ops/job/log', 'ops/job/log', 'ops:job:log:query', 'mdi:sticker-text-outline', 2, 1, '2026-06-12 17:32:13', 1, '2026-06-15 19:30:41', 1, '{}', 0);
-INSERT INTO `sys_menu` (`id`, `parent_id`, `menu_name`, `menu_type`, `path`, `component`, `perms`, `icon`, `sort`, `status`, `create_time`, `create_by`, `update_time`, `update_by`, `meta`, `is_deleted`) VALUES (1930000000002000, 0, '消息中心', 0, '/message-center', '', NULL, 'ion:chatbubbles-outline', 4, 1, '2026-06-26 09:59:51', 1, NULL, NULL, '{}', 0);
+INSERT INTO `sys_menu` (`id`, `parent_id`, `menu_name`, `menu_type`, `path`, `component`, `perms`, `icon`, `sort`, `status`, `create_time`, `create_by`, `update_time`, `update_by`, `meta`, `is_deleted`) VALUES (1930000000002000, 0, '消息中心', 0, '/message-center', '', NULL, 'ion:chatbubbles-outline', 2, 1, '2026-06-26 09:59:51', 1, '2026-06-26 02:58:46', 1, '{}', 0);
 INSERT INTO `sys_menu` (`id`, `parent_id`, `menu_name`, `menu_type`, `path`, `component`, `perms`, `icon`, `sort`, `status`, `create_time`, `create_by`, `update_time`, `update_by`, `meta`, `is_deleted`) VALUES (1930000000002001, 1930000000002000, '消息模板', 1, '/message-center/template', 'system/message-template/list', 'system:message:template:query', 'ion:document-text-outline', 2, 1, '2026-06-26 09:59:51', 1, NULL, NULL, '{}', 0);
 INSERT INTO `sys_menu` (`id`, `parent_id`, `menu_name`, `menu_type`, `path`, `component`, `perms`, `icon`, `sort`, `status`, `create_time`, `create_by`, `update_time`, `update_by`, `meta`, `is_deleted`) VALUES (1930000000002002, 1930000000002001, '新增', 2, NULL, NULL, 'system:message:template:create', NULL, 1, 1, '2026-06-26 09:59:51', 1, NULL, NULL, NULL, 0);
 INSERT INTO `sys_menu` (`id`, `parent_id`, `menu_name`, `menu_type`, `path`, `component`, `perms`, `icon`, `sort`, `status`, `create_time`, `create_by`, `update_time`, `update_by`, `meta`, `is_deleted`) VALUES (1930000000002003, 1930000000002001, '修改', 2, NULL, NULL, 'system:message:template:update', NULL, 2, 1, '2026-06-26 09:59:51', 1, NULL, NULL, NULL, 0);
 INSERT INTO `sys_menu` (`id`, `parent_id`, `menu_name`, `menu_type`, `path`, `component`, `perms`, `icon`, `sort`, `status`, `create_time`, `create_by`, `update_time`, `update_by`, `meta`, `is_deleted`) VALUES (1930000000002004, 1930000000002001, '删除', 2, NULL, NULL, 'system:message:template:delete', NULL, 3, 1, '2026-06-26 09:59:51', 1, NULL, NULL, NULL, 0);
-INSERT INTO `sys_menu` (`id`, `parent_id`, `menu_name`, `menu_type`, `path`, `component`, `perms`, `icon`, `sort`, `status`, `create_time`, `create_by`, `update_time`, `update_by`, `meta`, `is_deleted`) VALUES (2066431140185759745, 0, '系统运维', 0, '/ops', '', NULL, 'carbon:cloud-monitoring', 2, 1, '2026-06-15 08:02:31', 1, '2026-06-15 08:03:12', 1, '{}', 0);
+INSERT INTO `sys_menu` (`id`, `parent_id`, `menu_name`, `menu_type`, `path`, `component`, `perms`, `icon`, `sort`, `status`, `create_time`, `create_by`, `update_time`, `update_by`, `meta`, `is_deleted`) VALUES (2066431140185759745, 0, '系统运维', 0, '/ops', '', NULL, 'carbon:cloud-monitoring', 3, 1, '2026-06-15 08:02:31', 1, '2026-06-15 08:03:12', 1, '{}', 0);
 COMMIT;
 
 -- ----------------------------
@@ -800,18 +800,19 @@ COMMIT;
 DROP TABLE IF EXISTS `sys_message`;
 CREATE TABLE `sys_message` (
   `id` bigint NOT NULL COMMENT '主键ID',
-  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '消息标题',
-  `content` longtext COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '站内信内容快照，用于收件箱展示',
-  `message_type` tinyint NOT NULL DEFAULT '1' COMMENT '消息类型：1-系统消息 2-业务消息',
+  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '消息标题',
+  `content` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '站内信内容快照，用于收件箱展示',
+  `message_type` tinyint NOT NULL DEFAULT '1' COMMENT '消息类型：1-系统通知 2-业务消息',
   `push_type` tinyint NOT NULL DEFAULT '0' COMMENT '推送方式：0-手动推送 1-定时推送',
-  `source_type` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT 'MANUAL' COMMENT '来源类型：MANUAL-后台人工推送',
-  `source_id` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '来源ID',
-  `channels` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT 'IN_APP' COMMENT '推送通道，逗号分隔',
+  `source_type` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'MANUAL' COMMENT '来源类型：MANUAL-后台人工推送',
+  `source_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '来源ID',
+  `channels` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'IN_APP' COMMENT '推送通道，逗号分隔',
   `status` tinyint NOT NULL DEFAULT '0' COMMENT '状态：0-待推送 1-定时推送 2-已推送 3-已撤回',
-  `audience_type` tinyint NOT NULL COMMENT '接收范围：0-全部用户 1-指定用户 2-指定角色 3-指定部门',
-  `target_ids` varchar(2000) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '目标ID快照，逗号分隔，用于管理端回显',
+  `receiver_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'admin' COMMENT '接收端登录体系，与 LoginType 常量取值保持一致：admin/user',
+  `receiver_scope` tinyint NOT NULL COMMENT '接收范围：0-全部用户 1-指定用户 2-指定角色 3-指定部门',
+  `receiver_values` json DEFAULT NULL COMMENT '接收范围值JSON数组；全部用户为空',
   `publish_time` datetime DEFAULT NULL COMMENT '发布时间',
-  `remark` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '备注',
+  `remark` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '备注',
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
   `create_by` bigint DEFAULT NULL COMMENT '创建人ID',
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
@@ -820,7 +821,7 @@ CREATE TABLE `sys_message` (
   PRIMARY KEY (`id`),
   KEY `idx_sys_message_status_time` (`status`,`is_deleted`,`publish_time`,`create_time`),
   KEY `idx_sys_message_push_type` (`push_type`,`status`,`is_deleted`),
-  KEY `idx_sys_message_audience` (`audience_type`,`status`,`is_deleted`),
+  KEY `idx_sys_message_receiver` (`receiver_type`,`receiver_scope`,`status`,`is_deleted`),
   KEY `idx_sys_message_title` (`title`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='消息推送主体';
 
@@ -837,14 +838,14 @@ DROP TABLE IF EXISTS `sys_message_channel_content`;
 CREATE TABLE `sys_message_channel_content` (
   `id` bigint NOT NULL COMMENT '主键ID',
   `message_id` bigint NOT NULL COMMENT '消息ID',
-  `channel` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '推送通道：IN_APP/APP_PUSH/SMS/WECHAT_MP/DOUYIN_MP',
-  `title` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '渠道标题',
-  `subtitle` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '渠道副标题',
-  `content` longtext COLLATE utf8mb4_unicode_ci COMMENT '渠道内容',
-  `image_url` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '大图URL',
-  `jump_url` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '跳转链接',
+  `channel` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '推送通道：IN_APP/APP_PUSH/SMS/WECHAT',
+  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '渠道标题',
+  `subtitle` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '渠道副标题',
+  `content` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT '渠道内容',
+  `image_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '大图URL',
+  `jump_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '跳转链接',
   `template_id` bigint DEFAULT NULL COMMENT '消息模板ID',
-  `template_params` text COLLATE utf8mb4_unicode_ci COMMENT '模板参数JSON',
+  `template_params` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT '模板参数JSON',
   `word_count` int DEFAULT NULL COMMENT '字数',
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
   `create_by` bigint DEFAULT NULL COMMENT '创建人ID',
@@ -870,7 +871,7 @@ DROP TABLE IF EXISTS `sys_message_receiver`;
 CREATE TABLE `sys_message_receiver` (
   `id` bigint NOT NULL COMMENT '主键ID',
   `message_id` bigint NOT NULL COMMENT '消息ID',
-  `receiver_type` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '接收人登录体系，与 LoginType 常量取值保持一致',
+  `receiver_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '接收人登录体系，与 LoginType 常量取值保持一致',
   `receiver_id` bigint NOT NULL COMMENT '接收人ID',
   `read_status` tinyint NOT NULL DEFAULT '0' COMMENT '阅读状态：0-未读 1-已读 2-已删除',
   `read_time` datetime DEFAULT NULL COMMENT '阅读时间',
@@ -891,29 +892,6 @@ CREATE TABLE `sys_message_receiver` (
 BEGIN;
 COMMIT;
 
--- ----------------------------
--- Table structure for sys_message_target
--- ----------------------------
-DROP TABLE IF EXISTS `sys_message_target`;
-CREATE TABLE `sys_message_target` (
-  `id` bigint NOT NULL COMMENT '主键ID',
-  `message_id` bigint NOT NULL COMMENT '消息ID',
-  `target_type` tinyint NOT NULL COMMENT '目标类型：1-用户 2-角色 3-部门',
-  `target_id` bigint NOT NULL COMMENT '目标ID',
-  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
-  `create_by` bigint DEFAULT NULL COMMENT '创建人ID',
-  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
-  `update_by` bigint DEFAULT NULL COMMENT '更新人ID',
-  `is_deleted` tinyint NOT NULL DEFAULT '0' COMMENT '逻辑删除：0-未删除 1-已删除',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_sys_message_target` (`message_id`,`target_type`,`target_id`),
-  KEY `idx_sys_message_target_lookup` (`target_type`,`target_id`,`is_deleted`,`message_id`),
-  KEY `idx_sys_message_target_message` (`message_id`,`is_deleted`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='消息投放目标';
-
--- ----------------------------
--- Records of sys_message_target
--- ----------------------------
 BEGIN;
 COMMIT;
 
@@ -923,16 +901,16 @@ COMMIT;
 DROP TABLE IF EXISTS `sys_message_template`;
 CREATE TABLE `sys_message_template` (
   `id` bigint NOT NULL COMMENT '主键ID',
-  `template_code` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '模板编码',
-  `template_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '模板名称',
-  `channel` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '推送通道',
-  `platform_template_id` varchar(128) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '平台模板ID',
-  `content_schema` text COLLATE utf8mb4_unicode_ci COMMENT '模板字段结构JSON',
-  `content` longtext COLLATE utf8mb4_unicode_ci COMMENT '模板内容',
-  `page_path` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '小程序页面路径',
-  `jump_url` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '跳转链接',
+  `template_code` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '模板编码',
+  `template_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '模板名称',
+  `channel` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '推送通道',
+  `platform_template_id` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '平台模板ID',
+  `content_schema` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT '模板字段结构JSON',
+  `content` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT '模板内容',
+  `page_path` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '小程序页面路径',
+  `jump_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '跳转链接',
   `status` tinyint NOT NULL DEFAULT '1' COMMENT '状态：0-禁用 1-启用',
-  `remark` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '备注',
+  `remark` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '备注',
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
   `create_by` bigint DEFAULT NULL COMMENT '创建人ID',
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
@@ -1310,6 +1288,8 @@ INSERT INTO `sys_operation_log` (`id`, `user_id`, `username`, `description`, `mo
 INSERT INTO `sys_operation_log` (`id`, `user_id`, `username`, `description`, `module`, `method`, `request_url`, `request_method`, `request_params`, `response_result`, `ip`, `duration`, `status`, `error_msg`, `create_time`) VALUES (2070180106554703874, 1, 'travis0115', '删除公告', '系统公告', 'com.travis.monolith.system.notice.internal.controller.admin.SysNoticeController#delete', '/api/admin/system/notice/2070160197137354754', 'DELETE', '[\"2070160197137354754\"]', '{\"code\":\"200\",\"msg\":\"操作成功\"}', '127.0.0.1', 6, 1, NULL, '2026-06-25 16:19:34');
 INSERT INTO `sys_operation_log` (`id`, `user_id`, `username`, `description`, `module`, `method`, `request_url`, `request_method`, `request_params`, `response_result`, `ip`, `duration`, `status`, `error_msg`, `create_time`) VALUES (2070180111604645890, 1, 'travis0115', '删除公告', '系统公告', 'com.travis.monolith.system.notice.internal.controller.admin.SysNoticeController#delete', '/api/admin/system/notice/2070139873930924033', 'DELETE', '[\"2070139873930924033\"]', '{\"code\":\"200\",\"msg\":\"操作成功\"}', '127.0.0.1', 9, 1, NULL, '2026-06-25 16:19:35');
 INSERT INTO `sys_operation_log` (`id`, `user_id`, `username`, `description`, `module`, `method`, `request_url`, `request_method`, `request_params`, `response_result`, `ip`, `duration`, `status`, `error_msg`, `create_time`) VALUES (2070180116369375234, 1, 'travis0115', '删除公告', '系统公告', 'com.travis.monolith.system.notice.internal.controller.admin.SysNoticeController#delete', '/api/admin/system/notice/2070160176031617025', 'DELETE', '[\"2070160176031617025\"]', '{\"code\":\"200\",\"msg\":\"操作成功\"}', '127.0.0.1', 12, 1, NULL, '2026-06-25 16:19:36');
+INSERT INTO `sys_operation_log` (`id`, `user_id`, `username`, `description`, `module`, `method`, `request_url`, `request_method`, `request_params`, `response_result`, `ip`, `duration`, `status`, `error_msg`, `create_time`) VALUES (2070340966606581762, 1, 'travis0115', '上移菜单', '菜单管理', 'com.travis.monolith.system.menu.internal.controller.admin.SysMenuController#moveUp', '/api/admin/system/menu/1930000000002000/move-up', 'PUT', '[\"1930000000002000\"]', '{\"code\":\"200\",\"msg\":\"操作成功\"}', '127.0.0.1', 11, 1, NULL, '2026-06-26 02:58:46');
+INSERT INTO `sys_operation_log` (`id`, `user_id`, `username`, `description`, `module`, `method`, `request_url`, `request_method`, `request_params`, `response_result`, `ip`, `duration`, `status`, `error_msg`, `create_time`) VALUES (2070340971903987713, 1, 'travis0115', '上移菜单', '菜单管理', 'com.travis.monolith.system.menu.internal.controller.admin.SysMenuController#moveUp', '/api/admin/system/menu/1930000000002000/move-up', 'PUT', '[\"1930000000002000\"]', '{\"code\":\"200\",\"msg\":\"操作成功\"}', '127.0.0.1', 12, 1, NULL, '2026-06-26 02:58:47');
 COMMIT;
 
 -- ----------------------------

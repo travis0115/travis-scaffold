@@ -1,13 +1,13 @@
-package com.travis.monolith.system.log.errorlog.internal.service.impl;
+package com.travis.monolith.ops.errorlog.internal.service.impl;
 
 import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
-import com.travis.monolith.system.log.errorlog.api.request.SysErrorLogPageReq;
-import com.travis.monolith.system.log.errorlog.internal.entity.SysErrorLog;
-import com.travis.monolith.system.log.errorlog.internal.mapper.SysErrorLogMapper;
-import com.travis.monolith.system.log.errorlog.internal.service.SysErrorLogService;
+import com.travis.monolith.ops.errorlog.api.request.SysErrorLogPageReq;
+import com.travis.monolith.ops.errorlog.internal.entity.SysErrorLog;
+import com.travis.monolith.ops.errorlog.internal.mapper.SysErrorLogMapper;
+import com.travis.monolith.ops.errorlog.internal.service.SysErrorLogService;
 import org.springframework.stereotype.Service;
 
 @Service

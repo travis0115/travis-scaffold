@@ -29,11 +29,15 @@ public class SysMessageCreateReq {
     private String sourceId;
     private String channels;
 
+    /** 接收端登录体系，与 LoginType 常量取值保持一致：admin/user */
+    @NotBlank(message = "接收端不能为空")
+    private String receiverType;
+
     /** 接收范围：0-全部用户 1-指定用户 2-指定角色 3-指定部门 */
     @NotNull(message = "接收范围不能为空")
-    private Integer audienceType;
+    private Integer receiverScope;
 
-    private List<Long> targetIds;
+    private List<Long> receiverValues;
     private List<SysMessageChannelContentReq> channelContents;
 
     private LocalDateTime publishTime;

@@ -19,8 +19,9 @@ public class SysMessage extends BaseEntity {
     private String sourceId;
     private String channels;
     private Integer status;
-    private Integer audienceType;
-    private String targetIds;
+    private String receiverType;
+    private Integer receiverScope;
+    private String receiverValues;
     private LocalDateTime publishTime;
     private String remark;
 }

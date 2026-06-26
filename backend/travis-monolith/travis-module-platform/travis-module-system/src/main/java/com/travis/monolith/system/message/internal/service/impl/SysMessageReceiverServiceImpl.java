@@ -6,6 +6,7 @@ import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.monolith.system.message.api.request.SysUserMessagePageReq;
@@ -20,7 +21,6 @@ import com.travis.monolith.system.message.internal.service.SysMessageReceiverSer
 import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.api.SysUserApi;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -37,10 +37,10 @@ public class SysMessageReceiverServiceImpl
         extends ServiceImplX<SysMessageReceiverMapper, SysMessageReceiver>
         implements SysMessageReceiverService {
     private static final String RECEIVER_TYPE_ADMIN = LoginType.ADMIN;
-    private static final int AUDIENCE_ALL = 0;
-    private static final int AUDIENCE_USER = 1;
-    private static final int AUDIENCE_ROLE = 2;
-    private static final int AUDIENCE_DEPT = 3;
+    private static final int RECEIVER_SCOPE_ALL = 0;
+    private static final int RECEIVER_SCOPE_USER = 1;
+    private static final int RECEIVER_SCOPE_ROLE = 2;
+    private static final int RECEIVER_SCOPE_DEPT = 3;
     private static final int READ_UNREAD = 0;
     private static final int READ_READ = 1;
     private static final int READ_DELETED = 2;
@@ -189,13 +189,16 @@ public class SysMessageReceiverServiceImpl
     }
 
     private boolean matchesAudience(Long userId, SysMessage message) {
-        var targetIds = parseTargetIds(message.getTargetIds());
-        return switch (message.getAudienceType()) {
-            case AUDIENCE_ALL -> true;
-            case AUDIENCE_USER -> targetIds.contains(userId);
-            case AUDIENCE_ROLE ->
-                    roleApi.getRoleIdsByUserId(userId).stream().anyMatch(targetIds::contains);
-            case AUDIENCE_DEPT -> targetIds.contains(userApi.getDeptIdByUserId(userId));
+        if (!RECEIVER_TYPE_ADMIN.equals(message.getReceiverType())) {
+            return false;
+        }
+        var receiverValues = parseReceiverValues(message.getReceiverValues());
+        return switch (message.getReceiverScope()) {
+            case RECEIVER_SCOPE_ALL -> true;
+            case RECEIVER_SCOPE_USER -> receiverValues.contains(userId);
+            case RECEIVER_SCOPE_ROLE ->
+                    roleApi.getRoleIdsByUserId(userId).stream().anyMatch(receiverValues::contains);
+            case RECEIVER_SCOPE_DEPT -> receiverValues.contains(userApi.getDeptIdByUserId(userId));
             default -> false;
         };
     }
@@ -223,15 +226,11 @@ public class SysMessageReceiverServiceImpl
                 roleApi.getRoleIdsByUserId(userId), userApi.getDeptIdByUserId(userId));
     }
 
-    private List<Long> parseTargetIds(String targetIds) {
-        if (targetIds == null || targetIds.isBlank()) {
+    private List<Long> parseReceiverValues(String receiverValues) {
+        if (receiverValues == null || receiverValues.isBlank()) {
             return List.of();
         }
-        return Arrays.stream(targetIds.split(","))
-                .map(String::trim)
-                .filter(value -> !value.isEmpty())
-                .map(Long::valueOf)
-                .toList();
+        return JsonUtil.parseArray(receiverValues, Long.class);
     }
 
     private record AudienceContext(List<Long> roleIds, Long deptId) {}

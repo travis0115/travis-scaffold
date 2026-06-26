@@ -13,4 +13,12 @@ public interface SysMessageApi {
             Collection<Long> userIds,
             String sourceType,
             String sourceId);
+
+    void publishToUsers(
+            String receiverType,
+            String title,
+            String content,
+            Collection<Long> userIds,
+            String sourceType,
+            String sourceId);
 }

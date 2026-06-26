@@ -1,5 +1,6 @@
 package com.travis.monolith.system.message.internal.api;
 
+import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.monolith.system.message.api.SysMessageApi;
 import com.travis.monolith.system.message.api.request.SysMessageCreateReq;
 import com.travis.monolith.system.message.internal.service.SysMessageService;
@@ -16,11 +17,22 @@ public class SysMessageApiImpl implements SysMessageApi {
 
     @Override
     public void publishToUsers(String title, String content, Collection<Long> userIds) {
-        publishToUsers(title, content, userIds, null, null);
+        publishToUsers(LoginType.ADMIN, title, content, userIds, null, null);
     }
 
     @Override
     public void publishToUsers(
+            String title,
+            String content,
+            Collection<Long> userIds,
+            String sourceType,
+            String sourceId) {
+        publishToUsers(LoginType.ADMIN, title, content, userIds, sourceType, sourceId);
+    }
+
+    @Override
+    public void publishToUsers(
+            String receiverType,
             String title,
             String content,
             Collection<Long> userIds,
@@ -37,8 +49,9 @@ public class SysMessageApiImpl implements SysMessageApi {
         request.setSourceType(sourceType);
         request.setSourceId(sourceId);
         request.setChannels("IN_APP");
-        request.setAudienceType(1);
-        request.setTargetIds(List.copyOf(userIds));
+        request.setReceiverType(receiverType);
+        request.setReceiverScope(1);
+        request.setReceiverValues(List.copyOf(userIds));
         Long messageId = messageService.create(request);
         messageService.push(messageId);
     }

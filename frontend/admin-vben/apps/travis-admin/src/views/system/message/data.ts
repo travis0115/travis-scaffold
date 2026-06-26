@@ -53,6 +53,18 @@ export const messageSourceTypeOptions = [
   { label: '运营活动', value: 'ACTIVITY' },
 ];
 
+export const messageReceiverTypeOptions = [
+  { label: '管理后台用户', value: 'admin' },
+  { label: '前端用户', value: 'user' },
+];
+
+export const messageReceiverScopeOptions = [
+  { label: '全部用户', value: 0 },
+  { label: '指定用户', value: 1 },
+  { label: '指定角色', value: 2 },
+  { label: '指定部门', value: 3 },
+];
+
 export const useFormSchema = (): VbenFormSchema[] => [
   {
     component: 'Input',
@@ -106,15 +118,24 @@ export const useFormSchema = (): VbenFormSchema[] => [
     componentProps: {
       buttonStyle: 'solid',
       optionType: 'button',
-      options: [
-        { label: '全部用户', value: 0 },
-        { label: '指定用户', value: 1 },
-        { label: '指定角色', value: 2 },
-        { label: '指定部门', value: 3 },
-      ],
+      options: messageReceiverTypeOptions,
+    },
+    defaultValue: 'admin',
+    fieldName: 'receiverType',
+    label: '接收端',
+    rules: z
+      .string({ required_error: '接收端不能为空' })
+      .min(1, '接收端不能为空'),
+  },
+  {
+    component: 'RadioGroup',
+    componentProps: {
+      buttonStyle: 'solid',
+      optionType: 'button',
+      options: messageReceiverScopeOptions,
     },
     defaultValue: 0,
-    fieldName: 'audienceType',
+    fieldName: 'receiverScope',
     label: '接收范围',
     rules: requiredNumber('接收范围不能为空').refine(
       (value) => [0, 1, 2, 3].includes(value),
@@ -124,7 +145,7 @@ export const useFormSchema = (): VbenFormSchema[] => [
   {
     component: 'Select',
     componentProps: { class: 'w-full', mode: 'multiple', options: [], placeholder: '请选择用户' },
-    dependencies: { show: (values) => values.audienceType === 1, triggerFields: ['audienceType'] },
+    dependencies: { show: (values) => values.receiverScope === 1, triggerFields: ['receiverScope'] },
     fieldName: 'userIds',
     label: '接收用户',
     rules: requiredIdList('请选择接收用户'),
@@ -132,7 +153,7 @@ export const useFormSchema = (): VbenFormSchema[] => [
   {
     component: 'Select',
     componentProps: { class: 'w-full', mode: 'multiple', options: [], placeholder: '请选择角色' },
-    dependencies: { show: (values) => values.audienceType === 2, triggerFields: ['audienceType'] },
+    dependencies: { show: (values) => values.receiverScope === 2, triggerFields: ['receiverScope'] },
     fieldName: 'roleIds',
     label: '接收角色',
     rules: requiredIdList('请选择接收角色'),
@@ -146,7 +167,7 @@ export const useFormSchema = (): VbenFormSchema[] => [
       placeholder: '请选择部门',
       treeData: [],
     },
-    dependencies: { show: (values) => values.audienceType === 3, triggerFields: ['audienceType'] },
+    dependencies: { show: (values) => values.receiverScope === 3, triggerFields: ['receiverScope'] },
     fieldName: 'deptIds',
     label: '接收部门',
     rules: requiredIdList('请选择接收部门'),
@@ -265,7 +286,14 @@ export function useColumns<T>(
       width: 100,
     },
     {
-      field: 'audienceType',
+      field: 'receiverType',
+      formatter: ({ cellValue }: any) =>
+        cellValue === 'user' ? '前端用户' : '管理后台用户',
+      title: '接收端',
+      width: 120,
+    },
+    {
+      field: 'receiverScope',
       formatter: ({ cellValue }: any) => ['全部用户', '指定用户', '指定角色', '指定部门'][cellValue] ?? '-',
       title: '接收范围',
       width: 110,

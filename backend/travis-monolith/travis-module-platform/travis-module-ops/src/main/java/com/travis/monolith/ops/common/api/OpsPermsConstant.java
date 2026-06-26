@@ -24,4 +24,7 @@ public class OpsPermsConstant {
 
     /** 任务执行日志查询权限 */
     public static final String OPS_JOB_LOG_QUERY = "ops:job:log:query";
+
+    /** 错误日志查询权限 */
+    public static final String OPS_ERROR_LOG_QUERY = "ops:error-log:query";
 }

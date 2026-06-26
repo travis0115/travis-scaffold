@@ -72,6 +72,7 @@ export const OPS_PERMS = {
   jobOperation: 'ops:job:operation',
   jobUpdate: 'ops:job:update',
   jobLogQuery: 'ops:job:log:query',
+  errorLogQuery: 'ops:error-log:query',
 } as const;
 
 export function hasAccessCode(code: string) {

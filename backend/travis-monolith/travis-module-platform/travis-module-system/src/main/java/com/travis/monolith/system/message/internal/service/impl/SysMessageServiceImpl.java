@@ -2,6 +2,7 @@ package com.travis.monolith.system.message.internal.service.impl;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
+import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
@@ -18,11 +19,9 @@ import com.travis.monolith.system.message.api.response.SysMessagePageResp;
 import com.travis.monolith.system.message.internal.converter.SysMessageConverter;
 import com.travis.monolith.system.message.internal.entity.SysMessage;
 import com.travis.monolith.system.message.internal.entity.SysMessageChannelContent;
-import com.travis.monolith.system.message.internal.entity.SysMessageTarget;
 import com.travis.monolith.system.message.internal.mapper.SysMessageChannelContentMapper;
 import com.travis.monolith.system.message.internal.mapper.SysMessageMapper;
 import com.travis.monolith.system.message.internal.mapper.SysMessageReceiverMapper;
-import com.travis.monolith.system.message.internal.mapper.SysMessageTargetMapper;
 import com.travis.monolith.system.message.internal.service.SysMessageService;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -41,10 +40,10 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 @CacheConfig(cacheNames = "system:message")
 public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMessage>
         implements SysMessageService {
-    private static final int AUDIENCE_ALL = 0;
-    private static final int AUDIENCE_USER = 1;
-    private static final int AUDIENCE_ROLE = 2;
-    private static final int AUDIENCE_DEPT = 3;
+    private static final int RECEIVER_SCOPE_ALL = 0;
+    private static final int RECEIVER_SCOPE_USER = 1;
+    private static final int RECEIVER_SCOPE_ROLE = 2;
+    private static final int RECEIVER_SCOPE_DEPT = 3;
     private static final int PUSH_TYPE_MANUAL = 0;
     private static final int PUSH_TYPE_SCHEDULED = 1;
     private static final int STATUS_PENDING = 0;
@@ -53,19 +52,16 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     private static final int STATUS_REVOKED = 3;
 
     private final SysMessageReceiverMapper messageReceiverMapper;
-    private final SysMessageTargetMapper messageTargetMapper;
     private final SysMessageChannelContentMapper channelContentMapper;
     private final SysMessageConverter converter;
     private final WebSocketMessageSender webSocketMessageSender;
 
     public SysMessageServiceImpl(
             SysMessageReceiverMapper messageReceiverMapper,
-            SysMessageTargetMapper messageTargetMapper,
             SysMessageChannelContentMapper channelContentMapper,
             SysMessageConverter converter,
             WebSocketMessageSender webSocketMessageSender) {
         this.messageReceiverMapper = messageReceiverMapper;
-        this.messageTargetMapper = messageTargetMapper;
         this.channelContentMapper = channelContentMapper;
         this.converter = converter;
         this.webSocketMessageSender = webSocketMessageSender;
@@ -96,7 +92,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     @Transactional
     @CacheEvict(cacheNames = "system:message-inbox", allEntries = true)
     public Long create(SysMessageCreateReq req) {
-        validateAudience(req.getAudienceType(), req.getTargetIds());
+        validateReceiver(req.getReceiverType(), req.getReceiverScope(), req.getReceiverValues());
         validatePush(req.getPushType(), req.getPublishTime());
         var entity = converter.toEntity(req);
         entity.setStatus(initialStatus(req.getPushType()));
@@ -105,7 +101,6 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
         entity.setContent(resolveInAppContent(req.getChannelContents(), req.getContent()));
         save(entity);
-        syncTargets(entity.getId(), req.getAudienceType(), req.getTargetIds());
         syncChannelContents(entity.getId(), req);
         return entity.getId();
     }
@@ -137,7 +132,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                 @CacheEvict(cacheNames = "system:message-inbox", allEntries = true)
             })
     public void update(Long id, SysMessageUpdateReq req) {
-        validateAudience(req.getAudienceType(), req.getTargetIds());
+        validateReceiver(req.getReceiverType(), req.getReceiverScope(), req.getReceiverValues());
         validatePush(req.getPushType(), req.getPublishTime());
         var entity = getByIdOrThrow(id);
         if (Integer.valueOf(STATUS_SENT).equals(entity.getStatus())) {
@@ -150,7 +145,6 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
         entity.setContent(resolveInAppContent(req.getChannelContents(), req.getContent()));
         updateById(entity);
-        syncTargets(id, req.getAudienceType(), req.getTargetIds());
         syncChannelContents(id, req);
     }
 
@@ -213,7 +207,6 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
             })
     public void delete(Long id) {
         messageReceiverMapper.deleteByMessageId(id);
-        messageTargetMapper.deleteByMessageId(id);
         channelContentMapper.deleteByMessageId(id);
         removeById(id);
     }
@@ -259,25 +252,6 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                 });
     }
 
-    private void syncTargets(Long messageId, Integer audienceType, List<Long> targetIds) {
-        messageTargetMapper.deleteByMessageId(messageId);
-        if (Integer.valueOf(AUDIENCE_ALL).equals(audienceType)
-                || targetIds == null
-                || targetIds.isEmpty()) {
-            return;
-        }
-        targetIds.stream()
-                .distinct()
-                .forEach(
-                        targetId -> {
-                            var target = new SysMessageTarget();
-                            target.setMessageId(messageId);
-                            target.setTargetType(audienceType);
-                            target.setTargetId(targetId);
-                            messageTargetMapper.insert(target);
-                        });
-    }
-
     private void publish(SysMessage message) {
         message.setStatus(STATUS_SENT);
         message.setPublishTime(LocalDateTime.now());
@@ -304,11 +278,18 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
     }
 
-    private void validateAudience(Integer audienceType, List<Long> targetIds) {
-        if (audienceType == null || audienceType < AUDIENCE_ALL || audienceType > AUDIENCE_DEPT) {
+    private void validateReceiver(
+            String receiverType, Integer receiverScope, List<Long> receiverValues) {
+        if (!LoginType.ADMIN.equals(receiverType) && !LoginType.USER.equals(receiverType)) {
             throw new BizException(CommonErrorCode.BAD_REQUEST);
         }
-        if (audienceType != AUDIENCE_ALL && (targetIds == null || targetIds.isEmpty())) {
+        if (receiverScope == null
+                || receiverScope < RECEIVER_SCOPE_ALL
+                || receiverScope > RECEIVER_SCOPE_DEPT) {
+            throw new BizException(CommonErrorCode.BAD_REQUEST);
+        }
+        if (receiverScope != RECEIVER_SCOPE_ALL
+                && (receiverValues == null || receiverValues.isEmpty())) {
             throw new BizException(CommonErrorCode.BAD_REQUEST);
         }
     }

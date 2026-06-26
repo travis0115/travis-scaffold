@@ -15,8 +15,9 @@ public class SysMessagePageResp {
     private String sourceId;
     private String channels;
     private Integer status;
-    private Integer audienceType;
-    private List<Long> targetIds;
+    private String receiverType;
+    private Integer receiverScope;
+    private List<Long> receiverValues;
     private LocalDateTime publishTime;
     private String remark;
     private LocalDateTime createTime;
