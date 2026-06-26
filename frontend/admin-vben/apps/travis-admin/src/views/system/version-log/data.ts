@@ -3,6 +3,7 @@ import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { SystemVersionLogApi } from '#/api';
 
 import { z } from '#/adapter/form';
+import { FILE_FOLDER_IDS } from '#/api';
 import { $t } from '#/locales';
 import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
 
@@ -65,6 +66,7 @@ export function useFormSchema(): VbenFormSchema[] {
         validateOnModelUpdate: false,
       },
       componentProps: {
+        imageUploadFolderId: FILE_FOLDER_IDS.VERSION,
         maxHeight: 520,
         minHeight: 280,
       },

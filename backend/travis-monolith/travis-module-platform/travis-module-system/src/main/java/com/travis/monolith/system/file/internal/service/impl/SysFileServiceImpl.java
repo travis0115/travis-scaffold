@@ -16,7 +16,6 @@ import com.travis.monolith.system.file.internal.mapper.SysFileMapper;
 import com.travis.monolith.system.file.internal.mapper.SysFileStorageConfigMapper;
 import com.travis.monolith.system.file.internal.service.FileStorageStrategy;
 import com.travis.monolith.system.file.internal.service.SysFileService;
-import com.travis.monolith.system.user.api.SysUserApi;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -36,11 +35,10 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
 
     private final java.util.List<FileStorageStrategy> storageStrategies;
     private final SysFileStorageConfigMapper storageConfigMapper;
-    private final SysUserApi userApi;
 
     @Override
     public FileUploadResp upload(MultipartFile file, Long folderId) {
-        SysFileStorageConfig config =
+        var config =
                 storageConfigMapper.selectOne(
                         new LambdaQueryWrapperX<SysFileStorageConfig>()
                                 .eq(SysFileStorageConfig::getIsDefault, 1)
@@ -49,7 +47,7 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
         if (config == null) {
             throw new BizException(CommonErrorCode.BAD_REQUEST);
         }
-        FileStorageStrategy strategy =
+        var strategy =
                 storageStrategies.stream()
                         .filter(
                                 item ->
@@ -79,10 +77,20 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
     public PageResp<SysFileResp> page(SysFilePageReq req) {
         var wrapper =
                 new LambdaQueryWrapperX<SysFile>()
-                        .likeIfPresent(SysFile::getOriginalName, req.getFileName())
+                        .likeIfPresent(SysFile::getFileName, req.getFileName())
+                        .likeIfPresent(SysFile::getOriginalName, req.getOriginalName())
                         .likeIfPresent(SysFile::getMimeType, req.getMimeType())
                         .eqIfPresent(SysFile::getStorageConfigId, req.getStorageConfigId())
-                        .orderByDesc(SysFile::getCreateTime);
+                        .orderByAllowed(
+                                req.getOrderBy(),
+                                req.getAsc(),
+                                Map.of(
+                                        "size",
+                                        SysFile::getSize,
+                                        "createTime",
+                                        SysFile::getCreateTime),
+                                false,
+                                SysFile::getCreateTime);
         if (Boolean.TRUE.equals(req.getUnclassified())
                 || Long.valueOf(0).equals(req.getFolderId())) {
             wrapper.and(item -> item.isNull(SysFile::getFolderId).or().eq(SysFile::getFolderId, 0));
@@ -104,20 +112,9 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
                         .stream()
                         .collect(
                                 Collectors.toMap(SysFileStorageConfig::getId, Function.identity()));
-        Map<Long, String> usernameMap =
-                userApi.getUsernameMapByIds(
-                        page.getRecords().stream()
-                                .map(SysFile::getCreateBy)
-                                .filter(java.util.Objects::nonNull)
-                                .distinct()
-                                .toList());
         return PageConverter.toResp(
                 page.convert(
-                        file ->
-                                toResponse(
-                                        file,
-                                        storageConfigMap.get(file.getStorageConfigId()),
-                                        usernameMap.get(file.getCreateBy()))));
+                        file -> toResponse(file, storageConfigMap.get(file.getStorageConfigId()))));
     }
 
     @Override
@@ -171,8 +168,7 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
         return filename.substring(filename.lastIndexOf('.') + 1);
     }
 
-    private SysFileResp toResponse(
-            SysFile file, SysFileStorageConfig storageConfig, String creatorName) {
+    private SysFileResp toResponse(SysFile file, SysFileStorageConfig storageConfig) {
         var response = new SysFileResp();
         response.setId(file.getId());
         response.setFolderId(file.getFolderId());
@@ -187,8 +183,6 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
         response.setExtension(file.getExtension());
         response.setMimeType(file.getMimeType());
         response.setSize(file.getSize());
-        response.setCreateBy(file.getCreateBy());
-        response.setCreatorName(creatorName);
         response.setCreateTime(file.getCreateTime());
         if (storageConfig != null) {
             response.setStorageConfigName(storageConfig.getConfigName());

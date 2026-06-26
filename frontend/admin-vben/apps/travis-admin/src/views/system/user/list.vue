@@ -89,8 +89,10 @@ async function loadDeptList() {
   try {
     const data = await getDeptTree();
     deptListSource.value = data;
+    deptManualExpandedKeys.value = collectDeptExpandableKeys(data);
   } catch {
     deptListSource.value = [];
+    deptManualExpandedKeys.value = [];
   }
 }
 

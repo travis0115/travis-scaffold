@@ -17,7 +17,5 @@ public class SysFileResp {
     private String extension;
     private String mimeType;
     private Long size;
-    private Long createBy;
-    private String creatorName;
     private LocalDateTime createTime;
 }

@@ -31,7 +31,7 @@ import LoginForm from '#/views/_core/authentication/login.vue';
 const notifications = ref<NotificationItem[]>([]);
 const unreadCount = ref(0);
 let notificationTimer: ReturnType<typeof setInterval> | undefined;
-let notificationSocket: WebSocket | undefined;
+let notificationSocket: undefined | WebSocket;
 let notificationSocketReconnectTimer: ReturnType<typeof setTimeout> | undefined;
 let notificationSocketClosedByClient = false;
 let notificationSocketConnectedOnce = false;
@@ -147,41 +147,56 @@ function connectNotificationSocket() {
   if (!socketUrl) return;
   notificationSocketClosedByClient = false;
   notificationSocket = new WebSocket(socketUrl);
-  notificationSocket.onopen = () => {
-    notificationSocketConnectedOnce = true;
-    notificationSocketReconnectDelay = 5000;
-  };
-  notificationSocket.onmessage = (event) => {
-    try {
-      const message = JSON.parse(event.data);
-      if (message?.content?.event === 'SYSTEM_MESSAGE_PUBLISHED') {
-        void loadNotifications();
-      }
-    } catch {
-      // 忽略非 JSON WebSocket 消息，保留轮询兜底。
+  notificationSocket.addEventListener('open', handleNotificationSocketOpen);
+  notificationSocket.addEventListener(
+    'message',
+    handleNotificationSocketMessage,
+  );
+  notificationSocket.addEventListener('close', handleNotificationSocketClose);
+  notificationSocket.addEventListener('error', handleNotificationSocketError);
+}
+
+function handleNotificationSocketOpen() {
+  notificationSocketConnectedOnce = true;
+  notificationSocketReconnectDelay = 5000;
+}
+
+function handleNotificationSocketMessage(event: MessageEvent) {
+  try {
+    const message = JSON.parse(event.data);
+    if (message?.content?.event === 'SYSTEM_MESSAGE_PUBLISHED') {
+      void loadNotifications();
     }
-  };
-  notificationSocket.onclose = () => {
+  } catch {
+    // 忽略非 JSON WebSocket 消息，保留轮询兜底。
+  }
+}
+
+function handleNotificationSocketClose(event: CloseEvent) {
+  if (notificationSocket === event.currentTarget) {
     notificationSocket = undefined;
-    if (
-      notificationSocketClosedByClient ||
-      !accessStore.accessToken ||
-      !notificationSocketConnectedOnce
-    ) {
-      return;
-    }
-    notificationSocketReconnectTimer = setTimeout(
-      connectNotificationSocket,
-      notificationSocketReconnectDelay,
-    );
-    notificationSocketReconnectDelay = Math.min(
-      notificationSocketReconnectDelay * 2,
-      30_000,
-    );
-  };
-  notificationSocket.onerror = () => {
-    notificationSocket?.close();
-  };
+  }
+  if (
+    notificationSocketClosedByClient ||
+    !accessStore.accessToken ||
+    !notificationSocketConnectedOnce
+  ) {
+    return;
+  }
+  notificationSocketReconnectTimer = setTimeout(
+    connectNotificationSocket,
+    notificationSocketReconnectDelay,
+  );
+  notificationSocketReconnectDelay = Math.min(
+    notificationSocketReconnectDelay * 2,
+    30_000,
+  );
+}
+
+function handleNotificationSocketError(event: Event) {
+  if (event.currentTarget instanceof WebSocket) {
+    event.currentTarget.close();
+  }
 }
 
 function closeNotificationSocket() {
@@ -193,8 +208,19 @@ function closeNotificationSocket() {
     notificationSocketReconnectTimer = undefined;
   }
   if (notificationSocket) {
-    notificationSocket.onclose = null;
-    notificationSocket.onmessage = null;
+    notificationSocket.removeEventListener('open', handleNotificationSocketOpen);
+    notificationSocket.removeEventListener(
+      'message',
+      handleNotificationSocketMessage,
+    );
+    notificationSocket.removeEventListener(
+      'close',
+      handleNotificationSocketClose,
+    );
+    notificationSocket.removeEventListener(
+      'error',
+      handleNotificationSocketError,
+    );
     notificationSocket.close();
   }
   notificationSocket = undefined;

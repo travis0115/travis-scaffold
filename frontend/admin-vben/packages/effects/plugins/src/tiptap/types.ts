@@ -17,6 +17,12 @@ export interface ImageUploadResult {
   url: string;
 }
 
+export type ImageSelectResult =
+  | ImageUploadResult
+  | ImageUploadResult[]
+  | string
+  | string[];
+
 export interface ImageUploadOptions {
   /** 允许的文件类型，默认 'image/*' */
   accept?: string;
@@ -25,7 +31,7 @@ export interface ImageUploadOptions {
   /** 上传失败回调，未提供时使用 alert 弹窗提示 */
   onUploadError?: (error: unknown) => void;
   /** 从已上传文件中选择图片 */
-  select?: () => Promise<ImageUploadResult | string | undefined>;
+  select?: () => Promise<ImageSelectResult | undefined>;
   /** 上传函数，返回图片 URL，可选 onProgress 回调报告上传进度 */
   upload: (
     file: File,

@@ -89,6 +89,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 const [PreviewModal, previewModalApi] = useVbenModal({
+  closeOnClickModal: true,
   footer: false,
 });
 
@@ -178,23 +179,32 @@ async function onStatusChange(
         </button>
       </template>
     </Grid>
-    <PreviewModal class="w-[860px]" :fullscreen-button="false" title="版本预览">
-      <div class="space-y-4">
-        <div>
-          <div class="flex items-center gap-3 text-gray-400 text-xs">
-            <Tag :style="versionTagStyle">
-              {{ formatVersion(previewRow?.version) }}
-            </Tag>
-            <span>{{
-              formatDate(previewRow?.publishTime || previewRow?.createTime)
-            }}</span>
+    <PreviewModal
+      class="w-[860px]"
+      :fullscreen-button="false"
+      :title="previewRow?.title || '版本详情'"
+    >
+      <template #title>
+        <div class="flex min-w-0 items-start gap-3">
+          <span class="h-5 w-1.5 shrink-0 rounded-full bg-primary"></span>
+          <div class="min-w-0 space-y-2">
+            <div class="flex min-w-0 items-center gap-3">
+              <span class="min-w-0 truncate">
+                {{ previewRow?.title || '版本详情' }}
+              </span>
+              <Tag :style="versionTagStyle">
+                {{ formatVersion(previewRow?.version) }}
+              </Tag>
+            </div>
+            <div class="text-muted-foreground text-xs font-normal">
+              {{
+                formatDate(previewRow?.publishTime || previewRow?.createTime)
+              }}
+            </div>
           </div>
         </div>
-        <h3 class="text-foreground text-lg font-semibold">
-          {{ previewRow?.title || $t('system.version.content') }}
-        </h3>
-        <RichTextPreview :content="previewRow?.content" :min-height="320" />
-      </div>
+      </template>
+      <RichTextPreview :content="previewRow?.content" :min-height="320" />
     </PreviewModal>
   </Page>
 </template>

@@ -10,6 +10,7 @@ public class SysFilePageReq extends PageRequest {
     private Long folderId;
     private Boolean unclassified;
     private String fileName;
+    private String originalName;
     private String mimeType;
     private Long storageConfigId;
 }

@@ -5,9 +5,9 @@ import type { ComponentPropsMap, ComponentType } from './component';
 
 import { h, unref } from 'vue';
 
+import { confirm as vbenConfirm } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 import { $te } from '@vben/locales';
-import { confirm as vbenConfirm } from '@vben/common-ui';
 import {
   setupVbenVxeTable,
   useVbenVxeGrid as useGrid,
@@ -32,6 +32,7 @@ setupVbenVxeTable({
         columnConfig: {
           resizable: true,
         },
+        height: '100%',
         minHeight: 180,
         formConfig: {
           // 全局禁用vxe-table的表单配置，使用formOptions

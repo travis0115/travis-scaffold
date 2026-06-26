@@ -49,7 +49,7 @@ public class JsoupHtmlSanitizer implements HtmlSanitizer {
                         "th",
                         "td")
                 .addAttributes("a", "href", "title", "target")
-                .addAttributes("img", "src", "alt", "title", "width", "height")
+                .addAttributes("img", "src", "alt", "title", "width", "height", "data-file-id")
                 .addAttributes("th", "colspan", "rowspan")
                 .addAttributes("td", "colspan", "rowspan")
                 .addProtocols("a", "href", "http", "https", "mailto")

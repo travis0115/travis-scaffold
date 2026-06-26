@@ -599,7 +599,10 @@ CREATE TABLE `sys_file_folder` (
 -- Records of sys_file_folder
 -- ----------------------------
 BEGIN;
-INSERT INTO `sys_file_folder` (`id`, `parent_id`, `folder_name`, `sort`, `is_builtin`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (2070365341451997186, 0, '头像', 0, 1, 0, '2026-06-26 04:35:38', 1, '2026-06-26 13:23:02', 1);
+INSERT INTO `sys_file_folder` (`id`, `parent_id`, `folder_name`, `sort`, `is_builtin`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (2, 0, '手动上传', 0, 1, 0, '2026-06-26 04:35:38', 1, '2026-06-26 13:23:02', 1);
+INSERT INTO `sys_file_folder` (`id`, `parent_id`, `folder_name`, `sort`, `is_builtin`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (3, 0, '头像', 1, 1, 0, '2026-06-26 04:35:38', 1, '2026-06-26 13:23:02', 1);
+INSERT INTO `sys_file_folder` (`id`, `parent_id`, `folder_name`, `sort`, `is_builtin`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (4, 0, '系统公告', 2, 1, 0, '2026-06-26 04:35:38', 1, '2026-06-26 13:23:02', 1);
+INSERT INTO `sys_file_folder` (`id`, `parent_id`, `folder_name`, `sort`, `is_builtin`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (5, 0, '版本管理', 3, 1, 0, '2026-06-26 04:35:38', 1, '2026-06-26 13:23:02', 1);
 COMMIT;
 
 -- ----------------------------

@@ -54,6 +54,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 const [PreviewModal, previewModalApi] = useVbenModal({
+  closeOnClickModal: true,
   footer: false,
 });
 
@@ -101,23 +102,36 @@ async function onStatusChange(newStatus: number, row: SystemNoticeApi.Notice) {
         </button>
       </template>
     </Grid>
-    <PreviewModal class="w-[860px]" :fullscreen-button="false" title="公告预览">
-      <div class="space-y-4">
-        <div>
-          <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <Tag v-if="previewRow?.isPinned === 1" :style="pinnedTagStyle">
-              置顶
-            </Tag>
-            <h3 class="text-foreground text-lg font-semibold">
-              {{ previewRow?.title || '公告内容' }}
-            </h3>
-            <span class="text-gray-400 text-xs">{{
-              formatDate(previewRow?.publishTime || previewRow?.createTime)
-            }}</span>
+    <PreviewModal
+      class="w-[860px]"
+      :fullscreen-button="false"
+      :title="previewRow?.title || '公告详情'"
+    >
+      <template #title>
+        <div class="flex min-w-0 items-start gap-3">
+          <span class="h-5 w-1.5 shrink-0 rounded-full bg-primary"></span>
+          <div class="min-w-0 space-y-2">
+            <div class="flex min-w-0 items-center gap-3">
+              <span class="min-w-0 truncate">
+                {{ previewRow?.title || '公告详情' }}
+              </span>
+              <Tag
+                v-if="previewRow?.isPinned === 1"
+                class="shrink-0 text-[10px] leading-4"
+                :style="pinnedTagStyle"
+              >
+                置顶
+              </Tag>
+            </div>
+            <div class="text-muted-foreground text-xs font-normal">
+              {{
+                formatDate(previewRow?.publishTime || previewRow?.createTime)
+              }}
+            </div>
           </div>
         </div>
-        <RichTextPreview :content="previewRow?.content" :min-height="320" />
-      </div>
+      </template>
+      <RichTextPreview :content="previewRow?.content" :min-height="320" />
     </PreviewModal>
   </Page>
 </template>

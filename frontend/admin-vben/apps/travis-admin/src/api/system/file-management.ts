@@ -8,8 +8,6 @@ export namespace SystemFileApi {
   export interface FileInfo {
     [key: string]: any;
     createTime: string;
-    createBy?: number;
-    creatorName?: string;
     extension?: string;
     fileName: string;
     id: number | string;
@@ -68,8 +66,8 @@ const createStorageConfig = (data: Partial<SystemFileApi.StorageConfig>) =>
 export {
   createFileFolder,
   createStorageConfig,
-  deleteFileFolder,
   deleteFile,
+  deleteFileFolder,
   getFileFolders,
   getFilePage,
   getStorageConfigs,

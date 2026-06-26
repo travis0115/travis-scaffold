@@ -10,7 +10,7 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { Page, Tree, useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 
-import { Button, Card, Image, Input, message, Upload } from 'antdv-next';
+import { Button, Card, Image, Input, Progress, Upload } from 'antdv-next';
 
 import { useVbenForm, z } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
@@ -19,6 +19,7 @@ import {
   createStorageConfig,
   deleteFile,
   deleteFileFolder,
+  FILE_FOLDER_IDS,
   getFileFolders,
   getFilePage,
   getStorageConfigs,
@@ -34,6 +35,12 @@ type FolderSelection = 'all' | 'unclassified' | FolderId;
 type TreeExpose = {
   expandNodes: (value: FolderId | FolderId[]) => void;
 };
+type UploadTask = {
+  name: string;
+  percent: number;
+  status: 'error' | 'success' | 'uploading';
+  uid: string;
+};
 
 const selectedFolderKey = ref<FolderSelection>('all');
 const folderTreeValue = ref<FolderId>();
@@ -44,6 +51,7 @@ const folderRestoreTransitionDisabled = ref(false);
 const editingFolder = ref<SystemFileApi.Folder>();
 const deletingFolder = ref<SystemFileApi.Folder>();
 const folderParentId = ref<FolderId>(0);
+const uploadTasks = ref<UploadTask[]>([]);
 
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: { schema: useGridFormSchema() },
@@ -52,10 +60,16 @@ const [Grid, gridApi] = useVbenVxeGrid({
     height: 'auto',
     proxyConfig: {
       ajax: {
-        query: ({ page }, values) =>
+        query: ({ page, sort }, values) =>
           getFilePage({
             pageNum: page.currentPage,
             pageSize: page.pageSize,
+            ...(sort?.order
+              ? {
+                  asc: sort.order === 'asc',
+                  orderBy: sort.field || sort.property,
+                }
+              : {}),
             ...values,
             ...getFolderQueryParams(),
           }),
@@ -120,6 +134,55 @@ const deleteFolderContent = computed(() => {
     ? `删除「${folderName}」后，子文件夹会一并删除，相关文件将清除归属，确认删除？`
     : `删除「${folderName}」后，相关文件将清除归属，确认删除？`;
 });
+
+function getPreviewIcon(row: SystemFileApi.FileInfo) {
+  const extension = row.extension?.toLowerCase();
+  const mimeType = row.mimeType?.toLowerCase() ?? '';
+  if (mimeType.includes('pdf') || extension === 'pdf') {
+    return 'lucide:file-text';
+  }
+  if (
+    mimeType.includes('spreadsheet') ||
+    ['csv', 'xls', 'xlsx'].includes(extension ?? '')
+  ) {
+    return 'lucide:file-spreadsheet';
+  }
+  if (
+    mimeType.includes('presentation') ||
+    ['ppt', 'pptx'].includes(extension ?? '')
+  ) {
+    return 'lucide:presentation';
+  }
+  if (
+    mimeType.includes('word') ||
+    ['doc', 'docx'].includes(extension ?? '')
+  ) {
+    return 'lucide:file-text';
+  }
+  if (
+    mimeType.includes('zip') ||
+    ['7z', 'gz', 'rar', 'tar', 'zip'].includes(extension ?? '')
+  ) {
+    return 'lucide:file-archive';
+  }
+  if (mimeType.includes('audio')) {
+    return 'lucide:file-audio';
+  }
+  if (mimeType.includes('video')) {
+    return 'lucide:file-video';
+  }
+  if (
+    mimeType.includes('json') ||
+    mimeType.includes('javascript') ||
+    mimeType.includes('xml') ||
+    ['css', 'html', 'java', 'js', 'json', 'ts', 'vue', 'xml'].includes(
+      extension ?? '',
+    )
+  ) {
+    return 'lucide:file-code';
+  }
+  return 'lucide:file';
+}
 
 function getFolderQueryParams() {
   if (selectedFolderKey.value === 'unclassified') {
@@ -209,6 +272,13 @@ const [DeleteFolderModal, deleteFolderModalApi] = useVbenModal({
   },
 });
 
+const [UploadProgressModal, uploadProgressModalApi] = useVbenModal({
+  footer: false,
+  onClosed() {
+    uploadTasks.value = [];
+  },
+});
+
 watch(
   [filteredFolderTree, isFolderSearchActive],
   ([tree, active]) => {
@@ -233,10 +303,15 @@ watch(
 );
 
 async function loadOptions() {
-  [folders.value, storageConfigs.value] = await Promise.all([
+  const [folderItems, storageConfigItems] = await Promise.all([
     getFileFolders(),
     getStorageConfigs(),
   ]);
+  folders.value = folderItems;
+  storageConfigs.value = storageConfigItems;
+  folderManualExpandedKeys.value = collectFolderExpandableKeys(
+    buildFolderTree(folderItems),
+  );
 }
 
 function buildFolderTree(items: SystemFileApi.Folder[]) {
@@ -268,7 +343,7 @@ function isFolderKey(value: FolderSelection) {
 function getSelectedFolderId() {
   return isFolderKey(selectedFolderKey.value)
     ? (selectedFolderKey.value as FolderId)
-    : undefined;
+    : FILE_FOLDER_IDS.MANUAL_UPLOAD;
 }
 
 function isRootFolder(id?: FolderId) {
@@ -368,10 +443,44 @@ function onActionClick({
   }
 }
 
-async function customRequest({ file }: any) {
-  await uploadFileApi(file, getSelectedFolderId());
-  message.success('上传成功');
-  gridApi.query();
+function upsertUploadTask(file: any, values: Partial<UploadTask>) {
+  const uid = String(file.uid ?? file.name);
+  const index = uploadTasks.value.findIndex((item) => item.uid === uid);
+  const nextTask: UploadTask = {
+    name: file.name || '文件',
+    percent: 0,
+    status: 'uploading',
+    uid,
+    ...values,
+  };
+  if (index === -1) {
+    uploadTasks.value = [...uploadTasks.value, nextTask];
+    uploadProgressModalApi.open();
+    return;
+  }
+  uploadTasks.value = uploadTasks.value.map((item) =>
+    item.uid === uid ? { ...item, ...values } : item,
+  );
+}
+
+async function customRequest({ file, onError, onProgress, onSuccess }: any) {
+  upsertUploadTask(file, { percent: 0, status: 'uploading' });
+  try {
+    await uploadFileApi(file, getSelectedFolderId(), (event) => {
+      const percent = event.total
+        ? Math.round((event.loaded / event.total) * 100)
+        : 0;
+      upsertUploadTask(file, { percent, status: 'uploading' });
+      onProgress?.({ percent }, file);
+    });
+    upsertUploadTask(file, { percent: 100, status: 'success' });
+    onSuccess?.();
+    gridApi.query();
+  } catch (error) {
+    upsertUploadTask(file, { status: 'error' });
+    onError?.(error);
+    throw error;
+  }
 }
 
 function selectAllFiles() {
@@ -631,33 +740,45 @@ onMounted(loadOptions);
       <div class="ml-4 min-w-0 flex-1">
         <Grid :table-title="fileTableTitle">
           <template #toolbar-tools>
-            <Button
-              v-access:code="SYSTEM_PERMS.fileUpload"
-              @click="openStorageModal"
-            >
-              存储配置（{{ storageConfigs.length }}）
-            </Button>
-            <Upload
-              v-access:code="SYSTEM_PERMS.fileUpload"
-              :custom-request="customRequest"
-              :show-upload-list="false"
-            >
-              <Button v-access:code="SYSTEM_PERMS.fileUpload" type="primary">
-                上传文件
+            <div class="flex items-center gap-2">
+              <Button
+                v-access:code="SYSTEM_PERMS.fileUpload"
+                @click="openStorageModal"
+              >
+                存储配置（{{ storageConfigs.length }}）
               </Button>
-            </Upload>
+              <Upload
+                v-access:code="SYSTEM_PERMS.fileUpload"
+                :custom-request="customRequest"
+                multiple
+                :show-upload-list="false"
+              >
+                <Button v-access:code="SYSTEM_PERMS.fileUpload" type="primary">
+                  上传文件
+                </Button>
+              </Upload>
+            </div>
           </template>
           <template #preview="{ row }">
-            <Image
-              v-if="row.mimeType?.startsWith('image/')"
-              :src="row.url"
-              :width="48"
-              :height="48"
-              class="object-cover"
-            />
-            <Button v-else type="link" :href="row.url" target="_blank">
-              预览
-            </Button>
+            <div class="file-preview-cell">
+              <Image
+                v-if="row.mimeType?.startsWith('image/')"
+                :src="row.url"
+                :width="32"
+                :height="32"
+                class="file-preview-image object-cover"
+              />
+              <Button
+                v-else
+                type="link"
+                :href="row.url"
+                target="_blank"
+                title="预览"
+                class="file-preview-button"
+              >
+                <IconifyIcon :icon="getPreviewIcon(row)" class="size-7" />
+              </Button>
+            </div>
           </template>
         </Grid>
       </div>
@@ -674,6 +795,45 @@ onMounted(loadOptions);
     <DeleteFolderModal title="删除文件夹">
       <p class="text-sm text-muted-foreground">{{ deleteFolderContent }}</p>
     </DeleteFolderModal>
+    <UploadProgressModal class="w-[640px]" title="上传进度">
+      <div class="upload-progress-panel">
+        <div class="upload-progress-list">
+          <div
+            v-for="task in uploadTasks"
+            :key="task.uid"
+            class="upload-progress-item"
+            :class="`upload-progress-item-${task.status}`"
+          >
+            <div class="upload-progress-header">
+              <span class="upload-progress-name">{{ task.name }}</span>
+              <span
+                class="upload-progress-status"
+                :class="`upload-progress-status-${task.status}`"
+              >
+                {{
+                  task.status === 'success'
+                    ? '已完成'
+                    : task.status === 'error'
+                      ? '上传失败'
+                      : '上传中'
+                }}
+              </span>
+            </div>
+            <Progress
+              :percent="task.percent"
+              :status="task.status === 'error' ? 'exception' : undefined"
+              size="small"
+            />
+          </div>
+          <div
+            v-if="uploadTasks.length === 0"
+            class="flex h-full items-center justify-center text-sm text-muted-foreground"
+          >
+            暂无上传任务
+          </div>
+        </div>
+      </div>
+    </UploadProgressModal>
   </Page>
 </template>
 
@@ -835,5 +995,99 @@ onMounted(loadOptions);
 
 .side-tree :deep(.tree-node > .item-checkbox > .item-checkbox) {
   min-width: 0;
+}
+
+.upload-progress-panel {
+  width: 592px;
+  height: 360px;
+}
+
+.upload-progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.upload-progress-item {
+  padding: 12px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+}
+
+.upload-progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.upload-progress-name {
+  min-width: 0;
+  overflow: hidden;
+  color: hsl(var(--foreground));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upload-progress-status {
+  flex: none;
+  color: hsl(var(--primary));
+  font-size: 12px;
+}
+
+.upload-progress-status-success {
+  color: hsl(var(--primary));
+}
+
+.upload-progress-status-error {
+  color: hsl(var(--destructive));
+}
+
+.upload-progress-item :deep(.ant-progress-bg) {
+  background-color: hsl(var(--primary));
+}
+
+.upload-progress-item-error :deep(.ant-progress-bg) {
+  background-color: hsl(var(--destructive));
+}
+
+.file-preview-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 48px;
+  height: 48px;
+  margin: 4px auto;
+  padding: 8px;
+}
+
+.file-preview-cell :deep(.ant-image) {
+  width: 32px !important;
+  height: 32px !important;
+  overflow: hidden;
+}
+
+.file-preview-cell :deep(.ant-image-img) {
+  width: 32px !important;
+  height: 32px !important;
+}
+
+.file-preview-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  color: hsl(var(--muted-foreground));
+}
+
+.file-preview-button:hover {
+  color: hsl(var(--primary));
 }
 </style>

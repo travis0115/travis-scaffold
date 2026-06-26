@@ -5,7 +5,7 @@ import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.monolith.system.common.api.enums.Status;
-import com.travis.monolith.system.file.internal.service.RichTextFileReferenceService;
+import com.travis.monolith.system.file.api.SysFileApi;
 import com.travis.monolith.system.notice.api.request.SysNoticeCreateReq;
 import com.travis.monolith.system.notice.api.request.SysNoticePageReq;
 import com.travis.monolith.system.notice.api.request.SysNoticeUpdateReq;
@@ -14,13 +14,12 @@ import com.travis.monolith.system.notice.internal.converter.SysNoticeConverter;
 import com.travis.monolith.system.notice.internal.entity.SysNotice;
 import com.travis.monolith.system.notice.internal.mapper.SysNoticeMapper;
 import com.travis.monolith.system.notice.internal.service.SysNoticeService;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -31,7 +30,7 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
     /** 对象转换器 */
     private final SysNoticeConverter converter;
 
-    private final RichTextFileReferenceService richTextFileReferenceService;
+    private final SysFileApi fileApi;
 
     @Override
     public PageResp<SysNoticeResp> page(SysNoticePageReq req) {
@@ -70,8 +69,7 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
     @Transactional
     public void create(SysNoticeCreateReq req) {
         var entity = converter.toEntity(req);
-        entity.setContent(
-                richTextFileReferenceService.stripManagedImageSources(entity.getContent()));
+        entity.setContent(fileApi.stripManagedImageSources(entity.getContent()));
         save(entity);
     }
 
@@ -81,8 +79,7 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
     public void update(Long id, SysNoticeUpdateReq req) {
         var entity = getByIdOrThrow(id);
         converter.update(req, entity);
-        entity.setContent(
-                richTextFileReferenceService.stripManagedImageSources(entity.getContent()));
+        entity.setContent(fileApi.stripManagedImageSources(entity.getContent()));
         updateById(entity);
     }
 
@@ -104,7 +101,7 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
 
     private SysNoticeResp toResp(SysNotice entity) {
         var resp = converter.toResp(entity);
-        resp.setContent(richTextFileReferenceService.resolveManagedImageSources(resp.getContent()));
+        resp.setContent(fileApi.resolveManagedImageSources(resp.getContent()));
         return resp;
     }
 }

@@ -1,6 +1,7 @@
 package com.travis.monolith.system.file.internal.api;
 
 import com.travis.monolith.system.file.api.SysFileApi;
+import com.travis.monolith.system.file.internal.service.RichTextFileReferenceService;
 import com.travis.monolith.system.file.internal.service.SysFileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 public class SysFileApiImpl implements SysFileApi {
 
     private final SysFileService fileService;
+    private final RichTextFileReferenceService richTextFileReferenceService;
 
     @Override
     public String getFileUrl(String path) {
@@ -24,5 +26,15 @@ public class SysFileApiImpl implements SysFileApi {
     @Override
     public String getFileUrlById(Long fileId) {
         return fileService.getFileUrlById(fileId);
+    }
+
+    @Override
+    public String stripManagedImageSources(String html) {
+        return richTextFileReferenceService.stripManagedImageSources(html);
+    }
+
+    @Override
+    public String resolveManagedImageSources(String html) {
+        return richTextFileReferenceService.resolveManagedImageSources(html);
     }
 }

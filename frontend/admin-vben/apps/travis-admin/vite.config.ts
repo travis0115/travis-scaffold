@@ -5,19 +5,19 @@ export default defineConfig(async () => {
     application: {},
     vite: {
       server: {
-        proxy: {
-          '/api': {
-            changeOrigin: true,
-            // mock代理目标地址
-            target: 'http://localhost',
-            ws: true,
-          },
-          '/ws': {
-            changeOrigin: true,
-            target: 'http://localhost',
-            ws: true,
-          },
-        },
+        // proxy: {
+        //   '/api': {
+        //     changeOrigin: true,
+        //     // mock代理目标地址
+        //     target: 'http://localhost',
+        //     ws: true,
+        //   },
+        //   '/ws': {
+        //     changeOrigin: true,
+        //     target: 'http://localhost',
+        //     ws: true,
+        //   },
+        // },
       },
     },
   };

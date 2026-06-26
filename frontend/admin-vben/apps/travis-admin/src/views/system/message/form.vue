@@ -165,4 +165,4 @@ const [Drawer, drawerApi] = useVbenDrawer({
 });
 </script>
 
-<template><Drawer :title="formData?.id ? '编辑消息推送' : '新增消息推送'"><Form /></Drawer></template>
+<template><Drawer class="w-full max-w-[1120px]" :title="formData?.id ? '编辑消息推送' : '新增消息推送'"><Form /></Drawer></template>

@@ -156,7 +156,15 @@ async function handleImageAction(editor: Editor) {
     return;
   }
 
-  editor.chain().focus().setImage({ src: nextUrl }).run();
+  const width = editor.view.dom.clientWidth;
+  editor
+    .chain()
+    .focus()
+    .setImage({
+      src: nextUrl,
+      ...(width > 0 ? { width: Math.round(width * 0.8) } : {}),
+    })
+    .run();
 }
 
 export function createToolbarGroups(

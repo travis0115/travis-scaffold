@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import { h, ref } from 'vue';
 
-import { alert as vbenAlert, useVbenModal } from '@vben/common-ui';
-import { useClipboard } from '@vueuse/core';
+import { useVbenModal, alert as vbenAlert } from '@vben/common-ui';
 
+import { useClipboard } from '@vueuse/core';
 import { App, Button } from 'antdv-next';
 
 import { useVbenForm, z } from '#/adapter/form';

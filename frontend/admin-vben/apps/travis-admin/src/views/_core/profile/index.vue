@@ -13,7 +13,7 @@ import { useUserStore } from '@vben/stores';
 
 import { message } from 'antdv-next';
 
-import { updateAvatarApi, uploadFileApi } from '#/api';
+import { FILE_FOLDER_IDS, updateAvatarApi, uploadFileApi } from '#/api';
 
 import ProfileBase from './base-setting.vue';
 import ProfileLoginLog from './login-log.vue';
@@ -92,9 +92,9 @@ function onFileChange(event: Event) {
   const displaySize =
     maxSizeMB >= 1
       ? Math.floor(maxSizeMB)
-      : maxSizeMB >= 0.01
+      : (maxSizeMB >= 0.01
         ? maxSizeMB.toFixed(2)
-        : '0.01';
+        : '0.01');
   if (file.size / (1024 * 1024) > maxSizeMB) {
     message.error(`图片大小不能超过 ${displaySize}MB`);
     return;
@@ -160,7 +160,7 @@ async function onConfirm() {
     const uploadFile = new File([u8arr], 'avatar.jpg', { type: mime });
 
     avatarModalApi.lock();
-    const result = await uploadFileApi(uploadFile);
+    const result = await uploadFileApi(uploadFile, FILE_FOLDER_IDS.AVATAR);
     await updateAvatarApi({ avatarFileId: result.id });
     avatarUrl.value = result.url;
     if (userStore.userInfo) {

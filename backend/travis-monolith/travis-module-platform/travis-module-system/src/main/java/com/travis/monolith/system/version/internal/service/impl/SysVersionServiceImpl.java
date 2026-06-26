@@ -9,7 +9,7 @@ import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
-import com.travis.monolith.system.file.internal.service.RichTextFileReferenceService;
+import com.travis.monolith.system.file.api.SysFileApi;
 import com.travis.monolith.system.version.api.request.SysVersionCreateReq;
 import com.travis.monolith.system.version.api.request.SysVersionPageReq;
 import com.travis.monolith.system.version.api.request.SysVersionUpdateReq;
@@ -39,7 +39,7 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
 
     private final SysVersionConverter converter;
 
-    private final RichTextFileReferenceService richTextFileReferenceService;
+    private final SysFileApi fileApi;
 
     private static final Map<String, SFunction<SysVersion, ?>> SORT_COLUMNS =
             Map.of(
@@ -81,8 +81,7 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
             throw new BizException(SystemErrorCode.VERSION_EXISTS);
         }
         var entity = converter.toEntity(req);
-        entity.setContent(
-                richTextFileReferenceService.stripManagedImageSources(entity.getContent()));
+        entity.setContent(fileApi.stripManagedImageSources(entity.getContent()));
         save(entity);
     }
 
@@ -100,8 +99,7 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
             throw new BizException(SystemErrorCode.VERSION_EXISTS);
         }
         converter.update(req, entity);
-        entity.setContent(
-                richTextFileReferenceService.stripManagedImageSources(entity.getContent()));
+        entity.setContent(fileApi.stripManagedImageSources(entity.getContent()));
         updateById(entity);
     }
 
@@ -134,7 +132,7 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
 
     private SysVersionResp toResp(SysVersion entity) {
         var resp = converter.toResp(entity);
-        resp.setContent(richTextFileReferenceService.resolveManagedImageSources(resp.getContent()));
+        resp.setContent(fileApi.resolveManagedImageSources(resp.getContent()));
         return resp;
     }
 }

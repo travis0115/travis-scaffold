@@ -1,6 +1,5 @@
 package com.travis.monolith.system.file.internal.service;
 
-import com.travis.monolith.system.file.api.SysFileApi;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +17,7 @@ public class RichTextFileReferenceService {
     private static final Pattern SRC_PATTERN =
             Pattern.compile("\\ssrc\\s*=\\s*([\"']).*?\\1", Pattern.CASE_INSENSITIVE);
 
-    private final SysFileApi fileApi;
+    private final SysFileService fileService;
 
     public String stripManagedImageSources(String html) {
         return replaceManagedImageTags(html, this::stripSource);
@@ -58,7 +57,7 @@ public class RichTextFileReferenceService {
     }
 
     private String resolveSource(String tag, Long fileId) {
-        var url = fileApi.getFileUrlById(fileId);
+        var url = fileService.getFileUrlById(fileId);
         if (url == null || url.isBlank()) {
             return tag;
         }

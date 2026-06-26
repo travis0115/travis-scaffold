@@ -10,7 +10,7 @@ import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.websocket.core.WebSocketMessageSender;
 import com.travis.infrastructure.framework.websocket.message.WebSocketMessage;
-import com.travis.monolith.system.file.internal.service.RichTextFileReferenceService;
+import com.travis.monolith.system.file.api.SysFileApi;
 import com.travis.monolith.system.message.api.request.SysMessageCreateReq;
 import com.travis.monolith.system.message.api.request.SysMessagePageReq;
 import com.travis.monolith.system.message.api.request.SysMessageUpdateReq;
@@ -55,19 +55,19 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     private final SysMessageChannelContentMapper channelContentMapper;
     private final SysMessageConverter converter;
     private final WebSocketMessageSender webSocketMessageSender;
-    private final RichTextFileReferenceService richTextFileReferenceService;
+    private final SysFileApi fileApi;
 
     public SysMessageServiceImpl(
             SysMessageReceiverMapper messageReceiverMapper,
             SysMessageChannelContentMapper channelContentMapper,
             SysMessageConverter converter,
             WebSocketMessageSender webSocketMessageSender,
-            RichTextFileReferenceService richTextFileReferenceService) {
+            SysFileApi fileApi) {
         this.messageReceiverMapper = messageReceiverMapper;
         this.channelContentMapper = channelContentMapper;
         this.converter = converter;
         this.webSocketMessageSender = webSocketMessageSender;
-        this.richTextFileReferenceService = richTextFileReferenceService;
+        this.fileApi = fileApi;
     }
 
     @Override
@@ -86,7 +86,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     @Override
     public SysMessageDetailResp get(Long id) {
         var resp = converter.toDetailResp(getByIdOrThrow(id));
-        resp.setContent(richTextFileReferenceService.resolveManagedImageSources(resp.getContent()));
+        resp.setContent(fileApi.resolveManagedImageSources(resp.getContent()));
         resp.setChannelContents(listChannelContents(id));
         return resp;
     }
@@ -103,7 +103,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
             entity.setPublishTime(null);
         }
         entity.setContent(
-                richTextFileReferenceService.stripManagedImageSources(
+                fileApi.stripManagedImageSources(
                         resolveInAppContent(req.getChannelContents(), req.getContent())));
         save(entity);
         syncChannelContents(entity.getId(), req);
@@ -149,7 +149,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
             entity.setPublishTime(null);
         }
         entity.setContent(
-                richTextFileReferenceService.stripManagedImageSources(
+                fileApi.stripManagedImageSources(
                         resolveInAppContent(req.getChannelContents(), req.getContent())));
         updateById(entity);
         syncChannelContents(id, req);
@@ -229,9 +229,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                         entity -> {
                             var resp = new SysMessageChannelContentResp();
                             BeanUtils.copyProperties(entity, resp);
-                            resp.setContent(
-                                    richTextFileReferenceService.resolveManagedImageSources(
-                                            resp.getContent()));
+                            resp.setContent(fileApi.resolveManagedImageSources(resp.getContent()));
                             return resp;
                         })
                 .toList();
@@ -258,9 +256,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                     var entity = new SysMessageChannelContent();
                     BeanUtils.copyProperties(item, entity);
                     entity.setMessageId(messageId);
-                    entity.setContent(
-                            richTextFileReferenceService.stripManagedImageSources(
-                                    entity.getContent()));
+                    entity.setContent(fileApi.stripManagedImageSources(entity.getContent()));
                     channelContentMapper.insert(entity);
                 });
     }

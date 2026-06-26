@@ -84,6 +84,24 @@ function normalizeUploadResult(result: ImageUploadResult | string) {
   return typeof result === 'string' ? { url: result } : result;
 }
 
+function normalizeSelectResults(
+  result: ImageUploadResult | ImageUploadResult[] | string | string[],
+) {
+  return (Array.isArray(result) ? result : [result]).map((item) =>
+    normalizeUploadResult(item),
+  );
+}
+
+function getDefaultImageWidth(editor: CoreEditor) {
+  const width = editor.view.dom.clientWidth;
+  return width > 0 ? Math.round(width * 0.8) : null;
+}
+
+function getDefaultImageAttrs(editor: CoreEditor) {
+  const width = getDefaultImageWidth(editor);
+  return width ? { width } : {};
+}
+
 const IMAGE_RESIZE_HANDLES = [
   'n',
   'ne',
@@ -321,6 +339,7 @@ function createUploadProcess(
     .chain()
     .insertContentAt(insertPos, {
       attrs: {
+        ...getDefaultImageAttrs(editor),
         'data-upload-progress': 0,
         'data-uploading': 'true',
         src: blobUrl,
@@ -376,6 +395,7 @@ function createUploadProcess(
         'data-file-id': result.id ?? null,
         'data-upload-progress': null,
         'data-uploading': null,
+        ...getDefaultImageAttrs(editor),
         src: result.url,
       });
       editor.view.dispatch(transaction);
@@ -453,6 +473,11 @@ function createCustomImage(
         spinner.className = 'vben-tiptap-upload-spinner';
         wrapper.append(spinner);
 
+        const loadingText = document.createElement('div');
+        loadingText.className = 'vben-tiptap-upload-text';
+        loadingText.textContent = $t('ui.tiptap.upload.uploading');
+        wrapper.append(loadingText);
+
         const progressBar = document.createElement('div');
         progressBar.className = 'vben-tiptap-upload-progress';
         const progressFill = document.createElement('div');
@@ -465,9 +490,11 @@ function createCustomImage(
           spinner.style.display = 'none';
           progressBar.style.display = '';
           progressFill.style.width = `${progress}%`;
+          loadingText.textContent = `${$t('ui.tiptap.upload.uploading')} ${progress}%`;
         } else {
           spinner.style.display = '';
           progressBar.style.display = 'none';
+          loadingText.textContent = $t('ui.tiptap.upload.uploading');
         }
 
         return {
@@ -490,9 +517,11 @@ function createCustomImage(
               spinner.style.display = 'none';
               progressBar.style.display = '';
               progressFill.style.width = `${newProgress}%`;
+              loadingText.textContent = `${$t('ui.tiptap.upload.uploading')} ${newProgress}%`;
             } else {
               spinner.style.display = '';
               progressBar.style.display = 'none';
+              loadingText.textContent = $t('ui.tiptap.upload.uploading');
             }
 
             return true;
@@ -516,15 +545,16 @@ function createCustomImage(
                 if (!selectResult || cmdEditor.isDestroyed) {
                   return;
                 }
-                const result = normalizeUploadResult(selectResult);
-                cmdEditor
-                  .chain()
-                  .focus()
-                  .setImage({
+                const results = normalizeSelectResults(selectResult);
+                const content = results.map((result) => ({
+                  attrs: {
+                    ...getDefaultImageAttrs(cmdEditor),
                     'data-file-id': result.id ?? null,
                     src: result.url,
-                  } as any)
-                  .run();
+                  },
+                  type: 'image',
+                }));
+                cmdEditor.chain().focus().insertContent(content).run();
               })
               .catch((error: unknown) => handleUploadError(error, imageUpload));
             return true;

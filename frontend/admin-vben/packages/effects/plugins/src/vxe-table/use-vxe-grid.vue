@@ -222,6 +222,13 @@ const options = computed(() => {
     mergedOptions.proxyConfig.enabled = !!ajax;
     // 不自动加载数据, 由组件控制
     mergedOptions.proxyConfig.autoLoad = false;
+    if (ajax && mergedOptions.proxyConfig.sort !== false) {
+      mergedOptions.sortConfig = mergeWithArrayOverride(
+        {},
+        mergedOptions.sortConfig,
+        { remote: true },
+      );
+    }
   }
 
   if (mergedOptions.pagerConfig) {
@@ -433,12 +440,12 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div :class="cn('h-full rounded-md bg-card', className)">
+  <div :class="cn('flex h-full min-h-0 flex-col rounded-md bg-card', className)">
     <VxeGrid
       ref="gridRef"
       :class="
         cn(
-          'p-2',
+          'min-h-0 flex-1 p-2',
           {
             'pt-0': showToolbar && !formOptions,
           },

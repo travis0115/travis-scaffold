@@ -41,6 +41,8 @@ import type {
 import type { TipTapProps } from '@vben/plugins/tiptap';
 import type { Recordable } from '@vben/types';
 
+import type { SystemFileApi } from '#/api';
+
 import {
   computed,
   defineAsyncComponent,
@@ -57,6 +59,7 @@ import {
   ApiComponent,
   globalShareState,
   IconPicker,
+  Tree,
   VCropper,
 } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
@@ -67,7 +70,7 @@ import { isEmpty } from '@vben/utils';
 import { message, Modal, notification } from 'antdv-next';
 
 import { uploadFileApi } from '#/api';
-import { getFilePage } from '#/api/system/file-management';
+import { getFileFolders, getFilePage } from '#/api/system/file-management';
 
 type AdapterUploadProps = UploadProps & {
   aspectRatio?: string;
@@ -75,6 +78,12 @@ type AdapterUploadProps = UploadProps & {
   handleChange?: (event: UploadChangeParam) => void;
   maxSize?: number;
   onHandleChange?: (event: UploadChangeParam) => void;
+};
+
+type FolderId = number | string;
+type FolderSelection = 'all' | 'unclassified' | FolderId;
+type RichEditorProps = TipTapProps & {
+  imageUploadFolderId?: number | string;
 };
 
 const AutoComplete = defineAsyncComponent(
@@ -181,46 +190,406 @@ const toNumber = (value: unknown) => {
   return Number.isFinite(numberValue) ? numberValue : undefined;
 };
 
+const buildFolderTree = (items: SystemFileApi.Folder[]) => {
+  const nodeMap = new Map<string, SystemFileApi.Folder>();
+  const roots: SystemFileApi.Folder[] = [];
+  items.forEach((item) =>
+    nodeMap.set(String(item.id), { ...item, children: [] }),
+  );
+  nodeMap.forEach((node) => {
+    const parentKey = String(node.parentId ?? 0);
+    if (!isRootFolder(node.parentId) && nodeMap.has(parentKey)) {
+      nodeMap.get(parentKey)?.children?.push(node);
+    } else {
+      roots.push(node);
+    }
+  });
+  const sortNodes = (nodes: SystemFileApi.Folder[]) => {
+    nodes.sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
+    nodes.forEach((node) => sortNodes(node.children ?? []));
+  };
+  sortNodes(roots);
+  return roots;
+};
+
+const collectFolderExpandableKeys = (nodes: SystemFileApi.Folder[]) => {
+  const keys: FolderId[] = [];
+  nodes.forEach((node) => {
+    if (node.children?.length) {
+      keys.push(node.id, ...collectFolderExpandableKeys(node.children));
+    }
+  });
+  return keys;
+};
+
+const findFolderPath = (
+  nodes: SystemFileApi.Folder[],
+  id: FolderId,
+  parents: FolderId[] = [],
+): undefined | { hasChildren: boolean; parents: FolderId[] } => {
+  for (const node of nodes) {
+    if (String(node.id) === String(id)) {
+      return {
+        hasChildren: Boolean(node.children?.length),
+        parents,
+      };
+    }
+    const matched = findFolderPath(node.children ?? [], id, [
+      ...parents,
+      node.id,
+    ]);
+    if (matched) return matched;
+  }
+  return undefined;
+};
+
+const filterFolderTree = (
+  nodes: SystemFileApi.Folder[],
+  keyword: string,
+): SystemFileApi.Folder[] => {
+  if (!keyword) return nodes;
+  const lowerKeyword = keyword.toLowerCase();
+  return nodes
+    .map((node) => {
+      const children = filterFolderTree(node.children ?? [], keyword);
+      const matched = node.folderName.toLowerCase().includes(lowerKeyword);
+      if (matched || children.length > 0) {
+        return { ...node, children };
+      }
+      return null;
+    })
+    .filter(Boolean) as SystemFileApi.Folder[];
+};
+
+const isRootFolder = (id?: FolderId) =>
+  id === undefined || id === null || String(id) === '0';
+
+const isFolderKey = (value: FolderSelection) =>
+  value !== 'all' && value !== 'unclassified';
+
+const mergeFolderExpandedKeys = (keys: FolderId[], nextKeys: FolderId[]) => [
+  ...new Set([...keys, ...nextKeys]),
+];
+
+const ensureRichEditorFilePickerStyle = () => {
+  if (document.querySelector('#rich-editor-file-picker-style')) return;
+  const style = document.createElement('style');
+  style.id = 'rich-editor-file-picker-style';
+  style.textContent = `
+.rich-editor-file-picker .folder-row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 32px;
+  padding-right: 8px;
+  color: hsl(var(--muted-foreground));
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.16s ease, background-color 0.16s ease;
+}
+.rich-editor-file-picker .folder-row-normal:hover {
+  background-color: hsl(var(--accent) / 50%);
+  color: hsl(var(--foreground));
+}
+.rich-editor-file-picker .folder-row-selected,
+.rich-editor-file-picker .side-tree .tree-node[data-selected] {
+  background-color: hsl(var(--primary) / 12%) !important;
+  color: hsl(var(--foreground));
+}
+.rich-editor-file-picker .folder-search {
+  height: 32px;
+  border-color: hsl(var(--border));
+  border-radius: 6px;
+  font-size: 14px;
+}
+.rich-editor-file-picker .folder-search .ant-input {
+  font-size: 14px;
+}
+.rich-editor-file-picker .folder-row-spacer {
+  width: 18px;
+  height: 22px;
+  flex: none;
+}
+.rich-editor-file-picker .folder-icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  margin-right: 8px;
+  color: hsl(var(--muted-foreground));
+}
+.rich-editor-file-picker .folder-node {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1;
+}
+.rich-editor-file-picker .folder-name {
+  min-width: 0;
+  overflow: hidden;
+  flex: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rich-editor-file-picker .folder-tree {
+  margin-top: 2px;
+}
+.rich-editor-file-picker .side-tree .tree-node {
+  height: 32px;
+  padding-right: 8px;
+  color: hsl(var(--muted-foreground));
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1;
+  transition: color 0.16s ease, background-color 0.16s ease;
+}
+.rich-editor-file-picker .side-tree .tree-node:hover {
+  background-color: hsl(var(--accent) / 50%);
+  color: hsl(var(--foreground));
+}
+`;
+  document.head.append(style);
+};
+
 const selectRichEditorImage = () => {
-  return new Promise<undefined | { id?: number | string; url: string }>(
+  return new Promise<undefined | { id?: number | string; url: string }[]>(
     (resolve) => {
       const FilePicker = defineComponent({
         name: 'RichEditorFilePicker',
         setup() {
-          const files = ref<any[]>([]);
+          ensureRichEditorFilePickerStyle();
+          const pageSize = 20;
+          const fileName = ref('');
+          const folderSearch = ref('');
+          const files = ref<SystemFileApi.FileInfo[]>([]);
+          const folders = ref<SystemFileApi.Folder[]>([]);
+          const folderTreeValue = ref<FolderId>();
+          const folderManualExpandedKeys = ref<FolderId[]>([]);
+          const folderSearchExpandedKeys = ref<FolderId[]>([]);
           const loading = ref(false);
+          const pageNum = ref(1);
+          const selectedFolderKey = ref<FolderSelection>('all');
+          const selectedFileIds = ref<(number | string)[]>([]);
+          const selectedFileMap = ref<Record<string, SystemFileApi.FileInfo>>(
+            {},
+          );
+          const total = ref(0);
+          const folderTree = computed(() => buildFolderTree(folders.value));
+          const filteredFolderTree = computed(() =>
+            filterFolderTree(folderTree.value, folderSearch.value.trim()),
+          );
+          const isFolderSearchActive = computed(() =>
+            Boolean(folderSearch.value.trim()),
+          );
+          const folderTreeExpandedKeys = computed({
+            get: () =>
+              isFolderSearchActive.value
+                ? folderSearchExpandedKeys.value
+                : folderManualExpandedKeys.value,
+            set: (keys: FolderId[]) => {
+              if (isFolderSearchActive.value) {
+                folderSearchExpandedKeys.value = [...keys];
+                return;
+              }
+              folderManualExpandedKeys.value = [...keys];
+            },
+          });
+          const showAllEntry = computed(() => matchFolderEntry('全部图片'));
+          const showUnclassifiedEntry = computed(() =>
+            matchFolderEntry('未分类'),
+          );
+          const totalPages = computed(() =>
+            Math.max(1, Math.ceil(total.value / pageSize)),
+          );
+          const selectedFiles = computed(() =>
+            Object.values(selectedFileMap.value),
+          );
 
-          onMounted(async () => {
+          const loadFiles = async () => {
             loading.value = true;
             try {
               const result = await getFilePage({
+                fileName: fileName.value || undefined,
+                ...(selectedFolderKey.value === 'unclassified'
+                  ? { unclassified: true }
+                  : {}),
+                ...(isFolderKey(selectedFolderKey.value)
+                  ? { folderId: selectedFolderKey.value }
+                  : {}),
                 mimeType: 'image/',
-                pageNum: 1,
-                pageSize: 24,
+                pageNum: pageNum.value,
+                pageSize,
               });
               files.value = result.records ?? [];
+              total.value = result.total ?? 0;
             } finally {
               loading.value = false;
             }
+          };
+
+          watch(
+            [filteredFolderTree, isFolderSearchActive],
+            ([tree, active]) => {
+              folderSearchExpandedKeys.value = active
+                ? collectFolderExpandableKeys(tree)
+                : [];
+            },
+            { immediate: true },
+          );
+
+          onMounted(async () => {
+            const [folderItems] = await Promise.all([
+              getFileFolders(),
+              loadFiles(),
+            ]);
+            folders.value = folderItems;
+            folderManualExpandedKeys.value = collectFolderExpandableKeys(
+              buildFolderTree(folderItems),
+            );
           });
 
-          const select = (file: any) => {
-            resolve({ id: file.id, url: file.url });
+          const confirm = () => {
+            resolve(
+              selectedFiles.value.map((file) => ({ id: file.id, url: file.url })),
+            );
             modal.destroy();
           };
 
-          const renderContent = () => {
+          const toggle = (file: SystemFileApi.FileInfo) => {
+            const key = String(file.id);
+            if (selectedFileMap.value[key]) {
+              const { [key]: _removed, ...rest } = selectedFileMap.value;
+              selectedFileMap.value = rest;
+              selectedFileIds.value = selectedFileIds.value.filter(
+                (id) => id !== file.id,
+              );
+              return;
+            }
+            selectedFileMap.value = { ...selectedFileMap.value, [key]: file };
+            selectedFileIds.value = [...selectedFileIds.value, file.id];
+          };
+
+          const matchFolderEntry = (label: string) => {
+            const keyword = folderSearch.value.trim().toLowerCase();
+            return !keyword || label.toLowerCase().includes(keyword);
+          };
+
+          const selectFolder = (folder: FolderSelection) => {
+            selectedFolderKey.value = folder;
+            folderTreeValue.value = isFolderKey(folder) ? folder : undefined;
+            pageNum.value = 1;
+            loadFiles();
+          };
+
+          const search = () => {
+            pageNum.value = 1;
+            loadFiles();
+          };
+
+          const changePage = (offset: number) => {
+            const nextPage = pageNum.value + offset;
+            if (nextPage < 1 || nextPage > totalPages.value) {
+              return;
+            }
+            pageNum.value = nextPage;
+            loadFiles();
+          };
+
+          const renderFolderRow = (label: string, folder: FolderSelection) =>
+            h(
+              'div',
+              {
+                class: [
+                  'folder-row',
+                  selectedFolderKey.value === folder
+                    ? 'folder-row-selected'
+                    : 'folder-row-normal',
+                ],
+                onClick: () => selectFolder(folder),
+              },
+              [
+                h('span', { class: 'folder-row-spacer' }),
+                h(IconifyIcon, {
+                  class: 'folder-icon',
+                  icon: 'lucide:folder',
+                }),
+                h('span', { class: 'folder-name' }, label),
+              ],
+            );
+
+          const onSelectFolderNode = (item: any) => {
+            const folder = item.value as SystemFileApi.Folder;
+            if (isFolderSearchActive.value) {
+              const path = findFolderPath(folderTree.value, folder.id);
+              if (path) {
+                const keys = [...path.parents];
+                if (path.hasChildren) {
+                  keys.push(folder.id);
+                }
+                folderManualExpandedKeys.value = mergeFolderExpandedKeys(
+                  folderManualExpandedKeys.value,
+                  keys,
+                );
+              }
+            }
+            selectFolder(folder.id);
+          };
+
+          const renderFolderTree = () =>
+            filteredFolderTree.value.length > 0
+              ? h(
+                  Tree,
+                  {
+                    childrenField: 'children',
+                    class: 'side-tree folder-tree',
+                    defaultExpandedLevel: 0,
+                    expandedKeys: folderTreeExpandedKeys.value,
+                    labelField: 'folderName',
+                    modelValue: folderTreeValue.value,
+                    'onUpdate:expandedKeys': (keys: FolderId[]) => {
+                      folderTreeExpandedKeys.value = keys;
+                    },
+                    'onUpdate:modelValue': (value: FolderId) => {
+                      folderTreeValue.value = value;
+                    },
+                    onSelect: onSelectFolderNode,
+                    showIcon: false,
+                    showToolbar: false,
+                    transition: true,
+                    treeData: filteredFolderTree.value,
+                    valueField: 'id',
+                  },
+                  {
+                    node: ({ value: folder }: { value: SystemFileApi.Folder }) =>
+                      h('div', { class: 'folder-node' }, [
+                        h(IconifyIcon, {
+                          class: 'folder-icon',
+                          icon: 'lucide:folder',
+                        }),
+                        h('span', { class: 'folder-name' }, folder.folderName),
+                      ]),
+                  },
+                )
+              : null;
+
+          const renderImages = () => {
             if (loading.value) {
               return h(
                 'div',
-                { class: 'py-10 text-center text-muted-foreground' },
+                {
+                  class:
+                    'flex h-[456px] items-center justify-center text-muted-foreground',
+                },
                 '加载中...',
               );
             }
             if (files.value.length === 0) {
               return h(
                 'div',
-                { class: 'py-10 text-center text-muted-foreground' },
+                {
+                  class:
+                    'flex h-[456px] items-center justify-center text-muted-foreground',
+                },
                 '暂无图片',
               );
             }
@@ -228,15 +597,20 @@ const selectRichEditorImage = () => {
               'div',
               {
                 class:
-                  'grid max-h-[420px] grid-cols-3 gap-3 overflow-auto pr-1',
+                  'grid h-[456px] grid-cols-5 content-start gap-3 overflow-auto pr-1',
               },
-              files.value.map((file) =>
-                h(
+              files.value.map((file) => {
+                const selected = selectedFileIds.value.includes(file.id);
+                return h(
                   'button',
                   {
-                    class:
-                      'group overflow-hidden rounded-md border border-border bg-background text-left transition hover:border-primary',
-                    onClick: () => select(file),
+                    class: [
+                      'group relative overflow-hidden rounded-md border bg-background text-left transition hover:border-primary hover:bg-muted/40',
+                      selected
+                        ? 'border-primary bg-muted/40'
+                        : 'border-border',
+                    ],
+                    onClick: () => toggle(file),
                     type: 'button',
                   },
                   [
@@ -245,6 +619,21 @@ const selectRichEditorImage = () => {
                       class: 'aspect-square w-full object-cover',
                       src: file.url,
                     }),
+                    selected
+                      ? h(
+                          'span',
+                          {
+                            class:
+                              'absolute right-2 top-2 rounded-full bg-primary p-1 text-primary-foreground',
+                          },
+                          [
+                            h(IconifyIcon, {
+                              class: 'size-3.5',
+                              icon: 'lucide:check',
+                            }),
+                          ],
+                        )
+                      : null,
                     h(
                       'div',
                       {
@@ -255,13 +644,153 @@ const selectRichEditorImage = () => {
                       file.originalName,
                     ),
                   ],
-                ),
-              ),
+                );
+              }),
             );
           };
 
+          const renderContent = () =>
+            h('div', { class: 'rich-editor-file-picker flex h-[640px] flex-col' }, [
+              h('div', { class: 'flex items-center justify-between' }, [
+                h('div', { class: 'text-base font-medium' }, '选择图片'),
+                h(
+                  'button',
+                  {
+                    class:
+                      'rounded p-1 text-muted-foreground transition hover:bg-muted hover:text-foreground',
+                    onClick: () => {
+                      resolve(undefined);
+                      modal.destroy();
+                    },
+                    type: 'button',
+                  },
+                  [h(IconifyIcon, { class: 'size-5', icon: 'lucide:x' })],
+                ),
+              ]),
+              h('div', { class: 'mt-4 flex min-h-0 flex-1 gap-4' }, [
+                h(
+                  'aside',
+                  {
+                    class:
+                      'flex h-full w-60 shrink-0 flex-col border-r border-border pr-3',
+                  },
+                  [
+                    h(
+                      Input,
+                      {
+                        allowClear: true,
+                        class: 'folder-search mb-3',
+                        'onUpdate:value': (value: string) => {
+                          folderSearch.value = value;
+                        },
+                        placeholder: '请输入文件夹名称',
+                        value: folderSearch.value,
+                      },
+                      {
+                        prefix: () =>
+                          h(IconifyIcon, {
+                            class: 'size-4 text-muted-foreground',
+                            icon: 'lucide:search',
+                          }),
+                      },
+                    ),
+                    h('div', { class: 'min-h-0 flex-1 overflow-auto' }, [
+                      showAllEntry.value
+                        ? renderFolderRow('全部图片', 'all')
+                        : null,
+                      showUnclassifiedEntry.value
+                        ? renderFolderRow('未分类', 'unclassified')
+                        : null,
+                      renderFolderTree(),
+                    ]),
+                  ],
+                ),
+                h('section', { class: 'flex min-w-0 flex-1 flex-col' }, [
+                  h('div', { class: 'flex gap-2' }, [
+                    h('input', {
+                      class:
+                        'h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary',
+                      onInput: (event: Event) => {
+                        fileName.value = (event.target as HTMLInputElement).value;
+                      },
+                      onKeydown: (event: KeyboardEvent) => {
+                        if (event.key === 'Enter') search();
+                      },
+                      placeholder: '搜索文件名',
+                      value: fileName.value,
+                    }),
+                    h(
+                      'button',
+                      {
+                        class:
+                          'h-9 rounded-md bg-primary px-3 text-sm text-primary-foreground',
+                        onClick: search,
+                        type: 'button',
+                      },
+                      '搜索',
+                    ),
+                  ]),
+                  h('div', { class: 'mt-3 min-h-0 flex-1' }, [renderImages()]),
+                  h('div', { class: 'flex h-9 shrink-0 items-center justify-between text-xs text-muted-foreground' }, [
+                    h('span', `共 ${total.value} 个文件，已选 ${selectedFileIds.value.length} 个`),
+                    h('div', { class: 'flex items-center gap-2' }, [
+                      h(
+                        'button',
+                        {
+                          class:
+                            'rounded border border-border px-3 py-1 transition enabled:hover:border-primary enabled:hover:text-primary disabled:opacity-50',
+                          disabled: pageNum.value <= 1,
+                          onClick: () => changePage(-1),
+                          type: 'button',
+                        },
+                        '上一页',
+                      ),
+                      h('span', `第 ${pageNum.value} / ${totalPages.value} 页`),
+                      h(
+                        'button',
+                        {
+                          class:
+                            'rounded border border-border px-3 py-1 transition enabled:hover:border-primary enabled:hover:text-primary disabled:opacity-50',
+                          disabled: pageNum.value >= totalPages.value,
+                          onClick: () => changePage(1),
+                          type: 'button',
+                        },
+                        '下一页',
+                      ),
+                    ]),
+                  ]),
+                ]),
+              ]),
+              h('div', { class: 'mt-3 flex shrink-0 justify-end gap-2 border-t border-border pt-3' }, [
+                h(
+                  'button',
+                  {
+                    class:
+                      'h-9 rounded-md border border-border px-4 text-sm transition hover:border-primary hover:text-primary',
+                    onClick: () => {
+                      resolve(undefined);
+                      modal.destroy();
+                    },
+                    type: 'button',
+                  },
+                  '取消',
+                ),
+                h(
+                  'button',
+                  {
+                    class:
+                      'h-9 rounded-md bg-primary px-4 text-sm text-primary-foreground disabled:opacity-50',
+                    disabled: selectedFileIds.value.length === 0,
+                    onClick: confirm,
+                    type: 'button',
+                  },
+                  '确定',
+                ),
+              ]),
+            ]);
+
           return () =>
-            h('div', { class: 'min-h-48' }, [renderContent()]);
+            h('div', { class: 'min-h-120' }, [renderContent()]);
         },
       });
 
@@ -271,12 +800,69 @@ const selectRichEditorImage = () => {
         footer: null,
         icon: null,
         onCancel: () => resolve(undefined),
-        title: '选择图片',
-        width: 720,
+        title: null,
+        width: 1180,
       });
     },
   );
 };
+
+const createRichEditorImageUpload = (
+  folderId?: number | string,
+  imageUpload?: TipTapProps['imageUpload'],
+): NonNullable<TipTapProps['imageUpload']> => ({
+  maxSize: 5 * 1024 * 1024,
+  select: selectRichEditorImage,
+  ...imageUpload,
+  upload:
+    imageUpload?.upload ??
+    (async (file: File, onProgress?: (percent: number) => void) => {
+      const result = await uploadFileApi(file, folderId, (event) => {
+        if (!event.total) return;
+        onProgress?.(Math.round((event.loaded / event.total) * 100));
+      });
+      return { id: result.id, url: result.url };
+    }),
+});
+
+const RichEditorComponent = defineComponent({
+  name: 'RichEditor',
+  inheritAttrs: false,
+  setup(_props, { attrs, expose, slots }) {
+    const innerRef = ref();
+    expose(
+      new Proxy(
+        {},
+        {
+          get: (_target, key) => innerRef.value?.[key],
+          has: (_target, key) => key in (innerRef.value || {}),
+        },
+      ),
+    );
+
+    return () => {
+      const {
+        imageUpload,
+        imageUploadFolderId,
+        placeholder: inputPlaceholder,
+        ...restAttrs
+      } = attrs as RichEditorProps;
+      return h(
+        VbenTiptap,
+        {
+          ...restAttrs,
+          imageUpload: createRichEditorImageUpload(
+            imageUploadFolderId,
+            imageUpload,
+          ),
+          placeholder: inputPlaceholder || $t('ui.placeholder.input'),
+          ref: innerRef,
+        },
+        slots,
+      );
+    };
+  },
+});
 
 const getDecimalLength = (value: number) => {
   const text = String(value);
@@ -800,7 +1386,7 @@ export interface ComponentPropsMap {
   RadioGroup: RadioGroupProps;
   RangePicker: RangePickerProps;
   Rate: RateProps;
-  RichEditor: TipTapProps;
+  RichEditor: RichEditorProps;
   Select: SelectProps;
   Space: SpaceProps;
   Switch: SwitchProps;
@@ -877,16 +1463,7 @@ async function initComponentAdapter() {
       style: { width: '100%' },
     }),
     Rate,
-    RichEditor: withDefaultPlaceholder(VbenTiptap, 'input', {
-      imageUpload: {
-        maxSize: 5 * 1024 * 1024,
-        select: selectRichEditorImage,
-        upload: async (file: File) => {
-          const result = await uploadFileApi(file);
-          return { id: result.id, url: result.url };
-        },
-      },
-    }),
+    RichEditor: RichEditorComponent,
     Select: withDefaultPlaceholder(Select, 'select', {
       style: { width: '100%' },
     }),
