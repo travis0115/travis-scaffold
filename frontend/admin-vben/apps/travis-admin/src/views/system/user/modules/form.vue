@@ -29,6 +29,11 @@ const [Form, formApi] = useVbenForm({
 });
 
 const id = ref<number>();
+
+function isEmptyDeptId(value: unknown) {
+  return value === 0 || value === '0' || value == null;
+}
+
 const [Drawer, drawerApi] = useVbenDrawer({
   async onConfirm() {
     const { valid } = await formApi.validate();
@@ -41,6 +46,9 @@ const [Drawer, drawerApi] = useVbenDrawer({
       const roleIds = values.roleIds;
       const userData = { ...values };
       delete (userData as any).roleIds;
+      if (isDeptEnabled() && isEmptyDeptId(userData.deptId)) {
+        userData.deptId = 0;
+      }
 
       if (id.value) {
         // 编辑：更新用户信息 + 分配角色（不允许修改密码）
@@ -112,7 +120,10 @@ const [Drawer, drawerApi] = useVbenDrawer({
       if (data?.id) {
         // 编辑时加载完整用户详情（含 roleIds）
         const detail = await getUserDetail(data.id);
-        formApi.setValues(detail);
+        formApi.setValues({
+          ...detail,
+          deptId: isEmptyDeptId(detail.deptId) ? undefined : detail.deptId,
+        });
       }
     }
   },

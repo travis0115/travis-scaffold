@@ -6,7 +6,7 @@ import type { ClassType, Recordable } from '@vben-core/typings';
 
 import type { TreeProps } from './types';
 
-import { computed, onMounted, ref, watchEffect } from 'vue';
+import { computed, onMounted, ref, watch, watchEffect } from 'vue';
 
 import { ChevronRight, IconifyIcon } from '@vben-core/icons';
 import { cn, get } from '@vben-core/shared/utils';
@@ -62,10 +62,41 @@ function flatten<T = Recordable<any>, P = number | string>(
 
 const flattenData = ref<Array<InnerFlattenItem>>([]);
 const modelValue = defineModel<Arrayable<number | string>>();
-const expanded = ref<Array<number | string>>(props.defaultExpandedKeys ?? []);
+const expandedKeysModel = defineModel<Array<number | string>>('expandedKeys');
+const expanded = ref<Array<number | string>>([
+  ...(expandedKeysModel.value ?? props.defaultExpandedKeys ?? []),
+]);
 
 const treeValue = ref();
 let lastTreeData: any = null;
+
+function isSameKeys(a?: Array<number | string>, b?: Array<number | string>) {
+  if (!a || !b) return a === b;
+  return a.length === b.length && a.every((key, index) => key === b[index]);
+}
+
+watch(
+  expandedKeysModel,
+  (value) => {
+    if (value && !isSameKeys(value, expanded.value)) {
+      expanded.value = [...value];
+    }
+  },
+  { flush: 'sync', immediate: true },
+);
+
+watch(
+  expanded,
+  (value) => {
+    if (
+      expandedKeysModel.value !== undefined &&
+      !isSameKeys(value, expandedKeysModel.value)
+    ) {
+      expandedKeysModel.value = [...value];
+    }
+  },
+  { deep: true, flush: 'sync' },
+);
 
 onMounted(() => {
   watchEffect(() => {
@@ -107,10 +138,6 @@ function updateTreeValue() {
         return item && !get(item, props.disabledField);
       });
       treeValue.value = filteredValues.map((v) => getItemByValue(v));
-
-      if (filteredValues.length !== val.length) {
-        modelValue.value = filteredValues;
-      }
     }
   } else {
     const item = getItemByValue(val);
@@ -118,7 +145,6 @@ function updateTreeValue() {
       treeValue.value = item;
     } else {
       treeValue.value = props.multiple ? [] : undefined;
-      modelValue.value = props.multiple ? [] : undefined;
     }
   }
 }
@@ -135,7 +161,7 @@ function updateModelValue(val: Arrayable<Recordable<any>>) {
 }
 
 function expandToLevel(level: number) {
-  const keys: string[] = [];
+  const keys: Array<number | string> = [];
   flattenData.value.forEach((item) => {
     if (item.level <= level - 1) {
       keys.push(get(item.value, props.valueField));
@@ -168,6 +194,14 @@ function expandAll() {
 
 function collapseAll() {
   expanded.value = [];
+}
+
+function getExpandedKeys() {
+  return [...expanded.value];
+}
+
+function setExpandedKeys(keys: Array<number | string>) {
+  expanded.value = [...keys];
 }
 
 function checkAll() {
@@ -296,6 +330,8 @@ defineExpose({
   unCheckAll,
   expandToLevel,
   getItemByValue,
+  getExpandedKeys,
+  setExpandedKeys,
 });
 </script>
 <template>

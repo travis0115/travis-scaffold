@@ -25,8 +25,6 @@ import com.travis.monolith.system.user.internal.converter.SysUserConverter;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.mapper.SysUserMapper;
 import com.travis.monolith.system.user.internal.service.SysUserService;
-import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -34,6 +32,9 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * 用户管理服务实现，包含密码加密（BCrypt）、角色分配及部门名称关联查询
@@ -151,11 +152,10 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         if (count > 0) {
             throw new BizException(SystemErrorCode.USER_USERNAME_EXISTS);
         }
+
         if (req.getDeptId() != null && !req.getDeptId().equals(user.getDeptId())) {
             RedisUtil.deleteCacheKey(
-                    "system:user",
-                    "list:id:dept:" + user.getDeptId(),
-                    "list:id:dept:" + req.getDeptId());
+                    "system:user:list:id", "dept:" + user.getDeptId(), "dept:" + req.getDeptId());
         }
         converter.update(req, user);
         updateById(user);

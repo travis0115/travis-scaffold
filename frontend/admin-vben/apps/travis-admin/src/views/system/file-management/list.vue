@@ -5,9 +5,9 @@ import type {
 } from '#/adapter/vxe-table';
 import type { SystemFileApi } from '#/api';
 
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 
-import { Page, useVbenModal } from '@vben/common-ui';
+import { Page, Tree, useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 
 import { Button, Card, Image, Input, message, Upload } from 'antdv-next';
@@ -29,11 +29,18 @@ import { SYSTEM_PERMS } from '#/utils/permissions';
 
 import { useColumns, useGridFormSchema } from './data';
 
-type FolderRow = SystemFileApi.Folder & { level: number };
 type FolderId = number | string;
 type FolderSelection = 'all' | 'unclassified' | FolderId;
+type TreeExpose = {
+  expandNodes: (value: FolderId | FolderId[]) => void;
+};
 
 const selectedFolderKey = ref<FolderSelection>('all');
+const folderTreeValue = ref<FolderId>();
+const folderTreeRef = ref<TreeExpose>();
+const folderManualExpandedKeys = ref<FolderId[]>([]);
+const folderSearchExpandedKeys = ref<FolderId[]>([]);
+const folderRestoreTransitionDisabled = ref(false);
 const editingFolder = ref<SystemFileApi.Folder>();
 const deletingFolder = ref<SystemFileApi.Folder>();
 const folderParentId = ref<FolderId>(0);
@@ -50,11 +57,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
             pageNum: page.currentPage,
             pageSize: page.pageSize,
             ...values,
-            ...(selectedFolderKey.value === 'unclassified'
-              ? { unclassified: true }
-              : isFolderKey(selectedFolderKey.value)
-                ? { folderId: selectedFolderKey.value }
-                : {}),
+            ...getFolderQueryParams(),
           }),
       },
     },
@@ -66,18 +69,37 @@ const [Grid, gridApi] = useVbenVxeGrid({
 const folders = ref<SystemFileApi.Folder[]>([]);
 const storageConfigs = ref<SystemFileApi.StorageConfig[]>([]);
 const folderSearch = ref('');
-const expandedFolderIds = ref<Set<string>>(new Set());
 const folderModalMode = ref<'create' | 'edit'>('create');
 
 const folderTree = computed(() => buildFolderTree(folders.value));
 const filteredFolderTree = computed(() =>
   filterFolderTree(folderTree.value, folderSearch.value.trim()),
 );
-const visibleFolderRows = computed(() =>
-  flattenFolderTree(filteredFolderTree.value),
+const isFolderSearchActive = computed(() => Boolean(folderSearch.value.trim()));
+const folderTreeRenderKey = computed(() =>
+  isFolderSearchActive.value ? 'folder-search' : 'folder-default',
 );
+const folderTreeExpandedKeys = computed({
+  get: () =>
+    isFolderSearchActive.value
+      ? folderSearchExpandedKeys.value
+      : folderManualExpandedKeys.value,
+  set: (keys: FolderId[]) => {
+    if (isFolderSearchActive.value) {
+      folderSearchExpandedKeys.value = [...keys];
+      return;
+    }
+    folderManualExpandedKeys.value = [...keys];
+  },
+});
 const showAllEntry = computed(() => matchFolderEntry('全部'));
 const showUnclassifiedEntry = computed(() => matchFolderEntry('未分类'));
+const fileTableTitle = computed(() => `文件管理 - ${selectedFolderName.value}`);
+const selectedFolderName = computed(() => {
+  if (selectedFolderKey.value === 'all') return '全部';
+  if (selectedFolderKey.value === 'unclassified') return '未分类';
+  return getFolderName(selectedFolderKey.value) ?? '全部';
+});
 const folderModalTitle = computed(() => {
   if (folderModalMode.value === 'edit') return '修改文件夹';
   return isRootFolder(folderParentId.value) ? '新增文件夹' : '新增子文件夹';
@@ -98,6 +120,16 @@ const deleteFolderContent = computed(() => {
     ? `删除「${folderName}」后，子文件夹会一并删除，相关文件将清除归属，确认删除？`
     : `删除「${folderName}」后，相关文件将清除归属，确认删除？`;
 });
+
+function getFolderQueryParams() {
+  if (selectedFolderKey.value === 'unclassified') {
+    return { unclassified: true };
+  }
+  if (isFolderKey(selectedFolderKey.value)) {
+    return { folderId: selectedFolderKey.value };
+  }
+  return {};
+}
 
 const [FolderForm, folderFormApi] = useVbenForm({
   commonConfig: { labelWidth: 88 },
@@ -177,6 +209,29 @@ const [DeleteFolderModal, deleteFolderModalApi] = useVbenModal({
   },
 });
 
+watch(
+  [filteredFolderTree, isFolderSearchActive],
+  ([tree, active]) => {
+    folderSearchExpandedKeys.value = active
+      ? collectFolderExpandableKeys(tree)
+      : [];
+  },
+  { immediate: true },
+);
+
+watch(
+  folderSearch,
+  async (value, oldValue) => {
+    if (value.trim() || !oldValue.trim()) return;
+    folderRestoreTransitionDisabled.value = true;
+    folderSearchExpandedKeys.value = [];
+    await nextTick();
+    await nextTick();
+    folderRestoreTransitionDisabled.value = false;
+  },
+  { flush: 'sync' },
+);
+
 async function loadOptions() {
   [folders.value, storageConfigs.value] = await Promise.all([
     getFileFolders(),
@@ -254,44 +309,54 @@ function filterFolderTree(
     .filter(Boolean) as SystemFileApi.Folder[];
 }
 
-function flattenFolderTree(
-  nodes: SystemFileApi.Folder[],
-  level = 0,
-): FolderRow[] {
-  const rows: FolderRow[] = [];
+function collectFolderExpandableKeys(nodes: SystemFileApi.Folder[]) {
+  const keys: FolderId[] = [];
   nodes.forEach((node) => {
-    rows.push({ ...node, level });
-    if (
-      node.children?.length &&
-      (folderSearch.value || expandedFolderIds.value.has(String(node.id)))
-    ) {
-      rows.push(...flattenFolderTree(node.children, level + 1));
+    if (node.children?.length) {
+      keys.push(node.id, ...collectFolderExpandableKeys(node.children));
     }
   });
-  return rows;
+  return keys;
 }
 
-function isFolderSelected(folder: SystemFileApi.Folder) {
-  return String(selectedFolderKey.value) === String(folder.id);
+function mergeFolderExpandedKeys(keys: FolderId[], nextKeys: FolderId[]) {
+  return [...new Set([...keys, ...nextKeys])];
 }
 
-function isFolderExpanded(folder: SystemFileApi.Folder) {
-  return (
-    Boolean(folderSearch.value) ||
-    expandedFolderIds.value.has(String(folder.id))
-  );
-}
-
-function toggleFolder(folder: SystemFileApi.Folder) {
-  if (!folder.children?.length) return;
-  const next = new Set(expandedFolderIds.value);
-  const folderKey = String(folder.id);
-  if (next.has(folderKey)) {
-    next.delete(folderKey);
-  } else {
-    next.add(folderKey);
+function findFolderPath(
+  nodes: SystemFileApi.Folder[],
+  id: FolderId,
+  parents: FolderId[] = [],
+): undefined | { hasChildren: boolean; parents: FolderId[] } {
+  for (const node of nodes) {
+    if (String(node.id) === String(id)) {
+      return {
+        hasChildren: Boolean(node.children?.length),
+        parents,
+      };
+    }
+    const matched = findFolderPath(node.children ?? [], id, [
+      ...parents,
+      node.id,
+    ]);
+    if (matched) return matched;
   }
-  expandedFolderIds.value = next;
+  return undefined;
+}
+
+function rememberFolderSearchSelection(item: any) {
+  if (!isFolderSearchActive.value) return;
+  const folder = item.value as SystemFileApi.Folder;
+  const path = findFolderPath(folderTree.value, folder.id);
+  if (!path) return;
+  const keys = [...path.parents];
+  if (path.hasChildren) {
+    keys.push(folder.id);
+  }
+  folderManualExpandedKeys.value = mergeFolderExpandedKeys(
+    folderManualExpandedKeys.value,
+    keys,
+  );
 }
 
 function onActionClick({
@@ -311,17 +376,25 @@ async function customRequest({ file }: any) {
 
 function selectAllFiles() {
   selectedFolderKey.value = 'all';
+  folderTreeValue.value = undefined;
   gridApi.query();
 }
 
 function selectUnclassifiedFiles() {
   selectedFolderKey.value = 'unclassified';
+  folderTreeValue.value = undefined;
   gridApi.query();
 }
 
 function selectFolder(folder: SystemFileApi.Folder) {
   selectedFolderKey.value = folder.id;
+  folderTreeValue.value = folder.id;
   gridApi.query();
+}
+
+function onSelectFolderNode(item: any) {
+  rememberFolderSearchSelection(item);
+  selectFolder(item.value as SystemFileApi.Folder);
 }
 
 function getNextFolderSort(parentId: FolderId) {
@@ -346,6 +419,7 @@ async function openEditFolder(folder: SystemFileApi.Folder) {
   editingFolder.value = folder;
   folderParentId.value = folder.parentId ?? 0;
   selectedFolderKey.value = folder.id;
+  folderTreeValue.value = folder.id;
   folderModalApi.open();
   await nextTick();
   await folderFormApi.resetForm();
@@ -369,17 +443,15 @@ async function saveFolder() {
     if (folderModalMode.value === 'edit' && editingFolder.value) {
       await updateFileFolder(editingFolder.value.id, payload);
       selectedFolderKey.value = editingFolder.value.id;
+      folderTreeValue.value = editingFolder.value.id;
     } else {
       await createFileFolder(payload);
-      if (!isRootFolder(folderParentId.value)) {
-        expandedFolderIds.value = new Set([
-          ...expandedFolderIds.value,
-          String(folderParentId.value),
-        ]);
-      }
     }
     folderModalApi.close();
     await loadOptions();
+    if (!isRootFolder(folderParentId.value)) {
+      folderTreeRef.value?.expandNodes(folderParentId.value);
+    }
     gridApi.query();
   } catch {
     folderModalApi.unlock();
@@ -389,6 +461,7 @@ async function saveFolder() {
 function removeFolder(folder: SystemFileApi.Folder) {
   if (folder.isBuiltin === 1) return;
   selectedFolderKey.value = folder.id;
+  folderTreeValue.value = folder.id;
   deletingFolder.value = folder;
   deleteFolderModalApi.open();
 }
@@ -399,6 +472,7 @@ async function confirmDeleteFolder() {
   try {
     await deleteFileFolder(deletingFolder.value.id);
     selectedFolderKey.value = 'all';
+    folderTreeValue.value = undefined;
     deleteFolderModalApi.close();
     await loadOptions();
     gridApi.query();
@@ -499,72 +573,63 @@ onMounted(loadOptions);
           <span class="folder-name">未分类</span>
         </div>
 
-        <div class="folder-tree">
-          <div
-            v-for="folder in visibleFolderRows"
-            :key="folder.id"
-            class="folder-row group"
-            :class="
-              isFolderSelected(folder)
-                ? 'folder-row-selected'
-                : 'folder-row-normal'
-            "
-            :style="{ paddingLeft: `${folder.level * 24}px` }"
-            @click="selectFolder(folder)"
-          >
-            <button
-              v-if="folder.children?.length"
-              class="folder-toggle"
-              type="button"
-              @click.stop="toggleFolder(folder)"
-            >
-              <IconifyIcon
-                :icon="
-                  isFolderExpanded(folder)
-                    ? 'lucide:chevron-down'
-                    : 'lucide:chevron-right'
-                "
-                class="size-4"
-              />
-            </button>
-            <span v-else class="folder-row-spacer"></span>
-            <IconifyIcon icon="lucide:folder" class="folder-icon" />
-            <span class="folder-name">{{ folder.folderName }}</span>
-            <div class="folder-actions" @click.stop>
-              <button
-                v-access:code="SYSTEM_PERMS.fileUpload"
-                class="folder-action"
-                title="新建子文件夹"
-                type="button"
-                @click="openCreateFolder(folder.id)"
-              >
-                <IconifyIcon icon="lucide:plus" class="size-4" />
-              </button>
-              <button
-                v-access:code="SYSTEM_PERMS.fileUpload"
-                class="folder-action"
-                title="修改文件夹"
-                type="button"
-                @click="openEditFolder(folder)"
-              >
-                <IconifyIcon icon="lucide:square-pen" class="size-4" />
-              </button>
-              <button
-                v-if="folder.isBuiltin !== 1"
-                v-access:code="SYSTEM_PERMS.fileDelete"
-                class="folder-action"
-                title="删除文件夹"
-                type="button"
-                @click="removeFolder(folder)"
-              >
-                <IconifyIcon icon="lucide:trash-2" class="size-4" />
-              </button>
+        <Tree
+          v-if="filteredFolderTree.length > 0"
+          ref="folderTreeRef"
+          :key="folderTreeRenderKey"
+          v-model="folderTreeValue"
+          v-model:expanded-keys="folderTreeExpandedKeys"
+          class="side-tree folder-tree"
+          :default-expanded-level="0"
+          :show-icon="false"
+          :show-toolbar="false"
+          :tree-data="filteredFolderTree"
+          :transition="!folderRestoreTransitionDisabled"
+          children-field="children"
+          label-field="folderName"
+          value-field="id"
+          @select="onSelectFolderNode"
+        >
+          <template #node="{ value: folder }">
+            <div class="folder-node group">
+              <IconifyIcon icon="lucide:folder" class="folder-icon" />
+              <span class="folder-name">{{ folder.folderName }}</span>
+              <div class="folder-actions" @click.stop>
+                <button
+                  v-access:code="SYSTEM_PERMS.fileUpload"
+                  class="folder-action"
+                  title="新建子文件夹"
+                  type="button"
+                  @click="openCreateFolder(folder.id)"
+                >
+                  <IconifyIcon icon="lucide:plus" class="size-4" />
+                </button>
+                <button
+                  v-access:code="SYSTEM_PERMS.fileUpload"
+                  class="folder-action"
+                  title="修改文件夹"
+                  type="button"
+                  @click="openEditFolder(folder)"
+                >
+                  <IconifyIcon icon="lucide:square-pen" class="size-4" />
+                </button>
+                <button
+                  v-if="folder.isBuiltin !== 1"
+                  v-access:code="SYSTEM_PERMS.fileDelete"
+                  class="folder-action"
+                  title="删除文件夹"
+                  type="button"
+                  @click="removeFolder(folder)"
+                >
+                  <IconifyIcon icon="lucide:trash-2" class="size-4" />
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
+          </template>
+        </Tree>
       </Card>
       <div class="ml-4 min-w-0 flex-1">
-        <Grid table-title="文件管理">
+        <Grid :table-title="fileTableTitle">
           <template #toolbar-tools>
             <Button
               v-access:code="SYSTEM_PERMS.fileUpload"
@@ -676,20 +741,10 @@ onMounted(loadOptions);
   color: hsl(var(--foreground));
 }
 
-.folder-row-spacer,
-.folder-toggle {
+.folder-row-spacer {
   width: 18px;
   height: 22px;
   flex: none;
-}
-
-.folder-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 0;
-  color: hsl(var(--muted-foreground));
-  background: transparent;
 }
 
 .folder-icon {
@@ -698,6 +753,13 @@ onMounted(loadOptions);
   flex: none;
   margin-right: 8px;
   color: hsl(var(--muted-foreground));
+}
+
+.folder-node {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1;
 }
 
 .folder-name {
@@ -719,7 +781,8 @@ onMounted(loadOptions);
   transition: opacity 0.16s ease;
 }
 
-.folder-row:hover .folder-actions {
+.folder-row:hover .folder-actions,
+.folder-node:hover .folder-actions {
   opacity: 1;
   pointer-events: auto;
 }
@@ -741,5 +804,36 @@ onMounted(loadOptions);
 
 .folder-tree {
   margin-top: 2px;
+}
+
+.side-tree :deep(.tree-node) {
+  height: 32px;
+  padding-right: 8px;
+  color: hsl(var(--muted-foreground));
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1;
+  transition:
+    color 0.16s ease,
+    background-color 0.16s ease;
+}
+
+.side-tree :deep(.tree-node:hover) {
+  background-color: hsl(var(--accent) / 50%);
+  color: hsl(var(--foreground));
+}
+
+.side-tree :deep(.tree-node[data-selected]) {
+  background-color: hsl(var(--primary) / 12%) !important;
+  color: hsl(var(--foreground));
+}
+
+.side-tree :deep(.tree-node > .item-checkbox) {
+  min-width: 0;
+  flex: 1;
+}
+
+.side-tree :deep(.tree-node > .item-checkbox > .item-checkbox) {
+  min-width: 0;
 }
 </style>

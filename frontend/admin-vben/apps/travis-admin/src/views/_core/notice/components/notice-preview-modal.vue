@@ -18,6 +18,7 @@ const pinnedTagStyle = {
 };
 
 const [PreviewModal, previewModalApi] = useVbenModal({
+  closeOnClickModal: true,
   footer: false,
 });
 
