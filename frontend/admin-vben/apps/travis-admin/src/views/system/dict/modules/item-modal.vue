@@ -37,7 +37,8 @@ const [Form, formApi] = useVbenForm({
       label: $t('system.dict.item.label'),
       rules: z
         .string()
-        .min(1, '请输入标签'),
+        .min(1, '字典标签不能为空')
+        .max(20, '字典标签长度不能超过20个字符'),
     },
     {
       component: 'Input',
@@ -45,7 +46,8 @@ const [Form, formApi] = useVbenForm({
       label: $t('system.dict.item.value'),
       rules: z
         .string()
-        .min(1, '请输入值'),
+        .min(1, '字典值不能为空')
+        .max(100, '字典值长度不能超过100个字符'),
     },
     {
       component: 'Select',
@@ -58,12 +60,18 @@ const [Form, formApi] = useVbenForm({
       defaultValue: 'default',
       fieldName: 'tagStyle',
       label: $t('system.dict.item.tagStyle'),
+      rules: z
+        .string()
+        .max(100, '展示样式长度不能超过100个字符')
+        .optional()
+        .or(z.literal('')),
     },
     {
       component: 'InputNumber',
+      componentProps: { max: 9999, min: 0 },
       fieldName: 'sort',
       label: $t('system.dict.item.sort'),
-      defaultValue: 0,
+      defaultValue: 1,
     },
     {
       component: 'RadioGroup',
@@ -80,6 +88,11 @@ const [Form, formApi] = useVbenForm({
       component: 'Textarea',
       fieldName: 'remark',
       label: $t('system.dict.item.remark'),
+      rules: z
+        .string()
+        .max(255, '备注长度不能超过255个字符')
+        .optional()
+        .or(z.literal('')),
     },
   ],
   showDefaultActions: false,

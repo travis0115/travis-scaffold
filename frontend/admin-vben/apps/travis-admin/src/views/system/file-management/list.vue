@@ -5,9 +5,9 @@ import type {
 } from '#/adapter/vxe-table';
 import type { SystemFileApi } from '#/api';
 
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
-import { Page, Tree, useVbenModal } from '@vben/common-ui';
+import { Page, Tree, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 
 import {
@@ -34,12 +34,13 @@ import {
   getFileFolders,
   getFilePage,
   getStorageConfigDetail,
+  getStorageConfigPage,
   getStorageConfigs,
+  getStorageTypes,
   getUploadPolicy,
   setDefaultStorageConfig,
   updateFileFolder,
   updateStorageConfig,
-  updateStorageConfigStatus,
   UPLOAD_FILE_MAX_SIZE_BYTES,
   uploadFileApi,
 } from '#/api';
@@ -60,10 +61,23 @@ type UploadTask = {
   uid: string;
 };
 
-const storageTypeOptions = [
+const defaultStorageTypeOptions = [
   { label: '本地存储', value: 'LOCAL' },
 ];
-const storageFormFieldsByType: Record<string, string[]> = {
+const storageTypeOptions = ref<SystemFileApi.StorageTypeOption[]>([
+  ...defaultStorageTypeOptions,
+]);
+const storageTypeFormFields = [
+  'storagePath',
+  'domain',
+  'endpoint',
+  'region',
+  'bucketId',
+  'bucketName',
+  'accessKey',
+  'secretKey',
+];
+const storageTypeFormFieldsByType: Record<string, string[]> = {
   LOCAL: ['storagePath', 'domain'],
 };
 const defaultAllowedUploadExtensions = [
@@ -107,6 +121,7 @@ const defaultAllowedUploadExtensions = [
   'avi',
   'mkv',
 ];
+const httpUrlPrefixRule = /^https?:\/\/.+/;
 
 const selectedFolderKey = ref<FolderSelection>('all');
 const folderTreeValue = ref<FolderId>();
@@ -117,6 +132,8 @@ const folderRestoreTransitionDisabled = ref(false);
 const editingFolder = ref<SystemFileApi.Folder>();
 const deletingFolder = ref<SystemFileApi.Folder>();
 const folderParentId = ref<FolderId>(0);
+const isWindowResizing = ref(false);
+const mediaThumbnailsReady = ref(false);
 const uploadTasks = ref<UploadTask[]>([]);
 const uploadPolicy = ref<SystemFileApi.UploadPolicy>({
   allowedExtensions: defaultAllowedUploadExtensions,
@@ -124,6 +141,11 @@ const uploadPolicy = ref<SystemFileApi.UploadPolicy>({
 });
 const folders = ref<SystemFileApi.Folder[]>([]);
 const storageConfigs = ref<SystemFileApi.StorageConfig[]>([]);
+const storageConfigPageItems = ref<SystemFileApi.StorageConfig[]>([]);
+const storageConfigPageLoading = ref(false);
+const storageConfigPageNum = ref(1);
+const storageConfigPageSize = 5;
+const storageConfigTotal = ref(0);
 const storageModalMode = ref<'create' | 'edit'>('create');
 const editingStorageConfig = ref<SystemFileApi.StorageConfig>();
 const storageConfigSearchOptions = computed(() =>
@@ -156,8 +178,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
     height: 'auto',
     proxyConfig: {
       ajax: {
-        query: ({ page, sort }, values) =>
-          getFilePage({
+        async query({ page, sort }, values) {
+          const thumbnailRequestId = beginMediaThumbnailDelay();
+          const result = await getFilePage({
             pageNum: page.currentPage,
             pageSize: page.pageSize,
             ...(sort?.order
@@ -168,7 +191,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
               : {}),
             ...values,
             ...getFolderQueryParams(),
-          }),
+          });
+          scheduleMediaThumbnailsAfterTablePaint(thumbnailRequestId);
+          return result;
+        },
       },
     },
     rowConfig: { keyField: 'id' },
@@ -233,16 +259,84 @@ const uploadFinished = computed(
     uploadTasks.value.length > 0 &&
     uploadTasks.value.every((task) => task.status !== 'uploading'),
 );
-const defaultStorageConfig = computed(() =>
-  storageConfigs.value.find((item) => item.isDefault === 1),
-);
 const storageModalTitle = computed(() =>
   storageModalMode.value === 'edit' ? '编辑存储配置' : '新增存储配置',
 );
+const storageConfigTotalPages = computed(() =>
+  Math.max(1, Math.ceil(storageConfigTotal.value / storageConfigPageSize)),
+);
+
+let mediaThumbnailFrame: number | undefined;
+let mediaThumbnailRequestId = 0;
+let mediaThumbnailTaskTimer: ReturnType<typeof setTimeout> | undefined;
+let windowResizeTimer: ReturnType<typeof setTimeout> | undefined;
+
+function isImageFile(row: SystemFileApi.FileInfo) {
+  return row.mimeType?.startsWith('image/');
+}
+
+function isVideoFile(row: SystemFileApi.FileInfo) {
+  return row.mimeType?.startsWith('video/');
+}
+
+function shouldShowMediaThumbnail(row: SystemFileApi.FileInfo) {
+  return (
+    mediaThumbnailsReady.value &&
+    !isWindowResizing.value &&
+    (isImageFile(row) || isVideoFile(row))
+  );
+}
+
+function beginMediaThumbnailDelay() {
+  mediaThumbnailRequestId += 1;
+  mediaThumbnailsReady.value = false;
+  if (mediaThumbnailFrame) {
+    cancelAnimationFrame(mediaThumbnailFrame);
+    mediaThumbnailFrame = undefined;
+  }
+  if (mediaThumbnailTaskTimer) {
+    clearTimeout(mediaThumbnailTaskTimer);
+    mediaThumbnailTaskTimer = undefined;
+  }
+  return mediaThumbnailRequestId;
+}
+
+function scheduleMediaThumbnailsAfterTablePaint(requestId: number) {
+  mediaThumbnailTaskTimer = setTimeout(() => {
+    showMediaThumbnailsAfterTablePaint(requestId);
+    mediaThumbnailTaskTimer = undefined;
+  }, 0);
+}
+
+async function showMediaThumbnailsAfterTablePaint(requestId: number) {
+  await nextTick();
+  await nextTick();
+  mediaThumbnailFrame = requestAnimationFrame(() => {
+    mediaThumbnailFrame = requestAnimationFrame(() => {
+      if (requestId === mediaThumbnailRequestId) {
+        mediaThumbnailsReady.value = true;
+      }
+      mediaThumbnailFrame = undefined;
+    });
+  });
+}
+
+function handleWindowResize() {
+  isWindowResizing.value = true;
+  if (windowResizeTimer) {
+    clearTimeout(windowResizeTimer);
+  }
+  windowResizeTimer = setTimeout(() => {
+    isWindowResizing.value = false;
+  }, 180);
+}
 
 function getPreviewIcon(row: SystemFileApi.FileInfo) {
   const extension = row.extension?.toLowerCase();
   const mimeType = row.mimeType?.toLowerCase() ?? '';
+  if (mimeType.startsWith('image/')) {
+    return 'lucide:image';
+  }
   if (mimeType.includes('pdf') || extension === 'pdf') {
     return 'lucide:file-text';
   }
@@ -296,6 +390,10 @@ function getUploadFileExtension(fileName?: string) {
   return fileName.slice(dotIndex + 1).toLowerCase();
 }
 
+function openMediaPreview(row: SystemFileApi.FileInfo) {
+  window.open(row.url, '_blank', 'noopener,noreferrer');
+}
+
 function formatFileSizeText(bytes: number) {
   const size = bytes / 1024 / 1024;
   if (size >= 1) {
@@ -322,7 +420,10 @@ const [FolderForm, folderFormApi] = useVbenForm({
       component: 'Input',
       fieldName: 'folderName',
       label: '文件夹名称',
-      rules: z.string().min(1, '请输入文件夹名称'),
+      rules: z
+        .string()
+        .min(1, '文件夹名称不能为空')
+        .max(20, '文件夹名称长度不能超过20个字符'),
     },
   ],
   showDefaultActions: false,
@@ -334,6 +435,15 @@ const [FolderModal, folderModalApi] = useVbenModal({
   },
 });
 
+const [StorageConfigDrawer, storageConfigDrawerApi] = useVbenDrawer({
+  destroyOnClose: true,
+  async onOpenChange(isOpen) {
+    if (!isOpen) return;
+    storageConfigPageNum.value = 1;
+    await loadStorageConfigPage();
+  },
+});
+
 const [StorageForm, storageFormApi] = useVbenForm({
   commonConfig: { labelWidth: 88 },
   layout: 'horizontal',
@@ -342,92 +452,129 @@ const [StorageForm, storageFormApi] = useVbenForm({
       component: 'Input',
       fieldName: 'configName',
       label: '配置名称',
-      rules: z.string().min(1, '请输入配置名称'),
+      rules: z
+        .string()
+        .trim()
+        .min(1, '请输入配置名称')
+        .max(100, '配置名称长度不能超过100'),
     },
     {
       component: 'Select',
       componentProps: {
-        onChange: (value: string) => applyStorageTypeSchema(value),
-        options: storageTypeOptions,
+        allowClear: true,
+        onChange: (value?: string) => applyStorageTypeSchema(value),
+        options: storageTypeOptions.value,
+        placeholder: '请选择存储类型',
+        popupClassName: 'storage-type-select-dropdown',
       },
       fieldName: 'storageType',
       label: '存储类型',
-      rules: z.string().min(1, '请选择存储类型'),
+      rules: z.preprocess(
+        (value) => value ?? '',
+        z.string().trim().min(1, '存储类型不能为空'),
+      ),
     },
     {
       component: 'Input',
       fieldName: 'storagePath',
+      hide: true,
       label: '存储路径',
-      rules: z.string().min(1, '请输入存储路径'),
+      rules: z
+        .string()
+        .trim()
+        .min(1, '请输入存储路径')
+        .max(500, '存储路径长度不能超过500'),
     },
     {
       component: 'Input',
       fieldName: 'domain',
+      hide: true,
       label: '访问域名',
+      rules: z
+        .string()
+        .trim()
+        .min(1, '请输入访问域名')
+        .max(500, '访问域名长度不能超过500')
+        .regex(httpUrlPrefixRule, '访问域名必须以http://或https://开头'),
     },
     {
       component: 'Input',
       fieldName: 'endpoint',
+      hide: true,
       label: '服务端点',
+      rules: z.string().max(500, 'endpoint长度不能超过500').optional(),
     },
     {
       component: 'Input',
       fieldName: 'region',
+      hide: true,
       label: '地域',
+      rules: z.string().max(100, 'region长度不能超过100').optional(),
     },
     {
       component: 'Input',
       fieldName: 'bucketId',
+      hide: true,
       label: 'Bucket ID',
+      rules: z.string().max(200, 'bucketId长度不能超过200').optional(),
     },
     {
       component: 'Input',
       fieldName: 'bucketName',
+      hide: true,
       label: 'Bucket 名称',
+      rules: z.string().max(200, 'bucketName长度不能超过200').optional(),
     },
     {
       component: 'Input',
       fieldName: 'accessKey',
+      hide: true,
       label: 'Access Key',
+      rules: z.string().max(500, 'accessKey长度不能超过500').optional(),
     },
     {
       component: 'InputPassword',
       fieldName: 'secretKey',
+      hide: true,
       label: 'Secret Key',
-    },
-    {
-      component: 'Textarea',
-      componentProps: { rows: 3 },
-      fieldName: 'meta',
-      label: '扩展配置',
+      rules: z.string().max(1000, 'secretKey长度不能超过1000').optional(),
     },
     {
       component: 'RadioGroup',
       componentProps: {
+        buttonStyle: 'solid',
         options: [
           { label: '否', value: 0 },
           { label: '是', value: 1 },
         ],
+        optionType: 'button',
       },
       fieldName: 'isDefault',
-      label: '设为默认',
+      formItemClass: 'storage-config-radio-item',
+      label: '默认',
+      labelClass: 'storage-config-radio-label',
     },
     {
       component: 'RadioGroup',
       componentProps: {
+        buttonStyle: 'solid',
         options: [
           { label: '禁用', value: 0 },
           { label: '启用', value: 1 },
         ],
+        optionType: 'button',
       },
       fieldName: 'status',
+      formItemClass: 'storage-config-radio-item',
       label: '状态',
+      labelClass: 'storage-config-radio-label',
     },
     {
       component: 'Textarea',
       componentProps: { rows: 2 },
       fieldName: 'remark',
       label: '备注',
+      rules: z.string().max(500, '备注长度不能超过500').optional(),
     },
   ],
   showDefaultActions: false,
@@ -440,8 +587,16 @@ const [StorageModal, storageModalApi] = useVbenModal({
   async onOpenChange(isOpen) {
     if (!isOpen) return;
     await nextTick();
+    await storageFormApi.resetForm();
+    updateStorageTypeOptions();
+    if (storageModalMode.value === 'edit' && editingStorageConfig.value) {
+      await storageFormApi.setValues(editingStorageConfig.value);
+      applyStorageTypeSchema(editingStorageConfig.value.storageType);
+      return;
+    }
     await resetStorageForm();
   },
+  zIndex: 2200,
 });
 
 const [DeleteFolderModal, deleteFolderModalApi] = useVbenModal({
@@ -481,13 +636,15 @@ watch(
 );
 
 async function loadOptions() {
-  const [folderItems, storageConfigItems, policy] = await Promise.all([
+  const [folderItems, storageConfigItems, policy, storageTypeItems] = await Promise.all([
     getFileFolders(),
     getStorageConfigs(),
     getUploadPolicy(),
+    getStorageTypes().catch(() => defaultStorageTypeOptions),
   ]);
   folders.value = folderItems;
   storageConfigs.value = storageConfigItems;
+  storageTypeOptions.value = storageTypeItems;
   uploadPolicy.value = {
     allowedExtensions: policy.allowedExtensions?.length
       ? policy.allowedExtensions
@@ -506,6 +663,41 @@ async function loadOptions() {
   folderManualExpandedKeys.value = collectFolderExpandableKeys(
     buildFolderTree(folderItems),
   );
+}
+
+async function loadStorageConfigPage() {
+  storageConfigPageLoading.value = true;
+  storageConfigPageItems.value = [];
+  try {
+    const result = await getStorageConfigPage({
+      pageNum: storageConfigPageNum.value,
+      pageSize: storageConfigPageSize,
+    });
+    storageConfigPageItems.value = result.records ?? [];
+    storageConfigTotal.value = result.total ?? 0;
+    const totalPages = Math.max(
+      1,
+      Math.ceil(storageConfigTotal.value / storageConfigPageSize),
+    );
+    if (
+      storageConfigPageItems.value.length === 0 &&
+      storageConfigPageNum.value > totalPages
+    ) {
+      storageConfigPageNum.value = totalPages;
+      await loadStorageConfigPage();
+    }
+  } finally {
+    storageConfigPageLoading.value = false;
+  }
+}
+
+function changeStorageConfigPage(offset: number) {
+  const nextPage = storageConfigPageNum.value + offset;
+  if (nextPage < 1 || nextPage > storageConfigTotalPages.value) {
+    return;
+  }
+  storageConfigPageNum.value = nextPage;
+  loadStorageConfigPage();
 }
 
 function buildFolderTree(items: SystemFileApi.Folder[]) {
@@ -551,24 +743,32 @@ function getFolderName(id?: FolderId) {
 }
 
 function getStorageTypeLabel(type?: string) {
-  return storageTypeOptions.find((item) => item.value === type)?.label ?? type;
+  return (
+    storageTypeOptions.value.find((item) => item.value === type)?.label ?? type
+  );
+}
+
+function updateStorageTypeOptions() {
+  storageFormApi.updateSchema([
+    {
+      componentProps: {
+        allowClear: true,
+        onChange: (value?: string) => applyStorageTypeSchema(value),
+        options: storageTypeOptions.value,
+        placeholder: '请选择存储类型',
+        popupClassName: 'storage-type-select-dropdown',
+      },
+      fieldName: 'storageType',
+    },
+  ]);
 }
 
 function applyStorageTypeSchema(storageType?: string) {
-  const typedFields = [
-    'storagePath',
-    'domain',
-    'endpoint',
-    'region',
-    'bucketId',
-    'bucketName',
-    'accessKey',
-    'secretKey',
-    'meta',
-  ];
-  const visibleFields = new Set(storageFormFieldsByType[storageType ?? 'LOCAL']);
+  const visibleFields = new Set(
+    storageType ? (storageTypeFormFieldsByType[storageType] ?? []) : [],
+  );
   storageFormApi.updateSchema(
-    typedFields.map((fieldName) => ({
+    storageTypeFormFields.map((fieldName) => ({
       fieldName,
       hide: !visibleFields.has(fieldName),
     })),
@@ -853,6 +1053,11 @@ async function saveStorage() {
   const { valid } = await storageFormApi.validate();
   if (!valid) return;
   const values = await storageFormApi.getValues();
+  Object.keys(values).forEach((key) => {
+    if (typeof values[key] === 'string') {
+      values[key] = values[key].trim();
+    }
+  });
   storageModalApi.lock();
   try {
     if (storageModalMode.value === 'edit' && editingStorageConfig.value) {
@@ -863,10 +1068,10 @@ async function saveStorage() {
       message.success('存储配置已创建');
     }
     await loadOptions();
-    await resetStorageForm();
+    await loadStorageConfigPage();
     storageModalMode.value = 'create';
     editingStorageConfig.value = undefined;
-    storageModalApi.unlock();
+    storageModalApi.close();
   } catch {
     storageModalApi.unlock();
   }
@@ -875,7 +1080,7 @@ async function saveStorage() {
 async function resetStorageForm() {
   await storageFormApi.resetForm();
   await storageFormApi.setValues({
-    storagePath: '${user.home}/data/uploads',
+    storagePath: '',
     configName: '',
     domain: '',
     endpoint: '',
@@ -884,41 +1089,33 @@ async function resetStorageForm() {
     bucketName: '',
     accessKey: '',
     secretKey: '',
-    meta: '',
     isDefault: 0,
     remark: '',
     status: 1,
-    storageType: 'LOCAL',
+    storageType: undefined,
   });
-  applyStorageTypeSchema('LOCAL');
+  applyStorageTypeSchema();
 }
 
 function openStorageModal() {
+  storageConfigDrawerApi.open();
+}
+
+function openStorageFormModal() {
+  storageModalApi.open();
+}
+
+function createStorageConfigItem() {
   storageModalMode.value = 'create';
   editingStorageConfig.value = undefined;
-  storageModalApi.open();
+  openStorageFormModal();
 }
 
 async function editStorageConfig(config: SystemFileApi.StorageConfig) {
   storageModalMode.value = 'edit';
   const detail = await getStorageConfigDetail(config.id);
   editingStorageConfig.value = detail;
-  await storageFormApi.resetForm();
-  await storageFormApi.setValues(detail);
-  applyStorageTypeSchema(detail.storageType);
-}
-
-function cancelEditStorageConfig() {
-  storageModalMode.value = 'create';
-  editingStorageConfig.value = undefined;
-  resetStorageForm();
-}
-
-async function changeStorageConfigStatus(config: SystemFileApi.StorageConfig) {
-  const nextStatus = config.status === 1 ? 0 : 1;
-  await updateStorageConfigStatus(config.id, nextStatus);
-  message.success(nextStatus === 1 ? '存储配置已启用' : '存储配置已禁用');
-  await loadOptions();
+  openStorageFormModal();
 }
 
 async function markDefaultStorageConfig(config: SystemFileApi.StorageConfig) {
@@ -926,15 +1123,33 @@ async function markDefaultStorageConfig(config: SystemFileApi.StorageConfig) {
   await setDefaultStorageConfig(config.id);
   message.success('默认存储配置已更新');
   await loadOptions();
+  await loadStorageConfigPage();
 }
 
 async function removeStorageConfig(config: SystemFileApi.StorageConfig) {
   await deleteStorageConfig(config.id);
   message.success('存储配置已删除');
   await loadOptions();
+  await loadStorageConfigPage();
 }
 
-onMounted(loadOptions);
+onMounted(() => {
+  loadOptions();
+  window.addEventListener('resize', handleWindowResize);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleWindowResize);
+  if (mediaThumbnailTaskTimer) {
+    clearTimeout(mediaThumbnailTaskTimer);
+  }
+  if (mediaThumbnailFrame) {
+    cancelAnimationFrame(mediaThumbnailFrame);
+  }
+  if (windowResizeTimer) {
+    clearTimeout(windowResizeTimer);
+  }
+});
 </script>
 
 <template>
@@ -1078,16 +1293,50 @@ onMounted(loadOptions);
           </template>
           <template #preview="{ row }">
             <div class="file-preview-cell">
-              <Image
-                v-if="row.mimeType?.startsWith('image/')"
-                :src="row.url"
-                :width="32"
-                :height="32"
-                class="file-preview-image object-cover"
-              />
+              <div
+                v-if="shouldShowMediaThumbnail(row) && isImageFile(row)"
+                class="file-preview-image-frame"
+              >
+                <Image
+                  class="file-preview-image"
+                  :height="32"
+                  :preview="{ src: row.url }"
+                  :src="row.url"
+                  :width="32"
+                />
+              </div>
+              <button
+                v-else-if="shouldShowMediaThumbnail(row) && isVideoFile(row)"
+                class="file-preview-media-button"
+                title="预览"
+                type="button"
+                @click="openMediaPreview(row)"
+              >
+                <video
+                  class="file-preview-media"
+                  muted
+                  playsinline
+                  preload="metadata"
+                  :src="row.url"
+                ></video>
+                <span class="file-preview-video-mask">
+                  <IconifyIcon icon="lucide:play" class="size-5" />
+                </span>
+              </button>
+              <Button
+                v-else-if="isImageFile(row) || isVideoFile(row)"
+                type="link"
+                html-type="button"
+                title="预览"
+                class="file-preview-button"
+                @click="openMediaPreview(row)"
+              >
+                <IconifyIcon :icon="getPreviewIcon(row)" class="size-7" />
+              </Button>
               <Button
                 v-else
                 type="link"
+                html-type="button"
                 :href="row.url"
                 target="_blank"
                 title="预览"
@@ -1106,102 +1355,124 @@ onMounted(loadOptions);
     >
       <FolderForm />
     </FolderModal>
-    <StorageModal class="w-[780px]" title="存储配置">
-      <div class="storage-config-modal">
-        <div class="storage-config-summary">
-          <div>
-            <div class="storage-config-summary-title">当前默认存储</div>
-            <div class="storage-config-summary-value">
-              {{ defaultStorageConfig?.configName ?? '未设置' }}
-            </div>
-          </div>
-          <div class="storage-config-summary-meta">
-            共 {{ storageConfigs.length }} 个配置
-          </div>
-        </div>
+    <StorageConfigDrawer class="w-full max-w-200" title="存储配置">
+      <div class="storage-config-toolbar">
+        <Button
+          v-access:code="SYSTEM_PERMS.fileUpload"
+          type="primary"
+          @click.stop="createStorageConfigItem"
+        >
+          新增配置
+        </Button>
+      </div>
 
-        <div class="storage-config-list">
-          <div
-            v-for="config in storageConfigs"
-            :key="config.id"
-            class="storage-config-item"
-          >
-            <div class="storage-config-main">
-              <div class="storage-config-name-row">
-                <span class="storage-config-name">{{ config.configName }}</span>
-                <Tag v-if="config.isDefault === 1" color="blue">默认</Tag>
-                <Tag :color="config.status === 1 ? 'green' : 'default'">
-                  {{ config.status === 1 ? '启用' : '禁用' }}
-                </Tag>
-              </div>
-              <div class="storage-config-meta">
-                {{ getStorageTypeLabel(config.storageType) }}
-              </div>
+      <div class="storage-config-list-header">
+        <span>配置名称</span>
+        <span>存储信息</span>
+        <span>操作</span>
+      </div>
+      <div class="storage-config-list">
+        <div
+          v-for="config in storageConfigPageItems"
+          :key="config.id"
+          class="storage-config-item"
+          :class="{
+            'storage-config-item-current': config.isDefault === 1,
+            'storage-config-item-disabled': config.status !== 1,
+          }"
+        >
+          <div class="storage-config-main">
+            <div class="storage-config-name-row">
+              <span class="storage-config-name">{{ config.configName }}</span>
+              <Tag v-if="config.isDefault === 1" color="blue">默认</Tag>
+              <Tag :color="config.status === 1 ? 'green' : 'default'">
+                {{ config.status === 1 ? '启用' : '禁用' }}
+              </Tag>
             </div>
-            <div class="storage-config-detail">
-              <span>{{ config.domain || '未配置访问域名' }}</span>
-              <span>{{ config.storagePath || '-' }}</span>
-            </div>
-            <div class="storage-config-actions">
-              <Button
-                v-access:code="SYSTEM_PERMS.fileUpload"
-                size="small"
-                type="link"
-                @click="editStorageConfig(config)"
-              >
-                编辑
-              </Button>
-              <Button
-                v-access:code="SYSTEM_PERMS.fileUpload"
-                size="small"
-                type="link"
-                :disabled="config.isDefault === 1 && config.status === 1"
-                @click="changeStorageConfigStatus(config)"
-              >
-                {{ config.status === 1 ? '禁用' : '启用' }}
-              </Button>
-              <Button
-                v-if="config.isDefault !== 1"
-                v-access:code="SYSTEM_PERMS.fileUpload"
-                size="small"
-                type="link"
-                @click="markDefaultStorageConfig(config)"
-              >
-                设为默认
-              </Button>
-              <Popconfirm
-                title="删除后不可恢复，确认删除该存储配置？"
-                @confirm="removeStorageConfig(config)"
-              >
-                <Button
-                  v-access:code="SYSTEM_PERMS.fileDelete"
-                  danger
-                  size="small"
-                  type="link"
-                  :disabled="config.isDefault === 1"
-                >
-                  删除
-                </Button>
-              </Popconfirm>
+            <div class="storage-config-meta">
+              {{ getStorageTypeLabel(config.storageType) }}
             </div>
           </div>
-          <div v-if="storageConfigs.length === 0" class="storage-config-empty">
-            暂无存储配置
+          <div class="storage-config-detail">
+            <span>访问域名：{{ config.domain || '未配置' }}</span>
+            <span>存储路径：{{ config.storagePath || '-' }}</span>
+          </div>
+          <div class="storage-config-actions">
+            <Button
+              v-access:code="SYSTEM_PERMS.fileUpload"
+              size="small"
+              type="link"
+              @click.stop="editStorageConfig(config)"
+            >
+              编辑
+            </Button>
+            <Button
+              v-if="config.isDefault !== 1"
+              v-access:code="SYSTEM_PERMS.fileUpload"
+              class="storage-config-default-action"
+              size="small"
+              type="link"
+              @click="markDefaultStorageConfig(config)"
+            >
+              设为默认
+            </Button>
+            <Popconfirm
+              v-if="config.isDefault !== 1"
+              title="删除后不可恢复，确认删除该存储配置？"
+              @confirm="removeStorageConfig(config)"
+            >
+              <Button
+                v-access:code="SYSTEM_PERMS.fileDelete"
+                danger
+                size="small"
+                type="link"
+              >
+                删除
+              </Button>
+            </Popconfirm>
           </div>
         </div>
-
-        <div class="storage-config-form-title">
-          {{ storageModalTitle }}
-          <Button
-            v-if="storageModalMode === 'edit'"
-            class="storage-config-cancel-edit"
-            size="small"
-            type="link"
-            @click="cancelEditStorageConfig"
-          >
-            取消编辑
-          </Button>
+        <div v-if="storageConfigPageLoading" class="storage-config-empty">
+          加载中...
         </div>
+        <div
+          v-else-if="storageConfigPageItems.length === 0"
+          class="storage-config-empty"
+        >
+          暂无存储配置
+        </div>
+      </div>
+      <template #footer>
+        <div class="storage-config-pagination">
+          <span class="storage-config-total">共 {{ storageConfigTotal }} 个配置</span>
+          <div class="storage-config-page-actions">
+            <span>
+              第 {{ storageConfigPageNum }} / {{ storageConfigTotalPages }} 页
+            </span>
+            <Button
+              size="small"
+              :disabled="storageConfigPageNum <= 1"
+              @click="changeStorageConfigPage(-1)"
+            >
+              上一页
+            </Button>
+            <Button
+              size="small"
+              :disabled="storageConfigPageNum >= storageConfigTotalPages"
+              @click="changeStorageConfigPage(1)"
+            >
+              下一页
+            </Button>
+          </div>
+        </div>
+      </template>
+    </StorageConfigDrawer>
+    <StorageModal
+      class="w-[760px]"
+      :fullscreen-button="false"
+      :title="storageModalTitle"
+    >
+      <div class="storage-config-form">
         <StorageForm />
       </div>
     </StorageModal>
@@ -1499,39 +1770,16 @@ onMounted(loadOptions);
   background-color: hsl(var(--destructive)) !important;
 }
 
-.storage-config-modal {
-  max-height: 68vh;
-  overflow-y: auto;
-  padding-right: 4px;
-}
-
-.storage-config-summary {
+.storage-config-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 14px;
-  border: 1px solid hsl(var(--border));
-  border-radius: 8px;
-  background-color: hsl(var(--muted) / 35%);
+  justify-content: flex-end;
+  min-height: 32px;
 }
 
-.storage-config-summary-title {
+.storage-config-total {
   color: hsl(var(--muted-foreground));
   font-size: 12px;
-  line-height: 18px;
-}
-
-.storage-config-summary-value {
-  margin-top: 2px;
-  color: hsl(var(--foreground));
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 22px;
-}
-
-.storage-config-summary-meta {
-  color: hsl(var(--muted-foreground));
-  font-size: 13px;
 }
 
 .storage-config-list {
@@ -1542,14 +1790,38 @@ onMounted(loadOptions);
   margin-bottom: 18px;
 }
 
+.storage-config-list-header {
+  display: grid;
+  grid-template-columns: minmax(170px, 0.75fr) minmax(0, 1fr) 168px;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 0 14px;
+  color: hsl(var(--muted-foreground));
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.storage-config-list-header span:last-child {
+  padding-left: 7px;
+}
+
 .storage-config-item {
   display: grid;
-  grid-template-columns: minmax(180px, 0.75fr) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(170px, 0.75fr) minmax(0, 1fr) 168px;
   align-items: center;
   gap: 14px;
   padding: 12px 14px;
   border: 1px solid hsl(var(--border));
   border-radius: 8px;
+}
+
+.storage-config-item-current {
+  border-color: hsl(var(--primary) / 45%);
+  background-color: hsl(var(--primary) / 8%);
+}
+
+.storage-config-item-disabled {
+  opacity: 0.62;
 }
 
 .storage-config-main {
@@ -1599,9 +1871,13 @@ onMounted(loadOptions);
 .storage-config-actions {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 2px;
   white-space: nowrap;
+}
+
+.storage-config-default-action {
+  color: hsl(181 84% 32%);
 }
 
 .storage-config-empty {
@@ -1615,20 +1891,48 @@ onMounted(loadOptions);
   font-size: 13px;
 }
 
-.storage-config-form-title {
+.storage-config-pagination {
   display: flex;
+  width: 100%;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
-  padding-top: 2px;
-  color: hsl(var(--foreground));
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 22px;
+  gap: 8px;
+  color: hsl(var(--muted-foreground));
+  font-size: 12px;
 }
 
-.storage-config-cancel-edit {
-  padding-right: 0;
+.storage-config-page-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.storage-config-form {
+  padding-right: 4px;
+}
+
+.storage-config-form :deep(.storage-config-radio-item) {
+  align-items: center !important;
+}
+
+.storage-config-form :deep(.storage-config-radio-label) {
+  align-items: center;
+  height: 32px;
+  padding-top: 0 !important;
+}
+
+.storage-config-form :deep(.storage-config-radio-label > label) {
+  align-items: center;
+}
+
+.storage-config-form :deep(.storage-config-radio-item > div) {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+:global(.storage-type-select-dropdown) {
+  z-index: 2301;
 }
 
 .file-preview-cell {
@@ -1642,15 +1946,59 @@ onMounted(loadOptions);
   padding: 8px;
 }
 
-.file-preview-cell :deep(.ant-image) {
+.file-preview-media-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: transparent;
+  cursor: pointer;
+}
+
+.file-preview-image-frame {
   width: 32px !important;
   height: 32px !important;
   overflow: hidden;
 }
 
-.file-preview-cell :deep(.ant-image-img) {
+.file-preview-image-frame :deep(.ant-image) {
   width: 32px !important;
   height: 32px !important;
+  overflow: hidden;
+}
+
+.file-preview-image-frame :deep(.ant-image-img) {
+  width: 32px !important;
+  height: 32px !important;
+  object-fit: cover !important;
+}
+
+.file-preview-media {
+  display: block;
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+}
+
+.file-preview-video-mask {
+  position: absolute;
+  inset: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background-color: rgb(0 0 0 / 45%);
+  opacity: 0;
+  transition: opacity 0.16s ease;
+}
+
+.file-preview-media-button:hover .file-preview-video-mask {
+  opacity: 1;
 }
 
 .file-preview-button {

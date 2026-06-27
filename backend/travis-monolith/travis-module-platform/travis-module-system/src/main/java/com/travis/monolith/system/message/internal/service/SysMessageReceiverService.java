@@ -13,7 +13,7 @@ public interface SysMessageReceiverService extends IService<SysMessageReceiver> 
 
     PageResp<SysUserMessagePageResp> page(Long userId, SysUserMessagePageReq req);
 
-    long countUnread(Long userId);
+    Long countUnread(Long userId);
 
     void markRead(Long userId, Long id);
 

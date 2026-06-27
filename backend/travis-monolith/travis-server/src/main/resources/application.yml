@@ -10,10 +10,11 @@ spring:
     exclude:
       - org.redisson.spring.starter.RedissonAutoConfigurationV4  # 排除 Redisson 的 RedissonConnectionFactory 自动配置，改用 Lettuce 作为 RedisTemplate 连接工厂
   cache:
+    #  config:
+    #    import:
+    #      - classpath:travis-xx.yml
     type: redis
-  #  config:
-  #    import:
-  #      - classpath:travis-xx.yml
+
   data:
     redis:
       host: ${REDIS_HOST:127.0.0.1}

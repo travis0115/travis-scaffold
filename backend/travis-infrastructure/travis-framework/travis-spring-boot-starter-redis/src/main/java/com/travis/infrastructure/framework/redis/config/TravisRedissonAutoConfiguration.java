@@ -1,6 +1,13 @@
 package com.travis.infrastructure.framework.redis.config;
 
 import com.travis.infrastructure.framework.redis.core.aop.DistributedLockAspect;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.util.ArrayList;
+import java.util.List;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.*;
@@ -11,6 +18,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration;
 import org.springframework.boot.data.redis.autoconfigure.DataRedisConnectionDetails;
 import org.springframework.boot.data.redis.autoconfigure.DataRedisProperties;
 import org.springframework.boot.ssl.SslBundle;
@@ -19,21 +27,13 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.Resource;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Redisson 配置类
  *
  * @author travis
  */
-@AutoConfiguration
-@EnableConfigurationProperties(RedissonProperties.class)
+@AutoConfiguration(before = DataRedisAutoConfiguration.class)
+@EnableConfigurationProperties({RedissonProperties.class, DataRedisProperties.class})
 public class TravisRedissonAutoConfiguration {
 
     public static final String[] EMPTY = {};
@@ -169,14 +169,15 @@ public class TravisRedissonAutoConfiguration {
 
         if (connectionDetails != null && connectionDetails.getCluster() != null) {
             nodes = convertNodes(prefix, connectionDetails.getCluster().getNodes());
-        } else {
+        } else if (redisProperties.getCluster() != null) {
             nodes = convert(prefix, redisProperties.getCluster().getNodes());
+        } else {
+            nodes = EMPTY;
         }
 
-        Config config = new Config().setUsername(username).setPassword(password);
+        var config = new Config().setUsername(username).setPassword(password);
 
-        ClusterServersConfig c =
-                config.useClusterServers().addNodeAddress(nodes).setClientName(clientName);
+        var c = config.useClusterServers().addNodeAddress(nodes).setClientName(clientName);
 
         setTimeouts(c);
         initSSL(config);
@@ -213,7 +214,7 @@ public class TravisRedissonAutoConfiguration {
         return config;
     }
 
-    private void setTimeouts(BaseConfig c) {
+    private void setTimeouts(BaseConfig<?> c) {
         if (redisProperties.getConnectTimeout() != null) {
             c.setConnectTimeout((int) redisProperties.getConnectTimeout().toMillis());
         }

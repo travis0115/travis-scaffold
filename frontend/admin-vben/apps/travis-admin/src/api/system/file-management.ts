@@ -48,6 +48,11 @@ export namespace SystemFileApi {
     storageType: string;
   }
 
+  export interface StorageTypeOption {
+    label: string;
+    value: string;
+  }
+
   export interface UploadPolicy {
     allowedExtensions: string[];
     maxFileSizeBytes: number;
@@ -73,11 +78,20 @@ const updateFileFolder = (
 const deleteFileFolder = (id: number | string) =>
   requestClient.delete(`/system/file/folder/${id}`);
 const getStorageConfigs = () =>
-  requestClient.get<SystemFileApi.StorageConfig[]>('/system/file-storage/list');
+  requestClient.get<SystemFileApi.StorageConfig[]>('/system/file/storage/list');
+const getStorageTypes = () =>
+  requestClient.get<SystemFileApi.StorageTypeOption[]>(
+    '/system/file/storage/types',
+  );
+const getStorageConfigPage = (params: Recordable<any>) =>
+  requestClient.get<PageResp<SystemFileApi.StorageConfig>>(
+    '/system/file/storage/page',
+    { params },
+  );
 const getStorageConfigDetail = (id: number | string) =>
-  requestClient.get<SystemFileApi.StorageConfig>(`/system/file-storage/${id}`);
+  requestClient.get<SystemFileApi.StorageConfig>(`/system/file/storage/${id}`);
 const createStorageConfig = (data: Partial<SystemFileApi.StorageConfig>) =>
-  requestClient.post('/system/file-storage', data);
+  requestClient.post('/system/file/storage', data);
 const updateStorageConfig = (
   id: number | string,
   data: Partial<SystemFileApi.StorageConfig>,
@@ -100,7 +114,9 @@ export {
   getFileFolders,
   getFilePage,
   getStorageConfigDetail,
+  getStorageConfigPage,
   getStorageConfigs,
+  getStorageTypes,
   getUploadPolicy,
   setDefaultStorageConfig,
   updateFileFolder,

@@ -35,6 +35,11 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'Textarea',
       fieldName: 'remark',
       label: $t('system.role.remark'),
+      rules: z
+        .string()
+        .max(255, '备注长度不能超过255个字符')
+        .optional()
+        .or(z.literal('')),
     },
     {
       component: 'RadioGroup',

@@ -45,6 +45,12 @@ export function useSchema(
       component: 'Input',
       fieldName: 'leader',
       label: $t('system.dept.leader'),
+      rules: z
+        .string()
+        .min(2, '负责人长度为2-20个字符')
+        .max(20, '负责人长度为2-20个字符')
+        .optional()
+        .or(z.literal('')),
     },
     {
       component: 'Input',
@@ -58,9 +64,10 @@ export function useSchema(
     },
     {
       component: 'InputNumber',
+      componentProps: { max: 9999, min: 0 },
       fieldName: 'sort',
       label: $t('system.dept.sort'),
-      defaultValue: 0,
+      defaultValue: 1,
     },
     {
       component: 'RadioGroup',

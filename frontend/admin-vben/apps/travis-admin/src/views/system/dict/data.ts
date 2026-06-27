@@ -19,7 +19,8 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: z
         .string()
         .min(1, $t('ui.formRules.required', [$t('system.dict.dictName')]))
-        .max(50, $t('ui.formRules.maxLength', [$t('system.dict.dictName'), 50])),
+        .min(2, '字典名称长度为2-20个字符')
+        .max(20, '字典名称长度为2-20个字符'),
     },
     {
       component: 'Input',
@@ -28,13 +29,18 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: z
         .string()
         .min(1, $t('ui.formRules.required', [$t('system.dict.dictCode')]))
-        .max(50, $t('ui.formRules.maxLength', [$t('system.dict.dictCode'), 50]))
+        .max(100, '字典编码长度不能超过100个字符')
         .regex(/^[a-zA-Z][a-zA-Z0-9_]+$/, '字典编码必须以字母开头，只能包含字母、数字和下划线'),
     },
     {
       component: 'Textarea',
       fieldName: 'remark',
       label: $t('system.dict.remark'),
+      rules: z
+        .string()
+        .max(255, '备注长度不能超过255个字符')
+        .optional()
+        .or(z.literal('')),
     },
     {
       component: 'RadioGroup',

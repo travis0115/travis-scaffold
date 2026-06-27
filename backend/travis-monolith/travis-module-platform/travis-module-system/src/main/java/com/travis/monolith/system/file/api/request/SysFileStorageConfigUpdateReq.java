@@ -8,6 +8,7 @@ import com.travis.monolith.system.file.api.enums.FileStorageType;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -25,7 +26,9 @@ public class SysFileStorageConfigUpdateReq {
     @Size(max = 500, message = "存储路径长度不能超过500")
     private String storagePath;
 
+    @NotBlank(message = "域名不能为空")
     @Size(max = 500, message = "域名长度不能超过500")
+    @Pattern(regexp = "^https?://.*", message = "域名必须以http://或https://开头")
     private String domain;
 
     @Size(max = 500, message = "endpoint长度不能超过500")

@@ -9,6 +9,9 @@ import { messageChannelOptions } from '#/views/system/message/data';
 const requiredString = (message: string) =>
   z.string({ required_error: message }).min(1, message);
 
+const optionalString = (max: number, message: string) =>
+  z.string().max(max, message).optional().or(z.literal(''));
+
 const statusOptions = [
   { label: '禁用', value: 0 },
   { label: '启用', value: 1 },
@@ -32,34 +35,39 @@ export const useFormSchema = (): VbenFormSchema[] => [
     componentProps: { options: messageChannelOptions },
     fieldName: 'channel',
     label: '推送通道',
-    rules: requiredString('推送通道不能为空'),
+    rules: requiredString('推送通道不能为空').max(32, '推送通道长度不能超过32个字符'),
   },
   {
     component: 'Input',
     fieldName: 'platformTemplateId',
     label: '平台模板ID',
+    rules: optionalString(128, '平台模板ID长度不能超过128个字符'),
   },
   {
     component: 'Textarea',
     componentProps: { rows: 4 },
     fieldName: 'contentSchema',
     label: '字段结构',
+    rules: optionalString(4000, '字段结构长度不能超过4000个字符'),
   },
   {
     component: 'Textarea',
     componentProps: { rows: 5 },
     fieldName: 'content',
     label: '模板内容',
+    rules: optionalString(5000, '模板内容长度不能超过5000个字符'),
   },
   {
     component: 'Input',
     fieldName: 'pagePath',
     label: '页面路径',
+    rules: optionalString(500, '页面路径长度不能超过500个字符'),
   },
   {
     component: 'Input',
     fieldName: 'jumpUrl',
     label: '跳转链接',
+    rules: optionalString(500, '跳转链接长度不能超过500个字符'),
   },
   {
     component: 'RadioGroup',
@@ -71,9 +79,13 @@ export const useFormSchema = (): VbenFormSchema[] => [
     defaultValue: 1,
     fieldName: 'status',
     label: '状态',
-    rules: z.number({ invalid_type_error: '状态不能为空', required_error: '状态不能为空' }),
   },
-  { component: 'Textarea', fieldName: 'remark', label: '备注' },
+  {
+    component: 'Textarea',
+    fieldName: 'remark',
+    label: '备注',
+    rules: optionalString(255, '备注长度不能超过255个字符'),
+  },
 ];
 
 export const useGridFormSchema = (): VbenFormSchema[] => [

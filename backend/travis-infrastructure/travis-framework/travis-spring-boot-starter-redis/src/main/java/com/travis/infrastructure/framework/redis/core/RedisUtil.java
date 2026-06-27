@@ -1,16 +1,16 @@
 package com.travis.infrastructure.framework.redis.core;
 
+import java.util.Arrays;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.redis.cache.CacheKeyPrefix;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.CollectionUtils;
-
-import java.util.Arrays;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 /**
  * 基于 RedisTemplate 的 Redis 工具类，提供静态方法封装常用操作。
@@ -40,7 +40,7 @@ public class RedisUtil {
      */
     public static void setExpire(String key, long time) {
         try {
-            redisTemplate.expire(key, time, TimeUnit.MILLISECONDS);
+            redisTemplate.expire(key, Expiration.from(time, TimeUnit.MILLISECONDS));
         } catch (Exception e) {
             log.warn("redis setExpire failed, key={}", key, e);
             throw new IllegalStateException("redis setExpire failed: " + key, e);

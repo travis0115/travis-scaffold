@@ -1,9 +1,9 @@
 <included>
     <!-- 文件日志 -->
     <appender name="APPENDER_FILE_EVENT" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_FILE_PATH}/event/${LOG_FILE_NAME}-access.log</file>
+        <file>${LOG_FILE_PATH}/event/${LOG_FILE_NAME}-event.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_FILE_PATH}/event/${LOG_FILE_NAME}-access.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>${LOG_FILE_PATH}/event/${LOG_FILE_NAME}-event.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <maxHistory>${LOG_FILE_MAX_HISTORY}</maxHistory> <!-- 日志文件的保留天数 -->
             <maxFileSize>${LOG_FILE_MAX_SIZE}</maxFileSize> <!-- 日志文件，到达多少容量，进行滚动 -->
             <totalSizeCap>${LOG_FILE_TOTAL_SIZE_CAP}</totalSizeCap>    <!-- 日志文件的总大小上限，超出会自动删除旧文件 -->

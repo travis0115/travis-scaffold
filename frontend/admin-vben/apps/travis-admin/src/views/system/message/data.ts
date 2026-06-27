@@ -13,6 +13,9 @@ const requiredIdList = (message: string) =>
     .array(z.number(), { invalid_type_error: message, required_error: message })
     .min(1, message);
 
+const optionalString = (max: number, message: string) =>
+  z.string().max(max, message).optional().or(z.literal(''));
+
 function hasRichTextContent(value?: string) {
   if (!value) return false;
   return (
@@ -219,25 +222,28 @@ export const useFormSchema = (): VbenFormSchema[] => [
     dependencies: { show: (values) => values.channels?.includes('APP_PUSH'), triggerFields: ['channels'] },
     fieldName: 'appPushTitle',
     label: 'App主标题',
-    rules: z.string().max(255, 'App主标题长度不能超过255个字符').optional().or(z.literal('')),
+    rules: optionalString(255, 'App主标题长度不能超过255个字符'),
   },
   {
     component: 'Input',
     dependencies: { show: (values) => values.channels?.includes('APP_PUSH'), triggerFields: ['channels'] },
     fieldName: 'appPushSubtitle',
     label: 'App副标题',
+    rules: optionalString(255, 'App副标题长度不能超过255个字符'),
   },
   {
     component: 'Input',
     dependencies: { show: (values) => values.channels?.includes('APP_PUSH'), triggerFields: ['channels'] },
     fieldName: 'appPushImageUrl',
     label: 'App大图URL',
+    rules: optionalString(500, 'App大图URL长度不能超过500个字符'),
   },
   {
     component: 'Input',
     dependencies: { show: (values) => values.channels?.includes('APP_PUSH'), triggerFields: ['channels'] },
     fieldName: 'appPushJumpUrl',
     label: 'App跳转链接',
+    rules: optionalString(500, 'App跳转链接长度不能超过500个字符'),
   },
   {
     component: 'Textarea',
@@ -245,6 +251,7 @@ export const useFormSchema = (): VbenFormSchema[] => [
     dependencies: { show: (values) => values.channels?.includes('SMS'), triggerFields: ['channels'] },
     fieldName: 'smsContent',
     label: '短信内容',
+    rules: optionalString(5000, '短信内容长度不能超过5000个字符'),
   },
   {
     component: 'Input',
@@ -254,6 +261,7 @@ export const useFormSchema = (): VbenFormSchema[] => [
     },
     fieldName: 'miniProgramTemplateParams',
     label: '小程序参数',
+    rules: optionalString(4000, '模板参数长度不能超过4000个字符'),
   },
   { component: 'Textarea', fieldName: 'remark', label: '备注' },
 ];

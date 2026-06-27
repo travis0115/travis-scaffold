@@ -114,7 +114,8 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
         if (fileId == null) {
             return null;
         }
-        var file = getByIdOrThrow(fileId);
+        var file = getById(fileId);
+        if (file == null) return null;
         var config =
                 file.getStorageConfigId() == null
                         ? sysFileStorageConfigService.getDefault()

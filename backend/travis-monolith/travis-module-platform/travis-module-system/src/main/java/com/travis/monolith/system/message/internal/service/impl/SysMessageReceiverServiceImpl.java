@@ -20,16 +20,17 @@ import com.travis.monolith.system.message.internal.mapper.SysMessageReceiverMapp
 import com.travis.monolith.system.message.internal.service.SysMessageReceiverService;
 import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.api.SysUserApi;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @CacheConfig(cacheNames = "system:message-inbox")
@@ -103,7 +104,7 @@ public class SysMessageReceiverServiceImpl
 
     @Override
     @Cacheable(key = "'unread:'+#userId")
-    public long countUnread(Long userId) {
+    public Long countUnread(Long userId) {
         var context = audienceContext(userId);
         return messageMapper.countUnreadInbox(
                 userId, RECEIVER_TYPE_ADMIN, context.roleIds(), context.deptId());

@@ -120,7 +120,7 @@ public interface SysMessageMapper extends BaseMapperX<SysMessage> {
               )
             </script>
             """)
-    long countUnreadInbox(
+    Long countUnreadInbox(
             @Param("userId") Long userId,
             @Param("receiverType") String receiverType,
             @Param("roleIds") List<Long> roleIds,

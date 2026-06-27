@@ -17,9 +17,6 @@ function hasRichTextContent(value?: string) {
   );
 }
 
-const requiredNumber = (message: string) =>
-  z.number({ invalid_type_error: message, required_error: message });
-
 export const useFormSchema = (): VbenFormSchema[] => [
   {
     component: 'Input',
@@ -51,24 +48,6 @@ export const useFormSchema = (): VbenFormSchema[] => [
       .refine(hasRichTextContent, '公告内容不能为空'),
   },
   {
-    component: 'RadioGroup',
-    componentProps: {
-      buttonStyle: 'solid',
-      optionType: 'button',
-      options: [
-        { label: '草稿', value: 0 },
-        { label: '发布', value: 1 },
-      ],
-    },
-    defaultValue: 0,
-    fieldName: 'status',
-    label: '状态',
-    rules: requiredNumber('公告状态不能为空').refine(
-      (value) => [0, 1].includes(value),
-      '状态值错误',
-    ),
-  },
-  {
     component: 'DatePicker',
     componentProps: { showTime: true, valueFormat: 'YYYY-MM-DD HH:mm:ss' },
     fieldName: 'publishTime',
@@ -76,6 +55,13 @@ export const useFormSchema = (): VbenFormSchema[] => [
     rules: z
       .string({ required_error: '发布时间不能为空' })
       .min(1, '发布时间不能为空'),
+  },
+  {
+    component: 'InputNumber',
+    componentProps: { max: 9999, min: 0 },
+    defaultValue: 1,
+    fieldName: 'sort',
+    label: '排序',
   },
   {
     component: 'RadioGroup',
@@ -90,19 +76,20 @@ export const useFormSchema = (): VbenFormSchema[] => [
     defaultValue: 0,
     fieldName: 'isPinned',
     label: '置顶',
-    rules: requiredNumber('置顶值不允许为空').refine(
-      (value) => [0, 1].includes(value),
-      '置顶值错误',
-    ),
   },
   {
-    component: 'InputNumber',
+    component: 'RadioGroup',
+    componentProps: {
+      buttonStyle: 'solid',
+      optionType: 'button',
+      options: [
+        { label: '草稿', value: 0 },
+        { label: '发布', value: 1 },
+      ],
+    },
     defaultValue: 0,
-    fieldName: 'sort',
-    label: '排序',
-    rules: requiredNumber('排序号不能为空')
-      .min(0, '排序号不能小于0')
-      .max(9999, '排序号不能大于9999'),
+    fieldName: 'status',
+    label: '状态',
   },
   {
     component: 'Textarea',

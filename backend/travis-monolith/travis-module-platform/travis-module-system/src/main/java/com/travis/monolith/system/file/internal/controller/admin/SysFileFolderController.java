@@ -12,10 +12,9 @@ import com.travis.monolith.system.file.api.request.SysFileFolderUpdateReq;
 import com.travis.monolith.system.file.internal.entity.SysFileFolder;
 import com.travis.monolith.system.file.internal.service.SysFileFolderService;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/system/file/folder")

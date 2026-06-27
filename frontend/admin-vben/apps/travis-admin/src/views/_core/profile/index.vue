@@ -58,7 +58,7 @@ const avatarUrl = ref(
 
 const [AvatarModal, avatarModalApi] = useVbenModal({
   centered: true,
-  class: 'w-full max-w-160',
+  class: 'w-[640px]',
   closeOnClickModal: false,
   closeOnPressEscape: false,
   confirmText: '确定',

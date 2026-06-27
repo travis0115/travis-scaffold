@@ -96,7 +96,10 @@ const schema: VbenFormSchema[] = [
     component: 'Input',
     fieldName: 'menuName',
     label: $t('system.menu.menuName'),
-    rules: 'required',
+    rules: z
+      .string()
+      .min(1, $t('ui.formRules.required', [$t('system.menu.menuName')]))
+      .max(50, '菜单名称长度不能超过50个字符'),
   },
   {
     component: 'ApiTreeSelect',
@@ -145,8 +148,8 @@ const schema: VbenFormSchema[] = [
             .string()
             .min(1, $t('ui.formRules.required', [$t('system.menu.path')]))
             .max(
-              100,
-              $t('ui.formRules.maxLength', [$t('system.menu.path'), 100]),
+              255,
+              $t('ui.formRules.maxLength', [$t('system.menu.path'), 255]),
             )
             .refine(
               (value: string) => value.startsWith('/'),
@@ -185,7 +188,10 @@ const schema: VbenFormSchema[] = [
     dependencies: {
       rules: (values) => {
         return values.menuType === 1 && values.isExternal !== 1
-          ? 'required'
+          ? z
+            .string()
+            .min(1, $t('ui.formRules.required', [$t('system.menu.component')]))
+            .max(255, '组件路径长度不能超过255个字符')
           : null;
       },
       show: (values) => values.menuType === 1,
@@ -199,7 +205,12 @@ const schema: VbenFormSchema[] = [
     component: 'Input',
     dependencies: {
       rules: (values) => {
-        return values.menuType === 2 ? 'required' : null;
+        return values.menuType === 2
+          ? z
+            .string()
+            .min(1, $t('ui.formRules.required', [$t('system.menu.perms')]))
+            .max(255, '权限标识长度不能超过255个字符')
+          : null;
       },
       triggerFields: ['menuType'],
     },
@@ -217,6 +228,7 @@ const schema: VbenFormSchema[] = [
     },
     fieldName: 'icon',
     label: $t('system.menu.icon'),
+    rules: z.string().max(100, '图标长度不能超过100个字符').optional(),
   },
   {
     component: 'IconPicker',
@@ -349,7 +361,8 @@ const schema: VbenFormSchema[] = [
   },
   {
     component: 'InputNumber',
-    defaultValue: 0,
+    componentProps: { max: 9999, min: 0 },
+    defaultValue: 1,
     fieldName: 'sort',
     label: $t('system.menu.sort'),
   },

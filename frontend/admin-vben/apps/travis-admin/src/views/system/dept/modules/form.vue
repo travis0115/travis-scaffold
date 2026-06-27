@@ -26,7 +26,6 @@ const getTitle = computed(() => {
 });
 
 const [Form, formApi] = useVbenForm({
-  layout: 'vertical',
   schema: useSchema(getParentDeptTree),
   showDefaultActions: false,
 });

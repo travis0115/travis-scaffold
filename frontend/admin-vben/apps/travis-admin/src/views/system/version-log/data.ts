@@ -45,8 +45,8 @@ export function useFormSchema(): VbenFormSchema[] {
         .string()
         .min(1, $t('ui.formRules.required', [$t('system.version.titleField')]))
         .max(
-          200,
-          $t('ui.formRules.maxLength', [$t('system.version.titleField'), 200]),
+          255,
+          $t('ui.formRules.maxLength', [$t('system.version.titleField'), 255]),
         ),
     },
     {
@@ -55,6 +55,7 @@ export function useFormSchema(): VbenFormSchema[] {
       label: $t('system.version.content'),
       rules: z
         .string()
+        .max(5000, '版本内容长度不能超过5000个字符')
         .refine(
           hasRichTextContent,
           $t('ui.formRules.required', [$t('system.version.content')]),
@@ -75,6 +76,9 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'DatePicker',
       fieldName: 'publishTime',
       label: $t('system.version.publishTime'),
+      rules: z
+        .string({ required_error: '发布时间不能为空' })
+        .min(1, '发布时间不能为空'),
       componentProps: {
         showTime: true,
         valueFormat: 'YYYY-MM-DD HH:mm:ss',

@@ -120,6 +120,10 @@ const currentRules = computed(() => {
   return dynamicRules.value || rules;
 });
 
+const shouldTopAlign = computed(() => {
+  return !isVertical.value && (description || component === 'RichEditor');
+});
+
 const visible = computed(() => {
   return !hide && isIf.value && isShow.value;
 });
@@ -345,7 +349,8 @@ onUnmounted(() => {
         'form-valid-error': isInValid,
         'form-is-required': shouldRequired,
         'flex-col': isVertical,
-        'flex-row items-start': !isVertical,
+        'flex-row items-center': !isVertical && !shouldTopAlign,
+        'flex-row items-start': shouldTopAlign,
         'pb-4': !compact,
         'pb-2': compact,
       }"
@@ -360,7 +365,7 @@ onUnmounted(() => {
             {
               'mr-2 shrink-0 justify-end': !isVertical,
               'mb-1 flex-row': isVertical,
-              'pt-1': !isVertical,
+              'pt-1': shouldTopAlign,
               'self-start': shouldCollapsible && !isVertical,
             },
             labelClass,

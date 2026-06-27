@@ -2,6 +2,7 @@ import type { VbenFormSchema } from '#/adapter/form';
 import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { SystemConfigApi } from '#/api';
 
+import { z } from '#/adapter/form';
 import { $t } from '#/locales';
 import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
 
@@ -11,16 +12,30 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'Input',
       fieldName: 'configKey',
       label: $t('system.config.configKey'),
+      rules: z
+        .string()
+        .min(1, '配置键不能为空')
+        .max(255, '配置键长度不能超过255个字符'),
     },
     {
       component: 'Textarea',
       fieldName: 'configValue',
       label: $t('system.config.configValue'),
+      rules: z
+        .string()
+        .max(1000, '配置值长度不能超过1000个字符')
+        .optional()
+        .or(z.literal('')),
     },
     {
       component: 'Textarea',
       fieldName: 'remark',
       label: $t('system.config.remark'),
+      rules: z
+        .string()
+        .max(255, '备注长度不能超过255个字符')
+        .optional()
+        .or(z.literal('')),
     },
   ];
 }

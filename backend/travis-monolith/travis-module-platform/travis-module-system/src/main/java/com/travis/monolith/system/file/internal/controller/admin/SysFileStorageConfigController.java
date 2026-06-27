@@ -6,18 +6,23 @@ import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
 import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
+import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
 import com.travis.monolith.system.common.api.constant.SystemPermission;
 import com.travis.monolith.system.common.api.enums.Status;
+import com.travis.monolith.system.file.api.enums.FileStorageType;
 import com.travis.monolith.system.file.api.request.SysFileStorageConfigCreateReq;
+import com.travis.monolith.system.file.api.request.SysFileStorageConfigPageReq;
 import com.travis.monolith.system.file.api.request.SysFileStorageConfigUpdateReq;
 import com.travis.monolith.system.file.api.response.SysFileStorageConfigResp;
+import com.travis.monolith.system.file.api.response.SysFileStorageTypeResp;
 import com.travis.monolith.system.file.internal.service.SysFileStorageConfigService;
+import com.travis.monolith.system.file.internal.strategy.FileStorageStrategy;
 import jakarta.validation.Valid;
+import java.util.Arrays;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/system/file/storage")
@@ -25,6 +30,14 @@ import java.util.List;
 @OperationLogModule("文件存储配置")
 public class SysFileStorageConfigController {
     private final SysFileStorageConfigService storageConfigService;
+    private final List<FileStorageStrategy> storageStrategies;
+
+    @GetMapping("/page")
+    @SaCheckPermission(value = SystemPermission.FILE_QUERY, type = LoginType.ADMIN)
+    public ApiResponse<PageResp<SysFileStorageConfigResp>> page(
+            @Valid SysFileStorageConfigPageReq req) {
+        return ApiResponse.success(storageConfigService.page(req));
+    }
 
     @GetMapping("/list")
     @SaCheckPermission(value = SystemPermission.FILE_QUERY, type = LoginType.ADMIN)
@@ -32,7 +45,18 @@ public class SysFileStorageConfigController {
         return ApiResponse.success(storageConfigService.listAll());
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/types")
+    @SaCheckPermission(value = SystemPermission.FILE_QUERY, type = LoginType.ADMIN)
+    public ApiResponse<List<SysFileStorageTypeResp>> listStorageTypes() {
+        return ApiResponse.success(
+                storageStrategies.stream()
+                        .map(FileStorageStrategy::getStorageType)
+                        .distinct()
+                        .map(value -> new SysFileStorageTypeResp(getStorageTypeLabel(value), value))
+                        .toList());
+    }
+
+    @GetMapping("/{id:\\d+}")
     @SaCheckPermission(value = SystemPermission.FILE_QUERY, type = LoginType.ADMIN)
     public ApiResponse<SysFileStorageConfigResp> get(@PathVariable Long id) {
         return ApiResponse.success(storageConfigService.get(id));
@@ -47,7 +71,7 @@ public class SysFileStorageConfigController {
         return ApiResponse.success();
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{id:\\d+}")
     @SaCheckPermission(value = SystemPermission.FILE_UPLOAD, type = LoginType.ADMIN)
     @NoRepeatSubmit
     @OperationLog(action = "更新文件存储配置")
@@ -57,7 +81,7 @@ public class SysFileStorageConfigController {
         return ApiResponse.success();
     }
 
-    @PutMapping("/{id}/status")
+    @PutMapping("/{id:\\d+}/status")
     @SaCheckPermission(value = SystemPermission.FILE_UPLOAD, type = LoginType.ADMIN)
     @NoRepeatSubmit
     @OperationLog(action = "修改文件存储配置状态")
@@ -68,7 +92,7 @@ public class SysFileStorageConfigController {
         return ApiResponse.success();
     }
 
-    @PutMapping("/{id}/default")
+    @PutMapping("/{id:\\d+}/default")
     @SaCheckPermission(value = SystemPermission.FILE_UPLOAD, type = LoginType.ADMIN)
     @NoRepeatSubmit
     @OperationLog(action = "设置默认文件存储配置")
@@ -77,12 +101,20 @@ public class SysFileStorageConfigController {
         return ApiResponse.success();
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id:\\d+}")
     @SaCheckPermission(value = SystemPermission.FILE_DELETE, type = LoginType.ADMIN)
     @NoRepeatSubmit
     @OperationLog(action = "删除文件存储配置")
     public ApiResponse<Void> deleteById(@PathVariable Long id) {
         storageConfigService.deleteById(id);
         return ApiResponse.success();
+    }
+
+    private String getStorageTypeLabel(String value) {
+        return Arrays.stream(FileStorageType.values())
+                .filter(item -> item.getValue().equals(value))
+                .findFirst()
+                .map(FileStorageType::getLabel)
+                .orElse(value);
     }
 }

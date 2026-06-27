@@ -1,12 +1,12 @@
 package com.travis.monolith.system.file.internal.entity;
 
 import com.travis.infrastructure.framework.mybatis.core.BaseEntity;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
+@AllArgsConstructor
+@NoArgsConstructor
 @Builder
 public class SysFile extends BaseEntity {
     private Long folderId;

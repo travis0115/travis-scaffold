@@ -65,7 +65,7 @@ const formSchema = computed((): VbenFormSchema[] => {
       componentProps: {
         size: 'large',
       },
-      rules: z.string().email('请输入有效的邮箱地址').optional().or(z.literal('')),
+      rules: z.string().email('请输入有效的邮箱地址').or(z.literal('')).optional(),
     },
     {
       fieldName: 'mobile',
@@ -74,7 +74,10 @@ const formSchema = computed((): VbenFormSchema[] => {
       componentProps: {
         size: 'large',
       },
-      rules: z.string().regex(/^$|^1[3-9]\d{9}$/, '请输入有效的手机号').optional().or(z.literal('')),
+      rules: z
+        .string()
+        .regex(/^$|^1[3-9]\d{9}$/, '请输入有效的手机号')
+        .optional(),
     },
   ];
 });

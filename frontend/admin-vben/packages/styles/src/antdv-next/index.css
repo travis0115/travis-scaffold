@@ -24,6 +24,10 @@
   }
 }
 
+.ant-btn-sm {
+  font-size: 12px;
+}
+
 .ant-tag {
   > svg {
     display: inline-block;

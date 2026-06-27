@@ -34,9 +34,9 @@ public class SysFileController {
     private final FileUploadProperties fileUploadProperties;
     private final MultipartProperties multipartProperties;
 
+    /** 获取文件上传的策略，包括允许的文件类型和最大文件大小 */
     @GetMapping("/upload-policy")
     @SaCheckPermission(value = SystemPermission.FILE_QUERY, type = LoginType.ADMIN)
-    @NoRepeatSubmit
     public ApiResponse<FileUploadPolicyResp> uploadPolicy() {
         return ApiResponse.success(
                 FileUploadPolicyResp.builder()

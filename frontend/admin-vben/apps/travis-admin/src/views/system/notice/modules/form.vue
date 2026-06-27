@@ -63,7 +63,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
 </script>
 
 <template>
-  <Drawer class="w-full max-w-[1120px]" :title="getTitle">
+  <Drawer class="w-full max-w-220" :title="getTitle">
     <Form />
   </Drawer>
 </template>
