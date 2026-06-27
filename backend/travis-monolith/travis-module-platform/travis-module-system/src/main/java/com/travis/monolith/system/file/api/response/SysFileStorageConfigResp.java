@@ -1,12 +1,12 @@
-package com.travis.monolith.system.file.internal.entity;
+package com.travis.monolith.system.file.api.response;
 
-import com.travis.infrastructure.framework.mybatis.core.BaseEntity;
+import java.time.LocalDateTime;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
+/** 文件存储配置响应 */
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class SysFileStorageConfig extends BaseEntity {
+public class SysFileStorageConfigResp {
+    private Long id;
     private String configName;
     private String storageType;
     private String storagePath;
@@ -21,4 +21,5 @@ public class SysFileStorageConfig extends BaseEntity {
     private Integer isDefault;
     private Integer status;
     private String remark;
+    private LocalDateTime createTime;
 }

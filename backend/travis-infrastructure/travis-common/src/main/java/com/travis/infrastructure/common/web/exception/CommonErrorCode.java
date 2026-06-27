@@ -43,7 +43,6 @@ public enum CommonErrorCode implements ErrorCode {
     ARITHMETIC_EXCEPTION("1502", "算数异常"),
     ILLEGALSTATE_EXCEPTION("1503", "状态异常"),
     FILE_NOT_FOUND("1504", "文件或目录不存在"),
-    FILE_UPLOAD_FAILED("1505", "文件上传失败"),
 
     /**
      * ──────────────────────────────────────────────────────────────── *

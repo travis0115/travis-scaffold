@@ -26,14 +26,6 @@ public interface SysFileService extends IService<SysFile> {
     PageResp<SysFileResp> page(SysFilePageReq req);
 
     /**
-     * 根据相对路径拼接完整访问URL
-     *
-     * @param path 文件相对路径
-     * @return 完整访问URL，如 http://127.0.0.1/files/2026-06-02/abc.jpg
-     */
-    String getFileUrl(String path);
-
-    /**
      * 根据文件ID拼接完整访问URL
      *
      * @param fileId 文件ID

@@ -1,4 +1,4 @@
-package com.travis.monolith.system.common.api.enums;
+package com.travis.monolith.system.menu.api.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

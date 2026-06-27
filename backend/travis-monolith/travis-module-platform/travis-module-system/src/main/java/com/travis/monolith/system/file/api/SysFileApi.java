@@ -8,14 +8,6 @@ package com.travis.monolith.system.file.api;
 public interface SysFileApi {
 
     /**
-     * 根据相对路径拼接完整访问URL
-     *
-     * @param path 文件相对路径
-     * @return 完整访问URL
-     */
-    String getFileUrl(String path);
-
-    /**
      * 根据文件ID拼接完整访问URL
      *
      * @param fileId 文件ID

@@ -3,15 +3,15 @@ package com.travis.monolith.system.common.api.enums;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-/** 是否允许修改 */
+/** 是否默认 */
 @Getter
 @AllArgsConstructor
-public enum Modifiable {
-    /** 禁止修改 */
-    NO(0, "禁止修改"),
+public enum IsDefault {
+    /** 非默认 */
+    NO(0, "非默认"),
 
-    /** 允许修改 */
-    YES(1, "允许修改");
+    /** 默认 */
+    YES(1, "默认");
 
     private final Integer value;
 

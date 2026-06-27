@@ -8,10 +8,10 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum IsPinned {
     /** 未置顶 */
-    UNPINNED(0, "未置顶"),
+    NO(0, "未置顶"),
 
     /** 置顶 */
-    PINNED(1, "置顶");
+    YES(1, "置顶");
 
     private final Integer value;
 

@@ -364,14 +364,14 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
     }
 
     private void checkModifiable(SysRole role) {
-        if (Modifiable.IMMUTABLE.getValue().equals(role.getModifiable())) {
+        if (Modifiable.NO.getValue().equals(role.getModifiable())) {
             throw new BizException(SystemErrorCode.ROLE_NOT_MODIFIABLE);
         }
     }
 
     private void checkDeletable(SysRole role) {
         checkModifiable(role);
-        if (IsBuiltin.BUILTIN.getValue().equals(role.getIsBuiltin())) {
+        if (IsBuiltin.YES.getValue().equals(role.getIsBuiltin())) {
             throw new BizException(SystemErrorCode.ROLE_BUILTIN_NOT_DELETABLE);
         }
     }

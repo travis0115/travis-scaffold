@@ -31,14 +31,26 @@ export namespace SystemFileApi {
   }
 
   export interface StorageConfig {
-    accessPrefix: string;
-    basePath: string;
+    accessKey?: string;
+    bucketId?: string;
+    bucketName?: string;
     configName: string;
     domain?: string;
+    endpoint?: string;
     id: number | string;
     isDefault: number;
+    meta?: string;
+    region?: string;
+    remark?: string;
+    secretKey?: string;
     status: number;
+    storagePath: string;
     storageType: string;
+  }
+
+  export interface UploadPolicy {
+    allowedExtensions: string[];
+    maxFileSizeBytes: number;
   }
 }
 
@@ -48,28 +60,50 @@ const getFilePage = (params: Recordable<any>) =>
   });
 const deleteFile = (id: number | string) =>
   requestClient.delete(`/system/file/${id}`);
+const getUploadPolicy = () =>
+  requestClient.get<SystemFileApi.UploadPolicy>('/system/file/upload-policy');
 const getFileFolders = () =>
-  requestClient.get<SystemFileApi.Folder[]>('/system/file-folder/list');
+  requestClient.get<SystemFileApi.Folder[]>('/system/file/folder/list');
 const createFileFolder = (data: Partial<SystemFileApi.Folder>) =>
-  requestClient.post('/system/file-folder', data);
+  requestClient.post('/system/file/folder', data);
 const updateFileFolder = (
   id: number | string,
   data: Partial<SystemFileApi.Folder>,
-) => requestClient.put(`/system/file-folder/${id}`, data);
+) => requestClient.put(`/system/file/folder/${id}`, data);
 const deleteFileFolder = (id: number | string) =>
-  requestClient.delete(`/system/file-folder/${id}`);
+  requestClient.delete(`/system/file/folder/${id}`);
 const getStorageConfigs = () =>
   requestClient.get<SystemFileApi.StorageConfig[]>('/system/file-storage/list');
+const getStorageConfigDetail = (id: number | string) =>
+  requestClient.get<SystemFileApi.StorageConfig>(`/system/file-storage/${id}`);
 const createStorageConfig = (data: Partial<SystemFileApi.StorageConfig>) =>
   requestClient.post('/system/file-storage', data);
+const updateStorageConfig = (
+  id: number | string,
+  data: Partial<SystemFileApi.StorageConfig>,
+) => requestClient.put(`/system/file/storage/${id}`, data);
+const updateStorageConfigStatus = (id: number | string, status: number) =>
+  requestClient.put(`/system/file/storage/${id}/status`, undefined, {
+    params: { status },
+  });
+const setDefaultStorageConfig = (id: number | string) =>
+  requestClient.put(`/system/file/storage/${id}/default`);
+const deleteStorageConfig = (id: number | string) =>
+  requestClient.delete(`/system/file/storage/${id}`);
 
 export {
   createFileFolder,
   createStorageConfig,
   deleteFile,
   deleteFileFolder,
+  deleteStorageConfig,
   getFileFolders,
   getFilePage,
+  getStorageConfigDetail,
   getStorageConfigs,
+  getUploadPolicy,
+  setDefaultStorageConfig,
   updateFileFolder,
+  updateStorageConfig,
+  updateStorageConfigStatus,
 };

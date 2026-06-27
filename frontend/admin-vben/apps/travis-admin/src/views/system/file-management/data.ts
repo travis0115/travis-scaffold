@@ -3,9 +3,20 @@ import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 
 import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
 
-export const useGridFormSchema = (): VbenFormSchema[] => [
+export const useGridFormSchema = (
+  storageConfigOptions: Array<{ label: string; value: number | string }> = [],
+): VbenFormSchema[] => [
   { component: 'Input', fieldName: 'fileName', label: '文件名称' },
   { component: 'Input', fieldName: 'originalName', label: '原始文件名' },
+  {
+    component: 'Select',
+    componentProps: {
+      allowClear: true,
+      options: storageConfigOptions,
+    },
+    fieldName: 'storageConfigId',
+    label: '服务商',
+  },
   {
     component: 'Select',
     componentProps: {

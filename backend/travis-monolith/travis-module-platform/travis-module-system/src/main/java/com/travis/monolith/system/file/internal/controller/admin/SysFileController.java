@@ -4,12 +4,16 @@ import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
 import com.travis.monolith.system.common.api.constant.SystemPermission;
 import com.travis.monolith.system.file.api.request.SysFilePageReq;
+import com.travis.monolith.system.file.api.response.FileUploadPolicyResp;
 import com.travis.monolith.system.file.api.response.FileUploadResp;
 import com.travis.monolith.system.file.api.response.SysFileResp;
+import com.travis.monolith.system.file.internal.config.properties.FileUploadProperties;
 import com.travis.monolith.system.file.internal.service.SysFileService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.servlet.autoconfigure.MultipartProperties;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,6 +28,22 @@ import org.springframework.web.multipart.MultipartFile;
 public class SysFileController {
 
     private final SysFileService fileService;
+    private final FileUploadProperties fileUploadProperties;
+    private final MultipartProperties multipartProperties;
+
+    @GetMapping("/upload-policy")
+    @SaCheckPermission(value = SystemPermission.FILE_QUERY, type = LoginType.ADMIN)
+    @NoRepeatSubmit
+    public ApiResponse<FileUploadPolicyResp> uploadPolicy() {
+        return ApiResponse.success(
+                FileUploadPolicyResp.builder()
+                        .allowedExtensions(
+                                fileUploadProperties.getNormalizedAllowedExtensions().stream()
+                                        .sorted()
+                                        .toList())
+                        .maxFileSizeBytes(multipartProperties.getMaxFileSize().toBytes())
+                        .build());
+    }
 
     /**
      * 上传文件，返回相对路径和完整访问URL
@@ -33,6 +53,7 @@ public class SysFileController {
      */
     @PostMapping("/upload")
     @SaCheckPermission(value = SystemPermission.FILE_UPLOAD, type = LoginType.ADMIN)
+    @NoRepeatSubmit
     public ApiResponse<FileUploadResp> upload(
             @RequestParam("file") MultipartFile file,
             @RequestParam(required = false) Long folderId) {
@@ -47,6 +68,7 @@ public class SysFileController {
 
     @DeleteMapping("/{id}")
     @SaCheckPermission(value = SystemPermission.FILE_DELETE, type = LoginType.ADMIN)
+    @NoRepeatSubmit
     public ApiResponse<Void> delete(@PathVariable Long id) {
         fileService.removeById(id);
         return ApiResponse.success();

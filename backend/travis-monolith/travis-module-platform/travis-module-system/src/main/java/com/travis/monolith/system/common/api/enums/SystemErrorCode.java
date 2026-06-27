@@ -38,7 +38,13 @@ public enum SystemErrorCode implements ErrorCode {
 
     /* notice模块 900-999 */
     /* file模块 1000-1099 */
-    FILE_FOLDER_BUILTIN_NOT_DELETABLE("SYS_1000", "系统内置文件夹不允许删除"),
+    FILE_STORAGE_DEFAULT_REQUIRED("SYS_1000", "系统内必须存在默认存储配置"),
+    FILE_STORAGE_DEFAULT_NOT_DELETABLE("SYS_1001", "默认存储配置不允许删除或禁用"),
+    FILE_STORAGE_IN_USE("SYS_1002", "存储配置已被文件使用，不允许删除"),
+    FILE_STORAGE_NOT_FOUND("SYS_1003", "未找到存储配置"),
+    FILE_FOLDER_BUILTIN_NOT_DELETABLE("SYS_1100", "系统内置文件夹不允许删除"),
+    FILE_UPLOAD_FAILED("SYS_1200", "文件上传失败"),
+    FILE_UPLOAD_EXTENSION_NOT_ALLOWED("SYS_1201", "不支持上传该文件类型"),
 
     /* config模块 1100-1199 */
     CONFIG_BUILTIN_NOT_DELETABLE("SYS_1100", "系统内置配置不允许删除"),

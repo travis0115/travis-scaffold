@@ -154,17 +154,7 @@ sa-token:
 travis:
   info:
     base-package: com.travis.monolith
-  rocketmq:
-    # RocketMQ 客户端日志路径（v5 gRPC 客户端 + tools），受 rocketmq.log.root 系统属性控制
-    client:
-      log-path: ${user.home}/data/logs/rocketmq
-    auto-initialize:
-      enabled: true  # 启动时自动初始化不存在的 Topic 和消费者分组
-      namesrv-addr: ${ROCKETMQ_NAMESRV_ADDR:127.0.0.1:9876}  # NameServer 地址（注意：不是 Proxy gRPC 端口），启用 auto-initialize 时必填
   web:
-    # 防重复提交配置
-    no-repeat-submit:
-      key-prefix: "repeat-submit:"
     # Web路径前缀配置
     apis:
       # 管理后台接口
@@ -176,10 +166,52 @@ travis:
     # 文件配置
     file:
       resource-handler: /files/**  # 文件访问URL
-      resource-location: ${user.home}/data/uploads # 文件存储路径
+      allowed-extensions:
+        - jpg
+        - jpeg
+        - png
+        - gif
+        - webp
+        - bmp
+        - svg
+        - ico
+        - pdf
+        - doc
+        - docx
+        - xls
+        - xlsx
+        - ppt
+        - pptx
+        - txt
+        - csv
+        - md
+        - json
+        - xml
+        - html
+        - css
+        - js
+        - ts
+        - vue
+        - zip
+        - rar
+        - 7z
+        - tar
+        - gz
+        - mp3
+        - wav
+        - ogg
+        - m4a
+        - mp4
+        - webm
+        - mov
+        - avi
+        - mkv
     i18n:
       enabled: true #是否启用国际化
     locale: zh_CN #spring.web.locale和spring.jackson.locale配置
+    # 防重复提交配置
+    no-repeat-submit:
+      key-prefix: "repeat-submit:"
     security:
       # 登录类型鉴权规则：每条规则对应一种 loginType 的路径拦截策略
       # starter 会自动发现对应 loginType 的 StpLogic Bean 并注册拦截器

@@ -3,13 +3,12 @@ package com.travis.monolith.system.dept.internal.api;
 import com.travis.monolith.system.dept.api.SysDeptApi;
 import com.travis.monolith.system.dept.api.response.SysDeptResp;
 import com.travis.monolith.system.dept.internal.service.SysDeptService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
-
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 /**
  * 部门模块对外 API 实现，委托调用内部 Service
@@ -46,7 +45,6 @@ public class SysDeptApiImpl implements SysDeptApi {
         }
         return result;
     }
-
 
     @Override
     public String getDeptNameById(Long deptId) {

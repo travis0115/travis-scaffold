@@ -8,10 +8,10 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum IsBuiltin {
     /** 用户创建 */
-    USER_BUILT(0, "用户创建"),
+    NO(0, "用户创建"),
 
     /** 系统内置 */
-    BUILTIN(1, "系统内置");
+    YES(1, "系统内置");
 
     private final Integer value;
 

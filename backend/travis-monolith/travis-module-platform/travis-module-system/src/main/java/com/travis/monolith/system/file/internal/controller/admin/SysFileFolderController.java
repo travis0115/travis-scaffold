@@ -3,18 +3,20 @@ package com.travis.monolith.system.file.internal.controller.admin;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
+import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
 import com.travis.monolith.system.common.api.constant.SystemPermission;
 import com.travis.monolith.system.file.api.request.SysFileFolderCreateReq;
 import com.travis.monolith.system.file.api.request.SysFileFolderUpdateReq;
 import com.travis.monolith.system.file.internal.entity.SysFileFolder;
 import com.travis.monolith.system.file.internal.service.SysFileFolderService;
 import jakarta.validation.Valid;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
-@RequestMapping("/system/file-folder")
+@RequestMapping("/system/file/folder")
 @RequiredArgsConstructor
 public class SysFileFolderController {
     private final SysFileFolderService folderService;
@@ -27,6 +29,7 @@ public class SysFileFolderController {
 
     @PostMapping
     @SaCheckPermission(value = SystemPermission.FILE_UPLOAD, type = LoginType.ADMIN)
+    @NoRepeatSubmit
     public ApiResponse<Void> create(@RequestBody @Valid SysFileFolderCreateReq req) {
         folderService.create(req);
         return ApiResponse.success();
@@ -34,6 +37,7 @@ public class SysFileFolderController {
 
     @PutMapping("/{id}")
     @SaCheckPermission(value = SystemPermission.FILE_UPLOAD, type = LoginType.ADMIN)
+    @NoRepeatSubmit
     public ApiResponse<Void> update(
             @PathVariable Long id, @RequestBody @Valid SysFileFolderUpdateReq req) {
         folderService.update(id, req);
@@ -42,6 +46,7 @@ public class SysFileFolderController {
 
     @DeleteMapping("/{id}")
     @SaCheckPermission(value = SystemPermission.FILE_DELETE, type = LoginType.ADMIN)
+    @NoRepeatSubmit
     public ApiResponse<Void> delete(@PathVariable Long id) {
         folderService.deleteById(id);
         return ApiResponse.success();

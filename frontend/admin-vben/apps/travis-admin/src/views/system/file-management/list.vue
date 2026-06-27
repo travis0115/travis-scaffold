@@ -10,7 +10,17 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { Page, Tree, useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 
-import { Button, Card, Image, Input, Progress, Upload } from 'antdv-next';
+import {
+  Button,
+  Card,
+  Image,
+  Input,
+  message,
+  Popconfirm,
+  Progress,
+  Tag,
+  Upload,
+} from 'antdv-next';
 
 import { useVbenForm, z } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
@@ -19,13 +29,18 @@ import {
   createStorageConfig,
   deleteFile,
   deleteFileFolder,
+  deleteStorageConfig,
   FILE_FOLDER_IDS,
   getFileFolders,
   getFilePage,
+  getStorageConfigDetail,
   getStorageConfigs,
+  getUploadPolicy,
+  setDefaultStorageConfig,
   updateFileFolder,
+  updateStorageConfig,
+  updateStorageConfigStatus,
   UPLOAD_FILE_MAX_SIZE_BYTES,
-  UPLOAD_FILE_MAX_SIZE_TEXT,
   uploadFileApi,
 } from '#/api';
 import { SYSTEM_PERMS } from '#/utils/permissions';
@@ -45,6 +60,54 @@ type UploadTask = {
   uid: string;
 };
 
+const storageTypeOptions = [
+  { label: '本地存储', value: 'LOCAL' },
+];
+const storageFormFieldsByType: Record<string, string[]> = {
+  LOCAL: ['storagePath', 'domain'],
+};
+const defaultAllowedUploadExtensions = [
+  'jpg',
+  'jpeg',
+  'png',
+  'gif',
+  'webp',
+  'bmp',
+  'svg',
+  'ico',
+  'pdf',
+  'doc',
+  'docx',
+  'xls',
+  'xlsx',
+  'ppt',
+  'pptx',
+  'txt',
+  'csv',
+  'md',
+  'json',
+  'xml',
+  'html',
+  'css',
+  'js',
+  'ts',
+  'vue',
+  'zip',
+  'rar',
+  '7z',
+  'tar',
+  'gz',
+  'mp3',
+  'wav',
+  'ogg',
+  'm4a',
+  'mp4',
+  'webm',
+  'mov',
+  'avi',
+  'mkv',
+];
+
 const selectedFolderKey = ref<FolderSelection>('all');
 const folderTreeValue = ref<FolderId>();
 const folderTreeRef = ref<TreeExpose>();
@@ -55,6 +118,36 @@ const editingFolder = ref<SystemFileApi.Folder>();
 const deletingFolder = ref<SystemFileApi.Folder>();
 const folderParentId = ref<FolderId>(0);
 const uploadTasks = ref<UploadTask[]>([]);
+const uploadPolicy = ref<SystemFileApi.UploadPolicy>({
+  allowedExtensions: defaultAllowedUploadExtensions,
+  maxFileSizeBytes: UPLOAD_FILE_MAX_SIZE_BYTES,
+});
+const folders = ref<SystemFileApi.Folder[]>([]);
+const storageConfigs = ref<SystemFileApi.StorageConfig[]>([]);
+const storageModalMode = ref<'create' | 'edit'>('create');
+const editingStorageConfig = ref<SystemFileApi.StorageConfig>();
+const storageConfigSearchOptions = computed(() =>
+  storageConfigs.value.map((item) => ({
+    label: item.configName,
+    value: item.id,
+  })),
+);
+const allowedUploadExtensionSet = computed(
+  () =>
+    new Set(
+      uploadPolicy.value.allowedExtensions.map((extension) =>
+        extension.replace(/^\./, '').toLowerCase(),
+      ),
+    ),
+);
+const uploadAccept = computed(() =>
+  [...allowedUploadExtensionSet.value]
+    .map((extension) => `.${extension}`)
+    .join(','),
+);
+const uploadMaxSizeText = computed(() =>
+  formatFileSizeText(uploadPolicy.value.maxFileSizeBytes),
+);
 
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: { schema: useGridFormSchema() },
@@ -83,8 +176,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
   } as VxeTableGridOptions<SystemFileApi.FileInfo>,
 });
 
-const folders = ref<SystemFileApi.Folder[]>([]);
-const storageConfigs = ref<SystemFileApi.StorageConfig[]>([]);
 const folderSearch = ref('');
 const folderModalMode = ref<'create' | 'edit'>('create');
 
@@ -137,6 +228,17 @@ const deleteFolderContent = computed(() => {
     ? `删除「${folderName}」后，子文件夹会一并删除，相关文件将清除归属，确认删除？`
     : `删除「${folderName}」后，相关文件将清除归属，确认删除？`;
 });
+const uploadFinished = computed(
+  () =>
+    uploadTasks.value.length > 0 &&
+    uploadTasks.value.every((task) => task.status !== 'uploading'),
+);
+const defaultStorageConfig = computed(() =>
+  storageConfigs.value.find((item) => item.isDefault === 1),
+);
+const storageModalTitle = computed(() =>
+  storageModalMode.value === 'edit' ? '编辑存储配置' : '新增存储配置',
+);
 
 function getPreviewIcon(row: SystemFileApi.FileInfo) {
   const extension = row.extension?.toLowerCase();
@@ -187,9 +289,24 @@ function getPreviewIcon(row: SystemFileApi.FileInfo) {
   return 'lucide:file';
 }
 
+function getUploadFileExtension(fileName?: string) {
+  if (!fileName) return '';
+  const dotIndex = fileName.lastIndexOf('.');
+  if (dotIndex <= 0 || dotIndex === fileName.length - 1) return '';
+  return fileName.slice(dotIndex + 1).toLowerCase();
+}
+
+function formatFileSizeText(bytes: number) {
+  const size = bytes / 1024 / 1024;
+  if (size >= 1) {
+    return String(Math.floor(size));
+  }
+  return size >= 0.01 ? size.toFixed(2) : '0.01';
+}
+
 function getFolderQueryParams() {
   if (selectedFolderKey.value === 'unclassified') {
-    return { unclassified: true };
+    return { folderId: 0 };
   }
   if (isFolderKey(selectedFolderKey.value)) {
     return { folderId: selectedFolderKey.value };
@@ -228,25 +345,61 @@ const [StorageForm, storageFormApi] = useVbenForm({
       rules: z.string().min(1, '请输入配置名称'),
     },
     {
-      component: 'Input',
-      componentProps: { disabled: true },
+      component: 'Select',
+      componentProps: {
+        onChange: (value: string) => applyStorageTypeSchema(value),
+        options: storageTypeOptions,
+      },
       fieldName: 'storageType',
       label: '存储类型',
+      rules: z.string().min(1, '请选择存储类型'),
     },
     {
       component: 'Input',
-      fieldName: 'basePath',
-      label: '存储目录',
-    },
-    {
-      component: 'Input',
-      fieldName: 'accessPrefix',
-      label: '访问前缀',
+      fieldName: 'storagePath',
+      label: '存储路径',
+      rules: z.string().min(1, '请输入存储路径'),
     },
     {
       component: 'Input',
       fieldName: 'domain',
       label: '访问域名',
+    },
+    {
+      component: 'Input',
+      fieldName: 'endpoint',
+      label: '服务端点',
+    },
+    {
+      component: 'Input',
+      fieldName: 'region',
+      label: '地域',
+    },
+    {
+      component: 'Input',
+      fieldName: 'bucketId',
+      label: 'Bucket ID',
+    },
+    {
+      component: 'Input',
+      fieldName: 'bucketName',
+      label: 'Bucket 名称',
+    },
+    {
+      component: 'Input',
+      fieldName: 'accessKey',
+      label: 'Access Key',
+    },
+    {
+      component: 'InputPassword',
+      fieldName: 'secretKey',
+      label: 'Secret Key',
+    },
+    {
+      component: 'Textarea',
+      componentProps: { rows: 3 },
+      fieldName: 'meta',
+      label: '扩展配置',
     },
     {
       component: 'RadioGroup',
@@ -259,6 +412,23 @@ const [StorageForm, storageFormApi] = useVbenForm({
       fieldName: 'isDefault',
       label: '设为默认',
     },
+    {
+      component: 'RadioGroup',
+      componentProps: {
+        options: [
+          { label: '禁用', value: 0 },
+          { label: '启用', value: 1 },
+        ],
+      },
+      fieldName: 'status',
+      label: '状态',
+    },
+    {
+      component: 'Textarea',
+      componentProps: { rows: 2 },
+      fieldName: 'remark',
+      label: '备注',
+    },
   ],
   showDefaultActions: false,
 });
@@ -266,6 +436,11 @@ const [StorageForm, storageFormApi] = useVbenForm({
 const [StorageModal, storageModalApi] = useVbenModal({
   async onConfirm() {
     await saveStorage();
+  },
+  async onOpenChange(isOpen) {
+    if (!isOpen) return;
+    await nextTick();
+    await resetStorageForm();
   },
 });
 
@@ -306,12 +481,28 @@ watch(
 );
 
 async function loadOptions() {
-  const [folderItems, storageConfigItems] = await Promise.all([
+  const [folderItems, storageConfigItems, policy] = await Promise.all([
     getFileFolders(),
     getStorageConfigs(),
+    getUploadPolicy(),
   ]);
   folders.value = folderItems;
   storageConfigs.value = storageConfigItems;
+  uploadPolicy.value = {
+    allowedExtensions: policy.allowedExtensions?.length
+      ? policy.allowedExtensions
+      : defaultAllowedUploadExtensions,
+    maxFileSizeBytes: policy.maxFileSizeBytes || UPLOAD_FILE_MAX_SIZE_BYTES,
+  };
+  gridApi.formApi.updateSchema([
+    {
+      componentProps: {
+        allowClear: true,
+        options: storageConfigSearchOptions.value,
+      },
+      fieldName: 'storageConfigId',
+    },
+  ]);
   folderManualExpandedKeys.value = collectFolderExpandableKeys(
     buildFolderTree(folderItems),
   );
@@ -357,6 +548,31 @@ function getFolderName(id?: FolderId) {
   if (isRootFolder(id)) return undefined;
   return folders.value.find((item) => String(item.id) === String(id))
     ?.folderName;
+}
+
+function getStorageTypeLabel(type?: string) {
+  return storageTypeOptions.find((item) => item.value === type)?.label ?? type;
+}
+
+function applyStorageTypeSchema(storageType?: string) {
+  const typedFields = [
+    'storagePath',
+    'domain',
+    'endpoint',
+    'region',
+    'bucketId',
+    'bucketName',
+    'accessKey',
+    'secretKey',
+    'meta',
+  ];
+  const visibleFields = new Set(storageFormFieldsByType[storageType ?? 'LOCAL']);
+  storageFormApi.updateSchema(
+    typedFields.map((fieldName) => ({
+      fieldName,
+      hide: !visibleFields.has(fieldName),
+    })),
+  );
 }
 
 function getChildFolders(id?: FolderId) {
@@ -486,8 +702,16 @@ async function customRequest({ file, onError, onProgress, onSuccess }: any) {
     percent: 0,
     status: 'uploading',
   });
-  if ((file.size || 0) > UPLOAD_FILE_MAX_SIZE_BYTES) {
-    const errorMessage = `文件大小不能超过 ${UPLOAD_FILE_MAX_SIZE_TEXT}MB`;
+  const extension = getUploadFileExtension(file.name);
+  if (!allowedUploadExtensionSet.value.has(extension)) {
+    const errorMessage = '不支持上传该文件类型';
+    const error = new Error(errorMessage);
+    upsertUploadTask(file, { errorMessage, status: 'error' });
+    onError?.(error);
+    throw error;
+  }
+  if ((file.size || 0) > uploadPolicy.value.maxFileSizeBytes) {
+    const errorMessage = `文件大小不能超过 ${uploadMaxSizeText.value}MB`;
     const error = new Error(errorMessage);
     upsertUploadTask(file, { errorMessage, status: 'error' });
     onError?.(error);
@@ -512,6 +736,10 @@ async function customRequest({ file, onError, onProgress, onSuccess }: any) {
     onError?.(error);
     throw error;
   }
+}
+
+function closeUploadProgress() {
+  uploadProgressModalApi.close();
 }
 
 function selectAllFiles() {
@@ -627,26 +855,83 @@ async function saveStorage() {
   const values = await storageFormApi.getValues();
   storageModalApi.lock();
   try {
-    await createStorageConfig(values);
-    storageModalApi.close();
+    if (storageModalMode.value === 'edit' && editingStorageConfig.value) {
+      await updateStorageConfig(editingStorageConfig.value.id, values);
+      message.success('存储配置已更新');
+    } else {
+      await createStorageConfig(values);
+      message.success('存储配置已创建');
+    }
     await loadOptions();
+    await resetStorageForm();
+    storageModalMode.value = 'create';
+    editingStorageConfig.value = undefined;
+    storageModalApi.unlock();
   } catch {
     storageModalApi.unlock();
   }
 }
 
-async function openStorageModal() {
+async function resetStorageForm() {
   await storageFormApi.resetForm();
   await storageFormApi.setValues({
-    accessPrefix: '/files',
-    basePath: '${user.home}/data/uploads',
+    storagePath: '${user.home}/data/uploads',
     configName: '',
     domain: '',
+    endpoint: '',
+    region: '',
+    bucketId: '',
+    bucketName: '',
+    accessKey: '',
+    secretKey: '',
+    meta: '',
     isDefault: 0,
+    remark: '',
     status: 1,
     storageType: 'LOCAL',
   });
+  applyStorageTypeSchema('LOCAL');
+}
+
+function openStorageModal() {
+  storageModalMode.value = 'create';
+  editingStorageConfig.value = undefined;
   storageModalApi.open();
+}
+
+async function editStorageConfig(config: SystemFileApi.StorageConfig) {
+  storageModalMode.value = 'edit';
+  const detail = await getStorageConfigDetail(config.id);
+  editingStorageConfig.value = detail;
+  await storageFormApi.resetForm();
+  await storageFormApi.setValues(detail);
+  applyStorageTypeSchema(detail.storageType);
+}
+
+function cancelEditStorageConfig() {
+  storageModalMode.value = 'create';
+  editingStorageConfig.value = undefined;
+  resetStorageForm();
+}
+
+async function changeStorageConfigStatus(config: SystemFileApi.StorageConfig) {
+  const nextStatus = config.status === 1 ? 0 : 1;
+  await updateStorageConfigStatus(config.id, nextStatus);
+  message.success(nextStatus === 1 ? '存储配置已启用' : '存储配置已禁用');
+  await loadOptions();
+}
+
+async function markDefaultStorageConfig(config: SystemFileApi.StorageConfig) {
+  if (config.isDefault === 1) return;
+  await setDefaultStorageConfig(config.id);
+  message.success('默认存储配置已更新');
+  await loadOptions();
+}
+
+async function removeStorageConfig(config: SystemFileApi.StorageConfig) {
+  await deleteStorageConfig(config.id);
+  message.success('存储配置已删除');
+  await loadOptions();
 }
 
 onMounted(loadOptions);
@@ -780,6 +1065,7 @@ onMounted(loadOptions);
               </Button>
               <Upload
                 v-access:code="SYSTEM_PERMS.fileUpload"
+                :accept="uploadAccept"
                 :custom-request="customRequest"
                 multiple
                 :show-upload-list="false"
@@ -820,8 +1106,104 @@ onMounted(loadOptions);
     >
       <FolderForm />
     </FolderModal>
-    <StorageModal title="新增存储配置">
-      <StorageForm />
+    <StorageModal class="w-[780px]" title="存储配置">
+      <div class="storage-config-modal">
+        <div class="storage-config-summary">
+          <div>
+            <div class="storage-config-summary-title">当前默认存储</div>
+            <div class="storage-config-summary-value">
+              {{ defaultStorageConfig?.configName ?? '未设置' }}
+            </div>
+          </div>
+          <div class="storage-config-summary-meta">
+            共 {{ storageConfigs.length }} 个配置
+          </div>
+        </div>
+
+        <div class="storage-config-list">
+          <div
+            v-for="config in storageConfigs"
+            :key="config.id"
+            class="storage-config-item"
+          >
+            <div class="storage-config-main">
+              <div class="storage-config-name-row">
+                <span class="storage-config-name">{{ config.configName }}</span>
+                <Tag v-if="config.isDefault === 1" color="blue">默认</Tag>
+                <Tag :color="config.status === 1 ? 'green' : 'default'">
+                  {{ config.status === 1 ? '启用' : '禁用' }}
+                </Tag>
+              </div>
+              <div class="storage-config-meta">
+                {{ getStorageTypeLabel(config.storageType) }}
+              </div>
+            </div>
+            <div class="storage-config-detail">
+              <span>{{ config.domain || '未配置访问域名' }}</span>
+              <span>{{ config.storagePath || '-' }}</span>
+            </div>
+            <div class="storage-config-actions">
+              <Button
+                v-access:code="SYSTEM_PERMS.fileUpload"
+                size="small"
+                type="link"
+                @click="editStorageConfig(config)"
+              >
+                编辑
+              </Button>
+              <Button
+                v-access:code="SYSTEM_PERMS.fileUpload"
+                size="small"
+                type="link"
+                :disabled="config.isDefault === 1 && config.status === 1"
+                @click="changeStorageConfigStatus(config)"
+              >
+                {{ config.status === 1 ? '禁用' : '启用' }}
+              </Button>
+              <Button
+                v-if="config.isDefault !== 1"
+                v-access:code="SYSTEM_PERMS.fileUpload"
+                size="small"
+                type="link"
+                @click="markDefaultStorageConfig(config)"
+              >
+                设为默认
+              </Button>
+              <Popconfirm
+                title="删除后不可恢复，确认删除该存储配置？"
+                @confirm="removeStorageConfig(config)"
+              >
+                <Button
+                  v-access:code="SYSTEM_PERMS.fileDelete"
+                  danger
+                  size="small"
+                  type="link"
+                  :disabled="config.isDefault === 1"
+                >
+                  删除
+                </Button>
+              </Popconfirm>
+            </div>
+          </div>
+          <div v-if="storageConfigs.length === 0" class="storage-config-empty">
+            暂无存储配置
+          </div>
+        </div>
+
+        <div class="storage-config-form-title">
+          {{ storageModalTitle }}
+          <Button
+            v-if="storageModalMode === 'edit'"
+            class="storage-config-cancel-edit"
+            size="small"
+            type="link"
+            @click="cancelEditStorageConfig"
+          >
+            取消编辑
+          </Button>
+        </div>
+        <StorageForm />
+      </div>
     </StorageModal>
     <DeleteFolderModal title="删除文件夹">
       <p class="text-sm text-muted-foreground">{{ deleteFolderContent }}</p>
@@ -865,6 +1247,16 @@ onMounted(loadOptions);
           >
             暂无上传任务
           </div>
+        </div>
+        <div class="upload-progress-actions">
+          <Button @click="closeUploadProgress">取消</Button>
+          <Button
+            type="primary"
+            :disabled="!uploadFinished"
+            @click="closeUploadProgress"
+          >
+            完成
+          </Button>
         </div>
       </div>
     </UploadProgressModal>
@@ -1032,16 +1424,27 @@ onMounted(loadOptions);
 }
 
 .upload-progress-panel {
+  display: flex;
+  flex-direction: column;
   width: 592px;
-  height: 360px;
+  height: 336px;
 }
 
 .upload-progress-list {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  height: 100%;
+  min-height: 0;
+  flex: 1;
   overflow-y: auto;
+}
+
+.upload-progress-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 16px;
+  padding-bottom: 4px;
 }
 
 .upload-progress-item {
@@ -1094,6 +1497,138 @@ onMounted(loadOptions);
 
 .upload-progress-item-error :deep(.ant-progress-bg) {
   background-color: hsl(var(--destructive)) !important;
+}
+
+.storage-config-modal {
+  max-height: 68vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.storage-config-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  background-color: hsl(var(--muted) / 35%);
+}
+
+.storage-config-summary-title {
+  color: hsl(var(--muted-foreground));
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.storage-config-summary-value {
+  margin-top: 2px;
+  color: hsl(var(--foreground));
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.storage-config-summary-meta {
+  color: hsl(var(--muted-foreground));
+  font-size: 13px;
+}
+
+.storage-config-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+  margin-bottom: 18px;
+}
+
+.storage-config-item {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.75fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+}
+
+.storage-config-main {
+  min-width: 0;
+}
+
+.storage-config-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.storage-config-name {
+  min-width: 0;
+  overflow: hidden;
+  color: hsl(var(--foreground));
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.storage-config-meta,
+.storage-config-detail {
+  color: hsl(var(--muted-foreground));
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.storage-config-meta {
+  margin-top: 6px;
+}
+
+.storage-config-detail {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.storage-config-detail span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.storage-config-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.storage-config-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 80px;
+  border: 1px dashed hsl(var(--border));
+  border-radius: 8px;
+  color: hsl(var(--muted-foreground));
+  font-size: 13px;
+}
+
+.storage-config-form-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-top: 2px;
+  color: hsl(var(--foreground));
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.storage-config-cancel-edit {
+  padding-right: 0;
 }
 
 .file-preview-cell {

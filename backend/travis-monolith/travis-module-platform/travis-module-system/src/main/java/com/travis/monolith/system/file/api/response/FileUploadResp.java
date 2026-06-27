@@ -1,8 +1,7 @@
 package com.travis.monolith.system.file.api.response;
 
-import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 /**
  * 文件上传响应
@@ -10,8 +9,7 @@ import lombok.NoArgsConstructor;
  * @author travis
  */
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Builder
 public class FileUploadResp {
 
     /** 文件相对路径（用于数据库存储），如 /files/2026-06-02/abc.jpg */
@@ -22,9 +20,4 @@ public class FileUploadResp {
 
     /** 文件元数据ID */
     private Long id;
-
-    public FileUploadResp(String path, String url) {
-        this.path = path;
-        this.url = url;
-    }
 }

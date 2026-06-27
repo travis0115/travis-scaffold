@@ -18,10 +18,6 @@ public class SysFileApiImpl implements SysFileApi {
     private final SysFileService fileService;
     private final RichTextFileReferenceService richTextFileReferenceService;
 
-    @Override
-    public String getFileUrl(String path) {
-        return fileService.getFileUrl(path);
-    }
 
     @Override
     public String getFileUrlById(Long fileId) {
