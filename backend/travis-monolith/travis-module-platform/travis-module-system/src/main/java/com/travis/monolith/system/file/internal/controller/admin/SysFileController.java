@@ -1,6 +1,8 @@
 package com.travis.monolith.system.file.internal.controller.admin;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import com.travis.infrastructure.common.logging.annotation.OperationLog;
+import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
@@ -25,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/system/file")
 @RequiredArgsConstructor
+@OperationLogModule("文件管理")
 public class SysFileController {
 
     private final SysFileService fileService;
@@ -54,6 +57,7 @@ public class SysFileController {
     @PostMapping("/upload")
     @SaCheckPermission(value = SystemPermission.FILE_UPLOAD, type = LoginType.ADMIN)
     @NoRepeatSubmit
+    @OperationLog(action = "上传文件")
     public ApiResponse<FileUploadResp> upload(
             @RequestParam("file") MultipartFile file,
             @RequestParam(required = false) Long folderId) {
@@ -69,6 +73,7 @@ public class SysFileController {
     @DeleteMapping("/{id}")
     @SaCheckPermission(value = SystemPermission.FILE_DELETE, type = LoginType.ADMIN)
     @NoRepeatSubmit
+    @OperationLog(action = "删除文件")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         fileService.removeById(id);
         return ApiResponse.success();

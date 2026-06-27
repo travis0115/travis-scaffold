@@ -17,14 +17,13 @@ import com.travis.monolith.system.file.internal.mapper.SysFileMapper;
 import com.travis.monolith.system.file.internal.service.SysFileService;
 import com.travis.monolith.system.file.internal.service.SysFileStorageConfigService;
 import com.travis.monolith.system.file.internal.strategy.FileStorageStrategy;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 文件管理服务实现，委托给文件存储策略
@@ -109,7 +108,6 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
                 page.convert(
                         file -> toResp(file, storageConfigMap.get(file.getStorageConfigId()))));
     }
-
 
     @Override
     public String getFileUrlById(Long fileId) {
