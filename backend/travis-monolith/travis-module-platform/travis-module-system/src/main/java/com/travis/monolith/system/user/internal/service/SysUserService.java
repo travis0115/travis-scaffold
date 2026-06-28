@@ -5,6 +5,7 @@ import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.user.api.request.*;
 import com.travis.monolith.system.user.api.response.SysUserResp;
 import com.travis.monolith.system.user.internal.entity.SysUser;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -68,6 +69,35 @@ public interface SysUserService extends IService<SysUser> {
      * @param id 用户ID
      */
     void resetDept(Long id);
+
+    /**
+     * 批量重置指定部门下的用户部门归属
+     *
+     * @param deptIds 部门ID集合
+     */
+    void resetDeptByDeptIds(Collection<Long> deptIds);
+
+    /**
+     * 标记用户上线
+     *
+     * @param userId 用户ID
+     * @param ip 上线IP
+     */
+    void markOnline(Long userId, String ip);
+
+    /**
+     * 标记用户下线
+     *
+     * @param userId 用户ID
+     */
+    void markOffline(Long userId);
+
+    /**
+     * 获取在线用户数量
+     *
+     * @return 在线用户数量
+     */
+    Long countOnlineUsers();
 
     /**
      * 为用户分配角色（先清除原有关联再批量插入）

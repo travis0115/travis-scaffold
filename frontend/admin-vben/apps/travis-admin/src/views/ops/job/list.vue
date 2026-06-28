@@ -92,7 +92,7 @@ function onJobAction({ code, row }: OnActionClickParams<OpsJobApi.Job>) {
 
 async function onStatusChange(value: number, row: OpsJobApi.Job) {
   await changeJobStatus(row.id, value);
-  message.success(`任务已${getDictLabel('sys_status', value)}`);
+  message.success(`任务已${getDictLabel('status', value)}`);
   await gridApi.query();
   return true;
 }

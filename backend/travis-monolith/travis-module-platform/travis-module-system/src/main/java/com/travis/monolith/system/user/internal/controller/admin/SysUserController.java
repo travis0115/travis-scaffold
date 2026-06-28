@@ -54,6 +54,13 @@ public class SysUserController {
         return ApiResponse.success(userService.page(req));
     }
 
+    /** 获取在线用户数量 */
+    @GetMapping("/online-count")
+    @SaCheckPermission(value = SystemPermission.USER_QUERY, type = LoginType.ADMIN)
+    public ApiResponse<Long> onlineCount() {
+        return ApiResponse.success(userService.countOnlineUsers());
+    }
+
     /**
      * 获取用户详情
      *

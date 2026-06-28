@@ -370,7 +370,7 @@ const schema: VbenFormSchema[] = [
     component: 'RadioGroup',
     componentProps: {
       buttonStyle: 'solid',
-      options: getDictOptions('sys_status'),
+      options: getDictOptions('status'),
       optionType: 'button',
     },
     defaultValue: 1,

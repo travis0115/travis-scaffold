@@ -37,4 +37,7 @@ public class SysUserPageReq extends PageRequest {
 
     /** 所属部门ID */
     private Long deptId;
+
+    /** 是否只查询在线用户 */
+    private Boolean onlineOnly;
 }

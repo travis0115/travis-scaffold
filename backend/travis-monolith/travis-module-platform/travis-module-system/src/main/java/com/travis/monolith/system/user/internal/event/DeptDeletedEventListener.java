@@ -1,9 +1,8 @@
 package com.travis.monolith.system.user.internal.event;
 
 import com.travis.monolith.system.dept.api.SysDeptApi;
-import com.travis.monolith.system.dept.api.event.DeptDeletedPayload;
+import com.travis.monolith.system.dept.api.event.DeptDeletedEvent;
 import com.travis.monolith.system.user.internal.service.SysUserService;
-import java.util.LinkedHashSet;
 import lombok.RequiredArgsConstructor;
 import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.stereotype.Component;
@@ -21,16 +20,10 @@ public class DeptDeletedEventListener {
     private final SysDeptApi sysDeptApi;
 
     @ApplicationModuleListener
-    void onDeptDeleted(DeptDeletedPayload payload) {
-        if (sysDeptApi.existsAnyByIds(payload.deptIds())) {
+    void onDeptDeleted(DeptDeletedEvent event) {
+        if (sysDeptApi.existsAnyByIds(event.deptIds())) {
             return;
         }
-        var userIds = new LinkedHashSet<Long>();
-        for (Long deptId : payload.deptIds()) {
-            userIds.addAll(sysUserService.listUserIdsByDeptId(deptId));
-        }
-        for (Long userId : userIds) {
-            sysUserService.resetDept(userId);
-        }
+        sysUserService.resetDeptByDeptIds(event.deptIds());
     }
 }

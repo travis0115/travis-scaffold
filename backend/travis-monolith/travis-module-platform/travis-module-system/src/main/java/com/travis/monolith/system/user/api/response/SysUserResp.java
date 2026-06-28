@@ -47,14 +47,20 @@ public class SysUserResp {
     /** 状态（0-禁用 1-启用） */
     private Integer status;
 
-    /** 最后登录时间 */
-    private LocalDateTime lastLoginTime;
+    /** 是否在线 */
+    private Boolean online;
 
-    /** 最后登录IP */
-    private String lastLoginIp;
+    /** 最近上线时间 */
+    private LocalDateTime lastOnlineTime;
 
-    /** 最后登录地点（IP解析） */
-    private String lastLoginLocation;
+    /** 最近上线IP */
+    private String lastOnlineIp;
+
+    /** 最近上线地点（IP解析） */
+    private String lastOnlineLocation;
+
+    /** 最近下线时间 */
+    private LocalDateTime lastOfflineTime;
 
     /** 创建时间 */
     private LocalDateTime createTime;

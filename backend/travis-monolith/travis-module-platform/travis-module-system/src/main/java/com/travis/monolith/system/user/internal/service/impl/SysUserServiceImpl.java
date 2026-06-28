@@ -34,8 +34,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.util.*;
 
 /**
  * 用户管理服务实现，包含密码加密（BCrypt）、角色分配及部门名称关联查询
@@ -48,9 +48,12 @@ import java.util.Map;
 public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         implements SysUserService {
 
+    private static final String ONLINE_USER_KEY = "system:user:online";
+
     private static final Map<String, SFunction<SysUser, ?>> SORT_COLUMNS =
             Map.ofEntries(
-                    Map.entry("lastLoginTime", SysUser::getLastLoginTime),
+                    Map.entry("lastOnlineTime", SysUser::getLastOnlineTime),
+                    Map.entry("lastOfflineTime", SysUser::getLastOfflineTime),
                     Map.entry("createTime", SysUser::getCreateTime));
 
     /** 部门 API（用于关联查询部门名称） */
@@ -70,6 +73,16 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     /** 分页查询用户列表 */
     @Override
     public PageResp<SysUserResp> page(SysUserPageReq req) {
+        var onlineUserIds = getOnlineUserIds();
+        if (Boolean.TRUE.equals(req.getOnlineOnly()) && onlineUserIds.isEmpty()) {
+            return PageResp.<SysUserResp>builder()
+                    .records(List.of())
+                    .total(0L)
+                    .pageNum((long) req.getPageNum())
+                    .pageSize((long) req.getPageSize())
+                    .totalPages(0L)
+                    .build();
+        }
         var wrapper =
                 new LambdaQueryWrapperX<SysUser>()
                         .likeIfPresent(SysUser::getUsername, req.getUsername())
@@ -84,8 +97,13 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
                                 SORT_COLUMNS,
                                 false,
                                 SysUser::getCreateTime);
+        if (Boolean.TRUE.equals(req.getOnlineOnly())) {
+            wrapper.in(SysUser::getId, onlineUserIds);
+        }
         var page = page(req.getPageNum(), req.getPageSize(), wrapper);
-        return PageConverter.toResp(page.convert(this::toResp));
+        var resp = PageConverter.toResp(page.convert(this::toResp));
+        fillOnlineStatus(resp.getRecords(), onlineUserIds);
+        return resp;
     }
 
     /** 获取用户详情，同时关联查询角色ID和角色名称 */
@@ -193,6 +211,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     public void deleteById(Long id) {
         var user = getByIdOrThrow(id);
         removeById(id);
+        RedisUtil.setRemove(ONLINE_USER_KEY, String.valueOf(id));
         RedisUtil.deleteCacheKey("system:user", "list:id:dept:" + user.getDeptId());
         // 通过角色服务删除用户-角色关联
         roleApi.deleteUserRolesByUserId(id);
@@ -207,7 +226,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
      */
     @Override
     @Transactional
-    @Caching(evict = {@CacheEvict(key = "'detail:'+#id")})
+    @CacheEvict(key = "'detail:'+#id")
     public void resetDept(Long id) {
         var user = getByIdOrThrow(id);
         var originalDeptId = user.getDeptId();
@@ -215,6 +234,64 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         updateById(user);
         RedisUtil.deleteCacheKey(
                 "system:user", "list:id:dept:" + originalDeptId, "list:id:dept:" + 0L);
+    }
+
+    /** 批量重置指定部门下的用户部门归属 */
+    @Override
+    @Transactional
+    public void resetDeptByDeptIds(Collection<Long> deptIds) {
+        if (deptIds == null || deptIds.isEmpty()) {
+            return;
+        }
+        lambdaUpdate().in(SysUser::getDeptId, deptIds).set(SysUser::getDeptId, 0L).update();
+        RedisUtil.deleteCacheKeyByPattern("system:user", "detail:*");
+        var cacheKeys = new ArrayList<String>();
+        for (Long deptId : deptIds) {
+            cacheKeys.add("list:id:dept:" + deptId);
+        }
+        cacheKeys.add("list:id:dept:" + 0L);
+        RedisUtil.deleteCacheKey("system:user", cacheKeys);
+    }
+
+    /** 标记用户上线 */
+    @Override
+    @Transactional
+    @CacheEvict(key = "'detail:'+#userId")
+    public void markOnline(Long userId, String ip) {
+        if (userId == null) {
+            return;
+        }
+        var added = RedisUtil.setAdd(ONLINE_USER_KEY, String.valueOf(userId));
+        if (added == null || added == 0) {
+            return;
+        }
+        lambdaUpdate()
+                .eq(SysUser::getId, userId)
+                .set(SysUser::getLastOnlineTime, LocalDateTime.now())
+                .set(SysUser::getLastOnlineIp, ip)
+                .update();
+    }
+
+    /** 标记用户下线 */
+    @Override
+    @Transactional
+    @CacheEvict(key = "'detail:'+#userId")
+    public void markOffline(Long userId) {
+        if (userId == null) {
+            return;
+        }
+        RedisUtil.setRemove(ONLINE_USER_KEY, String.valueOf(userId));
+        lambdaUpdate()
+                .eq(SysUser::getId, userId)
+                .set(SysUser::getLastOfflineTime, LocalDateTime.now())
+                .update();
+    }
+
+    /** 获取在线用户数量 */
+    @Override
+    public Long countOnlineUsers() {
+        var count = RedisUtil.setSize(ONLINE_USER_KEY);
+        return count == null ? 0L : count;
     }
 
     /** 分配用户角色：委托给角色服务 */
@@ -319,10 +396,37 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
             resp.setDeptName(deptName);
         }
         resp.setRoleNames(roleApi.getRoleNamesByUserId(user.getId()));
-        if (user.getLastLoginIp() != null && !user.getLastLoginIp().isEmpty()) {
-            resp.setLastLoginLocation(Ip2RegionUtil.getRegionByIP(user.getLastLoginIp()));
+        if (user.getLastOnlineIp() != null && !user.getLastOnlineIp().isEmpty()) {
+            resp.setLastOnlineLocation(Ip2RegionUtil.getRegionByIP(user.getLastOnlineIp()));
         }
         return resp;
+    }
+
+    private Set<Long> getOnlineUserIds() {
+        var members = RedisUtil.setMembers(ONLINE_USER_KEY);
+        if (members == null || members.isEmpty()) {
+            return Collections.emptySet();
+        }
+        var userIds = new HashSet<Long>();
+        for (Object member : members) {
+            if (member == null) {
+                continue;
+            }
+            try {
+                userIds.add(Long.valueOf(member.toString()));
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return userIds;
+    }
+
+    private void fillOnlineStatus(List<SysUserResp> records, Set<Long> onlineUserIds) {
+        if (records == null || records.isEmpty()) {
+            return;
+        }
+        for (SysUserResp record : records) {
+            record.setOnline(onlineUserIds.contains(record.getId()));
+        }
     }
 
     private void syncCurrentSessionUsername(Long userId, String username) {

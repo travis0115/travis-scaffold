@@ -5,7 +5,7 @@ import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
-import com.travis.monolith.system.dept.api.event.DeptDeletedPayload;
+import com.travis.monolith.system.dept.api.event.DeptDeletedEvent;
 import com.travis.monolith.system.dept.api.request.SysDeptCreateReq;
 import com.travis.monolith.system.dept.api.request.SysDeptUpdateReq;
 import com.travis.monolith.system.dept.api.response.SysDeptResp;
@@ -166,7 +166,7 @@ public class SysDeptServiceImpl extends ServiceImplX<SysDeptMapper, SysDept>
         collectAllDescendantIds(id, ids);
         ids.add(id);
         removeBatchByIds(ids);
-        eventPublisher.publishEvent(new DeptDeletedPayload(ids));
+        eventPublisher.publishEvent(new DeptDeletedEvent(ids));
     }
 
     /**

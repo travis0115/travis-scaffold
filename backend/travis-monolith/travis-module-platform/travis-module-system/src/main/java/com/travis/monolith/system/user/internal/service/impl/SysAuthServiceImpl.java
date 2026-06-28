@@ -13,14 +13,13 @@ import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.menu.api.SysMenuApi;
 import com.travis.monolith.system.menu.api.response.VbenMenuResp;
 import com.travis.monolith.system.role.api.SysRoleApi;
-import com.travis.monolith.system.user.api.event.UserLoginPayload;
+import com.travis.monolith.system.user.api.event.UserLoginEvent;
 import com.travis.monolith.system.user.api.request.SysUserLoginReq;
 import com.travis.monolith.system.user.api.response.SysUserInfoResp;
 import com.travis.monolith.system.user.internal.converter.SysUserConverter;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.service.SysAuthService;
 import com.travis.monolith.system.user.internal.service.SysUserService;
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -70,7 +69,7 @@ public class SysAuthServiceImpl implements SysAuthService {
                         .one();
         if (user == null) {
             publishLoginEvent(
-                    buildLoginPayload(
+                    buildLoginEvent(
                             req.getUsername(),
                             Status.DISABLED.getValue(),
                             "用户不存在",
@@ -82,7 +81,7 @@ public class SysAuthServiceImpl implements SysAuthService {
         // BCrypt 校验密码
         if (!BCrypt.checkpw(req.getPassword(), user.getPassword())) {
             publishLoginEvent(
-                    buildLoginPayload(
+                    buildLoginEvent(
                             req.getUsername(),
                             Status.DISABLED.getValue(),
                             "密码错误",
@@ -94,7 +93,7 @@ public class SysAuthServiceImpl implements SysAuthService {
         // 检查账号是否被禁用
         if (user.getStatus() != null && user.getStatus().equals(Status.DISABLED.getValue())) {
             publishLoginEvent(
-                    buildLoginPayload(
+                    buildLoginEvent(
                             req.getUsername(),
                             Status.DISABLED.getValue(),
                             "账号已被禁用",
@@ -108,19 +107,14 @@ public class SysAuthServiceImpl implements SysAuthService {
         stpLogic.login(user.getId());
         stpLogic.getSession().set(LoginSubjectSessionKey.USERNAME, user.getUsername());
 
-        // 更新最后登录时间和IP
-        user.setLastLoginTime(LocalDateTime.now());
-        user.setLastLoginIp(clientIp);
-        userService.updateById(user);
-
         // 记录登录成功日志
         publishLoginEvent(
-                buildLoginPayload(
+                buildLoginEvent(
                         req.getUsername(), Status.ENABLED.getValue(), "登录成功", clientIp, uaInfo));
     }
 
-    private void publishLoginEvent(UserLoginPayload payload) {
-        eventPublisher.publishEvent(payload);
+    private void publishLoginEvent(UserLoginEvent event) {
+        eventPublisher.publishEvent(event);
     }
 
     /** 获取当前登录用户信息，包含角色编码和权限列表 */
@@ -158,9 +152,9 @@ public class SysAuthServiceImpl implements SysAuthService {
         return getPermissionsByUserId(userId);
     }
 
-    private static UserLoginPayload buildLoginPayload(
+    private static UserLoginEvent buildLoginEvent(
             String username, int status, String message, String ip, UserAgentInfo uaInfo) {
-        return UserLoginPayload.builder()
+        return UserLoginEvent.builder()
                 .username(username)
                 .status(status)
                 .message(message)

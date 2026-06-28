@@ -20,7 +20,7 @@ import org.mapstruct.MappingTarget;
 @Mapper(config = BaseMapperConfig.class)
 public interface SysUserConverter {
 
-    /** SysUser → SysUserResp（基础字段映射） deptName、roleIds、roleNames、lastLoginLocation 需在Service层手动设置 */
+    /** SysUser → SysUserResp（基础字段映射） deptName、roleIds、roleNames 需在Service层手动设置 */
     SysUserInfoResp toInfoResp(SysUserResp userResp);
 
     SysUserResp toResp(SysUser user);
@@ -34,5 +34,4 @@ public interface SysUserConverter {
     void update(SysUserUpdateReq req, @MappingTarget SysUser user);
 
     void update(SysUserProfileReq req, @MappingTarget SysUser user);
-
 }

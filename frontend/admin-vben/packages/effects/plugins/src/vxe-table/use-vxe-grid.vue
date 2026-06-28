@@ -478,7 +478,9 @@ onUnmounted(() => {
         <slot :name="slotName" v-bind="slotProps"></slot>
       </template>
       <template #toolbar-tools="slotProps">
-        <slot name="toolbar-tools" v-bind="slotProps"></slot>
+        <div class="flex items-center gap-2">
+          <slot name="toolbar-tools" v-bind="slotProps"></slot>
+        </div>
         <VxeButton
           icon="vxe-icon-search"
           circle

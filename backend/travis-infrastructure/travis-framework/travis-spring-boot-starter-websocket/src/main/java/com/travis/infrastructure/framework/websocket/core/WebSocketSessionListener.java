@@ -14,7 +14,7 @@ package com.travis.infrastructure.framework.websocket.core;
  *     private final MessagePublisher messagePublisher;
  *
  *     @Override
- *     public void onConnect(String loginType, String userId) {
+ *     public void onConnect(String loginType, String userId, String ip) {
  *         messagePublisher.publish(SystemMessage.USER_ONLINE,
  *                 new UserOnlinePayload(loginType, userId, true));
  *     }
@@ -36,8 +36,9 @@ public interface WebSocketSessionListener {
      *
      * @param loginType 登录类型（如 "admin"、"user"）
      * @param userId 用户 ID
+     * @param ip 客户端 IP
      */
-    void onConnect(String loginType, String userId);
+    void onConnect(String loginType, String userId, String ip);
 
     /**
      * 用户最后一个 WebSocket 连接断开时触发（从 1 → 0）

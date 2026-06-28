@@ -35,15 +35,22 @@ function pickChar(chars: string) {
   return chars.charAt(Math.floor(Math.random() * chars.length));
 }
 
-function formatLastLogin(row: SystemUserApi.SysUser) {
-  if (!row.lastLoginTime && !row.lastLoginIp && !row.lastLoginLocation) {
+function formatIp(ip?: string, location?: string) {
+  if (!ip && !location) {
     return '-';
   }
+  return `${ip || '-'}${location ? `（${location}）` : ''}`;
+}
+
+function formatLastOnline(row: SystemUserApi.SysUser) {
+  if (!row.lastOnlineTime && !row.lastOnlineIp && !row.lastOfflineTime) {
+    return '-';
+  }
+  const timeLabel = row.online ? '上线' : '离线';
+  const time = row.online ? row.lastOnlineTime : row.lastOfflineTime;
   return [
-    `时间：${row.lastLoginTime || '-'}`,
-    `IP：${row.lastLoginIp || '-'}${
-      row.lastLoginLocation ? `（${row.lastLoginLocation}）` : ''
-    }`,
+    `${timeLabel}：${time || '-'}`,
+    `IP：${formatIp(row.lastOnlineIp, row.lastOnlineLocation)}`,
   ].join('\n');
 }
 
@@ -167,7 +174,7 @@ export function useFormSchema(deptTreeData?: any[]): VbenFormSchema[] {
       component: 'RadioGroup',
       componentProps: {
         buttonStyle: 'solid',
-        options: getDictOptions('sys_status'),
+        options: getDictOptions('status'),
         optionType: 'button',
       },
       defaultValue: 1,
@@ -195,7 +202,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
       component: 'Select',
       componentProps: {
         allowClear: true,
-        options: getDictOptions('sys_status'),
+        options: getDictOptions('status'),
       },
       fieldName: 'status',
       label: $t('system.user.status'),
@@ -229,11 +236,14 @@ export function useColumns<T = SystemUserApi.SysUser>(
       width: 140,
     },
     {
-      field: 'deptName',
-      title: $t('system.user.dept'),
-      width: 140,
-      visible: isDeptEnabled(),
-      formatter: 'emptyPlaceholder',
+      align: 'center',
+      cellRender: {
+        attrs: { dictCode: 'online_status' },
+        name: 'CellTag',
+      },
+      field: 'onlineStatus',
+      title: $t('system.user.onlineStatus'),
+      width: 100,
     },
     {
       field: 'roleNames',
@@ -247,6 +257,13 @@ export function useColumns<T = SystemUserApi.SysUser>(
       },
     },
     {
+      field: 'deptName',
+      title: $t('system.user.dept'),
+      width: 140,
+      visible: isDeptEnabled(),
+      formatter: 'emptyPlaceholder',
+    },
+    {
       className: 'whitespace-pre-line text-center leading-6',
       field: 'contactInfo',
       formatter: ({ row }) => formatContactInfo(row),
@@ -255,16 +272,15 @@ export function useColumns<T = SystemUserApi.SysUser>(
       title: $t('system.user.contactInfo'),
       minWidth: 210,
     },
-    
     {
       className: 'whitespace-pre-line text-center leading-6',
-      field: 'lastLoginTime',
-      formatter: ({ row }) => formatLastLogin(row),
+      field: 'lastOnlineTime',
+      formatter: ({ row }) => formatLastOnline(row),
       headerAlign: 'center',
       showOverflow: false,
       sortable: true,
       title: $t('system.user.lastLogin'),
-      minWidth: 240,
+      minWidth: 260,
     },
     
     {
@@ -276,7 +292,7 @@ export function useColumns<T = SystemUserApi.SysUser>(
     },
     {
       cellRender: {
-        attrs: { beforeChange: onStatusChange, dictCode: 'sys_status' },
+        attrs: { beforeChange: onStatusChange, dictCode: 'status' },
         name: onStatusChange ? 'CellSwitch' : 'CellTag',
       },
       field: 'status',

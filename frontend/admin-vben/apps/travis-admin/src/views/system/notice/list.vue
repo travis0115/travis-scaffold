@@ -8,6 +8,7 @@ import type { SystemNoticeApi } from '#/api';
 import { ref } from 'vue';
 
 import { Page, useVbenDrawer, useVbenModal } from '@vben/common-ui';
+import { Plus } from '@vben/icons';
 import { formatDate } from '@vben/utils';
 
 import { Button, Tag } from 'antdv-next';
@@ -89,6 +90,7 @@ async function onStatusChange(newStatus: number, row: SystemNoticeApi.Notice) {
           type="primary"
           @click="formDrawerApi.setData({}).open()"
         >
+          <Plus class="size-5" />
           新增公告
         </Button>
       </template>

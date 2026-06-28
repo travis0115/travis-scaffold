@@ -1,6 +1,7 @@
 package com.travis.infrastructure.framework.redis.core;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -83,16 +84,29 @@ public class RedisUtil {
      * @param key 键，可多个
      */
     public static void delete(String... key) {
+        if (key == null || key.length == 0) {
+            return;
+        }
+        delete(Arrays.asList(key));
+    }
+
+    /**
+     * 删除多个 key
+     *
+     * @param keys 键集合
+     */
+    public static void delete(Collection<String> keys) {
+        if (CollectionUtils.isEmpty(keys)) {
+            return;
+        }
         try {
-            if (key != null && key.length > 0) {
-                if (key.length == 1) {
-                    redisTemplate.delete(key[0]);
-                } else {
-                    redisTemplate.delete(Arrays.asList(key));
-                }
+            if (keys.size() == 1) {
+                redisTemplate.delete(keys.iterator().next());
+            } else {
+                redisTemplate.delete(keys);
             }
         } catch (Exception e) {
-            log.warn("redis delete failed, keys={}", key, e);
+            log.warn("redis delete failed, keys={}", keys, e);
             throw new IllegalStateException("redis delete failed", e);
         }
     }
@@ -107,31 +121,32 @@ public class RedisUtil {
         if (key == null || key.length == 0) {
             return;
         }
-        Runnable deleteTask = () -> doDeleteCacheKey(cacheName, key);
-        if (TransactionSynchronizationManager.isActualTransactionActive()
-                && TransactionSynchronizationManager.isSynchronizationActive()) {
-            TransactionSynchronizationManager.registerSynchronization(
-                    new TransactionSynchronization() {
-                        @Override
-                        public void afterCommit() {
-                            deleteTask.run();
-                        }
-                    });
-            return;
-        }
-        deleteTask.run();
+        deleteCacheKey(cacheName, Arrays.asList(key));
     }
 
-    private static void doDeleteCacheKey(String cacheName, String... key) {
+    /**
+     * 删除 Spring Cache 生成的 Redis key，会自动套用当前 CacheKeyPrefix 配置。
+     *
+     * @param cacheName 缓存名称
+     * @param keys 缓存 key 集合
+     */
+    public static void deleteCacheKey(String cacheName, Collection<String> keys) {
+        if (CollectionUtils.isEmpty(keys)) {
+            return;
+        }
+        runAfterCommitIfNecessary(() -> doDeleteCacheKey(cacheName, keys));
+    }
+
+    private static void doDeleteCacheKey(String cacheName, Collection<String> keys) {
         try {
-            var cacheKeys = Arrays.stream(key).map(item -> buildCacheKey(cacheName, item)).toList();
+            var cacheKeys = keys.stream().map(item -> buildCacheKey(cacheName, item)).toList();
             if (cacheKeys.size() == 1) {
                 redisTemplate.delete(cacheKeys.getFirst());
             } else {
                 redisTemplate.delete(cacheKeys);
             }
         } catch (Exception e) {
-            log.warn("redis delete cache key failed, cacheName={}, keys={}", cacheName, key, e);
+            log.warn("redis delete cache key failed, cacheName={}, keys={}", cacheName, keys, e);
             throw new IllegalStateException("redis delete cache key failed", e);
         }
     }
@@ -149,15 +164,95 @@ public class RedisUtil {
      * @param pattern 模式，如 "user:*"
      */
     public static void deleteByPattern(String pattern) {
+        if (pattern == null) {
+            return;
+        }
+        deleteByPattern(Set.of(pattern));
+    }
+
+    /**
+     * 按模式匹配删除 key（慎用 keys，大 key 集合时阻塞）
+     *
+     * @param patterns 模式集合，如 "user:*"
+     */
+    public static void deleteByPattern(Collection<String> patterns) {
+        if (CollectionUtils.isEmpty(patterns)) {
+            return;
+        }
         try {
-            Set<String> keys = redisTemplate.keys(pattern);
-            if (!CollectionUtils.isEmpty(keys)) {
-                redisTemplate.delete(keys);
+            for (String pattern : patterns) {
+                doDeleteByPattern(pattern);
             }
         } catch (Exception e) {
-            log.warn("redis deleteByPattern failed, pattern={}", pattern, e);
-            throw new IllegalStateException("redis deleteByPattern failed: " + pattern, e);
+            log.warn("redis deleteByPattern failed, patterns={}", patterns, e);
+            throw new IllegalStateException("redis deleteByPattern failed", e);
         }
+    }
+
+    /**
+     * 按模式匹配删除 Spring Cache 生成的 Redis key，会自动套用当前 CacheKeyPrefix 配置。
+     *
+     * @param cacheName 缓存名称
+     * @param pattern 缓存 key 模式，如 "detail:*"
+     */
+    public static void deleteCacheKeyByPattern(String cacheName, String pattern) {
+        if (pattern == null) {
+            return;
+        }
+        deleteCacheKeyByPattern(cacheName, Set.of(pattern));
+    }
+
+    /**
+     * 按模式匹配删除 Spring Cache 生成的 Redis key，会自动套用当前 CacheKeyPrefix 配置。
+     *
+     * @param cacheName 缓存名称
+     * @param patterns 缓存 key 模式集合，如 "detail:*"
+     */
+    public static void deleteCacheKeyByPattern(String cacheName, Collection<String> patterns) {
+        if (CollectionUtils.isEmpty(patterns)) {
+            return;
+        }
+        runAfterCommitIfNecessary(
+                () -> {
+                    for (String pattern : patterns) {
+                        doDeleteCacheKeyByPattern(cacheName, pattern);
+                    }
+                });
+    }
+
+    private static void doDeleteCacheKeyByPattern(String cacheName, String pattern) {
+        try {
+            doDeleteByPattern(buildCacheKey(cacheName, pattern));
+        } catch (Exception e) {
+            log.warn(
+                    "redis delete cache key by pattern failed, cacheName={}, pattern={}",
+                    cacheName,
+                    pattern,
+                    e);
+            throw new IllegalStateException("redis delete cache key by pattern failed", e);
+        }
+    }
+
+    private static void doDeleteByPattern(String pattern) {
+        Set<String> keys = redisTemplate.keys(pattern);
+        if (!CollectionUtils.isEmpty(keys)) {
+            redisTemplate.delete(keys);
+        }
+    }
+
+    private static void runAfterCommitIfNecessary(Runnable task) {
+        if (TransactionSynchronizationManager.isActualTransactionActive()
+                && TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(
+                    new TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            task.run();
+                        }
+                    });
+            return;
+        }
+        task.run();
     }
 
     /**
@@ -277,6 +372,84 @@ public class RedisUtil {
         } catch (Exception e) {
             log.warn("redis decrement failed, key={}", key, e);
             throw new IllegalStateException("redis decrement failed: " + key, e);
+        }
+    }
+
+    /**
+     * 向 Set 添加成员
+     *
+     * @param key 键
+     * @param values 成员
+     * @return 新增成员数量
+     */
+    public static Long setAdd(String key, Object... values) {
+        try {
+            return redisTemplate.opsForSet().add(key, values);
+        } catch (Exception e) {
+            log.warn("redis setAdd failed, key={}", key, e);
+            throw new IllegalStateException("redis setAdd failed: " + key, e);
+        }
+    }
+
+    /**
+     * 从 Set 删除成员
+     *
+     * @param key 键
+     * @param values 成员
+     * @return 删除成员数量
+     */
+    public static Long setRemove(String key, Object... values) {
+        try {
+            return redisTemplate.opsForSet().remove(key, values);
+        } catch (Exception e) {
+            log.warn("redis setRemove failed, key={}", key, e);
+            throw new IllegalStateException("redis setRemove failed: " + key, e);
+        }
+    }
+
+    /**
+     * 判断 Set 是否包含成员
+     *
+     * @param key 键
+     * @param value 成员
+     * @return true 包含，false 不包含
+     */
+    public static Boolean setIsMember(String key, Object value) {
+        try {
+            return redisTemplate.opsForSet().isMember(key, value);
+        } catch (Exception e) {
+            log.warn("redis setIsMember failed, key={}", key, e);
+            throw new IllegalStateException("redis setIsMember failed: " + key, e);
+        }
+    }
+
+    /**
+     * 获取 Set 所有成员
+     *
+     * @param key 键
+     * @return 成员集合
+     */
+    public static Set<Object> setMembers(String key) {
+        try {
+            return redisTemplate.opsForSet().members(key);
+        } catch (Exception e) {
+            log.warn("redis setMembers failed, key={}", key, e);
+            throw new IllegalStateException("redis setMembers failed: " + key, e);
+        }
+    }
+
+    /**
+     * 获取 Set 成员数量
+     *
+     * @param key 键
+     * @return 成员数量
+     */
+    public static Long setSize(String key) {
+        try {
+            return redisTemplate.opsForSet().size(key);
+        } catch (Exception e) {
+            log.warn("redis setSize failed, key={}", key, e);
+            throw new IllegalStateException("redis setSize failed: " + key, e);
         }
     }
 }

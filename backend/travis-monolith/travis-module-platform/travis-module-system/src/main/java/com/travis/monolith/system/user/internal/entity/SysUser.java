@@ -39,11 +39,14 @@ public class SysUser extends BaseEntity {
     /** 状态（0-禁用 1-启用） */
     private Integer status;
 
-    /** 最后登录时间 */
-    private LocalDateTime lastLoginTime;
+    /** 最近上线时间 */
+    private LocalDateTime lastOnlineTime;
 
-    /** 最后登录IP */
-    private String lastLoginIp;
+    /** 最近上线IP */
+    private String lastOnlineIp;
+
+    /** 最近下线时间 */
+    private LocalDateTime lastOfflineTime;
 
     /** 乐观锁版本号 */
     private Integer version;

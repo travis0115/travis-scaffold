@@ -13,7 +13,13 @@ import { IconifyIcon, Plus } from '@vben/icons';
 import { Button, Card, Input, message } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { deleteUser, getDeptTree, getUserPage, updateUserStatus } from '#/api';
+import {
+  deleteUser,
+  getDeptTree,
+  getOnlineUserCount,
+  getUserPage,
+  updateUserStatus,
+} from '#/api';
 import { isDeptEnabled } from '#/features';
 import { $t } from '#/locales';
 import { hasAccessCode, SYSTEM_PERMS } from '#/utils/permissions';
@@ -38,6 +44,8 @@ const [ResetPwdModal, resetPwdModalApi] = useVbenModal({
 const showDeptTree = isDeptEnabled();
 const deptListSource = ref<any[]>([]);
 const deptSearchValue = ref('');
+const onlineOnly = ref(false);
+const onlineUserCount = ref(0);
 const selectedDeptId = ref<number>();
 const deptManualExpandedKeys = ref<TreeKey[]>([]);
 const deptSearchExpandedKeys = ref<TreeKey[]>([]);
@@ -68,8 +76,10 @@ const deptTreeExpandedKeys = computed({
 });
 const deptTreeExpanded = computed(() => deptTreeExpandedKeys.value.length > 0);
 const userTableTitle = computed(() => {
-  const title = $t('system.user.list');
-  if (!showDeptTree) return title;
+  const title = onlineOnly.value
+    ? $t('system.user.onlineList')
+    : $t('system.user.list');
+  if (!showDeptTree && !onlineOnly.value) return title;
   return `${title} - ${selectedDeptName.value}`;
 });
 const selectedDeptName = computed(() => {
@@ -93,6 +103,14 @@ async function loadDeptList() {
   } catch {
     deptListSource.value = [];
     deptManualExpandedKeys.value = [];
+  }
+}
+
+async function loadOnlineUserCount() {
+  try {
+    onlineUserCount.value = await getOnlineUserCount();
+  } catch {
+    onlineUserCount.value = 0;
   }
 }
 
@@ -251,15 +269,21 @@ const [Grid, gridApi] = useVbenVxeGrid({
           const orderParams = sort?.order
             ? { asc: sort.order === 'asc', orderBy: sort.field || sort.property }
             : {};
-          return await getUserPage({
+          const result = await getUserPage({
             pageNum: page.currentPage,
             pageSize: page.pageSize,
+            onlineOnly: onlineOnly.value,
             ...orderParams,
             ...formValues,
             ...(selectedDeptId.value === undefined
               ? {}
               : { deptId: selectedDeptId.value }),
           });
+          result.records?.forEach((item) => {
+            item.onlineStatus = item.online ? 1 : 0;
+          });
+          await loadOnlineUserCount();
+          return result;
         },
       },
     },
@@ -339,6 +363,11 @@ function onCreate() {
   formDrawerApi.setData({}).open();
 }
 
+function onToggleOnlineOnly() {
+  onlineOnly.value = !onlineOnly.value;
+  gridApi.query();
+}
+
 async function onResetPassword(row: SystemUserApi.SysUser) {
   resetPwdModalApi.setData({ id: row.id, nickname: row.nickname }).open();
 }
@@ -347,6 +376,7 @@ onMounted(() => {
   if (showDeptTree) {
     loadDeptList();
   }
+  loadOnlineUserCount();
 });
 </script>
 <template>
@@ -434,6 +464,17 @@ onMounted(() => {
       <div class="ml-4 min-w-0 flex-1">
         <Grid :table-title="userTableTitle">
           <template #toolbar-tools>
+            <Button @click="onToggleOnlineOnly">
+              <IconifyIcon
+                :icon="onlineOnly ? 'lucide:users' : 'lucide:activity'"
+                class="size-4"
+              />
+              {{
+                onlineOnly
+                  ? $t('system.user.allUsers')
+                  : $t('system.user.onlineUsers', [onlineUserCount])
+              }}
+            </Button>
             <Button
               v-access:code="SYSTEM_PERMS.userCreate"
               type="primary"
@@ -447,8 +488,19 @@ onMounted(() => {
       </div>
     </div>
     <!-- 未启用部门时只显示表格 -->
-    <Grid v-else :table-title="$t('system.user.list')">
+    <Grid v-else :table-title="userTableTitle">
       <template #toolbar-tools>
+        <Button @click="onToggleOnlineOnly">
+          <IconifyIcon
+            :icon="onlineOnly ? 'lucide:users' : 'lucide:activity'"
+            class="size-4"
+          />
+          {{
+            onlineOnly
+              ? $t('system.user.allUsers')
+              : $t('system.user.onlineUsers', [onlineUserCount])
+          }}
+        </Button>
         <Button
           v-access:code="SYSTEM_PERMS.userCreate"
           type="primary"

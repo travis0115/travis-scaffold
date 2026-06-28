@@ -3,12 +3,12 @@ package com.travis.monolith.system.user.api.event;
 import lombok.Builder;
 
 /**
- * 用户登录事件载荷，由认证服务在登录成功或失败时发布
+ * 用户登录事件，由认证服务在登录成功或失败时发布
  *
  * @author travis
  */
 @Builder
-public record UserLoginPayload(
+public record UserLoginEvent(
         /* 登录用户名 */
         String username,
         /* 登录状态（0-失败 1-成功） */

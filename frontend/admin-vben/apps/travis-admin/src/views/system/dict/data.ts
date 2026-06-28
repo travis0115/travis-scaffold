@@ -46,7 +46,7 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'RadioGroup',
       componentProps: {
         buttonStyle: 'solid',
-        options: getDictOptions('sys_status'),
+        options: getDictOptions('status'),
         optionType: 'button',
       },
       defaultValue: 1,
@@ -72,7 +72,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
       component: 'Select',
       componentProps: {
         allowClear: true,
-        options: getDictOptions('sys_status'),
+        options: getDictOptions('status'),
       },
       fieldName: 'status',
       label: $t('system.dict.status'),
@@ -103,7 +103,7 @@ export function useColumns(
     },
     {
       cellRender: {
-        attrs: { beforeChange: onStatusChange, dictCode: 'sys_status' },
+        attrs: { beforeChange: onStatusChange, dictCode: 'status' },
         name: onStatusChange ? 'CellSwitch' : 'CellTag',
       },
       field: 'status',

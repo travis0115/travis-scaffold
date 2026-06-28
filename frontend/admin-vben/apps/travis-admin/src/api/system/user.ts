@@ -19,9 +19,12 @@ export namespace SystemUserApi {
     status: 0 | 1;
     roleIds?: number[];
     roleNames?: string[];
-    lastLoginIp?: string;
-    lastLoginLocation?: string;
-    lastLoginTime?: string;
+    lastOfflineTime?: string;
+    lastOnlineIp?: string;
+    lastOnlineLocation?: string;
+    lastOnlineTime?: string;
+    online?: boolean;
+    onlineStatus?: 0 | 1;
     createTime?: string;
   }
 }
@@ -34,6 +37,10 @@ async function getUserPage(params: Recordable<any>) {
     '/system/user/page',
     { params },
   );
+}
+
+async function getOnlineUserCount() {
+  return requestClient.get<number>('/system/user/online-count');
 }
 
 /**
@@ -94,6 +101,7 @@ export {
   assignUserRoles,
   createUser,
   deleteUser,
+  getOnlineUserCount,
   getUserDetail,
   getUserPage,
   resetUserPassword,

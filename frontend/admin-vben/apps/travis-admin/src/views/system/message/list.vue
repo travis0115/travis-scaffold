@@ -3,6 +3,7 @@ import type { OnActionClickParams, VxeTableGridOptions } from '#/adapter/vxe-tab
 import type { SystemMessageApi } from '#/api';
 
 import { Page, useVbenDrawer } from '@vben/common-ui';
+import { Plus } from '@vben/icons';
 
 import { Button } from 'antdv-next';
 
@@ -43,6 +44,7 @@ function onActionClick({ code, row }: OnActionClickParams<SystemMessageApi.Messa
           type="primary"
           @click="formDrawerApi.setData({}).open()"
         >
+          <Plus class="size-5" />
           新增消息
         </Button>
       </template>

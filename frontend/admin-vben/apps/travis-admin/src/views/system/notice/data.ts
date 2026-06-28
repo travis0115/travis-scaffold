@@ -150,7 +150,7 @@ export function useColumns(
     {
       cellRender: {
         attrs: {
-          dictCode: 'sys_pinned',
+          dictCode: 'is_pinned',
         },
         name: 'CellTag',
       },

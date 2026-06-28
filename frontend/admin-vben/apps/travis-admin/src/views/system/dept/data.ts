@@ -73,7 +73,7 @@ export function useSchema(
       component: 'RadioGroup',
       componentProps: {
         buttonStyle: 'solid',
-        options: getDictOptions('sys_status'),
+        options: getDictOptions('status'),
         optionType: 'button',
       },
       defaultValue: 1,
@@ -119,7 +119,7 @@ export function useColumns(
     },
     {
       cellRender: {
-        attrs: { beforeChange: onStatusChange, dictCode: 'sys_status' },
+        attrs: { beforeChange: onStatusChange, dictCode: 'status' },
         name: onStatusChange ? 'CellSwitch' : 'CellTag',
       },
       field: 'status',

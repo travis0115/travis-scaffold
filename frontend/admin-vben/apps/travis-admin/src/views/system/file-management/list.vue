@@ -1275,6 +1275,7 @@ onBeforeUnmount(() => {
                 v-access:code="SYSTEM_PERMS.fileUpload"
                 @click="openStorageModal"
               >
+                <IconifyIcon icon="lucide:settings" class="size-4" />
                 存储配置（{{ storageConfigs.length }}）
               </Button>
               <Upload
@@ -1285,6 +1286,7 @@ onBeforeUnmount(() => {
                 :show-upload-list="false"
               >
                 <Button v-access:code="SYSTEM_PERMS.fileUpload" type="primary">
+                  <IconifyIcon icon="lucide:upload" class="size-4" />
                   上传文件
                 </Button>
               </Upload>
@@ -1361,6 +1363,7 @@ onBeforeUnmount(() => {
           type="primary"
           @click.stop="createStorageConfigItem"
         >
+          <IconifyIcon icon="lucide:plus" class="size-4" />
           新增配置
         </Button>
       </div>

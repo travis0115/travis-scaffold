@@ -186,7 +186,7 @@ export const useJobGridFormSchema = (): VbenFormSchema[] => [
     component: 'Select',
     componentProps: {
       allowClear: true,
-      options: getDictOptions('sys_status'),
+      options: getDictOptions('status'),
     },
     fieldName: 'status',
     label: '状态',
@@ -229,7 +229,7 @@ export function useJobColumns(
     },
     {
       cellRender: {
-        attrs: { beforeChange: onStatusChange, dictCode: 'sys_status' },
+        attrs: { beforeChange: onStatusChange, dictCode: 'status' },
         name: onStatusChange ? 'CellSwitch' : 'CellTag',
       },
       field: 'status',

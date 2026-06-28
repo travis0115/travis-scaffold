@@ -42,6 +42,9 @@ public class WebSocketProperties {
     /** Session 超时时间，单位毫秒（默认 5min） */
     private long sessionTimeout = 300000;
 
+    /** 下线确认宽限期，单位毫秒（默认 15s），用于避免刷新页面时短暂离线 */
+    private long offlineGracePeriod = 15000;
+
     /** Redis 相关配置 */
     private Redis redis = new Redis();
 

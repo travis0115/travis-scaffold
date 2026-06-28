@@ -55,6 +55,16 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
 
     private final ThreadPoolTaskScheduler heartbeatScheduler;
     private ScheduledFuture<?> heartbeatTask;
+    private final ConcurrentMap<String, ScheduledFuture<?>> pendingDisconnectTasks =
+            new ConcurrentHashMap<>();
+    private static final String[] CLIENT_IP_HEADERS = {
+        "X-Forwarded-For",
+        "X-Real-IP",
+        "Proxy-Client-IP",
+        "WL-Proxy-Client-IP",
+        "HTTP_CLIENT_IP",
+        "HTTP_X_FORWARDED_FOR"
+    };
 
     public LocalWebSocketSessionManager(
             WebSocketProperties properties,
@@ -95,6 +105,8 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
             return;
         }
 
+        boolean wasOnline = isSessionKeyOnline(sessionKey);
+        cancelPendingDisconnect(sessionKey);
         boolean isFirst =
                 localSessions
                         .computeIfAbsent(sessionKey, k -> ConcurrentHashMap.newKeySet())
@@ -103,9 +115,9 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
             dispatcher.registerUserInstance(sessionKey, instanceId);
         }
 
-        // 首次连接（从 0 → 1）时通知监听器
-        if (isFirst) {
-            fireConnect(sessionKey);
+        // 全局首次连接（从 0 → 1）时通知监听器
+        if (isFirst && !wasOnline) {
+            fireConnect(sessionKey, getClientIp(session));
         }
 
         log.debug("[WebSocket] 连接建立: sessionKey={}, sessionId={}", sessionKey, session.getId());
@@ -138,11 +150,7 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
             sessions.remove(session);
             if (sessions.isEmpty()) {
                 localSessions.remove(sessionKey);
-                if (dispatcher != null) {
-                    dispatcher.unregisterUserInstance(sessionKey, instanceId);
-                }
-                // 最后一个连接断开（从 1 → 0）时通知监听器
-                fireDisconnect(sessionKey);
+                scheduleDisconnect(sessionKey);
             }
         }
         log.debug(
@@ -187,6 +195,13 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
     @Override
     public boolean isOnline(String loginType, String userId) {
         String sessionKey = loginType + ":" + userId;
+        return isSessionKeyOnline(sessionKey);
+    }
+
+    private boolean isSessionKeyOnline(String sessionKey) {
+        if (pendingDisconnectTasks.containsKey(sessionKey)) {
+            return true;
+        }
         // 先查本地
         if (localSessions.containsKey(sessionKey)) {
             return true;
@@ -260,11 +275,11 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
     }
 
     /** 通知所有监听器：用户上线 */
-    private void fireConnect(String sessionKey) {
+    private void fireConnect(String sessionKey, String ip) {
         String[] parts = splitSessionKey(sessionKey);
         for (WebSocketSessionListener listener : listeners) {
             try {
-                listener.onConnect(parts[0], parts[1]);
+                listener.onConnect(parts[0], parts[1], ip);
             } catch (Exception e) {
                 log.warn("[WebSocket] Listener.onConnect 异常: sessionKey={}", sessionKey, e);
             }
@@ -283,6 +298,37 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
         }
     }
 
+    private void scheduleDisconnect(String sessionKey) {
+        cancelPendingDisconnect(sessionKey);
+        var task =
+                heartbeatScheduler.schedule(
+                        () -> confirmDisconnect(sessionKey),
+                        java.time.Instant.now()
+                                .plusMillis(Math.max(properties.getOfflineGracePeriod(), 0)));
+        pendingDisconnectTasks.put(sessionKey, task);
+    }
+
+    private void cancelPendingDisconnect(String sessionKey) {
+        var task = pendingDisconnectTasks.remove(sessionKey);
+        if (task != null) {
+            task.cancel(false);
+        }
+    }
+
+    private void confirmDisconnect(String sessionKey) {
+        pendingDisconnectTasks.remove(sessionKey);
+        if (localSessions.containsKey(sessionKey)) {
+            return;
+        }
+        if (dispatcher != null) {
+            dispatcher.unregisterUserInstance(sessionKey, instanceId);
+            if (dispatcher.isUserOnline(sessionKey)) {
+                return;
+            }
+        }
+        fireDisconnect(sessionKey);
+    }
+
     /** 拆分 sessionKey：{@code loginType:userId} → [loginType, userId] */
     private String[] splitSessionKey(String sessionKey) {
         int idx = sessionKey.indexOf(':');
@@ -290,6 +336,20 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
             return new String[] {"unknown", sessionKey};
         }
         return new String[] {sessionKey.substring(0, idx), sessionKey.substring(idx + 1)};
+    }
+
+    private String getClientIp(WebSocketSession session) {
+        var headers = session.getHandshakeHeaders();
+        for (String header : CLIENT_IP_HEADERS) {
+            var value = headers.getFirst(header);
+            if (value != null && !value.isBlank() && !"unknown".equalsIgnoreCase(value)) {
+                return value.split(",")[0].trim();
+            }
+        }
+        var address = session.getRemoteAddress();
+        return address == null || address.getAddress() == null
+                ? null
+                : address.getAddress().getHostAddress();
     }
 
     /** 向所有本地连接发送心跳 */

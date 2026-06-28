@@ -45,7 +45,7 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'RadioGroup',
       componentProps: {
         buttonStyle: 'solid',
-        options: getDictOptions('sys_status'),
+        options: getDictOptions('status'),
         optionType: 'button',
       },
       defaultValue: 1,
@@ -78,7 +78,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
       component: 'Select',
       componentProps: {
         allowClear: true,
-        options: getDictOptions('sys_status'),
+        options: getDictOptions('status'),
       },
       fieldName: 'status',
       label: $t('system.role.status'),
@@ -135,7 +135,7 @@ export function useColumns<T = SystemRoleApi.SysRole>(
       cellRender: {
         attrs: {
           beforeChange: onStatusChange,
-          dictCode: 'sys_status',
+          dictCode: 'status',
           disabled: isNotModifiable,
         },
         name: onStatusChange ? 'CellSwitch' : 'CellTag',

@@ -164,6 +164,10 @@ function handleNotificationSocketOpen() {
 function handleNotificationSocketMessage(event: MessageEvent) {
   try {
     const message = JSON.parse(event.data);
+    if (message?.type === 'PING') {
+      notificationSocket?.send('pong');
+      return;
+    }
     if (message?.content?.event === 'SYSTEM_MESSAGE_PUBLISHED') {
       void loadNotifications();
     }
