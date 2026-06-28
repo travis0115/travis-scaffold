@@ -11,6 +11,8 @@ import lombok.*;
 public class SysFile extends BaseEntity {
     private Long folderId;
     private Long storageConfigId;
+    private String uploaderType;
+    private String uploaderName;
     private String fileName;
     private String originalName;
     private String path;

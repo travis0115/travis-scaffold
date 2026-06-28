@@ -105,6 +105,11 @@ spring:
       org.quartz.threadPool.threadCount: 10
   modulith:
     detection-strategy: explicitly-annotated  #只选择显式注释的包作为应用程序模块的基础包（通过 @ApplicationModules 或 jMolecules 的 DDD @Module）。
+    events:
+      completion-mode: DELETE
+      jdbc:
+        schema-initialization:
+          enabled: true
   servlet:
     multipart:
       enabled: true #开启文件上传

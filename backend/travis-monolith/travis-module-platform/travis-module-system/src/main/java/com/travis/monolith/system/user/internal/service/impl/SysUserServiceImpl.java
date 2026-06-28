@@ -13,9 +13,11 @@ import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.redis.core.RedisUtil;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.util.Ip2RegionUtil;
+import com.travis.monolith.system.common.api.constant.LoginSubjectSessionKey;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.dept.api.SysDeptApi;
 import com.travis.monolith.system.file.api.SysFileApi;
+import com.travis.monolith.system.file.api.event.UploaderNameChangedEvent;
 import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.api.request.*;
 import com.travis.monolith.system.user.api.response.SysUserResp;
@@ -25,11 +27,12 @@ import com.travis.monolith.system.user.internal.mapper.SysUserMapper;
 import com.travis.monolith.system.user.internal.service.SysUserService;
 import java.util.List;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 @CacheConfig(cacheNames = "system:user")
+@RequiredArgsConstructor
 public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         implements SysUserService {
 
@@ -57,19 +61,10 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     /** 文件 API */
     private final SysFileApi fileApi;
 
+    private final ApplicationEventPublisher eventPublisher;
+
     /** 对象转换器 */
     private final SysUserConverter converter;
-
-    public SysUserServiceImpl(
-            SysDeptApi deptApi,
-            SysRoleApi roleApi,
-            @Lazy SysFileApi fileApi,
-            SysUserConverter converter) {
-        this.deptApi = deptApi;
-        this.roleApi = roleApi;
-        this.fileApi = fileApi;
-        this.converter = converter;
-    }
 
     /** 分页查询用户列表 */
     @Override
@@ -150,6 +145,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     @Caching(evict = {@CacheEvict(key = "'username:'+#id"), @CacheEvict(key = "'detail:'+#id")})
     public void update(Long id, SysUserUpdateReq req) {
         var user = getByIdOrThrow(id);
+        var oldUsername = user.getUsername();
         // 检查用户名唯一性（排除自身）
         var count =
                 count(
@@ -166,6 +162,11 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         }
         converter.update(req, user);
         updateById(user);
+        if (!user.getUsername().equals(oldUsername)) {
+            syncCurrentSessionUsername(id, user.getUsername());
+            eventPublisher.publishEvent(
+                    new UploaderNameChangedEvent(LoginType.ADMIN, id, user.getUsername()));
+        }
     }
 
     /** 修改用户状态 */
@@ -224,11 +225,11 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
             return null;
         }
         var user =
-                mapper().selectOne(
-                                new LambdaQueryWrapperX<SysUser>()
-                                        .select(SysUser::getId, SysUser::getUsername)
-                                        .eq(SysUser::getId, userId)
-                                        .last("LIMIT 1"));
+                getOne(
+                        new LambdaQueryWrapperX<SysUser>()
+                                .select(SysUser::getId, SysUser::getUsername)
+                                .eq(SysUser::getId, userId)
+                                .last("LIMIT 1"));
         return user == null ? null : user.getUsername();
     }
 
@@ -316,5 +317,15 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
             resp.setLastLoginLocation(Ip2RegionUtil.getRegionByIP(user.getLastLoginIp()));
         }
         return resp;
+    }
+
+    private void syncCurrentSessionUsername(Long userId, String username) {
+        try {
+            var logic = StpKit.of(LoginType.ADMIN);
+            if (logic.isLogin() && logic.getLoginIdAsLong() == userId) {
+                logic.getSession().set(LoginSubjectSessionKey.USERNAME, username);
+            }
+        } catch (Exception ignored) {
+        }
     }
 }

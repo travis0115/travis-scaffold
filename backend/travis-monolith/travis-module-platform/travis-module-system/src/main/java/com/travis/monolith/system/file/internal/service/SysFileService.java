@@ -21,7 +21,8 @@ public interface SysFileService extends IService<SysFile> {
      * @param file 文件
      * @return 文件相对路径，如 /files/2026-06-02/abc.jpg
      */
-    FileUploadResp upload(MultipartFile file, Long folderId);
+    FileUploadResp upload(
+            MultipartFile file, Long folderId, String uploaderType, String uploaderName);
 
     PageResp<SysFileResp> page(SysFilePageReq req);
 
@@ -32,4 +33,7 @@ public interface SysFileService extends IService<SysFile> {
      * @return 完整访问URL
      */
     String getFileUrlById(Long fileId);
+
+    /** 更新指定上传主体的文件上传人名称。 */
+    void updateUploaderName(String uploaderType, Long uploaderId, String uploaderName);
 }

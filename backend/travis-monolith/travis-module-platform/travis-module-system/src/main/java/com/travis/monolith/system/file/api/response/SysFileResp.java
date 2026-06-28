@@ -10,6 +10,9 @@ public class SysFileResp {
     private Long storageConfigId;
     private String storageConfigName;
     private String storageType;
+    private Long createBy;
+    private String uploaderType;
+    private String uploaderName;
     private String fileName;
     private String originalName;
     private String path;

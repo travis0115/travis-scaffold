@@ -46,6 +46,16 @@ function formatFileSize(size?: number) {
   return `${Math.ceil(value / 1024)} KB`;
 }
 
+function formatUploader(row: any) {
+  if (row.uploaderName) {
+    return row.uploaderName;
+  }
+  if (row.uploaderType && row.createBy) {
+    return `${row.uploaderType}:${row.createBy}`;
+  }
+  return '-';
+}
+
 export function useColumns<T>(onActionClick: OnActionClickFn<T>): VxeTableGridColumns {
   return [
     { field: 'fileName', minWidth: 220, title: '文件名' },
@@ -58,6 +68,12 @@ export function useColumns<T>(onActionClick: OnActionClickFn<T>): VxeTableGridCo
       formatter: ({ row }: any) => row.storageConfigName || row.storageType || '-',
       title: '服务商',
       width: 150,
+    },
+    {
+      field: 'uploaderName',
+      formatter: ({ row }: any) => formatUploader(row),
+      title: '上传人',
+      width: 140,
     },
     { field: 'createTime', formatter: 'formatDateTime', sortable: true, title: '上传时间', width: 180 },
     {

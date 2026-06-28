@@ -9,6 +9,7 @@ import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.model.UserAgentInfo;
 import com.travis.infrastructure.framework.web.core.util.IpUtil;
 import com.travis.infrastructure.framework.web.core.util.UserAgentUtil;
+import com.travis.monolith.system.common.api.constant.LoginSubjectSessionKey;
 import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.common.api.event.SystemEvent;
 import com.travis.monolith.system.menu.api.SysMenuApi;
@@ -82,17 +83,6 @@ public class SysAuthServiceImpl implements SysAuthService {
                             uaInfo));
             throw new BizException(CommonErrorCode.AUTH_LOGIN_BAD_CREDENTIALS);
         }
-        // 检查账号是否被禁用
-        if (user.getStatus() != null && user.getStatus().equals(Status.DISABLED.getValue())) {
-            publishLoginEvent(
-                    buildLoginPayload(
-                            req.getUsername(),
-                            Status.DISABLED.getValue(),
-                            "账号已被禁用",
-                            clientIp,
-                            uaInfo));
-            throw new BizException(CommonErrorCode.AUTH_LOGIN_USER_DISABLED);
-        }
 
         // BCrypt 校验密码
         if (!BCrypt.checkpw(req.getPassword(), user.getPassword())) {
@@ -106,8 +96,23 @@ public class SysAuthServiceImpl implements SysAuthService {
             throw new BizException(CommonErrorCode.AUTH_LOGIN_BAD_CREDENTIALS);
         }
 
+        // 检查账号是否被禁用
+        if (user.getStatus() != null && user.getStatus().equals(Status.DISABLED.getValue())) {
+            publishLoginEvent(
+                    buildLoginPayload(
+                            req.getUsername(),
+                            Status.DISABLED.getValue(),
+                            "账号已被禁用",
+                            clientIp,
+                            uaInfo));
+            throw new BizException(CommonErrorCode.AUTH_LOGIN_USER_DISABLED);
+        }
+
         // 校验通过，通过 Sa-Token 执行登录
         StpKit.of(LoginType.ADMIN).login(user.getId());
+        StpKit.of(LoginType.ADMIN)
+                .getSession()
+                .set(LoginSubjectSessionKey.USERNAME, user.getUsername());
         var token = StpKit.of(LoginType.ADMIN).getTokenValue();
 
         // 更新最后登录时间和IP

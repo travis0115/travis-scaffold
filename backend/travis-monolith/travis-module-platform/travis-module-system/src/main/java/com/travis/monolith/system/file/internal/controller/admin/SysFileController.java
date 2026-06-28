@@ -6,7 +6,9 @@ import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
+import com.travis.monolith.system.common.api.constant.LoginSubjectSessionKey;
 import com.travis.monolith.system.common.api.constant.SystemPermission;
 import com.travis.monolith.system.file.api.request.SysFilePageReq;
 import com.travis.monolith.system.file.api.response.FileUploadPolicyResp;
@@ -61,7 +63,16 @@ public class SysFileController {
     public ApiResponse<FileUploadResp> upload(
             @RequestParam("file") MultipartFile file,
             @RequestParam(required = false) Long folderId) {
-        return ApiResponse.success(fileService.upload(file, folderId));
+        var logic = StpKit.of(LoginType.ADMIN);
+        var username = logic.getSession().get(LoginSubjectSessionKey.USERNAME);
+        return ApiResponse.success(
+                fileService.upload(
+                        file,
+                        folderId,
+                        LoginType.ADMIN,
+                        username == null
+                                ? String.valueOf(logic.getLoginIdAsLong())
+                                : username.toString()));
     }
 
     @GetMapping("/page")

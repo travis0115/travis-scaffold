@@ -35,6 +35,10 @@ public abstract class ServiceImplX<M extends BaseMapperX<T>, T> extends ServiceI
         return entity;
     }
 
+    protected T getOne(LambdaQueryWrapperX<T> wrapper) {
+        return baseMapper.selectOne(wrapper.last("LIMIT 1"));
+    }
+
     protected Page<T> page(int pageNum, int pageSize, LambdaQueryWrapperX<T> wrapper) {
         return baseMapper.page(pageNum, pageSize, wrapper);
     }

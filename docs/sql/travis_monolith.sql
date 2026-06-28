@@ -18,6 +18,30 @@ SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- ----------------------------
+-- Table structure for EVENT_PUBLICATION
+-- ----------------------------
+DROP TABLE IF EXISTS `EVENT_PUBLICATION`;
+CREATE TABLE `EVENT_PUBLICATION` (
+  `ID` varchar(36) NOT NULL,
+  `LISTENER_ID` varchar(512) NOT NULL,
+  `EVENT_TYPE` varchar(512) NOT NULL,
+  `SERIALIZED_EVENT` varchar(4000) NOT NULL,
+  `PUBLICATION_DATE` timestamp(6) NOT NULL,
+  `COMPLETION_DATE` timestamp(6) NULL DEFAULT NULL,
+  `STATUS` varchar(20) DEFAULT NULL,
+  `COMPLETION_ATTEMPTS` int DEFAULT NULL,
+  `LAST_RESUBMISSION_DATE` timestamp(6) NULL DEFAULT NULL,
+  PRIMARY KEY (`ID`),
+  KEY `EVENT_PUBLICATION_BY_COMPLETION_DATE_IDX` (`COMPLETION_DATE`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- ----------------------------
+-- Records of EVENT_PUBLICATION
+-- ----------------------------
+BEGIN;
+COMMIT;
+
+-- ----------------------------
 -- Table structure for ops_job
 -- ----------------------------
 DROP TABLE IF EXISTS `ops_job`;
@@ -549,6 +573,8 @@ CREATE TABLE `sys_file` (
   `id` bigint NOT NULL COMMENT '主键ID',
   `folder_id` bigint DEFAULT NULL COMMENT '文件夹ID',
   `storage_config_id` bigint NOT NULL COMMENT '存储配置ID',
+  `uploader_type` varchar(32) NOT NULL DEFAULT 'admin' COMMENT '上传主体类型',
+  `uploader_name` varchar(100) DEFAULT NULL COMMENT '上传主体名称',
   `file_name` varchar(255) NOT NULL COMMENT '存储文件名',
   `original_name` varchar(500) DEFAULT NULL COMMENT '原始文件名',
   `path` varchar(1000) NOT NULL COMMENT '相对路径',
@@ -563,6 +589,7 @@ CREATE TABLE `sys_file` (
   PRIMARY KEY (`id`),
   KEY `idx_file_folder` (`folder_id`),
   KEY `idx_file_storage` (`storage_config_id`),
+  KEY `idx_file_uploader` (`uploader_type`,`create_by`),
   KEY `idx_file_create_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='文件元数据表';
 
@@ -570,10 +597,10 @@ CREATE TABLE `sys_file` (
 -- Records of sys_file
 -- ----------------------------
 BEGIN;
-INSERT INTO `sys_file` (`id`, `folder_id`, `storage_config_id`, `file_name`, `original_name`, `path`, `extension`, `mime_type`, `size`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (2064991134304079874, NULL, 1930000000001000, 'ae6789812d63493790ce5dad378a4389.jpg', 'avatar.jpg', '/files/2026-06-11/ae6789812d63493790ce5dad378a4389.jpg', 'jpg', 'image/jpeg', 130883, 0, '2026-06-11 08:40:27', 1, '2026-06-26 11:50:44', NULL);
-INSERT INTO `sys_file` (`id`, `folder_id`, `storage_config_id`, `file_name`, `original_name`, `path`, `extension`, `mime_type`, `size`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (2065023466524274690, NULL, 1930000000001000, 'bcb9eb67bd0c417e974f153b4af663ac.jpg', 'IMAGE 2026-06-11 15:53:00.jpg', '/files/2026-06-11/bcb9eb67bd0c417e974f153b4af663ac.jpg', 'jpg', 'image/jpeg', 115784, 0, '2026-06-11 10:48:55', 1, '2026-06-26 21:08:38', NULL);
-INSERT INTO `sys_file` (`id`, `folder_id`, `storage_config_id`, `file_name`, `original_name`, `path`, `extension`, `mime_type`, `size`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (2070353943804170241, NULL, 1930000000001000, '0203fc28e0b941bab941a1775c577e18.jpg', 'MOTA克重表.jpg', '/files/2026-06-26/0203fc28e0b941bab941a1775c577e18.jpg', 'jpg', 'image/jpeg', 278510, 0, '2026-06-26 03:50:20', 1, '2026-06-26 21:08:38', NULL);
-INSERT INTO `sys_file` (`id`, `folder_id`, `storage_config_id`, `file_name`, `original_name`, `path`, `extension`, `mime_type`, `size`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (2070354119696502786, NULL, 1930000000001000, '49ebe2a91ff6472eab65fbf87b812b3f.pdf', 'MOTA产品单-202511.pdf', '/files/2026-06-26/49ebe2a91ff6472eab65fbf87b812b3f.pdf', 'pdf', 'application/pdf', 17183010, 0, '2026-06-26 03:51:02', 1, NULL, NULL);
+INSERT INTO `sys_file` (`id`, `folder_id`, `storage_config_id`, `uploader_type`, `uploader_name`, `file_name`, `original_name`, `path`, `extension`, `mime_type`, `size`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (2064991134304079874, NULL, 1930000000001000, 'admin', 'travis0115', 'ae6789812d63493790ce5dad378a4389.jpg', 'avatar.jpg', '/files/2026-06-11/ae6789812d63493790ce5dad378a4389.jpg', 'jpg', 'image/jpeg', 130883, 0, '2026-06-11 08:40:27', 1, '2026-06-26 11:50:44', NULL);
+INSERT INTO `sys_file` (`id`, `folder_id`, `storage_config_id`, `uploader_type`, `uploader_name`, `file_name`, `original_name`, `path`, `extension`, `mime_type`, `size`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (2065023466524274690, NULL, 1930000000001000, 'admin', 'travis0115', 'bcb9eb67bd0c417e974f153b4af663ac.jpg', 'IMAGE 2026-06-11 15:53:00.jpg', '/files/2026-06-11/bcb9eb67bd0c417e974f153b4af663ac.jpg', 'jpg', 'image/jpeg', 115784, 0, '2026-06-11 10:48:55', 1, '2026-06-26 21:08:38', NULL);
+INSERT INTO `sys_file` (`id`, `folder_id`, `storage_config_id`, `uploader_type`, `uploader_name`, `file_name`, `original_name`, `path`, `extension`, `mime_type`, `size`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (2070353943804170241, NULL, 1930000000001000, 'admin', 'travis0115', '0203fc28e0b941bab941a1775c577e18.jpg', 'MOTA克重表.jpg', '/files/2026-06-26/0203fc28e0b941bab941a1775c577e18.jpg', 'jpg', 'image/jpeg', 278510, 0, '2026-06-26 03:50:20', 1, '2026-06-26 21:08:38', NULL);
+INSERT INTO `sys_file` (`id`, `folder_id`, `storage_config_id`, `uploader_type`, `uploader_name`, `file_name`, `original_name`, `path`, `extension`, `mime_type`, `size`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (2070354119696502786, NULL, 1930000000001000, 'admin', 'travis0115', '49ebe2a91ff6472eab65fbf87b812b3f.pdf', 'MOTA产品单-202511.pdf', '/files/2026-06-26/49ebe2a91ff6472eab65fbf87b812b3f.pdf', 'pdf', 'application/pdf', 17183010, 0, '2026-06-26 03:51:02', 1, NULL, NULL);
 COMMIT;
 
 -- ----------------------------

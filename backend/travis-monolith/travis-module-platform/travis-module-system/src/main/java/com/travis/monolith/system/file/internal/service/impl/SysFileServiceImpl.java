@@ -44,7 +44,8 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
                     Map.entry("createTime", SysFile::getCreateTime));
 
     @Override
-    public FileUploadResp upload(MultipartFile file, Long folderId) {
+    public FileUploadResp upload(
+            MultipartFile file, Long folderId, String uploaderType, String uploaderName) {
         var config = sysFileStorageConfigService.getDefault();
         var strategy =
                 storageStrategies.stream()
@@ -61,6 +62,8 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
                 SysFile.builder()
                         .folderId(folderId)
                         .storageConfigId(config.getId())
+                        .uploaderType(uploaderType)
+                        .uploaderName(uploaderName)
                         .fileName(result.fileName())
                         .originalName(file.getOriginalFilename())
                         .path(result.path())
@@ -121,6 +124,18 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
                         ? sysFileStorageConfigService.getDefault()
                         : sysFileStorageConfigService.get(file.getStorageConfigId());
         return buildUrl(config, file.getPath());
+    }
+
+    @Override
+    public void updateUploaderName(String uploaderType, Long uploaderId, String uploaderName) {
+        if (uploaderType == null || uploaderType.isBlank() || uploaderId == null) {
+            return;
+        }
+        lambdaUpdate()
+                .eq(SysFile::getUploaderType, uploaderType)
+                .eq(SysFile::getCreateBy, uploaderId)
+                .set(SysFile::getUploaderName, uploaderName)
+                .update();
     }
 
     private String buildUrl(String domain, String path) {
