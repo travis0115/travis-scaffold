@@ -86,4 +86,15 @@ public class WebSocketMessage {
                 .timestamp(System.currentTimeMillis())
                 .build();
     }
+
+    /** 创建关闭指定 token 连接的内部消息 */
+    public static WebSocketMessage closeToken(String loginType, String userId, String token) {
+        return WebSocketMessage.builder()
+                .type(WebSocketMessageType.CLOSE_TOKEN)
+                .loginType(loginType)
+                .toUser(userId)
+                .content(token)
+                .timestamp(System.currentTimeMillis())
+                .build();
+    }
 }

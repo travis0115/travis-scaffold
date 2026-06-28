@@ -1,9 +1,12 @@
 package com.travis.infrastructure.framework.websocket.core;
 
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
+import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.websocket.config.WebSocketProperties;
+import com.travis.infrastructure.framework.websocket.interceptor.WebSocketAuthInterceptor;
 import com.travis.infrastructure.framework.websocket.message.WebSocketMessage;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -193,6 +196,17 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
     }
 
     @Override
+    public void closeByToken(String loginType, String userId, String token) {
+        if (loginType == null || userId == null || token == null || token.isBlank()) {
+            return;
+        }
+        closeLocalByToken(loginType, userId, token);
+        if (dispatcher != null) {
+            dispatcher.publish(WebSocketMessage.closeToken(loginType, userId, token));
+        }
+    }
+
+    @Override
     public boolean isOnline(String loginType, String userId) {
         String sessionKey = loginType + ":" + userId;
         return isSessionKeyOnline(sessionKey);
@@ -268,9 +282,34 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
         localSessions.forEach((sessionKey, _) -> deliverToLocal(sessionKey, message));
     }
 
+    public void closeLocalByToken(String loginType, String userId, String token) {
+        String sessionKey = loginType + ":" + userId;
+        Set<WebSocketSession> sessions = localSessions.get(sessionKey);
+        if (sessions == null || sessions.isEmpty()) {
+            return;
+        }
+        for (WebSocketSession session : new ArrayList<>(sessions)) {
+            Object sessionToken = session.getAttributes().get(WebSocketAuthInterceptor.ATTR_TOKEN);
+            if (!token.equals(sessionToken)) {
+                continue;
+            }
+            try {
+                if (session.isOpen()) {
+                    session.close(CloseStatus.NORMAL);
+                }
+            } catch (IOException e) {
+                log.warn(
+                        "[WebSocket] 关闭 token 连接失败: sessionKey={}, sessionId={}",
+                        sessionKey,
+                        session.getId(),
+                        e);
+            }
+        }
+    }
+
     /** 从 Session attributes 中提取 sessionKey（loginType:userId） */
     private String extractSessionKey(WebSocketSession session) {
-        Object sessionKey = session.getAttributes().get("sessionKey");
+        Object sessionKey = session.getAttributes().get(WebSocketAuthInterceptor.ATTR_SESSION_KEY);
         return sessionKey != null ? sessionKey.toString() : null;
     }
 
@@ -354,6 +393,9 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
 
     /** 向所有本地连接发送心跳 */
     private void sendHeartbeat() {
+        closeInvalidTokenSessions();
+        refreshLocalSessionTtl();
+
         WebSocketMessage ping = WebSocketMessage.ping();
         String json;
         try {
@@ -379,6 +421,53 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
                         }
                     }
                 });
+    }
+
+    private void closeInvalidTokenSessions() {
+        localSessions.forEach(
+                (sessionKey, sessions) -> {
+                    for (WebSocketSession session : new ArrayList<>(sessions)) {
+                        if (!session.isOpen() || isSessionTokenValid(session)) {
+                            continue;
+                        }
+                        try {
+                            session.close(CloseStatus.POLICY_VIOLATION);
+                            log.debug(
+                                    "[WebSocket] token 已失效，关闭连接: sessionKey={}, sessionId={}",
+                                    sessionKey,
+                                    session.getId());
+                        } catch (IOException e) {
+                            log.warn(
+                                    "[WebSocket] 关闭失效 token 连接失败: sessionKey={}, sessionId={}",
+                                    sessionKey,
+                                    session.getId(),
+                                    e);
+                        }
+                    }
+                });
+    }
+
+    private boolean isSessionTokenValid(WebSocketSession session) {
+        var attrs = session.getAttributes();
+        Object loginType = attrs.get(WebSocketAuthInterceptor.ATTR_LOGIN_TYPE);
+        Object userId = attrs.get(WebSocketAuthInterceptor.ATTR_USER_ID);
+        Object token = attrs.get(WebSocketAuthInterceptor.ATTR_TOKEN);
+        if (loginType == null || userId == null || token == null) {
+            return false;
+        }
+        try {
+            Object loginId = StpKit.of(loginType.toString()).getLoginIdByToken(token.toString());
+            return loginId != null && userId.toString().equals(loginId.toString());
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private void refreshLocalSessionTtl() {
+        if (dispatcher == null) {
+            return;
+        }
+        localSessions.keySet().forEach(sessionKey -> dispatcher.registerUserInstance(sessionKey, instanceId));
     }
 
     private ThreadPoolTaskScheduler createHeartbeatScheduler() {

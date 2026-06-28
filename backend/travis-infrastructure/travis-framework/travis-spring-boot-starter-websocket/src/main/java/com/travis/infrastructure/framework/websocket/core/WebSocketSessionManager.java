@@ -33,6 +33,15 @@ public interface WebSocketSessionManager {
     void sendToAll(WebSocketMessage message);
 
     /**
+     * 关闭指定 token 建立的连接，不影响同一用户的其他 token 连接
+     *
+     * @param loginType 登录类型
+     * @param userId 用户 ID
+     * @param token token 值
+     */
+    void closeByToken(String loginType, String userId, String token);
+
+    /**
      * 判断用户是否在线（集群范围）
      *
      * @param loginType 登录类型

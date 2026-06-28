@@ -37,6 +37,11 @@ import org.springframework.web.socket.server.HandshakeInterceptor;
 @Slf4j
 public class WebSocketAuthInterceptor implements HandshakeInterceptor {
 
+    public static final String ATTR_LOGIN_TYPE = "loginType";
+    public static final String ATTR_USER_ID = "userId";
+    public static final String ATTR_SESSION_KEY = "sessionKey";
+    public static final String ATTR_TOKEN = "token";
+
     @Override
     public boolean beforeHandshake(
             ServerHttpRequest request,
@@ -79,9 +84,10 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor {
             String userId = loginId.toString();
             String sessionKey = buildSessionKey(loginType, userId);
 
-            attributes.put("loginType", loginType);
-            attributes.put("userId", userId);
-            attributes.put("sessionKey", sessionKey);
+            attributes.put(ATTR_LOGIN_TYPE, loginType);
+            attributes.put(ATTR_USER_ID, userId);
+            attributes.put(ATTR_SESSION_KEY, sessionKey);
+            attributes.put(ATTR_TOKEN, token);
 
             log.debug(
                     "[WebSocket] 握手认证成功: loginType={}, userId={}, sessionKey={}",

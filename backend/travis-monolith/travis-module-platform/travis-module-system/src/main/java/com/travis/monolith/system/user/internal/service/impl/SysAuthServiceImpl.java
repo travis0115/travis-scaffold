@@ -9,6 +9,7 @@ import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.model.UserAgentInfo;
 import com.travis.infrastructure.framework.web.core.util.IpUtil;
 import com.travis.infrastructure.framework.web.core.util.UserAgentUtil;
+import com.travis.infrastructure.framework.websocket.core.WebSocketSessionManager;
 import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.menu.api.SysMenuApi;
 import com.travis.monolith.system.menu.api.response.VbenMenuResp;
@@ -20,11 +21,12 @@ import com.travis.monolith.system.user.internal.converter.SysUserConverter;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.service.SysAuthService;
 import com.travis.monolith.system.user.internal.service.SysUserService;
-import java.util.Collections;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * 后台认证服务实现，处理登录验证（BCrypt 密码校验）、用户信息获取及权限查询
@@ -37,6 +39,9 @@ public class SysAuthServiceImpl implements SysAuthService {
 
     /** 用户管理服务 */
     private final SysUserService userService;
+
+    /** WebSocket Session 管理器 */
+    private final WebSocketSessionManager webSocketSessionManager;
 
     /** 角色 API */
     private final SysRoleApi roleApi;
@@ -110,7 +115,19 @@ public class SysAuthServiceImpl implements SysAuthService {
         // 记录登录成功日志
         publishLoginEvent(
                 buildLoginEvent(
-                        req.getUsername(), Status.ENABLED.getValue(), "登录成功", clientIp, uaInfo));
+                        req.getUsername(), Status.ENABLED.getValue(), null, clientIp, uaInfo));
+    }
+
+    /** 管理员登出：清理 Sa-Token 登录态，并关闭当前 token 对应的 WebSocket 连接 */
+    @Override
+    public void logout() {
+        var stpLogic = StpKit.of(LoginType.ADMIN);
+        Long userId = stpLogic.isLogin() ? stpLogic.getLoginIdAsLong() : null;
+        String token = stpLogic.getTokenValue();
+        stpLogic.logout();
+        if (userId != null) {
+            webSocketSessionManager.closeByToken(LoginType.ADMIN, String.valueOf(userId), token);
+        }
     }
 
     private void publishLoginEvent(UserLoginEvent event) {

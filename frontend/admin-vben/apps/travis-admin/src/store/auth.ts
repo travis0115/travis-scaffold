@@ -85,6 +85,12 @@ export const useAuthStore = defineStore('auth', () => {
     isLoggingOut.value = true;
 
     try {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('travis:close-notification-socket'),
+        );
+      }
+
       try {
         // 仅在 token 有效时调用后端登出接口，避免 token 已失效时触发 401 死循环
         if (accessStore.accessToken) {

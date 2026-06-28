@@ -103,6 +103,15 @@ public class RedisWebSocketMessageDispatcher implements MessageListener {
                 return;
             }
 
+            if (wsMessage.getType() == WebSocketMessageType.CLOSE_TOKEN
+                    && wsMessage.getLoginType() != null
+                    && wsMessage.getToUser() != null
+                    && wsMessage.getContent() instanceof String token) {
+                sessionManager.closeLocalByToken(
+                        wsMessage.getLoginType(), wsMessage.getToUser(), token);
+                return;
+            }
+
             // 根据消息类型投递到本地 Session
             if (wsMessage.getType() == WebSocketMessageType.BROADCAST) {
                 sessionManager.deliverToAllLocal(wsMessage);

@@ -17,5 +17,8 @@ public enum WebSocketMessageType {
     USER,
 
     /** 广播消息 */
-    BROADCAST
+    BROADCAST,
+
+    /** 内部指令：关闭指定 token 的连接 */
+    CLOSE_TOKEN
 }

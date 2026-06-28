@@ -7,6 +7,8 @@ import type { SystemUserApi } from '#/api';
 
 import { h } from 'vue';
 
+import { formatDateTime } from '@vben/utils';
+
 import { Button } from 'antdv-next';
 
 import { z } from '#/adapter/form';
@@ -48,8 +50,9 @@ function formatLastOnline(row: SystemUserApi.SysUser) {
   }
   const timeLabel = row.online ? '上线' : '离线';
   const time = row.online ? row.lastOnlineTime : row.lastOfflineTime;
+  const formattedTime = formatDateTime(time);
   return [
-    `${timeLabel}：${time || '-'}`,
+    `${timeLabel}：${formattedTime || '-'}`,
     `IP：${formatIp(row.lastOnlineIp, row.lastOnlineLocation)}`,
   ].join('\n');
 }

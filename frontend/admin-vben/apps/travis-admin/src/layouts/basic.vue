@@ -89,6 +89,10 @@ onMounted(async () => {
     'vben:clear-preferences-and-logout',
     handleClearPreferencesLogout,
   );
+  window.addEventListener(
+    'travis:close-notification-socket',
+    closeNotificationSocket,
+  );
   await loadNotifications();
   notificationTimer = setInterval(loadNotifications, 60_000);
   connectNotificationSocket();
@@ -98,6 +102,10 @@ onUnmounted(() => {
   window.removeEventListener(
     'vben:clear-preferences-and-logout',
     handleClearPreferencesLogout,
+  );
+  window.removeEventListener(
+    'travis:close-notification-socket',
+    closeNotificationSocket,
   );
   if (notificationTimer) clearInterval(notificationTimer);
   closeNotificationSocket();

@@ -19,6 +19,9 @@ public interface SysAuthService {
      */
     void login(SysUserLoginReq req);
 
+    /** 管理员登出 */
+    void logout();
+
     /**
      * 获取当前登录用户的详细信息，包含角色编码和权限列表
      *
