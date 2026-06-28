@@ -30,7 +30,6 @@ import {
   deleteFile,
   deleteFileFolder,
   deleteStorageConfig,
-  FILE_FOLDER_IDS,
   getFileFolders,
   getFilePage,
   getStorageConfigDetail,
@@ -729,7 +728,7 @@ function isFolderKey(value: FolderSelection) {
 function getSelectedFolderId() {
   return isFolderKey(selectedFolderKey.value)
     ? (selectedFolderKey.value as FolderId)
-    : FILE_FOLDER_IDS.MANUAL_UPLOAD;
+    : undefined;
 }
 
 function isRootFolder(id?: FolderId) {

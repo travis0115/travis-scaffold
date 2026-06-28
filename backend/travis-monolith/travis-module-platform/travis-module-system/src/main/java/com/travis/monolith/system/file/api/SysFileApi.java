@@ -1,11 +1,26 @@
 package com.travis.monolith.system.file.api;
 
+import com.travis.monolith.system.file.api.response.FileUploadResp;
+import org.springframework.web.multipart.MultipartFile;
+
 /**
  * 文件模块对外 API，供跨模块调用，只暴露 DTO，不暴露 entity
  *
  * @author travis
  */
 public interface SysFileApi {
+
+    /**
+     * 上传文件。
+     *
+     * @param file 文件
+     * @param folderId 文件夹ID
+     * @param uploaderType 上传主体类型
+     * @param uploaderName 上传主体名称
+     * @return 文件上传结果
+     */
+    FileUploadResp upload(
+            MultipartFile file, Long folderId, String uploaderType, String uploaderName);
 
     /**
      * 根据文件ID拼接完整访问URL

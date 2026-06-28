@@ -1,6 +1,10 @@
+import type { AxiosProgressEvent } from '@vben/request';
+
 import type { PageResp } from '#/api/types';
 
 import { requestClient } from '#/api/request';
+
+import type { FileUploadResult } from './file';
 
 export namespace SystemVersionLogApi {
   export interface VersionLog {
@@ -66,6 +70,22 @@ async function deleteVersionLog(id: number) {
   return requestClient.delete(`/system/version/${id}`);
 }
 
+function uploadVersionLogImage(
+  file: File,
+  onUploadProgress?: (progressEvent: AxiosProgressEvent) => void,
+) {
+  const formData = new FormData();
+  formData.append('file', file);
+  return requestClient.post<FileUploadResult>(
+    '/system/version/image/upload',
+    formData,
+    {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress,
+    },
+  );
+}
+
 /**
  * 分页获取已发布的版本日志列表
  */
@@ -87,4 +107,5 @@ export {
   getVersionLogPage,
   updateVersionLog,
   updateVersionLogStatus,
+  uploadVersionLogImage,
 };

@@ -42,10 +42,6 @@
                     <!-- 客户端IP -->
                     <includeMdcKeyName>client_ip</includeMdcKeyName>
 
-                    <!-- ******************* 事件 ****************** -->
-                    <!-- 事件类型 -->
-                    <includeMdcKeyName>event_type</includeMdcKeyName>
-
                 </mdc>
                 <message/>
                 <arguments

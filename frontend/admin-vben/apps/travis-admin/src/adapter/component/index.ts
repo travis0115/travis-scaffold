@@ -82,9 +82,7 @@ type AdapterUploadProps = UploadProps & {
 
 type FolderId = number | string;
 type FolderSelection = 'all' | 'unclassified' | FolderId;
-type RichEditorProps = TipTapProps & {
-  imageUploadFolderId?: number | string;
-};
+type RichEditorProps = TipTapProps;
 
 const AutoComplete = defineAsyncComponent(
   () => import('antdv-next/dist/auto-complete/index'),
@@ -827,7 +825,6 @@ const selectRichEditorImage = () => {
 };
 
 const createRichEditorImageUpload = (
-  folderId?: number | string,
   imageUpload?: TipTapProps['imageUpload'],
 ): NonNullable<TipTapProps['imageUpload']> => ({
   maxSize: UPLOAD_FILE_MAX_SIZE_BYTES,
@@ -847,7 +844,7 @@ const createRichEditorImageUpload = (
   upload:
     imageUpload?.upload ??
     (async (file: File, onProgress?: (percent: number) => void) => {
-      const result = await uploadFileApi(file, folderId, (event) => {
+      const result = await uploadFileApi(file, undefined, (event) => {
         if (!event.total) return;
         onProgress?.(Math.round((event.loaded / event.total) * 100));
       });
@@ -873,7 +870,6 @@ const RichEditorComponent = defineComponent({
     return () => {
       const {
         imageUpload,
-        imageUploadFolderId,
         placeholder: inputPlaceholder,
         ...restAttrs
       } = attrs as RichEditorProps;
@@ -881,10 +877,7 @@ const RichEditorComponent = defineComponent({
         VbenTiptap,
         {
           ...restAttrs,
-          imageUpload: createRichEditorImageUpload(
-            imageUploadFolderId,
-            imageUpload,
-          ),
+          imageUpload: createRichEditorImageUpload(imageUpload),
           placeholder: inputPlaceholder || $t('ui.placeholder.input'),
           ref: innerRef,
         },

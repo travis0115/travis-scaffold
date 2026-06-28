@@ -1,15 +1,21 @@
 package com.travis.monolith.system.notice.internal.controller.admin;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import cn.dev33.satoken.annotation.SaMode;
 import com.travis.infrastructure.common.logging.annotation.OperationLog;
 import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
 import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
+import com.travis.infrastructure.framework.satoken.core.LoginSubjectSessionKey;
 import com.travis.monolith.system.common.api.constant.SystemPermission;
 import com.travis.monolith.system.common.api.enums.Status;
+import com.travis.monolith.system.file.api.SysFileApi;
+import com.travis.monolith.system.file.api.constant.FileFolderId;
+import com.travis.monolith.system.file.api.response.FileUploadResp;
 import com.travis.monolith.system.notice.api.request.SysNoticeCreateReq;
 import com.travis.monolith.system.notice.api.request.SysNoticePageReq;
 import com.travis.monolith.system.notice.api.request.SysNoticeUpdateReq;
@@ -18,6 +24,7 @@ import com.travis.monolith.system.notice.internal.service.SysNoticeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/system/notice")
@@ -25,6 +32,7 @@ import org.springframework.web.bind.annotation.*;
 @OperationLogModule("系统公告")
 public class SysNoticeController {
     private final SysNoticeService noticeService;
+    private final SysFileApi fileApi;
 
     @GetMapping("/page")
     @SaCheckPermission(value = SystemPermission.NOTICE_QUERY, type = LoginType.ADMIN)
@@ -60,6 +68,20 @@ public class SysNoticeController {
             @PathVariable Long id, @RequestBody @Valid SysNoticeUpdateReq req) {
         noticeService.update(id, req);
         return ApiResponse.success();
+    }
+
+    @OperationLog(action = "上传公告图片")
+    @NoRepeatSubmit
+    @PostMapping("/image/upload")
+    @SaCheckPermission(
+            value = {SystemPermission.NOTICE_CREATE, SystemPermission.NOTICE_UPDATE},
+            mode = SaMode.OR,
+            type = LoginType.ADMIN)
+    public ApiResponse<FileUploadResp> uploadImage(@RequestParam("file") MultipartFile file) {
+        var username =
+                StpKit.of(LoginType.ADMIN).getSession().getString(LoginSubjectSessionKey.USERNAME);
+        return ApiResponse.success(
+                fileApi.upload(file, FileFolderId.NOTICE, LoginType.ADMIN, username));
     }
 
     @OperationLog(action = "修改公告状态")

@@ -7,9 +7,14 @@ import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
+import com.travis.infrastructure.framework.satoken.core.LoginSubjectSessionKey;
 import com.travis.monolith.system.common.api.constant.SystemPermission;
 import com.travis.monolith.system.common.api.enums.Status;
+import com.travis.monolith.system.file.api.SysFileApi;
+import com.travis.monolith.system.file.api.constant.FileFolderId;
+import com.travis.monolith.system.file.api.response.FileUploadResp;
 import com.travis.monolith.system.user.api.request.*;
 import com.travis.monolith.system.user.api.response.SysUserResp;
 import com.travis.monolith.system.user.internal.service.SysUserService;
@@ -17,6 +22,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 后台用户管理控制器，提供管理员账号的增删改查及角色分配接口
@@ -32,6 +38,8 @@ public class SysUserController {
 
     /** 用户管理服务 */
     private final SysUserService userService;
+
+    private final SysFileApi fileApi;
 
     /**
      * 分页查询用户列表
@@ -156,6 +164,16 @@ public class SysUserController {
     public ApiResponse<Void> updateAvatar(@RequestBody @Valid SysUserUpdateAvatarReq req) {
         userService.updateAvatar(req);
         return ApiResponse.success();
+    }
+
+    @OperationLog(action = "上传头像")
+    @NoRepeatSubmit
+    @PostMapping("/avatar/upload")
+    public ApiResponse<FileUploadResp> uploadAvatar(@RequestParam("file") MultipartFile file) {
+        var username =
+                StpKit.of(LoginType.ADMIN).getSession().getString(LoginSubjectSessionKey.USERNAME);
+        return ApiResponse.success(
+                fileApi.upload(file, FileFolderId.AVATAR, LoginType.ADMIN, username));
     }
 
     /**

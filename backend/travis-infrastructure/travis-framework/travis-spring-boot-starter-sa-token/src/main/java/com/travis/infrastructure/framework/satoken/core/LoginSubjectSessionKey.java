@@ -1,4 +1,4 @@
-package com.travis.monolith.system.common.api.constant;
+package com.travis.infrastructure.framework.satoken.core;
 
 /** 登录主体会话字段。 */
 public final class LoginSubjectSessionKey {

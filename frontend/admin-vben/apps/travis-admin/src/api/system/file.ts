@@ -12,13 +12,6 @@ export interface FileUploadResult {
   url: string;
 }
 
-export const FILE_FOLDER_IDS = {
-  MANUAL_UPLOAD: 2,
-  AVATAR: 3,
-  NOTICE: 4,
-  VERSION: 5,
-} as const;
-
 export const UPLOAD_FILE_MAX_SIZE_MB =
   Number(import.meta.env.VITE_UPLOAD_FILE_MAX_SIZE) || 20;
 

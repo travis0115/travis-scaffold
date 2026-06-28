@@ -1,8 +1,11 @@
 import type { Recordable } from '@vben/types';
+import type { AxiosProgressEvent } from '@vben/request';
 
 import type { PageResp } from '#/api/types';
 
 import { requestClient } from '#/api/request';
+
+import type { FileUploadResult } from './file';
 
 export namespace SystemNoticeApi {
   export interface Notice {
@@ -38,6 +41,21 @@ const updateNoticeStatus = (id: number, status: number) =>
   });
 const deleteNotice = (id: number) =>
   requestClient.delete(`/system/notice/${id}`);
+const uploadNoticeImage = (
+  file: File,
+  onUploadProgress?: (progressEvent: AxiosProgressEvent) => void,
+) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  return requestClient.post<FileUploadResult>(
+    '/system/notice/image/upload',
+    formData,
+    {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress,
+    },
+  );
+};
 
 export {
   createNotice,
@@ -47,4 +65,5 @@ export {
   getPublishedNoticePage,
   updateNotice,
   updateNoticeStatus,
+  uploadNoticeImage,
 };

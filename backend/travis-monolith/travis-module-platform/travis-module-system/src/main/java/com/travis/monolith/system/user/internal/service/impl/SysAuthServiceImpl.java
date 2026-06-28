@@ -9,7 +9,7 @@ import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.model.UserAgentInfo;
 import com.travis.infrastructure.framework.web.core.util.IpUtil;
 import com.travis.infrastructure.framework.web.core.util.UserAgentUtil;
-import com.travis.monolith.system.common.api.constant.LoginSubjectSessionKey;
+import com.travis.infrastructure.framework.satoken.core.LoginSubjectSessionKey;
 import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.common.api.event.SystemEvent;
 import com.travis.monolith.system.menu.api.SysMenuApi;

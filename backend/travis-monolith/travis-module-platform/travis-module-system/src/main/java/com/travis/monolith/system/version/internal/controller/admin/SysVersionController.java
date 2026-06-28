@@ -1,13 +1,20 @@
 package com.travis.monolith.system.version.internal.controller.admin;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import cn.dev33.satoken.annotation.SaMode;
 import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageRequest;
 import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.infrastructure.framework.satoken.core.StpKit;
+import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
+import com.travis.infrastructure.framework.satoken.core.LoginSubjectSessionKey;
 import com.travis.monolith.system.common.api.constant.SystemPermission;
 import com.travis.monolith.system.common.api.enums.Status;
+import com.travis.monolith.system.file.api.SysFileApi;
+import com.travis.monolith.system.file.api.constant.FileFolderId;
+import com.travis.monolith.system.file.api.response.FileUploadResp;
 import com.travis.monolith.system.version.api.request.SysVersionCreateReq;
 import com.travis.monolith.system.version.api.request.SysVersionPageReq;
 import com.travis.monolith.system.version.api.request.SysVersionUpdateReq;
@@ -17,6 +24,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 系统版本日志管理控制器，提供CRUD接口和已发布日志查询
@@ -30,6 +38,7 @@ import org.springframework.web.bind.annotation.*;
 public class SysVersionController {
 
     private final SysVersionService versionService;
+    private final SysFileApi fileApi;
 
     /** 分页查询版本日志 */
     @GetMapping("/page")
@@ -60,6 +69,20 @@ public class SysVersionController {
             @PathVariable Long id, @RequestBody @Valid SysVersionUpdateReq req) {
         versionService.update(id, req);
         return ApiResponse.success();
+    }
+
+    /** 上传版本日志图片 */
+    @NoRepeatSubmit
+    @PostMapping("/image/upload")
+    @SaCheckPermission(
+            value = {SystemPermission.VERSION_CREATE, SystemPermission.VERSION_UPDATE},
+            mode = SaMode.OR,
+            type = LoginType.ADMIN)
+    public ApiResponse<FileUploadResp> uploadImage(@RequestParam("file") MultipartFile file) {
+        var username =
+                StpKit.of(LoginType.ADMIN).getSession().getString(LoginSubjectSessionKey.USERNAME);
+        return ApiResponse.success(
+                fileApi.upload(file, FileFolderId.VERSION, LoginType.ADMIN, username));
     }
 
     /** 修改版本日志状态 */

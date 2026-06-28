@@ -14,11 +14,10 @@ import { useUserStore } from '@vben/stores';
 import { message } from 'antdv-next';
 
 import {
-  FILE_FOLDER_IDS,
   updateAvatarApi,
   UPLOAD_FILE_MAX_SIZE_MB,
   UPLOAD_FILE_MAX_SIZE_TEXT,
-  uploadFileApi,
+  uploadAvatarApi,
 } from '#/api';
 
 import ProfileBase from './base-setting.vue';
@@ -158,7 +157,7 @@ async function onConfirm() {
     const uploadFile = new File([u8arr], 'avatar.jpg', { type: mime });
 
     avatarModalApi.lock();
-    const result = await uploadFileApi(uploadFile, FILE_FOLDER_IDS.AVATAR);
+    const result = await uploadAvatarApi(uploadFile);
     await updateAvatarApi({ avatarFileId: result.id });
     avatarUrl.value = result.url;
     if (userStore.userInfo) {
