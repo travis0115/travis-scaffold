@@ -3,7 +3,6 @@ package com.travis.monolith.system.user.internal.service;
 import com.travis.monolith.system.menu.api.response.VbenMenuResp;
 import com.travis.monolith.system.user.api.request.SysUserLoginReq;
 import com.travis.monolith.system.user.api.response.SysUserInfoResp;
-import com.travis.monolith.system.user.api.response.SysUserLoginResp;
 import java.util.List;
 
 /**
@@ -17,9 +16,8 @@ public interface SysAuthService {
      * 管理员登录
      *
      * @param req 登录请求参数（用户名 + 密码）
-     * @return 登录响应（包含访问令牌）
      */
-    SysUserLoginResp login(SysUserLoginReq req);
+    void login(SysUserLoginReq req);
 
     /**
      * 获取当前登录用户的详细信息，包含角色编码和权限列表

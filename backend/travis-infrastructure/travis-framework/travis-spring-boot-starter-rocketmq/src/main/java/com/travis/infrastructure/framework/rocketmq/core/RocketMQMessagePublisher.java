@@ -1,53 +1,54 @@
 package com.travis.infrastructure.framework.rocketmq.core;
 
-import com.travis.infrastructure.common.event.*;
+import com.travis.infrastructure.common.message.*;
+import lombok.extern.slf4j.Slf4j;
+
 import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.client.apis.producer.SendReceipt;
 
 /**
  * 基于 RocketMQ 的 {@link MessagePublisher} 实现。
  *
- * <p>将 {@link Event} 的 {@code topic} 映射为 Topic，{@code type} 映射为 Tag， 并根据 {@link
- * Event#getTopicType()} 自动选择投递方式：
+ * <p>将 {@link Message} 的 {@code topic} 映射为 Topic，{@code type} 映射为 Tag， 并根据 {@link
+ * Message#getMessageType()} 自动选择投递方式：
  *
  * <ul>
- *   <li>{@link TopicType#NORMAL} — 普通消息
- *   <li>{@link TopicType#FIFO} — 顺序消息，需通过 {@link PublishOptions#fifo(String)} 提供 messageGroup
- *   <li>{@link TopicType#DELAY} — 延迟消息，需通过 {@link PublishOptions#delay(java.time.Duration)} 提供
- *       delayTime
+ *   <li>{@link MessageType#NORMAL} — 普通消息
+ *   <li>{@link MessageType#ORDERED} — 顺序消息，需通过 {@link MessagePublishOptions#ordered(String)} 提供
+ *       orderingKey
+ *   <li>{@link MessageType#DELAYED} — 延迟消息，需通过 {@link
+ *       MessagePublishOptions#delayed(java.time.Duration)} 提供 delayTime
  * </ul>
  *
  * @author travis
  * @see MessagePublisher
- * @see Event
+ * @see Message
  */
 @Slf4j
 public class RocketMQMessagePublisher implements MessagePublisher {
 
-    /** 将 Event 解析为 RocketMQ destination 格式：{@code topic:type} */
-    private static String toDestination(Event event) {
-        return event.getTopic() + ":" + event.getType();
+    /** 将 Message 解析为 RocketMQ destination 格式：{@code topic:type} */
+    private static String toDestination(Message message) {
+        return message.getTopic() + ":" + message.getType();
     }
 
     // ==================== 同步发布 ====================
 
     @Override
-    public void publish(Event event, Object payload) {
-        requireNormalEvent(event);
-        RocketMQProducerUtil.syncSendNormalMessage(toDestination(event), payload);
+    public void publish(Message message, Object payload) {
+        requireNormalMessage(message);
+        RocketMQProducerUtil.syncSendNormalMessage(toDestination(message), payload);
     }
 
     @Override
-    public void publish(Event event, Object payload, PublishOptions options) {
-        var destination = toDestination(event);
-        switch (event.getTopicType()) {
-            case FIFO ->
+    public void publish(Message message, Object payload, MessagePublishOptions options) {
+        var destination = toDestination(message);
+        switch (message.getMessageType()) {
+            case ORDERED ->
                     RocketMQProducerUtil.syncSendFifoMessage(
-                            destination, payload, requireMessageGroup(options));
-            case DELAY ->
+                            destination, payload, requireOrderingKey(options));
+            case DELAYED ->
                     RocketMQProducerUtil.syncSendDelayMessage(
                             destination, payload, requireDelayTime(options));
             default -> RocketMQProducerUtil.syncSendNormalMessage(destination, payload);
@@ -57,35 +58,35 @@ public class RocketMQMessagePublisher implements MessagePublisher {
     // ==================== 异步发布 ====================
 
     @Override
-    public CompletableFuture<Void> asyncPublish(Event event, Object payload) {
-        requireNormalEvent(event);
-        return RocketMQProducerUtil.asyncSendNormalMessage(toDestination(event), payload)
+    public CompletableFuture<Void> asyncPublish(Message message, Object payload) {
+        requireNormalMessage(message);
+        return RocketMQProducerUtil.asyncSendNormalMessage(toDestination(message), payload)
                 .thenAccept(_ -> {});
     }
 
     @Override
     public CompletableFuture<Void> asyncPublish(
-            Event event, Object payload, AsyncPublishCallback callback) {
-        requireNormalEvent(event);
-        Objects.requireNonNull(callback, "AsyncPublishCallback cannot be null");
-        return RocketMQProducerUtil.asyncSendNormalMessage(toDestination(event), payload)
+            Message message, Object payload, MessagePublishCallback callback) {
+        requireNormalMessage(message);
+        Objects.requireNonNull(callback, "MessagePublishCallback cannot be null");
+        return RocketMQProducerUtil.asyncSendNormalMessage(toDestination(message), payload)
                 .whenComplete(
-                        (receipt, ex) -> {
-                            callback.onCompleted(event, payload, null, ex);
+                        (_, ex) -> {
+                            callback.onCompleted(message, payload, null, ex);
                         })
-                .thenAccept(receipt -> {});
+                .thenAccept(_ -> {});
     }
 
     @Override
     public CompletableFuture<Void> asyncPublish(
-            Event event, Object payload, PublishOptions options) {
-        var destination = toDestination(event);
-        CompletableFuture<SendReceipt> future =
-                switch (event.getTopicType()) {
-                    case FIFO ->
+            Message message, Object payload, MessagePublishOptions options) {
+        var destination = toDestination(message);
+        var future =
+                switch (message.getMessageType()) {
+                    case ORDERED ->
                             RocketMQProducerUtil.asyncSendFifoMessage(
-                                    destination, payload, requireMessageGroup(options));
-                    case DELAY ->
+                                    destination, payload, requireOrderingKey(options));
+                    case DELAYED ->
                             RocketMQProducerUtil.asyncSendDelayMessage(
                                     destination, payload, requireDelayTime(options));
                     default -> RocketMQProducerUtil.asyncSendNormalMessage(destination, payload);
@@ -95,45 +96,51 @@ public class RocketMQMessagePublisher implements MessagePublisher {
 
     @Override
     public CompletableFuture<Void> asyncPublish(
-            Event event, Object payload, PublishOptions options, AsyncPublishCallback callback) {
-        Objects.requireNonNull(callback, "AsyncPublishCallback cannot be null");
-        var destination = toDestination(event);
-        CompletableFuture<SendReceipt> future =
-                switch (event.getTopicType()) {
-                    case FIFO ->
+            Message message,
+            Object payload,
+            MessagePublishOptions options,
+            MessagePublishCallback callback) {
+        Objects.requireNonNull(callback, "MessagePublishCallback cannot be null");
+        var destination = toDestination(message);
+        var future =
+                switch (message.getMessageType()) {
+                    case ORDERED ->
                             RocketMQProducerUtil.asyncSendFifoMessage(
-                                    destination, payload, requireMessageGroup(options));
-                    case DELAY ->
+                                    destination, payload, requireOrderingKey(options));
+                    case DELAYED ->
                             RocketMQProducerUtil.asyncSendDelayMessage(
                                     destination, payload, requireDelayTime(options));
                     default -> RocketMQProducerUtil.asyncSendNormalMessage(destination, payload);
                 };
         return future.whenComplete(
-                        (receipt, ex) -> callback.onCompleted(event, payload, options, ex))
+                        (receipt, ex) -> callback.onCompleted(message, payload, options, ex))
                 .thenAccept(receipt -> {});
     }
 
-    private static void requireNormalEvent(Event event) {
-        if (event.getTopicType() != TopicType.NORMAL) {
+    private static void requireNormalMessage(Message message) {
+        if (message.getMessageType() != MessageType.NORMAL) {
             throw new IllegalArgumentException(
-                    "Only NORMAL events can be published without PublishOptions: " + event);
+                    "Only NORMAL messages can be published without MessagePublishOptions: "
+                            + message);
         }
     }
 
-    private static String requireMessageGroup(PublishOptions options) {
-        Objects.requireNonNull(options, "PublishOptions cannot be null for FIFO events");
-        String messageGroup = options.getMessageGroup();
-        if (messageGroup == null || messageGroup.isBlank()) {
-            throw new IllegalArgumentException("messageGroup cannot be blank for FIFO events");
+    private static String requireOrderingKey(MessagePublishOptions options) {
+        Objects.requireNonNull(
+                options, "MessagePublishOptions cannot be null for ordered messages");
+        String orderingKey = options.getOrderingKey();
+        if (orderingKey == null || orderingKey.isBlank()) {
+            throw new IllegalArgumentException("orderingKey cannot be blank for ordered messages");
         }
-        return messageGroup;
+        return orderingKey;
     }
 
-    private static Duration requireDelayTime(PublishOptions options) {
-        Objects.requireNonNull(options, "PublishOptions cannot be null for DELAY events");
+    private static Duration requireDelayTime(MessagePublishOptions options) {
+        Objects.requireNonNull(
+                options, "MessagePublishOptions cannot be null for delayed messages");
         Duration delayTime = options.getDelayTime();
         if (delayTime == null || delayTime.isZero() || delayTime.isNegative()) {
-            throw new IllegalArgumentException("delayTime must be positive for DELAY events");
+            throw new IllegalArgumentException("delayTime must be positive for delayed messages");
         }
         return delayTime;
     }

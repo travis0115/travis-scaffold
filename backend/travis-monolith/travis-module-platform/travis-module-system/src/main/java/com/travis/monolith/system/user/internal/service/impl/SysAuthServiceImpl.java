@@ -16,7 +16,6 @@ import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.api.event.UserLoginPayload;
 import com.travis.monolith.system.user.api.request.SysUserLoginReq;
 import com.travis.monolith.system.user.api.response.SysUserInfoResp;
-import com.travis.monolith.system.user.api.response.SysUserLoginResp;
 import com.travis.monolith.system.user.internal.converter.SysUserConverter;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.service.SysAuthService;
@@ -53,7 +52,7 @@ public class SysAuthServiceImpl implements SysAuthService {
 
     /** 管理员登录：校验用户名密码、账号状态，通过后使用 Sa-Token 签发令牌，并记录登录日志 */
     @Override
-    public SysUserLoginResp login(SysUserLoginReq req) {
+    public void login(SysUserLoginReq req) {
         // 在 Web 线程中提前捕获请求上下文信息
         var clientIp = IpUtil.getClientIp();
         var uaInfo = UserAgentUtil.getCurrentUserAgentInfo();
@@ -108,7 +107,6 @@ public class SysAuthServiceImpl implements SysAuthService {
         var stpLogic = StpKit.of(LoginType.ADMIN);
         stpLogic.login(user.getId());
         stpLogic.getSession().set(LoginSubjectSessionKey.USERNAME, user.getUsername());
-        var token = StpKit.of(LoginType.ADMIN).getTokenValue();
 
         // 更新最后登录时间和IP
         user.setLastLoginTime(LocalDateTime.now());
@@ -119,8 +117,6 @@ public class SysAuthServiceImpl implements SysAuthService {
         publishLoginEvent(
                 buildLoginPayload(
                         req.getUsername(), Status.ENABLED.getValue(), "登录成功", clientIp, uaInfo));
-
-        return SysUserLoginResp.builder().accessToken(token).refreshToken(token).build();
     }
 
     private void publishLoginEvent(UserLoginPayload payload) {

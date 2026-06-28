@@ -5,7 +5,7 @@ package com.travis.infrastructure.framework.websocket.core;
  *
  * <p>当用户的首个 WebSocket 连接建立或最后一个连接断开时，starter 自动调用所有注册的实现。 多实例部署下，回调仅在用户实际连接的实例上触发。
  *
- * <p>典型用法：业务模块实现此接口，在回调中发布 RocketMQ 事件实现集群范围的上下线通知。
+ * <p>典型用法：业务模块实现此接口，在回调中发布 RocketMQ 消息实现集群范围的上下线通知。
  *
  * <pre>{@code
  * @Component
@@ -15,13 +15,13 @@ package com.travis.infrastructure.framework.websocket.core;
  *
  *     @Override
  *     public void onConnect(String loginType, String userId) {
- *         messagePublisher.publish(SystemEvent.USER_ONLINE,
+ *         messagePublisher.publish(SystemMessage.USER_ONLINE,
  *                 new UserOnlinePayload(loginType, userId, true));
  *     }
  *
  *     @Override
  *     public void onDisconnect(String loginType, String userId) {
- *         messagePublisher.publish(SystemEvent.USER_ONLINE,
+ *         messagePublisher.publish(SystemMessage.USER_ONLINE,
  *                 new UserOnlinePayload(loginType, userId, false));
  *     }
  * }

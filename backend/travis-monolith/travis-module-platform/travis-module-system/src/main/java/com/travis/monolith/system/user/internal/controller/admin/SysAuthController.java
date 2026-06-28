@@ -6,7 +6,6 @@ import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.monolith.system.menu.api.response.VbenMenuResp;
 import com.travis.monolith.system.user.api.request.SysUserLoginReq;
 import com.travis.monolith.system.user.api.response.SysUserInfoResp;
-import com.travis.monolith.system.user.api.response.SysUserLoginResp;
 import com.travis.monolith.system.user.internal.service.SysAuthService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -34,11 +33,12 @@ public class SysAuthController {
      * 管理员登录
      *
      * @param req 登录请求参数
-     * @return 登录令牌信息
+     * @return 空响应，Token 由 Sa-Token 写入响应头
      */
     @PostMapping("/login")
-    public ApiResponse<SysUserLoginResp> login(@RequestBody @Valid SysUserLoginReq req) {
-        return ApiResponse.success(sysAuthService.login(req));
+    public ApiResponse<Void> login(@RequestBody @Valid SysUserLoginReq req) {
+        sysAuthService.login(req);
+        return ApiResponse.success();
     }
 
     /**

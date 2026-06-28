@@ -1,6 +1,6 @@
 package com.travis.infrastructure.framework.rocketmq.core;
 
-import com.travis.infrastructure.common.event.TopicType;
+import com.travis.infrastructure.common.message.MessageType;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -24,7 +24,7 @@ import org.springframework.context.SmartLifecycle;
  * <ol>
  *   <li>实现 {@link SmartLifecycle}，phase 设为 {@code Integer.MIN_VALUE}，确保在 Push Consumer（phase=0）之前启动
  *   <li>扫描所有标注 {@link RocketMQMessageListener} 的 Bean，收集去重后的 Topic 列表和消费者分组列表
- *   <li>结合 {@link com.travis.infrastructure.common.event.Event} 枚举确定 Topic 类型
+ *   <li>结合 {@link com.travis.infrastructure.common.message.Message} 枚举确定 Topic 类型
  *   <li>通过 {@link DefaultMQAdminExt} 连接 NameServer，在所有 Master Broker 上创建对应类型的 Topic 和消费者分组
  * </ol>
  *
@@ -46,14 +46,14 @@ public class RocketMQInitializer implements SmartLifecycle {
     private final ApplicationContext applicationContext;
     private final boolean enabled;
     private final String namesrvAddr;
-    private final Map<String, TopicType> topicTypes;
+    private final Map<String, MessageType> topicTypes;
     private volatile boolean running = false;
 
     public RocketMQInitializer(
             ApplicationContext applicationContext,
             boolean enabled,
             String namesrvAddr,
-            Map<String, TopicType> topicTypes) {
+            Map<String, MessageType> topicTypes) {
         this.applicationContext = applicationContext;
         this.enabled = enabled;
         this.namesrvAddr = namesrvAddr;
@@ -71,7 +71,7 @@ public class RocketMQInitializer implements SmartLifecycle {
         Map<String, Object> listeners =
                 applicationContext.getBeansWithAnnotation(RocketMQMessageListener.class);
 
-        Map<String, TopicType> topicTypeMap = discoverTopics(listeners);
+        Map<String, MessageType> topicTypeMap = discoverTopics(listeners);
         Set<String> consumerGroups = discoverConsumerGroups(listeners);
 
         if (topicTypeMap.isEmpty() && consumerGroups.isEmpty()) {
@@ -271,26 +271,26 @@ public class RocketMQInitializer implements SmartLifecycle {
 
     // ======================== 扫描发现 ========================
 
-    private static TopicMessageType toTopicMessageType(TopicType topicType) {
-        if (topicType == null) {
+    private static TopicMessageType toTopicMessageType(MessageType messageType) {
+        if (messageType == null) {
             return TopicMessageType.NORMAL;
         }
-        return switch (topicType) {
-            case FIFO -> TopicMessageType.FIFO;
-            case DELAY -> TopicMessageType.DELAY;
+        return switch (messageType) {
+            case ORDERED -> TopicMessageType.FIFO;
+            case DELAYED -> TopicMessageType.DELAY;
             default -> TopicMessageType.NORMAL;
         };
     }
 
     /** 扫描所有 {@link RocketMQMessageListener} 注解，收集 Topic 列表及其类型 */
-    private Map<String, TopicType> discoverTopics(Map<String, Object> listeners) {
-        Map<String, TopicType> result = new HashMap<>();
+    private Map<String, MessageType> discoverTopics(Map<String, Object> listeners) {
+        Map<String, MessageType> result = new HashMap<>();
         for (Object bean : listeners.values()) {
             Class<?> targetClass = AopUtils.getTargetClass(bean);
             RocketMQMessageListener anno = targetClass.getAnnotation(RocketMQMessageListener.class);
             if (anno != null) {
                 String topic = anno.topic();
-                result.putIfAbsent(topic, topicTypes.getOrDefault(topic, TopicType.NORMAL));
+                result.putIfAbsent(topic, topicTypes.getOrDefault(topic, MessageType.NORMAL));
             }
         }
         return result;

@@ -1,3 +1,5 @@
+import type { RequestResponse } from '@vben/request';
+
 import { baseRequestClient, requestClient } from '#/api/request';
 
 export namespace AuthApi {
@@ -7,22 +9,36 @@ export namespace AuthApi {
     username?: string;
   }
 
-  /** 登录接口返回值 */
-  export interface LoginResult {
-    accessToken: string;
-  }
-
   export interface RefreshTokenResult {
     data: string;
     status: number;
   }
 }
 
+function normalizeToken(token: string) {
+  return token.startsWith('Bearer ') ? token.slice(7) : token;
+}
+
 /**
  * 登录
  */
 export async function loginApi(data: AuthApi.LoginParams) {
-  return requestClient.post<AuthApi.LoginResult>('/system/auth/login', data);
+  const response = await requestClient.post<RequestResponse>(
+    '/system/auth/login',
+    data,
+    {
+      responseReturn: 'raw',
+    },
+  );
+  const getHeader = response.headers.get;
+  const token =
+    (typeof getHeader === 'function'
+      ? getHeader.call(response.headers, 'Authorization')
+      : undefined) ??
+    response.headers.Authorization ??
+    response.headers.authorization ??
+    '';
+  return normalizeToken(String(token));
 }
 
 /**
