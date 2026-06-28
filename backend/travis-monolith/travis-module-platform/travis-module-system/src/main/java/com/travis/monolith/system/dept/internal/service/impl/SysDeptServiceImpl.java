@@ -1,12 +1,10 @@
 package com.travis.monolith.system.dept.internal.service.impl;
 
-import com.travis.infrastructure.common.event.MessagePublisher;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
-import com.travis.monolith.system.common.api.event.SystemEvent;
 import com.travis.monolith.system.dept.api.event.DeptDeletedPayload;
 import com.travis.monolith.system.dept.api.request.SysDeptCreateReq;
 import com.travis.monolith.system.dept.api.request.SysDeptUpdateReq;
@@ -18,15 +16,13 @@ import com.travis.monolith.system.dept.internal.service.SysDeptService;
 import java.util.*;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * 部门管理服务实现，支持树形部门结构的构建
@@ -35,7 +31,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
  */
 @Service
 @RequiredArgsConstructor
-@Slf4j
 @CacheConfig(cacheNames = "system:dept")
 public class SysDeptServiceImpl extends ServiceImplX<SysDeptMapper, SysDept>
         implements SysDeptService {
@@ -43,8 +38,7 @@ public class SysDeptServiceImpl extends ServiceImplX<SysDeptMapper, SysDept>
     /** 对象转换器 */
     private final SysDeptConverter converter;
 
-    /** 消息发布器（用于发布部门删除事件） */
-    private final MessagePublisher messagePublisher;
+    private final ApplicationEventPublisher eventPublisher;
 
     /** 获取部门树形列表 */
     @Override
@@ -172,21 +166,7 @@ public class SysDeptServiceImpl extends ServiceImplX<SysDeptMapper, SysDept>
         collectAllDescendantIds(id, ids);
         ids.add(id);
         removeBatchByIds(ids);
-        var payload = new DeptDeletedPayload(ids);
-        TransactionSynchronizationManager.registerSynchronization(
-                new TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        messagePublisher.asyncPublish(
-                                SystemEvent.DEPT_DELETED,
-                                payload,
-                                (event, body, options, ex) -> {
-                                    if (ex != null) {
-                                        log.error("部门删除事件发送失败, deptIds={}", payload.deptIds(), ex);
-                                    }
-                                });
-                    }
-                });
+        eventPublisher.publishEvent(new DeptDeletedPayload(ids));
     }
 
     /**

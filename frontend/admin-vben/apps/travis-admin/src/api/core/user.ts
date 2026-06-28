@@ -31,12 +31,13 @@ export async function updateProfileApi(
  * 更新头像
  */
 export async function updateAvatarApi(
-  data: {
-    avatarFileId: number | string;
-  },
+  avatarFileId: number | string,
   config?: RequestClientConfig,
 ) {
-  return requestClient.put('/system/user/avatar', data, config);
+  return requestClient.put('/system/user/avatar', undefined, {
+    ...config,
+    params: { ...config?.params, avatarFileId },
+  });
 }
 
 export function uploadAvatarApi(

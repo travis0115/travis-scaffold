@@ -7,9 +7,9 @@ import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.infrastructure.framework.satoken.core.LoginSubjectSessionKey;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
-import com.travis.infrastructure.framework.satoken.core.LoginSubjectSessionKey;
 import com.travis.monolith.system.common.api.constant.SystemPermission;
 import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.file.api.SysFileApi;
@@ -19,6 +19,7 @@ import com.travis.monolith.system.user.api.request.*;
 import com.travis.monolith.system.user.api.response.SysUserResp;
 import com.travis.monolith.system.user.internal.service.SysUserService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -152,17 +153,13 @@ public class SysUserController {
         return ApiResponse.success();
     }
 
-    /**
-     * 当前登录用户更新头像
-     *
-     * @param req 头像更新请求
-     * @return 空响应
-     */
+    /** 当前登录用户更新头像 */
     @OperationLog(action = "修改头像")
     @NoRepeatSubmit
     @PutMapping("/avatar")
-    public ApiResponse<Void> updateAvatar(@RequestBody @Valid SysUserUpdateAvatarReq req) {
-        userService.updateAvatar(req);
+    public ApiResponse<Void> updateAvatar(
+            @RequestParam @NotNull(message = "头像文件ID不能为空") Long avatarFileId) {
+        userService.updateAvatar(avatarFileId);
         return ApiResponse.success();
     }
 

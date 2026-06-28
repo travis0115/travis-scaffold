@@ -5,46 +5,38 @@ import com.travis.monolith.system.log.operationlog.internal.entity.SysOperationL
 import com.travis.monolith.system.log.operationlog.internal.service.SysOperationLogService;
 import com.travis.monolith.system.user.api.SysUserApi;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.stereotype.Component;
 
-/** 异步保存操作日志，失败时只记录应用日志，不影响原业务请求。 */
+/** 异步保存操作日志。 */
 @Component
 @RequiredArgsConstructor
-@Slf4j
 public class OperationLogEventListener {
 
     private final SysOperationLogService operationLogService;
     private final SysUserApi userApi;
 
-    @Async("operationLogTaskExecutor")
-    @EventListener
+    @ApplicationModuleListener
     public void handle(OperationLogEvent event) {
-        try {
-            var operationLog = new SysOperationLog();
-            operationLog.setUserId(event.userId());
-            if (event.userId() != null) {
-                String username = userApi.getUsernameById(event.userId());
-                if (username != null) {
-                    operationLog.setUsername(username);
-                }
+        var operationLog = new SysOperationLog();
+        operationLog.setUserId(event.userId());
+        if (event.userId() != null) {
+            String username = userApi.getUsernameById(event.userId());
+            if (username != null) {
+                operationLog.setUsername(username);
             }
-            operationLog.setDescription(event.description());
-            operationLog.setModule(event.module());
-            operationLog.setMethod(event.method());
-            operationLog.setRequestUrl(event.requestUrl());
-            operationLog.setRequestMethod(event.requestMethod());
-            operationLog.setRequestParams(event.requestParams());
-            operationLog.setResponseResult(event.responseResult());
-            operationLog.setIp(event.ip());
-            operationLog.setDuration(event.duration());
-            operationLog.setStatus(event.status());
-            operationLog.setErrorMsg(event.errorMsg());
-            operationLogService.saveOperation(operationLog);
-        } catch (Exception e) {
-            log.error("操作日志写入失败", e);
         }
+        operationLog.setDescription(event.description());
+        operationLog.setModule(event.module());
+        operationLog.setMethod(event.method());
+        operationLog.setRequestUrl(event.requestUrl());
+        operationLog.setRequestMethod(event.requestMethod());
+        operationLog.setRequestParams(event.requestParams());
+        operationLog.setResponseResult(event.responseResult());
+        operationLog.setIp(event.ip());
+        operationLog.setDuration(event.duration());
+        operationLog.setStatus(event.status());
+        operationLog.setErrorMsg(event.errorMsg());
+        operationLogService.saveOperation(operationLog);
     }
 }

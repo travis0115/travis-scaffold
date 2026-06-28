@@ -125,6 +125,19 @@ function onCropChange() {
   }, 80);
 }
 
+function clearAvatarSelection() {
+  if (selectedFileUrl.value) {
+    URL.revokeObjectURL(selectedFileUrl.value);
+  }
+  selectedFileUrl.value = '';
+  selectedFile.value = null;
+  previewUrl.value = '';
+  if (previewTimer) {
+    clearTimeout(previewTimer);
+    previewTimer = null;
+  }
+}
+
 /** 确定：裁剪并上传 */
 async function onConfirm() {
   if (!selectedFileUrl.value) {
@@ -158,26 +171,17 @@ async function onConfirm() {
 
     avatarModalApi.lock();
     const result = await uploadAvatarApi(uploadFile);
-    await updateAvatarApi({ avatarFileId: result.id });
+    await updateAvatarApi(result.id);
     avatarUrl.value = result.url;
     if (userStore.userInfo) {
       userStore.setUserInfo({ ...userStore.userInfo, avatar: result.url });
     }
     message.success('头像更新成功');
     avatarModalApi.close();
-    // 重置上传状态
-    if (selectedFileUrl.value) {
-      URL.revokeObjectURL(selectedFileUrl.value);
-    }
-    selectedFileUrl.value = '';
-    selectedFile.value = null;
-    previewUrl.value = '';
-    if (previewTimer) {
-      clearTimeout(previewTimer);
-      previewTimer = null;
-    }
+    clearAvatarSelection();
   } catch {
     avatarModalApi.unlock();
+    clearAvatarSelection();
     // 错误由全局拦截器统一处理
   } finally {
     if (previewTimer) {
@@ -189,16 +193,7 @@ async function onConfirm() {
 
 /** 关闭弹窗 */
 function onModalCancel() {
-  if (selectedFileUrl.value) {
-    URL.revokeObjectURL(selectedFileUrl.value);
-    selectedFileUrl.value = '';
-    selectedFile.value = null;
-    previewUrl.value = '';
-    if (previewTimer) {
-      clearTimeout(previewTimer);
-      previewTimer = null;
-    }
-  }
+  clearAvatarSelection();
 }
 </script>
 <template>

@@ -13,7 +13,6 @@ import com.travis.monolith.system.log.loginlog.internal.mapper.SysLoginLogMapper
 import com.travis.monolith.system.log.loginlog.internal.service.SysLoginLogService;
 import java.time.LocalDateTime;
 import java.util.Map;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * @author travis
  */
-@Slf4j
 @Service
 public class SysLoginLogServiceImpl extends ServiceImplX<SysLoginLogMapper, SysLoginLog>
         implements SysLoginLogService {
@@ -58,22 +56,17 @@ public class SysLoginLogServiceImpl extends ServiceImplX<SysLoginLogMapper, SysL
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordLoginLog(
             String username, int status, String message, String ip, String browser, String os) {
-        try {
-            SysLoginLog loginLog =
-                    SysLoginLog.builder()
-                            .username(username)
-                            .ip(ip)
-                            .location(Ip2RegionUtil.getRegionByIP(ip))
-                            .browser(browser)
-                            .os(os)
-                            .status(status)
-                            .message(message)
-                            .loginTime(LocalDateTime.now())
-                            .build();
-            save(loginLog);
-        } catch (Exception e) {
-            // 日志记录失败不影响登录流程
-            log.warn("记录登录日志失败: {}", e.getMessage());
-        }
+        var loginLog =
+                SysLoginLog.builder()
+                        .username(username)
+                        .ip(ip)
+                        .location(Ip2RegionUtil.getRegionByIP(ip))
+                        .browser(browser)
+                        .os(os)
+                        .status(status)
+                        .message(message)
+                        .loginTime(LocalDateTime.now())
+                        .build();
+        save(loginLog);
     }
 }

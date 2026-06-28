@@ -3,7 +3,6 @@ package com.travis.monolith.system.user.internal.converter;
 import com.travis.infrastructure.common.mapstruct.BaseMapperConfig;
 import com.travis.monolith.system.user.api.request.SysUserCreateReq;
 import com.travis.monolith.system.user.api.request.SysUserProfileReq;
-import com.travis.monolith.system.user.api.request.SysUserUpdateAvatarReq;
 import com.travis.monolith.system.user.api.request.SysUserUpdateReq;
 import com.travis.monolith.system.user.api.response.SysUserInfoResp;
 import com.travis.monolith.system.user.api.response.SysUserResp;
@@ -36,5 +35,4 @@ public interface SysUserConverter {
 
     void update(SysUserProfileReq req, @MappingTarget SysUser user);
 
-    void update(SysUserUpdateAvatarReq req, @MappingTarget SysUser user);
 }

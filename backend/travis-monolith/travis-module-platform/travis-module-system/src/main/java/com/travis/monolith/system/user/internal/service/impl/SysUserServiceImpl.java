@@ -11,9 +11,9 @@ import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.redis.core.RedisUtil;
+import com.travis.infrastructure.framework.satoken.core.LoginSubjectSessionKey;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.util.Ip2RegionUtil;
-import com.travis.infrastructure.framework.satoken.core.LoginSubjectSessionKey;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.dept.api.SysDeptApi;
 import com.travis.monolith.system.file.api.SysFileApi;
@@ -142,7 +142,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     /** 更新用户信息，密码为空时保持原密码不变 */
     @Override
     @Transactional
-    @Caching(evict = {@CacheEvict(key = "'username:'+#id"), @CacheEvict(key = "'detail:'+#id")})
+    @Caching(evict = {@CacheEvict(key = "'detail:'+#id")})
     public void update(Long id, SysUserUpdateReq req) {
         var user = getByIdOrThrow(id);
         var oldUsername = user.getUsername();
@@ -163,6 +163,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         converter.update(req, user);
         updateById(user);
         if (!user.getUsername().equals(oldUsername)) {
+            RedisUtil.deleteCacheKey("system:user:username", String.valueOf(user.getId()));
             syncCurrentSessionUsername(id, user.getUsername());
             eventPublisher.publishEvent(
                     new UploaderNameChangedEvent(LoginType.ADMIN, id, user.getUsername()));
@@ -198,9 +199,14 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         StpKit.of(LoginType.ADMIN).logout(id);
     }
 
+    /**
+     * 重置用户部门为0
+     *
+     * @param id 用户ID
+     */
     @Override
     @Transactional
-    @Caching(evict = {@CacheEvict(key = "'username:'+#id"), @CacheEvict(key = "'detail:'+#id")})
+    @Caching(evict = {@CacheEvict(key = "'detail:'+#id")})
     public void resetDept(Long id) {
         var user = getByIdOrThrow(id);
         var originalDeptId = user.getDeptId();
@@ -252,10 +258,10 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     @CacheEvict(
             key =
                     "'detail:' + T(com.travis.infrastructure.framework.satoken.core.StpKit).getLoginIdAsLong(T(com.travis.infrastructure.common.web.constant.LoginType).ADMIN)")
-    public void updateAvatar(SysUserUpdateAvatarReq req) {
+    public void updateAvatar(Long avatarFileId) {
         var userId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
         var user = getByIdOrThrow(userId);
-        converter.update(req, user);
+        user.setAvatarFileId(avatarFileId);
         updateById(user);
     }
 

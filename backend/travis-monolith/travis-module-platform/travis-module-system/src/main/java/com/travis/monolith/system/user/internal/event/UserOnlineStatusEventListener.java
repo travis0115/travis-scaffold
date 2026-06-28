@@ -1,18 +1,13 @@
 package com.travis.monolith.system.user.internal.event;
 
-import com.travis.infrastructure.framework.rocketmq.core.AbstractEventListener;
-import com.travis.monolith.system.common.api.event.SystemEventTopic;
-import com.travis.monolith.system.common.api.event.SystemEventType;
 import com.travis.monolith.system.user.api.event.UserOnlinePayload;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.client.annotation.RocketMQMessageListener;
+import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.stereotype.Component;
 
 /**
  * 用户在线状态变更事件消费者。
- *
- * <p>消费 {@code system-normal-event:user-online-status} 消息，处理用户上线/下线后的业务逻辑。
  *
  * <p>当前实现仅记录日志，后续可扩展：
  *
@@ -26,15 +21,11 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
-@RocketMQMessageListener(
-        topic = SystemEventTopic.NORMAL_EVENT,
-        tag = SystemEventType.USER_ONLINE_STATUS,
-        consumerGroup = EventConsumerGroup.USER_ONLINE_STATUS_CONSUMER_GROUP)
 @RequiredArgsConstructor
-public class UserOnlineStatusEventListener extends AbstractEventListener<UserOnlinePayload> {
+public class UserOnlineStatusEventListener {
 
-    @Override
-    protected void onEvent(UserOnlinePayload payload) {
+    @ApplicationModuleListener
+    void onUserOnlineStatusChanged(UserOnlinePayload payload) {
         if (payload.isOnline()) {
             log.info(
                     "[OnlineStatus] 用户上线: loginType={}, userId={}",

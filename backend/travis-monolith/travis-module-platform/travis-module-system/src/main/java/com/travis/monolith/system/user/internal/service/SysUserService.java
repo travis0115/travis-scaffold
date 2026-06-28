@@ -91,12 +91,8 @@ public interface SysUserService extends IService<SysUser> {
      */
     void updateProfile(SysUserProfileReq req);
 
-    /**
-     * 当前登录用户更新头像
-     *
-     * @param req 头像更新请求参数
-     */
-    void updateAvatar(SysUserUpdateAvatarReq req);
+    /** 当前登录用户更新头像 */
+    void updateAvatar(Long avatarFileId);
 
     /**
      * 当前登录用户修改密码

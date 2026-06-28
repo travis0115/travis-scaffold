@@ -1,17 +1,15 @@
 package com.travis.monolith.system.user.internal.service.impl;
 
 import cn.hutool.crypto.digest.BCrypt;
-import com.travis.infrastructure.common.event.MessagePublisher;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
+import com.travis.infrastructure.framework.satoken.core.LoginSubjectSessionKey;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.model.UserAgentInfo;
 import com.travis.infrastructure.framework.web.core.util.IpUtil;
 import com.travis.infrastructure.framework.web.core.util.UserAgentUtil;
-import com.travis.infrastructure.framework.satoken.core.LoginSubjectSessionKey;
 import com.travis.monolith.system.common.api.enums.Status;
-import com.travis.monolith.system.common.api.event.SystemEvent;
 import com.travis.monolith.system.menu.api.SysMenuApi;
 import com.travis.monolith.system.menu.api.response.VbenMenuResp;
 import com.travis.monolith.system.role.api.SysRoleApi;
@@ -27,7 +25,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 /**
@@ -37,7 +35,6 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class SysAuthServiceImpl implements SysAuthService {
 
     /** 用户管理服务 */
@@ -49,8 +46,7 @@ public class SysAuthServiceImpl implements SysAuthService {
     /** 菜单 API */
     private final SysMenuApi menuApi;
 
-    /** 消息发布器 */
-    private final MessagePublisher messagePublisher;
+    private final ApplicationEventPublisher eventPublisher;
 
     /** 对象转换器 */
     private final SysUserConverter converter;
@@ -109,10 +105,9 @@ public class SysAuthServiceImpl implements SysAuthService {
         }
 
         // 校验通过，通过 Sa-Token 执行登录
-        StpKit.of(LoginType.ADMIN).login(user.getId());
-        StpKit.of(LoginType.ADMIN)
-                .getSession()
-                .set(LoginSubjectSessionKey.USERNAME, user.getUsername());
+        var stpLogic = StpKit.of(LoginType.ADMIN);
+        stpLogic.login(user.getId());
+        stpLogic.getSession().set(LoginSubjectSessionKey.USERNAME, user.getUsername());
         var token = StpKit.of(LoginType.ADMIN).getTokenValue();
 
         // 更新最后登录时间和IP
@@ -129,18 +124,7 @@ public class SysAuthServiceImpl implements SysAuthService {
     }
 
     private void publishLoginEvent(UserLoginPayload payload) {
-        try {
-            messagePublisher.asyncPublish(
-                    SystemEvent.USER_LOGIN,
-                    payload,
-                    (event, body, options, ex) -> {
-                        if (ex != null) {
-                            log.error("登录日志事件发送失败, username={}", payload.username(), ex);
-                        }
-                    });
-        } catch (RuntimeException e) {
-            log.error("登录日志事件发送失败, username={}", payload.username(), e);
-        }
+        eventPublisher.publishEvent(payload);
     }
 
     /** 获取当前登录用户信息，包含角色编码和权限列表 */
