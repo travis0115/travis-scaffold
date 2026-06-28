@@ -1,5 +1,6 @@
 package com.travis.infrastructure.framework.websocket.config;
 
+import com.travis.infrastructure.framework.redis.core.pubsub.RedisPubSubClient;
 import com.travis.infrastructure.framework.websocket.core.*;
 import com.travis.infrastructure.framework.websocket.interceptor.WebSocketAuthInterceptor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,9 +12,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
@@ -47,16 +46,6 @@ public class TravisWebSocketAutoConfiguration {
         return new WebSocketAuthInterceptor();
     }
 
-    /** Redis 消息监听容器 */
-    @Bean
-    @ConditionalOnMissingBean
-    public RedisMessageListenerContainer redisMessageListenerContainer(
-            RedisConnectionFactory connectionFactory) {
-        var container = new RedisMessageListenerContainer();
-        container.setConnectionFactory(connectionFactory);
-        return container;
-    }
-
     /**
      * Redis 消息分发器。
      *
@@ -64,11 +53,12 @@ public class TravisWebSocketAutoConfiguration {
      */
     @Bean
     public RedisWebSocketMessageDispatcher redisWebSocketMessageDispatcher(
+            RedisPubSubClient redisPubSubClient,
             RedisTemplate<String, Object> redisTemplate,
-            RedisMessageListenerContainer listenerContainer,
             WebSocketProperties properties) {
-        var dispatcher = new RedisWebSocketMessageDispatcher(redisTemplate, properties);
-        dispatcher.subscribe(listenerContainer);
+        var dispatcher =
+                new RedisWebSocketMessageDispatcher(redisPubSubClient, redisTemplate, properties);
+        dispatcher.subscribe();
         return dispatcher;
     }
 

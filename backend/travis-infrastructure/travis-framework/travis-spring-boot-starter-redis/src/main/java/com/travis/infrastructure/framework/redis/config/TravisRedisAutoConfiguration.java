@@ -4,15 +4,18 @@ import cn.hutool.core.text.CharSequenceUtil;
 import com.travis.infrastructure.framework.jackson.config.TravisJacksonAutoConfiguration;
 import com.travis.infrastructure.framework.jackson.core.LaissezFaireSubTypeValidator;
 import com.travis.infrastructure.framework.redis.core.RedisUtil;
+import com.travis.infrastructure.framework.redis.core.pubsub.RedisPubSubClient;
 import com.travis.infrastructure.framework.redis.core.serializer.TravisJacksonJsonRedisSerializer;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.jackson.autoconfigure.JacksonProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.cache.CacheKeyPrefix;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import tools.jackson.databind.DefaultTyping;
 import tools.jackson.databind.DeserializationFeature;
@@ -102,5 +105,24 @@ public class TravisRedisAutoConfiguration {
         util.setRedisTemplate(redisTemplate);
         util.setCacheKeyPrefixProvider(cacheKeyPrefixProvider);
         return util;
+    }
+
+    /** 创建 Redis Pub/Sub 消息监听容器 */
+    @Bean
+    @ConditionalOnMissingBean
+    public RedisMessageListenerContainer redisMessageListenerContainer(
+            RedisConnectionFactory redisConnectionFactory) {
+        var container = new RedisMessageListenerContainer();
+        container.setConnectionFactory(redisConnectionFactory);
+        return container;
+    }
+
+    /** 创建 Redis Pub/Sub 客户端 */
+    @Bean
+    @ConditionalOnMissingBean
+    public RedisPubSubClient redisPubSubClient(
+            RedisTemplate<String, Object> redisTemplate,
+            RedisMessageListenerContainer listenerContainer) {
+        return new RedisPubSubClient(redisTemplate, listenerContainer);
     }
 }

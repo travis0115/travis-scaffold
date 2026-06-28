@@ -1,20 +1,16 @@
 package com.travis.infrastructure.framework.websocket.core;
 
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
+import com.travis.infrastructure.framework.redis.core.pubsub.RedisPubSubClient;
 import com.travis.infrastructure.framework.websocket.config.WebSocketProperties;
 import com.travis.infrastructure.framework.websocket.message.WebSocketMessage;
 import com.travis.infrastructure.framework.websocket.message.WebSocketMessageType;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.connection.Message;
-import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.listener.ChannelTopic;
-import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 
 /**
  * 基于 Redis Pub/Sub 的 WebSocket 消息分发器，实现多实例集群广播。
@@ -32,8 +28,9 @@ import org.springframework.data.redis.listener.RedisMessageListenerContainer;
  * @author travis
  */
 @Slf4j
-public class RedisWebSocketMessageDispatcher implements MessageListener {
+public class RedisWebSocketMessageDispatcher {
 
+    private final RedisPubSubClient redisPubSubClient;
     private final RedisTemplate<String, Object> redisTemplate;
     private final WebSocketProperties properties;
     private final String instanceId;
@@ -45,7 +42,10 @@ public class RedisWebSocketMessageDispatcher implements MessageListener {
     private volatile boolean redisAvailable = true;
 
     public RedisWebSocketMessageDispatcher(
-            RedisTemplate<String, Object> redisTemplate, WebSocketProperties properties) {
+            RedisPubSubClient redisPubSubClient,
+            RedisTemplate<String, Object> redisTemplate,
+            WebSocketProperties properties) {
+        this.redisPubSubClient = redisPubSubClient;
         this.redisTemplate = redisTemplate;
         this.properties = properties;
         this.instanceId = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
@@ -56,9 +56,10 @@ public class RedisWebSocketMessageDispatcher implements MessageListener {
         this.sessionManager = sessionManager;
     }
 
-    /** 订阅 Redis Pub/Sub 频道 */
-    public void subscribe(RedisMessageListenerContainer container) {
-        container.addMessageListener(this, new ChannelTopic(properties.getRedis().getChannel()));
+    /** 订阅 WebSocket 集群广播频道 */
+    public void subscribe() {
+        redisPubSubClient.subscribe(
+                properties.getRedis().getChannel(), (_, payload) -> onMessage(payload));
         log.info(
                 "[WebSocket] 已订阅 Redis 频道: channel={}, instanceId={}",
                 properties.getRedis().getChannel(),
@@ -78,19 +79,17 @@ public class RedisWebSocketMessageDispatcher implements MessageListener {
         }
         try {
             String json = JsonUtil.toJsonString(message);
-            redisTemplate.convertAndSend(properties.getRedis().getChannel(), json);
+            redisPubSubClient.publish(properties.getRedis().getChannel(), json);
         } catch (Exception e) {
             redisAvailable = false;
             log.warn("[WebSocket] Redis Pub/Sub 发布失败，降级为单实例模式", e);
         }
     }
 
-    // ==================== Redis Pub/Sub 消费 ====================
+    // ==================== WebSocket 集群消息消费 ====================
 
-    @Override
-    public void onMessage(Message message, byte[] pattern) {
+    private void onMessage(String json) {
         try {
-            String json = new String(message.getBody(), StandardCharsets.UTF_8);
             WebSocketMessage wsMessage = JsonUtil.parseObject(json, WebSocketMessage.class);
 
             if (wsMessage == null || sessionManager == null) {
