@@ -253,12 +253,12 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
                         new LambdaQueryWrapperX<SysRole>()
                                 .eq(SysRole::getRoleCode, Role.ADMIN.getValue()));
         for (SysRole role : adminRoles) {
-            long count =
-                    roleMenuMapper.selectCount(
+            boolean exists =
+                    roleMenuMapper.exists(
                             new LambdaQueryWrapperX<SysRoleMenu>()
                                     .eq(SysRoleMenu::getRoleId, role.getId())
                                     .eq(SysRoleMenu::getMenuId, menuId));
-            if (count == 0) {
+            if (!exists) {
                 SysRoleMenu rm = new SysRoleMenu();
                 rm.setRoleId(role.getId());
                 rm.setMenuId(menuId);

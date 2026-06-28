@@ -79,7 +79,7 @@ public class SysMessageTemplateServiceImpl
                         .eq(SysMessageTemplate::getTemplateCode, templateCode)
                         .eq(SysMessageTemplate::getChannel, channel)
                         .neIfPresent(SysMessageTemplate::getId, excludeId);
-        if (count(wrapper) > 0) {
+        if (exists(wrapper)) {
             throw new BizException(CommonErrorCode.BAD_REQUEST, "同通道下模板编码已存在");
         }
     }

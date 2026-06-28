@@ -163,10 +163,10 @@ public class SysFileStorageConfigServiceImpl
         if (IsDefault.YES.getValue().equals(entity.getIsDefault())) {
             throw new BizException(SystemErrorCode.FILE_STORAGE_DEFAULT_NOT_DELETABLE);
         }
-        var fileCount =
-                sysFileMapper.selectCount(
+        var fileExists =
+                sysFileMapper.exists(
                         new LambdaQueryWrapper<SysFile>().eq(SysFile::getStorageConfigId, id));
-        if (fileCount > 0) {
+        if (fileExists) {
             throw new BizException(SystemErrorCode.FILE_STORAGE_IN_USE);
         }
         removeById(id);

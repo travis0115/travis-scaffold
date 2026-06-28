@@ -1,5 +1,6 @@
 package com.travis.infrastructure.framework.mybatis.core;
 
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travis.infrastructure.common.web.exception.BizException;
@@ -28,7 +29,7 @@ public abstract class ServiceImplX<M extends BaseMapperX<T>, T> extends ServiceI
     }
 
     protected T getOneOrThrow(LambdaQueryWrapperX<T> wrapper) {
-        T entity = baseMapper.selectOne(wrapper.last("LIMIT 1"));
+        T entity = getOne(wrapper);
         if (entity == null) {
             throw new BizException(CommonErrorCode.DATABASE_RECORD_NOT_FOUND);
         }
@@ -36,7 +37,25 @@ public abstract class ServiceImplX<M extends BaseMapperX<T>, T> extends ServiceI
     }
 
     protected T getOne(LambdaQueryWrapperX<T> wrapper) {
-        return baseMapper.selectOne(wrapper.last("LIMIT 1"));
+        return getOne((Wrapper<T>) wrapper);
+    }
+
+    protected boolean exists(LambdaQueryWrapperX<T> wrapper) {
+        return baseMapper.exists(wrapper);
+    }
+
+    @Override
+    public T getOne(Wrapper<T> queryWrapper) {
+        return getOne(queryWrapper, false);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public T getOne(Wrapper<T> queryWrapper, boolean throwEx) {
+        if (queryWrapper instanceof LambdaQueryWrapperX<?> wrapper) {
+            return baseMapper.selectOne(((LambdaQueryWrapperX<T>) wrapper).last("LIMIT 1"));
+        }
+        return super.getOne(queryWrapper, throwEx);
     }
 
     protected Page<T> page(int pageNum, int pageSize, LambdaQueryWrapperX<T> wrapper) {

@@ -25,8 +25,6 @@ import com.travis.monolith.system.user.internal.converter.SysUserConverter;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.mapper.SysUserMapper;
 import com.travis.monolith.system.user.internal.service.SysUserService;
-import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -35,6 +33,9 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * 用户管理服务实现，包含密码加密（BCrypt）、角色分配及部门名称关联查询
@@ -234,8 +235,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
                 getOne(
                         new LambdaQueryWrapperX<SysUser>()
                                 .select(SysUser::getId, SysUser::getUsername)
-                                .eq(SysUser::getId, userId)
-                                .last("LIMIT 1"));
+                                .eq(SysUser::getId, userId));
         return user == null ? null : user.getUsername();
     }
 

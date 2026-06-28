@@ -121,7 +121,7 @@ public class SysMenuServiceImpl extends ServiceImplX<SysMenuMapper, SysMenu>
         if (excludeId != null) {
             query.ne(SysMenu::getId, excludeId);
         }
-        if (count(query) > 0) {
+        if (exists(query)) {
             throw new BizException(SystemErrorCode.MENU_PATH_EXISTS);
         }
     }
@@ -383,8 +383,7 @@ public class SysMenuServiceImpl extends ServiceImplX<SysMenuMapper, SysMenu>
                                 .eq(SysMenu::getId, menuId)
                                 .isNotNull(SysMenu::getPerms)
                                 .ne(SysMenu::getPerms, "")
-                                .eq(SysMenu::getStatus, Status.ENABLED.getValue())
-                                .last("LIMIT 1"));
+                                .eq(SysMenu::getStatus, Status.ENABLED.getValue()));
         return menu == null ? "" : menu.getPerms();
     }
 }
