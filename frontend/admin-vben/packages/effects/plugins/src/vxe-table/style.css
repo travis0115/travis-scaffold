@@ -92,6 +92,21 @@
   margin-left: 0.75rem;
 }
 
+.vben-vxe-grid {
+  container-type: inline-size;
+}
+
+.vben-vxe-grid-title {
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.vben-vxe-grid-toolbar-tools {
+  min-width: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .vxe-table-custom--checkbox-option:hover {
   background: none !important;
 }
@@ -116,6 +131,43 @@
 
 .vxe-grid--layout-body-content-wrapper {
   overflow: hidden;
+}
+
+@container (max-width: 420px) {
+  .vben-vxe-grid .vxe-toolbar {
+    height: auto !important;
+    min-height: 48px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .vben-vxe-grid .vxe-buttons--wrapper {
+    width: 100% !important;
+    max-width: 100%;
+    flex: 1 0 100%;
+    min-width: 0;
+    padding-bottom: 0.2em;
+  }
+
+  .vben-vxe-grid .vxe-button--item-wrapper {
+    max-width: 100%;
+  }
+
+  .vben-vxe-grid .vxe-tools--wrapper {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding-top: 0.2em;
+  }
+
+  .vben-vxe-grid .vxe-tools--operate {
+    flex: 0 0 auto;
+    padding-top: 0.2em;
+    margin-left: 0.5rem;
+  }
+
+  .vben-vxe-grid-toolbar-tools {
+    justify-content: flex-start;
+  }
 }
 
 /* 已读行默认样式 */

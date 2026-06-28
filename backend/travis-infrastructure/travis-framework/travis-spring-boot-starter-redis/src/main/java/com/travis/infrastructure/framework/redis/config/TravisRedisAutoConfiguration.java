@@ -3,7 +3,7 @@ package com.travis.infrastructure.framework.redis.config;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.travis.infrastructure.framework.jackson.config.TravisJacksonAutoConfiguration;
 import com.travis.infrastructure.framework.jackson.core.LaissezFaireSubTypeValidator;
-import com.travis.infrastructure.framework.redis.core.RedisUtil;
+import com.travis.infrastructure.framework.redis.core.util.RedisUtil;
 import com.travis.infrastructure.framework.redis.core.pubsub.RedisPubSubClient;
 import com.travis.infrastructure.framework.redis.core.serializer.TravisJacksonJsonRedisSerializer;
 import org.springframework.beans.factory.ObjectProvider;

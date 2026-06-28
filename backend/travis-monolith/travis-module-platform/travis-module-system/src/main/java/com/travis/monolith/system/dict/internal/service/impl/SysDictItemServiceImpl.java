@@ -4,7 +4,7 @@ import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
-import com.travis.infrastructure.framework.redis.core.RedisUtil;
+import com.travis.infrastructure.framework.redis.core.util.RedisUtil;
 import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.dict.api.request.SysDictItemCreateReq;
 import com.travis.monolith.system.dict.api.request.SysDictItemUpdateReq;

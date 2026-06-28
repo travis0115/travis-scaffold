@@ -30,7 +30,6 @@ import LoginForm from '#/views/_core/authentication/login.vue';
 
 const notifications = ref<NotificationItem[]>([]);
 const unreadCount = ref(0);
-let notificationTimer: ReturnType<typeof setInterval> | undefined;
 let notificationSocket: undefined | WebSocket;
 let notificationSocketReconnectTimer: ReturnType<typeof setTimeout> | undefined;
 let notificationSocketClosedByClient = false;
@@ -94,7 +93,6 @@ onMounted(async () => {
     closeNotificationSocket,
   );
   await loadNotifications();
-  notificationTimer = setInterval(loadNotifications, 60_000);
   connectNotificationSocket();
 });
 
@@ -107,7 +105,6 @@ onUnmounted(() => {
     'travis:close-notification-socket',
     closeNotificationSocket,
   );
-  if (notificationTimer) clearInterval(notificationTimer);
   closeNotificationSocket();
 });
 
@@ -180,7 +177,7 @@ function handleNotificationSocketMessage(event: MessageEvent) {
       void loadNotifications();
     }
   } catch {
-    // 忽略非 JSON WebSocket 消息，保留轮询兜底。
+    // 忽略非 JSON WebSocket 消息。
   }
 }
 

@@ -7,7 +7,7 @@ import type { SystemFileApi } from '#/api';
 
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
-import { Page, Tree, useVbenDrawer, useVbenModal } from '@vben/common-ui';
+import { ColPage, Tree, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 
 import {
@@ -1152,12 +1152,22 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <Page auto-content-height>
-    <div class="flex size-full">
-      <Card class="folder-panel w-72 flex-none">
-        <div class="mb-4 flex items-center justify-between">
-          <span class="folder-panel-title">文件夹</span>
-          <Button
+  <div class="h-full min-h-0">
+    <ColPage
+      auto-content-height
+      :left-max-width="34"
+      :left-min-width="22"
+      :left-width="22"
+      :right-min-width="50"
+      :right-width="78"
+      split-handle
+      split-line
+    >
+      <template #left>
+        <Card class="folder-panel h-full">
+          <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <span class="folder-panel-title">文件夹</span>
+            <Button
             v-access:code="SYSTEM_PERMS.fileUpload"
             class="folder-create-btn"
             type="link"
@@ -1267,273 +1277,271 @@ onBeforeUnmount(() => {
           </template>
         </Tree>
       </Card>
-      <div class="ml-4 min-w-0 flex-1">
-        <Grid :table-title="fileTableTitle">
-          <template #toolbar-tools>
-            <div class="flex items-center gap-2">
-              <Button
-                v-access:code="SYSTEM_PERMS.fileUpload"
-                @click="openStorageModal"
-              >
-                <IconifyIcon icon="lucide:settings" class="size-4" />
-                存储配置（{{ storageConfigs.length }}）
-              </Button>
-              <Upload
-                v-access:code="SYSTEM_PERMS.fileUpload"
-                :accept="uploadAccept"
-                :custom-request="customRequest"
-                multiple
-                :show-upload-list="false"
-              >
-                <Button v-access:code="SYSTEM_PERMS.fileUpload" type="primary">
-                  <IconifyIcon icon="lucide:upload" class="size-4" />
-                  上传文件
-                </Button>
-              </Upload>
-            </div>
-          </template>
-          <template #preview="{ row }">
-            <div class="file-preview-cell">
-              <div
-                v-if="shouldShowMediaThumbnail(row) && isImageFile(row)"
-                class="file-preview-image-frame"
-              >
-                <Image
-                  class="file-preview-image"
-                  :height="32"
-                  :preview="{ src: row.url }"
-                  :src="row.url"
-                  :width="32"
-                />
-              </div>
-              <button
-                v-else-if="shouldShowMediaThumbnail(row) && isVideoFile(row)"
-                class="file-preview-media-button"
-                title="预览"
-                type="button"
-                @click="openMediaPreview(row)"
-              >
-                <video
-                  class="file-preview-media"
-                  muted
-                  playsinline
-                  preload="metadata"
-                  :src="row.url"
-                ></video>
-                <span class="file-preview-video-mask">
-                  <IconifyIcon icon="lucide:play" class="size-5" />
-                </span>
-              </button>
-              <Button
-                v-else-if="isImageFile(row) || isVideoFile(row)"
-                type="link"
-                html-type="button"
-                title="预览"
-                class="file-preview-button"
-                @click="openMediaPreview(row)"
-              >
-                <IconifyIcon :icon="getPreviewIcon(row)" class="size-7" />
-              </Button>
-              <Button
-                v-else
-                type="link"
-                html-type="button"
-                :href="row.url"
-                target="_blank"
-                title="预览"
-                class="file-preview-button"
-              >
-                <IconifyIcon :icon="getPreviewIcon(row)" class="size-7" />
-              </Button>
-            </div>
-          </template>
-        </Grid>
-      </div>
-    </div>
-    <FolderModal
-      :description="folderModalDescription"
-      :title="folderModalTitle"
-    >
-      <FolderForm />
-    </FolderModal>
-    <StorageConfigDrawer class="w-full max-w-200" title="存储配置">
-      <div class="storage-config-toolbar">
-        <Button
-          v-access:code="SYSTEM_PERMS.fileUpload"
-          type="primary"
-          @click.stop="createStorageConfigItem"
-        >
-          <IconifyIcon icon="lucide:plus" class="size-4" />
-          新增配置
-        </Button>
-      </div>
-
-      <div class="storage-config-list-header">
-        <span>配置名称</span>
-        <span>存储信息</span>
-        <span>操作</span>
-      </div>
-      <div class="storage-config-list">
-        <div
-          v-for="config in storageConfigPageItems"
-          :key="config.id"
-          class="storage-config-item"
-          :class="{
-            'storage-config-item-current': config.isDefault === 1,
-            'storage-config-item-disabled': config.status !== 1,
-          }"
-        >
-          <div class="storage-config-main">
-            <div class="storage-config-name-row">
-              <span class="storage-config-name">{{ config.configName }}</span>
-              <Tag v-if="config.isDefault === 1" color="blue">默认</Tag>
-              <Tag :color="config.status === 1 ? 'green' : 'default'">
-                {{ config.status === 1 ? '启用' : '禁用' }}
-              </Tag>
-            </div>
-            <div class="storage-config-meta">
-              {{ getStorageTypeLabel(config.storageType) }}
-            </div>
-          </div>
-          <div class="storage-config-detail">
-            <span>访问域名：{{ config.domain || '未配置' }}</span>
-            <span>存储路径：{{ config.storagePath || '-' }}</span>
-          </div>
-          <div class="storage-config-actions">
-            <Button
-              v-access:code="SYSTEM_PERMS.fileUpload"
-              size="small"
-              type="link"
-              @click.stop="editStorageConfig(config)"
-            >
-              编辑
+    </template>
+    <Grid :table-title="fileTableTitle">
+      <template #toolbar-tools>
+        <div class="flex items-center gap-2">
+          <Button
+            v-access:code="SYSTEM_PERMS.fileUpload"
+            @click="openStorageModal"
+          >
+            <IconifyIcon icon="lucide:settings" class="size-4" />
+            存储配置（{{ storageConfigs.length }}）
+          </Button>
+          <Upload
+            v-access:code="SYSTEM_PERMS.fileUpload"
+            :accept="uploadAccept"
+            :custom-request="customRequest"
+            multiple
+            :show-upload-list="false"
+          >
+            <Button v-access:code="SYSTEM_PERMS.fileUpload" type="primary">
+              <IconifyIcon icon="lucide:upload" class="size-4" />
+              上传文件
             </Button>
-            <Button
-              v-if="config.isDefault !== 1"
-              v-access:code="SYSTEM_PERMS.fileUpload"
-              class="storage-config-default-action"
-              size="small"
-              type="link"
-              @click="markDefaultStorageConfig(config)"
-            >
-              设为默认
-            </Button>
-            <Popconfirm
-              v-if="config.isDefault !== 1"
-              title="删除后不可恢复，确认删除该存储配置？"
-              @confirm="removeStorageConfig(config)"
-            >
-              <Button
-                v-access:code="SYSTEM_PERMS.fileDelete"
-                danger
-                size="small"
-                type="link"
-              >
-                删除
-              </Button>
-            </Popconfirm>
-          </div>
-        </div>
-        <div v-if="storageConfigPageLoading" class="storage-config-empty">
-          加载中...
-        </div>
-        <div
-          v-else-if="storageConfigPageItems.length === 0"
-          class="storage-config-empty"
-        >
-          暂无存储配置
-        </div>
-      </div>
-      <template #footer>
-        <div class="storage-config-pagination">
-          <span class="storage-config-total">共 {{ storageConfigTotal }} 个配置</span>
-          <div class="storage-config-page-actions">
-            <span>
-              第 {{ storageConfigPageNum }} / {{ storageConfigTotalPages }} 页
-            </span>
-            <Button
-              size="small"
-              :disabled="storageConfigPageNum <= 1"
-              @click="changeStorageConfigPage(-1)"
-            >
-              上一页
-            </Button>
-            <Button
-              size="small"
-              :disabled="storageConfigPageNum >= storageConfigTotalPages"
-              @click="changeStorageConfigPage(1)"
-            >
-              下一页
-            </Button>
-          </div>
+          </Upload>
         </div>
       </template>
-    </StorageConfigDrawer>
-    <StorageModal
-      class="w-[760px]"
-      :fullscreen-button="false"
-      :title="storageModalTitle"
-    >
-      <div class="storage-config-form">
-        <StorageForm />
-      </div>
-    </StorageModal>
-    <DeleteFolderModal title="删除文件夹">
-      <p class="text-sm text-muted-foreground">{{ deleteFolderContent }}</p>
-    </DeleteFolderModal>
-    <UploadProgressModal class="w-[640px]" title="上传进度">
-      <div class="upload-progress-panel">
-        <div class="upload-progress-list">
+      <template #preview="{ row }">
+        <div class="file-preview-cell">
           <div
-            v-for="task in uploadTasks"
-            :key="task.uid"
-            class="upload-progress-item"
-            :class="`upload-progress-item-${task.status}`"
+            v-if="shouldShowMediaThumbnail(row) && isImageFile(row)"
+            class="file-preview-image-frame"
           >
-            <div class="upload-progress-header">
-              <span class="upload-progress-name">{{ task.name }}</span>
-              <span
-                class="upload-progress-status"
-                :class="`upload-progress-status-${task.status}`"
-              >
-                {{
-                  task.status === 'success'
-                    ? '已完成'
-                    : task.status === 'error'
-                      ? '上传失败'
-                      : '上传中'
-                }}
-              </span>
-            </div>
-            <Progress
-              :percent="task.percent"
-              :status="task.status === 'error' ? 'exception' : 'normal'"
-              size="small"
+            <Image
+              class="file-preview-image"
+              :height="32"
+              :preview="{ src: row.url }"
+              :src="row.url"
+              :width="32"
             />
-            <div v-if="task.errorMessage" class="upload-progress-error">
-              {{ task.errorMessage }}
-            </div>
           </div>
-          <div
-            v-if="uploadTasks.length === 0"
-            class="flex h-full items-center justify-center text-sm text-muted-foreground"
+          <button
+            v-else-if="shouldShowMediaThumbnail(row) && isVideoFile(row)"
+            class="file-preview-media-button"
+            title="预览"
+            type="button"
+            @click="openMediaPreview(row)"
           >
-            暂无上传任务
+            <video
+              class="file-preview-media"
+              muted
+              playsinline
+              preload="metadata"
+              :src="row.url"
+            ></video>
+            <span class="file-preview-video-mask">
+              <IconifyIcon icon="lucide:play" class="size-5" />
+            </span>
+          </button>
+          <Button
+            v-else-if="isImageFile(row) || isVideoFile(row)"
+            type="link"
+            html-type="button"
+            title="预览"
+            class="file-preview-button"
+            @click="openMediaPreview(row)"
+          >
+            <IconifyIcon :icon="getPreviewIcon(row)" class="size-7" />
+          </Button>
+          <Button
+            v-else
+            type="link"
+            html-type="button"
+            :href="row.url"
+            target="_blank"
+            title="预览"
+            class="file-preview-button"
+          >
+            <IconifyIcon :icon="getPreviewIcon(row)" class="size-7" />
+          </Button>
+        </div>
+      </template>
+    </Grid>
+  </ColPage>
+  <FolderModal :description="folderModalDescription" :title="folderModalTitle">
+    <FolderForm />
+  </FolderModal>
+  <StorageConfigDrawer class="w-full max-w-200" title="存储配置">
+    <div class="storage-config-toolbar">
+      <Button
+        v-access:code="SYSTEM_PERMS.fileUpload"
+        type="primary"
+        @click.stop="createStorageConfigItem"
+      >
+        <IconifyIcon icon="lucide:plus" class="size-4" />
+        新增配置
+      </Button>
+    </div>
+
+    <div class="storage-config-list-header">
+      <span>配置名称</span>
+      <span>存储信息</span>
+      <span>操作</span>
+    </div>
+    <div class="storage-config-list">
+      <div
+        v-for="config in storageConfigPageItems"
+        :key="config.id"
+        class="storage-config-item"
+        :class="{
+          'storage-config-item-current': config.isDefault === 1,
+          'storage-config-item-disabled': config.status !== 1,
+        }"
+      >
+        <div class="storage-config-main">
+          <div class="storage-config-name-row">
+            <span class="storage-config-name">{{ config.configName }}</span>
+            <Tag v-if="config.isDefault === 1" color="blue">默认</Tag>
+            <Tag :color="config.status === 1 ? 'green' : 'default'">
+              {{ config.status === 1 ? '启用' : '禁用' }}
+            </Tag>
+          </div>
+          <div class="storage-config-meta">
+            {{ getStorageTypeLabel(config.storageType) }}
           </div>
         </div>
-        <div class="upload-progress-actions">
-          <Button @click="closeUploadProgress">取消</Button>
+        <div class="storage-config-detail">
+          <span>访问域名：{{ config.domain || '未配置' }}</span>
+          <span>存储路径：{{ config.storagePath || '-' }}</span>
+        </div>
+        <div class="storage-config-actions">
           <Button
-            type="primary"
-            :disabled="!uploadFinished"
-            @click="closeUploadProgress"
+            v-access:code="SYSTEM_PERMS.fileUpload"
+            size="small"
+            type="link"
+            @click.stop="editStorageConfig(config)"
           >
-            完成
+            编辑
+          </Button>
+          <Button
+            v-if="config.isDefault !== 1"
+            v-access:code="SYSTEM_PERMS.fileUpload"
+            class="storage-config-default-action"
+            size="small"
+            type="link"
+            @click="markDefaultStorageConfig(config)"
+          >
+            设为默认
+          </Button>
+          <Popconfirm
+            v-if="config.isDefault !== 1"
+            title="删除后不可恢复，确认删除该存储配置？"
+            @confirm="removeStorageConfig(config)"
+          >
+            <Button
+              v-access:code="SYSTEM_PERMS.fileDelete"
+              danger
+              size="small"
+              type="link"
+            >
+              删除
+            </Button>
+          </Popconfirm>
+        </div>
+      </div>
+      <div v-if="storageConfigPageLoading" class="storage-config-empty">
+        加载中...
+      </div>
+      <div
+        v-else-if="storageConfigPageItems.length === 0"
+        class="storage-config-empty"
+      >
+        暂无存储配置
+      </div>
+    </div>
+    <template #footer>
+      <div class="storage-config-pagination">
+        <span class="storage-config-total"
+          >共 {{ storageConfigTotal }} 个配置</span
+        >
+        <div class="storage-config-page-actions">
+          <span>
+            第 {{ storageConfigPageNum }} / {{ storageConfigTotalPages }} 页
+          </span>
+          <Button
+            size="small"
+            :disabled="storageConfigPageNum <= 1"
+            @click="changeStorageConfigPage(-1)"
+          >
+            上一页
+          </Button>
+          <Button
+            size="small"
+            :disabled="storageConfigPageNum >= storageConfigTotalPages"
+            @click="changeStorageConfigPage(1)"
+          >
+            下一页
           </Button>
         </div>
       </div>
+    </template>
+  </StorageConfigDrawer>
+  <StorageModal
+    class="w-[760px]"
+    :fullscreen-button="false"
+    :title="storageModalTitle"
+  >
+    <div class="storage-config-form">
+      <StorageForm />
+    </div>
+  </StorageModal>
+  <DeleteFolderModal title="删除文件夹">
+    <p class="text-sm text-muted-foreground">{{ deleteFolderContent }}</p>
+  </DeleteFolderModal>
+  <UploadProgressModal class="w-[640px]" title="上传进度">
+    <div class="upload-progress-panel">
+      <div class="upload-progress-list">
+        <div
+          v-for="task in uploadTasks"
+          :key="task.uid"
+          class="upload-progress-item"
+          :class="`upload-progress-item-${task.status}`"
+        >
+          <div class="upload-progress-header">
+            <span class="upload-progress-name">{{ task.name }}</span>
+            <span
+              class="upload-progress-status"
+              :class="`upload-progress-status-${task.status}`"
+            >
+              {{
+                task.status === 'success'
+                  ? '已完成'
+                  : task.status === 'error'
+                    ? '上传失败'
+                    : '上传中'
+              }}
+            </span>
+          </div>
+          <Progress
+            :percent="task.percent"
+            :status="task.status === 'error' ? 'exception' : 'normal'"
+            size="small"
+          />
+          <div v-if="task.errorMessage" class="upload-progress-error">
+            {{ task.errorMessage }}
+          </div>
+        </div>
+        <div
+          v-if="uploadTasks.length === 0"
+          class="flex h-full items-center justify-center text-sm text-muted-foreground"
+        >
+          暂无上传任务
+        </div>
+      </div>
+      <div class="upload-progress-actions">
+        <Button @click="closeUploadProgress">取消</Button>
+        <Button
+          type="primary"
+          :disabled="!uploadFinished"
+          @click="closeUploadProgress"
+        >
+          完成
+        </Button>
+      </div>
+    </div>
     </UploadProgressModal>
-  </Page>
+  </div>
 </template>
 
 <style scoped>
@@ -1552,6 +1560,7 @@ onBeforeUnmount(() => {
   font-size: 16px;
   font-weight: 600;
   line-height: 24px;
+  white-space: nowrap;
 }
 
 .folder-create-btn {

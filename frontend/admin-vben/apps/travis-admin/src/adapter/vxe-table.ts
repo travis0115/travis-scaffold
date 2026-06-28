@@ -44,7 +44,7 @@ setupVbenVxeTable({
             total: 'total',
             list: '',
           },
-          showActiveMsg: true,
+          showActiveMsg: false,
           showResponseMsg: false,
           sort: true,
         },

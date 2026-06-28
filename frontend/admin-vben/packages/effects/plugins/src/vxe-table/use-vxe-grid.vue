@@ -440,7 +440,11 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div :class="cn('flex h-full min-h-0 flex-col rounded-md bg-card', className)">
+  <div
+    :class="
+      cn('vben-vxe-grid flex h-full min-h-0 flex-col rounded-md bg-card', className)
+    "
+  >
     <VxeGrid
       ref="gridRef"
       :class="
@@ -458,9 +462,11 @@ onUnmounted(() => {
       <!-- 左侧操作区域或者title -->
       <template v-if="showToolbar" #toolbar-actions="slotProps">
         <slot v-if="showTableTitle" name="table-title">
-          <div class="flex items-center gap-2 text-[1rem] font-bold">
+          <div
+            class="vben-vxe-grid-title flex min-w-0 items-center gap-2 text-[1rem] font-bold"
+          >
             <span class="h-5 w-1.5 rounded-full bg-primary"></span>
-            {{ tableTitle }}
+            <span class="min-w-0 truncate">{{ tableTitle }}</span>
             <VbenHelpTooltip v-if="tableTitleHelp">
               {{ tableTitleHelp }}
             </VbenHelpTooltip>
@@ -478,7 +484,7 @@ onUnmounted(() => {
         <slot :name="slotName" v-bind="slotProps"></slot>
       </template>
       <template #toolbar-tools="slotProps">
-        <div class="flex items-center gap-2">
+        <div class="vben-vxe-grid-toolbar-tools flex items-center gap-2">
           <slot name="toolbar-tools" v-bind="slotProps"></slot>
         </div>
         <VxeButton

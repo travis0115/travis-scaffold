@@ -7,7 +7,13 @@ import type { SystemUserApi } from '#/api';
 
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 
-import { Page, Tree, useVbenDrawer, useVbenModal } from '@vben/common-ui';
+import {
+  ColPage,
+  Page,
+  Tree,
+  useVbenDrawer,
+  useVbenModal,
+} from '@vben/common-ui';
 import { IconifyIcon, Plus } from '@vben/icons';
 
 import { Button, Card, Input, message } from 'antdv-next';
@@ -380,138 +386,152 @@ onMounted(() => {
 });
 </script>
 <template>
-  <Page auto-content-height>
+  <div class="h-full min-h-0">
     <FormDrawer @success="onRefresh" />
     <ResetPwdModal @success="onRefresh" />
-    <div v-if="showDeptTree" class="flex size-full">
-      <!-- 左侧部门树 -->
-      <Card class="folder-panel w-72 flex-none">
-        <div class="mb-4 flex items-center justify-between">
-          <span class="folder-panel-title">部门</span>
-          <Button
-            class="folder-create-btn"
-            type="link"
-            @click="onToggleDeptExpanded"
-          >
-            {{ deptTreeExpanded ? '全部收起' : '全部展开' }}
-          </Button>
-        </div>
-
-        <Input
-          v-model:value="deptSearchValue"
-          allow-clear
-          placeholder="请输入部门名称"
-          class="folder-search mb-5"
-        >
-          <template #prefix>
-            <IconifyIcon
-              icon="lucide:search"
-              class="size-4 text-muted-foreground"
-            />
-          </template>
-        </Input>
-        <div
-          v-if="showAllDeptEntry"
-          class="folder-row"
-          :class="
-            selectedDeptId === undefined
-              ? 'folder-row-selected'
-              : 'folder-row-normal'
-          "
-          @click="onSelectAllDept"
-        >
-          <span class="folder-row-spacer"></span>
-          <IconifyIcon icon="lucide:folder" class="folder-icon" />
-          <span class="folder-name">{{ $t('system.user.allDepts') }}</span>
-        </div>
-        <div
-          v-if="showUnassignedDeptEntry"
-          class="folder-row"
-          :class="
-            selectedDeptId === 0 ? 'folder-row-selected' : 'folder-row-normal'
-          "
-          @click="onSelectUnassignedDept"
-        >
-          <span class="folder-row-spacer"></span>
-          <IconifyIcon icon="lucide:folder" class="folder-icon" />
-          <span class="folder-name">未归属</span>
-        </div>
-        <Tree
-          v-if="deptList.length > 0"
-          :key="deptTreeRenderKey"
-          v-model="selectedDeptId"
-          v-model:expanded-keys="deptTreeExpandedKeys"
-          class="side-tree folder-tree"
-          :tree-data="deptList"
-          :default-expanded-level="0"
-          :show-icon="false"
-          :show-toolbar="false"
-          label-field="deptName"
-          :transition="!deptRestoreTransitionDisabled"
-          value-field="id"
-          children-field="children"
-          @select="onSelectDept"
-        >
-          <template #node="{ value: dept }">
-            <div class="folder-node">
-              <IconifyIcon icon="lucide:folder" class="folder-icon" />
-              <span class="folder-name">{{ dept.deptName }}</span>
-            </div>
-          </template>
-        </Tree>
-      </Card>
-      <!-- 右侧表格 -->
-      <div class="ml-4 min-w-0 flex-1">
-        <Grid :table-title="userTableTitle">
-          <template #toolbar-tools>
-            <Button @click="onToggleOnlineOnly">
-              <IconifyIcon
-                :icon="onlineOnly ? 'lucide:users' : 'lucide:activity'"
-                class="size-4"
-              />
-              {{
-                onlineOnly
-                  ? $t('system.user.allUsers')
-                  : $t('system.user.onlineUsers', [onlineUserCount])
-              }}
-            </Button>
+    <ColPage
+      v-if="showDeptTree"
+      auto-content-height
+      :left-max-width="34"
+      :left-min-width="22"
+      :left-width="22"
+      :right-min-width="50"
+      :right-width="78"
+      split-handle
+      split-line
+    >
+      <template #left>
+        <!-- 左侧部门树 -->
+        <Card class="folder-panel h-full">
+          <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <span class="folder-panel-title">部门</span>
             <Button
-              v-access:code="SYSTEM_PERMS.userCreate"
-              type="primary"
-              @click="onCreate"
+              class="folder-create-btn"
+              type="link"
+              @click="onToggleDeptExpanded"
             >
-              <Plus class="size-5" />
-              {{ $t('ui.actionTitle.create', [$t('system.user.name')]) }}
+              {{ deptTreeExpanded ? '全部收起' : '全部展开' }}
             </Button>
-          </template>
-        </Grid>
-      </div>
-    </div>
-    <!-- 未启用部门时只显示表格 -->
-    <Grid v-else :table-title="userTableTitle">
-      <template #toolbar-tools>
-        <Button @click="onToggleOnlineOnly">
-          <IconifyIcon
-            :icon="onlineOnly ? 'lucide:users' : 'lucide:activity'"
-            class="size-4"
-          />
-          {{
-            onlineOnly
-              ? $t('system.user.allUsers')
-              : $t('system.user.onlineUsers', [onlineUserCount])
-          }}
-        </Button>
-        <Button
-          v-access:code="SYSTEM_PERMS.userCreate"
-          type="primary"
-          @click="onCreate"
-        >
-          <Plus class="size-5" />
-          {{ $t('ui.actionTitle.create', [$t('system.user.name')]) }}
-        </Button>
+          </div>
+
+          <Input
+            v-model:value="deptSearchValue"
+            allow-clear
+            placeholder="请输入部门名称"
+            class="folder-search mb-5"
+          >
+            <template #prefix>
+              <IconifyIcon
+                icon="lucide:search"
+                class="size-4 text-muted-foreground"
+              />
+            </template>
+          </Input>
+          <div
+            v-if="showAllDeptEntry"
+            class="folder-row"
+            :class="
+              selectedDeptId === undefined
+                ? 'folder-row-selected'
+                : 'folder-row-normal'
+            "
+            @click="onSelectAllDept"
+          >
+            <span class="folder-row-spacer"></span>
+            <IconifyIcon icon="lucide:folder" class="folder-icon" />
+            <span class="folder-name">{{ $t('system.user.allDepts') }}</span>
+          </div>
+          <div
+            v-if="showUnassignedDeptEntry"
+            class="folder-row"
+            :class="
+              selectedDeptId === 0
+                ? 'folder-row-selected'
+                : 'folder-row-normal'
+            "
+            @click="onSelectUnassignedDept"
+          >
+            <span class="folder-row-spacer"></span>
+            <IconifyIcon icon="lucide:folder" class="folder-icon" />
+            <span class="folder-name">未归属</span>
+          </div>
+          <Tree
+            v-if="deptList.length > 0"
+            :key="deptTreeRenderKey"
+            v-model="selectedDeptId"
+            v-model:expanded-keys="deptTreeExpandedKeys"
+            class="side-tree folder-tree"
+            :tree-data="deptList"
+            :default-expanded-level="0"
+            :show-icon="false"
+            :show-toolbar="false"
+            label-field="deptName"
+            :transition="!deptRestoreTransitionDisabled"
+            value-field="id"
+            children-field="children"
+            @select="onSelectDept"
+          >
+            <template #node="{ value: dept }">
+              <div class="folder-node">
+                <IconifyIcon icon="lucide:folder" class="folder-icon" />
+                <span class="folder-name">{{ dept.deptName }}</span>
+              </div>
+            </template>
+          </Tree>
+        </Card>
       </template>
-    </Grid>
-  </Page>
+      <!-- 右侧表格 -->
+      <Grid :table-title="userTableTitle">
+        <template #toolbar-tools>
+          <Button @click="onToggleOnlineOnly">
+            <IconifyIcon
+              :icon="onlineOnly ? 'lucide:users' : 'lucide:activity'"
+              class="size-4"
+            />
+            {{
+              onlineOnly
+                ? $t('system.user.allUsers')
+                : $t('system.user.onlineUsers', [onlineUserCount])
+            }}
+          </Button>
+          <Button
+            v-access:code="SYSTEM_PERMS.userCreate"
+            type="primary"
+            @click="onCreate"
+          >
+            <Plus class="size-5" />
+            {{ $t('ui.actionTitle.create', [$t('system.user.name')]) }}
+          </Button>
+        </template>
+      </Grid>
+    </ColPage>
+    <!-- 未启用部门时只显示表格 -->
+    <Page v-else auto-content-height>
+      <Grid :table-title="userTableTitle">
+        <template #toolbar-tools>
+          <Button @click="onToggleOnlineOnly">
+            <IconifyIcon
+              :icon="onlineOnly ? 'lucide:users' : 'lucide:activity'"
+              class="size-4"
+            />
+            {{
+              onlineOnly
+                ? $t('system.user.allUsers')
+                : $t('system.user.onlineUsers', [onlineUserCount])
+            }}
+          </Button>
+          <Button
+            v-access:code="SYSTEM_PERMS.userCreate"
+            type="primary"
+            @click="onCreate"
+          >
+            <Plus class="size-5" />
+            {{ $t('ui.actionTitle.create', [$t('system.user.name')]) }}
+          </Button>
+        </template>
+      </Grid>
+    </Page>
+  </div>
 </template>
 
 <style scoped>
@@ -530,6 +550,7 @@ onMounted(() => {
   font-size: 16px;
   font-weight: 600;
   line-height: 24px;
+  white-space: nowrap;
 }
 
 .folder-create-btn {

@@ -8,7 +8,7 @@ import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
-import com.travis.infrastructure.framework.redis.core.RedisUtil;
+import com.travis.infrastructure.framework.redis.core.util.RedisUtil;
 import com.travis.monolith.ops.job.api.OpsJobErrorCode;
 import com.travis.monolith.ops.job.api.request.OpsJobLogPageReq;
 import com.travis.monolith.ops.job.api.response.*;
