@@ -18,7 +18,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *     session-timeout: 300000
  *     redis:
  *       channel: "websocket:channel:broadcast"
- *       session-key-prefix: "websocket:session:"
+ *       session-key-prefix: "websocket:session"
  * }</pre>
  *
  * @author travis
@@ -55,6 +55,6 @@ public class WebSocketProperties {
         private String channel = "websocket:channel:broadcast";
 
         /** Session 映射 Redis key 前缀 */
-        private String sessionKeyPrefix = "websocket:session:";
+        private String sessionKeyPrefix = "websocket:session";
     }
 }

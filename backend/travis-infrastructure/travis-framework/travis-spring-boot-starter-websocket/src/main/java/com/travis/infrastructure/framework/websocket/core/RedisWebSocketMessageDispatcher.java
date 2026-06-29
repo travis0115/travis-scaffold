@@ -213,7 +213,7 @@ public class RedisWebSocketMessageDispatcher {
                     .map(
                             key -> {
                                 String businessKey = redisKeyPrefixResolver.remove(key);
-                                String sessionPrefix = properties.getRedis().getSessionKeyPrefix();
+                                String sessionPrefix = sessionKeyPrefix();
                                 return businessKey.substring(sessionPrefix.length());
                             })
                     .collect(Collectors.toSet());
@@ -229,6 +229,11 @@ public class RedisWebSocketMessageDispatcher {
     }
 
     private String buildSessionKey(String userId) {
-        return redisKeyPrefixResolver.apply(properties.getRedis().getSessionKeyPrefix() + userId);
+        return redisKeyPrefixResolver.apply(sessionKeyPrefix() + userId);
+    }
+
+    private String sessionKeyPrefix() {
+        String prefix = properties.getRedis().getSessionKeyPrefix();
+        return prefix.endsWith(":") ? prefix : prefix + ":";
     }
 }
