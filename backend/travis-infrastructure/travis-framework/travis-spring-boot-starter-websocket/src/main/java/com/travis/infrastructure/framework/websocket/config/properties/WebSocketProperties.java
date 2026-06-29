@@ -1,4 +1,4 @@
-package com.travis.infrastructure.framework.websocket.config;
+package com.travis.infrastructure.framework.websocket.config.properties;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -17,8 +17,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *     heartbeat-interval: 30000
  *     session-timeout: 300000
  *     redis:
- *       channel: "travis:websocket:broadcast"
- *       session-key-prefix: "travis:ws:session:"
+ *       channel: "websocket:channel:broadcast"
+ *       session-key-prefix: "websocket:session:"
  * }</pre>
  *
  * @author travis
@@ -52,9 +52,9 @@ public class WebSocketProperties {
     public static class Redis {
 
         /** Redis Pub/Sub 频道名称 */
-        private String channel = "travis:websocket:broadcast";
+        private String channel = "websocket:channel:broadcast";
 
         /** Session 映射 Redis key 前缀 */
-        private String sessionKeyPrefix = "travis:ws:session:";
+        private String sessionKeyPrefix = "websocket:session:";
     }
 }

@@ -1,8 +1,9 @@
 package com.travis.infrastructure.framework.websocket.core;
 
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
+import com.travis.infrastructure.framework.redis.core.key.RedisKeyPrefixResolver;
 import com.travis.infrastructure.framework.redis.core.pubsub.RedisPubSubClient;
-import com.travis.infrastructure.framework.websocket.config.WebSocketProperties;
+import com.travis.infrastructure.framework.websocket.config.properties.WebSocketProperties;
 import com.travis.infrastructure.framework.websocket.message.WebSocketMessage;
 import com.travis.infrastructure.framework.websocket.message.WebSocketMessageType;
 import java.util.Collections;
@@ -32,6 +33,7 @@ public class RedisWebSocketMessageDispatcher {
 
     private final RedisPubSubClient redisPubSubClient;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisKeyPrefixResolver redisKeyPrefixResolver;
     private final WebSocketProperties properties;
     private final String instanceId;
 
@@ -44,9 +46,11 @@ public class RedisWebSocketMessageDispatcher {
     public RedisWebSocketMessageDispatcher(
             RedisPubSubClient redisPubSubClient,
             RedisTemplate<String, Object> redisTemplate,
+            RedisKeyPrefixResolver redisKeyPrefixResolver,
             WebSocketProperties properties) {
         this.redisPubSubClient = redisPubSubClient;
         this.redisTemplate = redisTemplate;
+        this.redisKeyPrefixResolver = redisKeyPrefixResolver;
         this.properties = properties;
         this.instanceId = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
     }
@@ -208,8 +212,9 @@ public class RedisWebSocketMessageDispatcher {
             return redisTemplate.keys(buildSessionKey("*")).stream()
                     .map(
                             key -> {
-                                String prefix = properties.getRedis().getSessionKeyPrefix();
-                                return key.substring(prefix.length());
+                                String businessKey = redisKeyPrefixResolver.remove(key);
+                                String sessionPrefix = properties.getRedis().getSessionKeyPrefix();
+                                return businessKey.substring(sessionPrefix.length());
                             })
                     .collect(Collectors.toSet());
         } catch (Exception e) {
@@ -224,6 +229,6 @@ public class RedisWebSocketMessageDispatcher {
     }
 
     private String buildSessionKey(String userId) {
-        return properties.getRedis().getSessionKeyPrefix() + userId;
+        return redisKeyPrefixResolver.apply(properties.getRedis().getSessionKeyPrefix() + userId);
     }
 }

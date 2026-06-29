@@ -11,7 +11,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.Environment;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.util.StringUtils;
 import tools.jackson.databind.JacksonModule;
 
 /** Web 输入安全与防重复提交自动配置。 */
@@ -38,8 +40,24 @@ public class TravisWebSecurityAutoConfiguration {
     @ConditionalOnClass(StringRedisTemplate.class)
     @ConditionalOnBean(StringRedisTemplate.class)
     public NoRepeatSubmitAspect noRepeatSubmitAspect(
-            StringRedisTemplate redisTemplate, WebProperties webProperties) {
+            StringRedisTemplate redisTemplate,
+            WebProperties webProperties,
+            Environment environment) {
         return new NoRepeatSubmitAspect(
-                redisTemplate, webProperties.getNoRepeatSubmit().getKeyPrefix());
+                redisTemplate,
+                buildRedisKeyPrefix(
+                        environment.getProperty("travis.redis.key-prefix"),
+                        webProperties.getNoRepeatSubmit().getKeyPrefix()));
+    }
+
+    private String buildRedisKeyPrefix(String redisKeyPrefix, String keyPrefix) {
+        return normalizePrefix(redisKeyPrefix) + (keyPrefix == null ? "" : keyPrefix);
+    }
+
+    private String normalizePrefix(String prefix) {
+        if (!StringUtils.hasText(prefix)) {
+            return "";
+        }
+        return prefix.endsWith(":") ? prefix : prefix + ":";
     }
 }

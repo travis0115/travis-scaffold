@@ -26,5 +26,4 @@ public class BizExceptionHandler {
         log.warn("业务异常: {}", ex.getErrorCode().getMsg(), ex);
         return ApiResponse.error(ex.getErrorCode(), ex.getArgs());
     }
-
 }

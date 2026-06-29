@@ -2,7 +2,7 @@ package com.travis.infrastructure.framework.websocket.core;
 
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
-import com.travis.infrastructure.framework.websocket.config.WebSocketProperties;
+import com.travis.infrastructure.framework.websocket.config.properties.WebSocketProperties;
 import com.travis.infrastructure.framework.websocket.interceptor.WebSocketAuthInterceptor;
 import com.travis.infrastructure.framework.websocket.message.WebSocketMessage;
 import java.io.IOException;
@@ -467,7 +467,9 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
         if (dispatcher == null) {
             return;
         }
-        localSessions.keySet().forEach(sessionKey -> dispatcher.registerUserInstance(sessionKey, instanceId));
+        localSessions
+                .keySet()
+                .forEach(sessionKey -> dispatcher.registerUserInstance(sessionKey, instanceId));
     }
 
     private ThreadPoolTaskScheduler createHeartbeatScheduler() {

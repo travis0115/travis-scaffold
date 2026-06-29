@@ -1,11 +1,10 @@
 package com.travis.infrastructure.framework.rocketmq.core;
 
 import com.travis.infrastructure.common.message.*;
-import lombok.extern.slf4j.Slf4j;
-
 import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 基于 RocketMQ 的 {@link MessagePublisher} 实现。

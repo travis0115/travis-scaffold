@@ -1,9 +1,11 @@
 package com.travis.infrastructure.framework.satoken.config;
 
+import cn.dev33.satoken.dao.SaTokenDao;
 import cn.dev33.satoken.interceptor.SaInterceptor;
 import cn.dev33.satoken.jwt.StpLogicJwtForSimple;
 import cn.dev33.satoken.stp.StpLogic;
 import com.travis.infrastructure.framework.satoken.config.properties.SaTokenProperties;
+import com.travis.infrastructure.framework.satoken.core.PrefixedSaTokenDao;
 import com.travis.infrastructure.framework.satoken.core.SaTokenExceptionHandler;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.satoken.core.UserContextInterceptor;
@@ -14,7 +16,9 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.Ordered;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -72,6 +76,13 @@ public class TravisSaTokenAutoConfiguration implements WebMvcConfigurer {
     @Bean
     public StpLogic getStpLogicJwt() {
         return new StpLogicJwtForSimple();
+    }
+
+    /** Sa-Token Redis DAO：请求头名保持不变，仅 Redis 物理 key 套用项目级前缀。 */
+    @Bean
+    @Primary
+    public SaTokenDao saTokenDao(Environment environment) {
+        return new PrefixedSaTokenDao(environment.getProperty("travis.redis.key-prefix"));
     }
 
     /** StpKit 初始化，根据 YAML 配置自动创建所有 loginType 对应的 StpLogic */

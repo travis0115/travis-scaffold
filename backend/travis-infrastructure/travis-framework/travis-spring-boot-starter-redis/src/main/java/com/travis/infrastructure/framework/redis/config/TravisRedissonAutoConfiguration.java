@@ -1,6 +1,7 @@
 package com.travis.infrastructure.framework.redis.config;
 
 import com.travis.infrastructure.framework.redis.core.aop.DistributedLockAspect;
+import com.travis.infrastructure.framework.redis.core.key.RedisKeyPrefixResolver;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.invoke.MethodHandle;
@@ -59,8 +60,9 @@ public class TravisRedissonAutoConfiguration {
 
     /** 注册基于 Redisson 的分布式锁切面。 */
     @Bean
-    public DistributedLockAspect distributedLockAspect(RedissonClient redissonClient) {
-        return new DistributedLockAspect(redissonClient);
+    public DistributedLockAspect distributedLockAspect(
+            RedissonClient redissonClient, RedisKeyPrefixResolver redisKeyPrefixResolver) {
+        return new DistributedLockAspect(redissonClient, redisKeyPrefixResolver);
     }
 
     /** 配置 Redisson */

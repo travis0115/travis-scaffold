@@ -41,8 +41,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLog>
         implements OpsJobLogService {
 
-    private static final String STATS_KEY_PREFIX = "travis:ops:job:stats:";
-    private static final String DASHBOARD_KEY = "travis:ops:job:dashboard";
+    private static final String STATS_KEY_PREFIX = "ops:job:stats:";
+    private static final String DASHBOARD_KEY = "ops:job:dashboard";
     private static final long CACHE_MILLIS = TimeUnit.MINUTES.toMillis(10);
     private static final Map<String, SFunction<OpsJobLog, ?>> SORT_COLUMNS =
             Map.of(

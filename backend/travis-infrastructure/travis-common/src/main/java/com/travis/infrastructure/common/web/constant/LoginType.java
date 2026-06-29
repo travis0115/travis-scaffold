@@ -1,10 +1,9 @@
 package com.travis.infrastructure.common.web.constant;
 
 import cn.hutool.core.util.StrUtil;
-import lombok.extern.slf4j.Slf4j;
-
 import java.util.Locale;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 
 /** 登录用户类型常量 */
 @Slf4j

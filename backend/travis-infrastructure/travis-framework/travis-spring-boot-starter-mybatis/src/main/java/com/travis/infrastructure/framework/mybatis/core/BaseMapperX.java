@@ -2,7 +2,6 @@ package com.travis.infrastructure.framework.mybatis.core;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-
 import java.util.List;
 
 /**
@@ -14,7 +13,6 @@ import java.util.List;
  * @author travis
  */
 public interface BaseMapperX<T> extends BaseMapper<T> {
-    
 
     /**
      * 查询全部记录总数

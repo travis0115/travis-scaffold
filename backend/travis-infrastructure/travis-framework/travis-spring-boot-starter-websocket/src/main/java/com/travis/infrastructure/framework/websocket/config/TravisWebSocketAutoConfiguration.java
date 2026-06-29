@@ -1,6 +1,8 @@
 package com.travis.infrastructure.framework.websocket.config;
 
+import com.travis.infrastructure.framework.redis.core.key.RedisKeyPrefixResolver;
 import com.travis.infrastructure.framework.redis.core.pubsub.RedisPubSubClient;
+import com.travis.infrastructure.framework.websocket.config.properties.WebSocketProperties;
 import com.travis.infrastructure.framework.websocket.core.*;
 import com.travis.infrastructure.framework.websocket.interceptor.WebSocketAuthInterceptor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,9 +57,11 @@ public class TravisWebSocketAutoConfiguration {
     public RedisWebSocketMessageDispatcher redisWebSocketMessageDispatcher(
             RedisPubSubClient redisPubSubClient,
             RedisTemplate<String, Object> redisTemplate,
+            RedisKeyPrefixResolver redisKeyPrefixResolver,
             WebSocketProperties properties) {
         var dispatcher =
-                new RedisWebSocketMessageDispatcher(redisPubSubClient, redisTemplate, properties);
+                new RedisWebSocketMessageDispatcher(
+                        redisPubSubClient, redisTemplate, redisKeyPrefixResolver, properties);
         dispatcher.subscribe();
         return dispatcher;
     }

@@ -6,6 +6,8 @@ import com.travis.infrastructure.common.message.MessageType;
 import com.travis.infrastructure.framework.rocketmq.core.RocketMQInitializer;
 import com.travis.infrastructure.framework.rocketmq.core.RocketMQMessagePublisher;
 import com.travis.infrastructure.framework.rocketmq.core.RocketMQProducerUtil;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.core.RocketMQClientTemplate;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,9 +21,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * RocketMQ 自动配置类，基于 rocketmq-spring-boot-starter 进行封装

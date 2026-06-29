@@ -1,5 +1,10 @@
 package com.travis.infrastructure.framework.redis.core.util;
 
+import com.travis.infrastructure.framework.redis.core.key.RedisKeyPrefixResolver;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.redis.cache.CacheKeyPrefix;
@@ -8,11 +13,6 @@ import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.CollectionUtils;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 /**
  * 基于 RedisTemplate 的 Redis 工具类，提供静态方法封装常用操作。
@@ -26,12 +26,18 @@ public class RedisUtil {
 
     private static ObjectProvider<CacheKeyPrefix> cacheKeyPrefixProvider;
 
+    private static RedisKeyPrefixResolver redisKeyPrefixResolver;
+
     public void setRedisTemplate(RedisTemplate<String, Object> redisTemplate) {
         RedisUtil.redisTemplate = redisTemplate;
     }
 
     public void setCacheKeyPrefixProvider(ObjectProvider<CacheKeyPrefix> cacheKeyPrefixProvider) {
         RedisUtil.cacheKeyPrefixProvider = cacheKeyPrefixProvider;
+    }
+
+    public void setRedisKeyPrefixResolver(RedisKeyPrefixResolver redisKeyPrefixResolver) {
+        RedisUtil.redisKeyPrefixResolver = redisKeyPrefixResolver;
     }
 
     /**
@@ -42,7 +48,7 @@ public class RedisUtil {
      */
     public static void setExpire(String key, long time) {
         try {
-            redisTemplate.expire(key, Expiration.from(time, TimeUnit.MILLISECONDS));
+            redisTemplate.expire(resolveKey(key), Expiration.from(time, TimeUnit.MILLISECONDS));
         } catch (Exception e) {
             log.warn("redis setExpire failed, key={}", key, e);
             throw new IllegalStateException("redis setExpire failed: " + key, e);
@@ -57,7 +63,7 @@ public class RedisUtil {
      */
     public static Long getExpire(String key) {
         try {
-            return redisTemplate.getExpire(key, TimeUnit.MILLISECONDS);
+            return redisTemplate.getExpire(resolveKey(key), TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             log.warn("redis getExpire failed, key={}", key, e);
             throw new IllegalStateException("redis getExpire failed: " + key, e);
@@ -72,7 +78,7 @@ public class RedisUtil {
      */
     public static Boolean hasKey(String key) {
         try {
-            return redisTemplate.hasKey(key);
+            return redisTemplate.hasKey(resolveKey(key));
         } catch (Exception e) {
             log.warn("redis hasKey failed, key={}", key, e);
             throw new IllegalStateException("redis hasKey failed: " + key, e);
@@ -101,10 +107,11 @@ public class RedisUtil {
             return;
         }
         try {
+            var resolvedKeys = keys.stream().map(RedisUtil::resolveKey).toList();
             if (keys.size() == 1) {
-                redisTemplate.delete(keys.iterator().next());
+                redisTemplate.delete(resolvedKeys.getFirst());
             } else {
-                redisTemplate.delete(keys);
+                redisTemplate.delete(resolvedKeys);
             }
         } catch (Exception e) {
             log.warn("redis delete failed, keys={}", keys, e);
@@ -223,7 +230,7 @@ public class RedisUtil {
 
     private static void doDeleteCacheKeyByPattern(String cacheName, String pattern) {
         try {
-            doDeleteByPattern(buildCacheKey(cacheName, pattern));
+            doDeleteByResolvedPattern(buildCacheKey(cacheName, pattern));
         } catch (Exception e) {
             log.warn(
                     "redis delete cache key by pattern failed, cacheName={}, pattern={}",
@@ -235,6 +242,10 @@ public class RedisUtil {
     }
 
     private static void doDeleteByPattern(String pattern) {
+        doDeleteByResolvedPattern(resolveKey(pattern));
+    }
+
+    private static void doDeleteByResolvedPattern(String pattern) {
         Set<String> keys = redisTemplate.keys(pattern);
         if (!CollectionUtils.isEmpty(keys)) {
             redisTemplate.delete(keys);
@@ -264,7 +275,7 @@ public class RedisUtil {
      */
     public static Object get(String key) {
         try {
-            return redisTemplate.opsForValue().get(key);
+            return redisTemplate.opsForValue().get(resolveKey(key));
         } catch (Exception e) {
             log.warn("redis get failed, key={}", key, e);
             throw new IllegalStateException("redis get failed: " + key, e);
@@ -279,7 +290,7 @@ public class RedisUtil {
      */
     public static void set(String key, Object value) {
         try {
-            redisTemplate.opsForValue().set(key, value);
+            redisTemplate.opsForValue().set(resolveKey(key), value);
         } catch (Exception e) {
             log.warn("redis set failed, key={}", key, e);
             throw new IllegalStateException("redis set failed: " + key, e);
@@ -295,10 +306,11 @@ public class RedisUtil {
      */
     public static void set(String key, Object value, long time) {
         try {
+            var resolvedKey = resolveKey(key);
             if (time > 0) {
-                redisTemplate.opsForValue().set(key, value, time, TimeUnit.MILLISECONDS);
+                redisTemplate.opsForValue().set(resolvedKey, value, time, TimeUnit.MILLISECONDS);
             } else {
-                redisTemplate.opsForValue().set(key, value);
+                redisTemplate.opsForValue().set(resolvedKey, value);
             }
         } catch (Exception e) {
             log.warn("redis set failed, key={}", key, e);
@@ -315,7 +327,7 @@ public class RedisUtil {
      */
     public static boolean setIfAbsent(String key, Object value) {
         try {
-            Boolean result = redisTemplate.opsForValue().setIfAbsent(key, value);
+            Boolean result = redisTemplate.opsForValue().setIfAbsent(resolveKey(key), value);
             return Boolean.TRUE.equals(result);
         } catch (Exception e) {
             log.warn("redis setIfAbsent failed, key={}", key, e);
@@ -336,7 +348,7 @@ public class RedisUtil {
             Boolean result =
                     redisTemplate
                             .opsForValue()
-                            .setIfAbsent(key, value, time, TimeUnit.MILLISECONDS);
+                            .setIfAbsent(resolveKey(key), value, time, TimeUnit.MILLISECONDS);
             return Boolean.TRUE.equals(result);
         } catch (Exception e) {
             log.warn("redis setIfAbsent failed, key={}", key, e);
@@ -353,7 +365,7 @@ public class RedisUtil {
      */
     public static Long increment(String key, long delta) {
         try {
-            return redisTemplate.opsForValue().increment(key, delta);
+            return redisTemplate.opsForValue().increment(resolveKey(key), delta);
         } catch (Exception e) {
             log.warn("redis increment failed, key={}", key, e);
             throw new IllegalStateException("redis increment failed: " + key, e);
@@ -369,7 +381,7 @@ public class RedisUtil {
      */
     public static Long decrement(String key, long delta) {
         try {
-            return redisTemplate.opsForValue().decrement(key, delta);
+            return redisTemplate.opsForValue().decrement(resolveKey(key), delta);
         } catch (Exception e) {
             log.warn("redis decrement failed, key={}", key, e);
             throw new IllegalStateException("redis decrement failed: " + key, e);
@@ -385,7 +397,7 @@ public class RedisUtil {
      */
     public static Long setAdd(String key, Object... values) {
         try {
-            return redisTemplate.opsForSet().add(key, values);
+            return redisTemplate.opsForSet().add(resolveKey(key), values);
         } catch (Exception e) {
             log.warn("redis setAdd failed, key={}", key, e);
             throw new IllegalStateException("redis setAdd failed: " + key, e);
@@ -401,7 +413,7 @@ public class RedisUtil {
      */
     public static Long setRemove(String key, Object... values) {
         try {
-            return redisTemplate.opsForSet().remove(key, values);
+            return redisTemplate.opsForSet().remove(resolveKey(key), values);
         } catch (Exception e) {
             log.warn("redis setRemove failed, key={}", key, e);
             throw new IllegalStateException("redis setRemove failed: " + key, e);
@@ -417,7 +429,7 @@ public class RedisUtil {
      */
     public static Boolean setIsMember(String key, Object value) {
         try {
-            return redisTemplate.opsForSet().isMember(key, value);
+            return redisTemplate.opsForSet().isMember(resolveKey(key), value);
         } catch (Exception e) {
             log.warn("redis setIsMember failed, key={}", key, e);
             throw new IllegalStateException("redis setIsMember failed: " + key, e);
@@ -432,7 +444,7 @@ public class RedisUtil {
      */
     public static Set<Object> setMembers(String key) {
         try {
-            return redisTemplate.opsForSet().members(key);
+            return redisTemplate.opsForSet().members(resolveKey(key));
         } catch (Exception e) {
             log.warn("redis setMembers failed, key={}", key, e);
             throw new IllegalStateException("redis setMembers failed: " + key, e);
@@ -447,10 +459,14 @@ public class RedisUtil {
      */
     public static Long setSize(String key) {
         try {
-            return redisTemplate.opsForSet().size(key);
+            return redisTemplate.opsForSet().size(resolveKey(key));
         } catch (Exception e) {
             log.warn("redis setSize failed, key={}", key, e);
             throw new IllegalStateException("redis setSize failed: " + key, e);
         }
+    }
+
+    private static String resolveKey(String key) {
+        return redisKeyPrefixResolver == null ? key : redisKeyPrefixResolver.apply(key);
     }
 }

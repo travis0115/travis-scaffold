@@ -1,6 +1,7 @@
 package com.travis.infrastructure.framework.redis.config;
 
 import cn.hutool.core.util.StrUtil;
+import java.util.Objects;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.cache.autoconfigure.CacheProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -12,8 +13,6 @@ import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
-
-import java.util.Objects;
 
 /**
  * Cache 配置类，基于Redis

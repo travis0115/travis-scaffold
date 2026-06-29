@@ -3,12 +3,17 @@ package com.travis.infrastructure.framework.redis.config;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.travis.infrastructure.framework.jackson.config.TravisJacksonAutoConfiguration;
 import com.travis.infrastructure.framework.jackson.core.LaissezFaireSubTypeValidator;
-import com.travis.infrastructure.framework.redis.core.util.RedisUtil;
+import com.travis.infrastructure.framework.redis.config.properties.TravisRedisProperties;
+import com.travis.infrastructure.framework.redis.core.key.RedisKeyPrefixResolver;
 import com.travis.infrastructure.framework.redis.core.pubsub.RedisPubSubClient;
 import com.travis.infrastructure.framework.redis.core.serializer.TravisJacksonJsonRedisSerializer;
+import com.travis.infrastructure.framework.redis.core.util.RedisUtil;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.jackson.autoconfigure.JacksonProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
@@ -26,21 +31,25 @@ import tools.jackson.databind.ext.javatime.ser.LocalDateTimeSerializer;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.module.SimpleModule;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-
 /**
  * Redis 配置类
  *
  * @author travis
  */
 @AutoConfiguration(after = TravisJacksonAutoConfiguration.class)
+@EnableConfigurationProperties(TravisRedisProperties.class)
 public class TravisRedisAutoConfiguration {
 
     private final JacksonProperties jacksonProperties;
 
     public TravisRedisAutoConfiguration(JacksonProperties jacksonProperties) {
         this.jacksonProperties = jacksonProperties;
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public RedisKeyPrefixResolver redisKeyPrefixResolver(TravisRedisProperties properties) {
+        return new RedisKeyPrefixResolver(properties);
     }
 
     /** 创建 RedisTemplate Bean，使用 JSON 序列化方式 */
@@ -72,8 +81,7 @@ public class TravisRedisAutoConfiguration {
         return JsonMapper.builder()
                 .addModule(redisJavaTimeModule())
                 .disable(
-                        DeserializationFeature
-                                .FAIL_ON_TRAILING_TOKENS) // 成功解析值后不验证是否存在额外内容(缓存内容可信)
+                        DeserializationFeature.FAIL_ON_TRAILING_TOKENS) // 成功解析值后不验证是否存在额外内容(缓存内容可信)
                 // 不可全局设置，会导致Spring Boot Actuator等Object/JsonMapper污染
                 // 添加默认类型到属性中，LaissezFaireSubTypeValidator
                 // 是全局放行的校验器，相当于关闭了校验，仅在序列化对象可信时使用，否则请使用白名单校验器
@@ -100,10 +108,12 @@ public class TravisRedisAutoConfiguration {
     @Bean
     public RedisUtil redisUtil(
             RedisTemplate<String, Object> redisTemplate,
-            ObjectProvider<CacheKeyPrefix> cacheKeyPrefixProvider) {
+            ObjectProvider<CacheKeyPrefix> cacheKeyPrefixProvider,
+            RedisKeyPrefixResolver redisKeyPrefixResolver) {
         var util = new RedisUtil();
         util.setRedisTemplate(redisTemplate);
         util.setCacheKeyPrefixProvider(cacheKeyPrefixProvider);
+        util.setRedisKeyPrefixResolver(redisKeyPrefixResolver);
         return util;
     }
 
@@ -122,7 +132,8 @@ public class TravisRedisAutoConfiguration {
     @ConditionalOnMissingBean
     public RedisPubSubClient redisPubSubClient(
             RedisTemplate<String, Object> redisTemplate,
-            RedisMessageListenerContainer listenerContainer) {
-        return new RedisPubSubClient(redisTemplate, listenerContainer);
+            RedisMessageListenerContainer listenerContainer,
+            RedisKeyPrefixResolver redisKeyPrefixResolver) {
+        return new RedisPubSubClient(redisTemplate, listenerContainer, redisKeyPrefixResolver);
     }
 }

@@ -4,6 +4,7 @@ import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
 import com.travis.infrastructure.framework.redis.core.annotation.DistributedLockNamespace;
+import com.travis.infrastructure.framework.redis.core.key.RedisKeyPrefixResolver;
 import java.lang.reflect.Method;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -26,12 +27,14 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 public class DistributedLockAspect {
 
-    private static final String KEY_PREFIX = "travis:lock:";
+    private static final String KEY_PREFIX = "lock:";
     private static final DefaultParameterNameDiscoverer PARAMETER_NAME_DISCOVERER =
             new DefaultParameterNameDiscoverer();
     private static final SpelExpressionParser EXPRESSION_PARSER = new SpelExpressionParser();
 
     private final RedissonClient redissonClient;
+
+    private final RedisKeyPrefixResolver redisKeyPrefixResolver;
 
     @Around("@annotation(distributedLock)")
     public Object around(ProceedingJoinPoint joinPoint, DistributedLock distributedLock)
@@ -96,6 +99,6 @@ public class DistributedLockAspect {
         if (!StringUtils.hasText(namespace)) {
             namespace = method.getDeclaringClass().getName() + ":" + method.getName();
         }
-        return KEY_PREFIX + namespace + ":" + keyValue;
+        return redisKeyPrefixResolver.apply(KEY_PREFIX + namespace + ":" + keyValue);
     }
 }

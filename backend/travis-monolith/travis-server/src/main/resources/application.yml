@@ -14,6 +14,8 @@ spring:
     #    import:
     #      - classpath:travis-xx.yml
     type: redis
+    redis:
+      key-prefix: ${travis.redis.key-prefix}
 
   data:
     redis:
@@ -162,6 +164,8 @@ sa-token:
   is-log: true
 #################### 应用相关配置 ####################
 travis:
+  redis:
+    key-prefix: ${spring.application.name}
   info:
     base-package: com.travis.monolith
   web:
