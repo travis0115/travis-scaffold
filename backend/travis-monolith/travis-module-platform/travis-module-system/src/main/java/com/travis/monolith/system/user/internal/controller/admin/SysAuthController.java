@@ -4,6 +4,7 @@ import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.monolith.system.menu.api.response.VbenMenuResp;
 import com.travis.monolith.system.user.api.request.SysUserLoginReq;
 import com.travis.monolith.system.user.api.response.SysUserInfoResp;
+import com.travis.monolith.system.user.api.response.SysWebSocketTicketResp;
 import com.travis.monolith.system.user.internal.service.SysAuthService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -48,6 +49,12 @@ public class SysAuthController {
     public ApiResponse<Void> logout() {
         sysAuthService.logout();
         return ApiResponse.success();
+    }
+
+    /** 签发 WebSocket 握手 ticket */
+    @PostMapping("/ws-ticket")
+    public ApiResponse<SysWebSocketTicketResp> createWebSocketTicket() {
+        return ApiResponse.success(sysAuthService.createWebSocketTicket());
     }
 
     /**

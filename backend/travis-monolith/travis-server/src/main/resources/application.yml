@@ -108,7 +108,7 @@ spring:
   modulith:
     detection-strategy: explicitly-annotated  #只选择显式注释的包作为应用程序模块的基础包（通过 @ApplicationModules 或 jMolecules 的 DDD @Module）。
     events:
-#      completion-mode: DELETE
+      #      completion-mode: DELETE
       jdbc:
         schema-initialization:
           enabled: true
@@ -177,49 +177,15 @@ travis:
       # 客户端接口
       - prefix: /api/app
         package-pattern: controller.app
+    cors:
+      exposed-headers:
+        - Authorization
+        - Content-Disposition
+        - X-Request-Id
     # 文件配置
     file:
       resource-handler: /files/**  # 文件访问URL
-      allowed-extensions:
-        - jpg
-        - jpeg
-        - png
-        - gif
-        - webp
-        - bmp
-        - svg
-        - ico
-        - pdf
-        - doc
-        - docx
-        - xls
-        - xlsx
-        - ppt
-        - pptx
-        - txt
-        - csv
-        - md
-        - json
-        - xml
-        - html
-        - css
-        - js
-        - ts
-        - vue
-        - zip
-        - rar
-        - 7z
-        - tar
-        - gz
-        - mp3
-        - wav
-        - ogg
-        - m4a
-        - mp4
-        - webm
-        - mov
-        - avi
-        - mkv
+      allowed-extensions: [ jpg, jpeg, png, gif, webp, bmp, svg, ico, pdf, doc, docx, xls, xlsx, ppt, pptx, txt, csv, md, json, xml, html, css, js, ts, vue, zip, rar, 7z, tar, gz, mp3, wav, ogg, m4a, mp4, webm, mov, avi, mkv ]
     i18n:
       enabled: true #是否启用国际化
     locale: zh_CN #spring.web.locale和spring.jackson.locale配置

@@ -16,9 +16,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *     allowed-origins: "*"
  *     heartbeat-interval: 30000
  *     session-timeout: 300000
+ *     ticket-timeout: 60000
  *     redis:
  *       channel: "websocket:channel:broadcast"
  *       session-key-prefix: "websocket:session"
+ *       ticket-key-prefix: "websocket:ticket"
  * }</pre>
  *
  * @author travis
@@ -30,7 +32,7 @@ public class WebSocketProperties {
     /** 是否启用 WebSocket（默认 true） */
     private boolean enabled = true;
 
-    /** WebSocket 端点路径（默认 /ws） */
+    /** WebSocket 基础路径（默认 /ws），实际端点按 loginType 注册为 /ws/{loginType} */
     private String path = "/ws";
 
     /** 允许的跨域来源（默认 *，即允许所有） */
@@ -45,6 +47,9 @@ public class WebSocketProperties {
     /** 下线确认宽限期，单位毫秒（默认 15s），用于避免刷新页面时短暂离线 */
     private long offlineGracePeriod = 15000;
 
+    /** 握手 ticket 有效期，单位毫秒（默认 60s） */
+    private long ticketTimeout = 60000;
+
     /** Redis 相关配置 */
     private Redis redis = new Redis();
 
@@ -56,5 +61,8 @@ public class WebSocketProperties {
 
         /** Session 映射 Redis key 前缀 */
         private String sessionKeyPrefix = "websocket:session";
+
+        /** 握手 ticket Redis key 前缀 */
+        private String ticketKeyPrefix = "websocket:ticket";
     }
 }

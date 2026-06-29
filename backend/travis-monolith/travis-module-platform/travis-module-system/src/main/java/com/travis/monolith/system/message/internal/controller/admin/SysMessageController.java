@@ -1,13 +1,20 @@
 package com.travis.monolith.system.message.internal.controller.admin;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import cn.dev33.satoken.annotation.SaMode;
 import com.travis.infrastructure.common.logging.annotation.OperationLog;
 import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
+import com.travis.infrastructure.common.validation.annotation.ImageFile;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.infrastructure.framework.satoken.core.LoginSubjectSessionKey;
+import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
 import com.travis.monolith.system.common.api.constant.SystemPermission;
+import com.travis.monolith.system.file.api.SysFileApi;
+import com.travis.monolith.system.file.api.constant.FileFolderId;
+import com.travis.monolith.system.file.api.response.FileUploadResp;
 import com.travis.monolith.system.message.api.request.SysMessageCreateReq;
 import com.travis.monolith.system.message.api.request.SysMessagePageReq;
 import com.travis.monolith.system.message.api.request.SysMessageUpdateReq;
@@ -16,14 +23,18 @@ import com.travis.monolith.system.message.api.response.SysMessagePageResp;
 import com.travis.monolith.system.message.internal.service.SysMessageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/system/message")
 @RequiredArgsConstructor
+@Validated
 @OperationLogModule("消息推送")
 public class SysMessageController {
     private final SysMessageService messageService;
+    private final SysFileApi fileApi;
 
     @GetMapping("/page")
     @SaCheckPermission(value = SystemPermission.MESSAGE_QUERY, type = LoginType.ADMIN)
@@ -54,6 +65,21 @@ public class SysMessageController {
             @PathVariable Long id, @RequestBody @Valid SysMessageUpdateReq req) {
         messageService.update(id, req);
         return ApiResponse.success();
+    }
+
+    @OperationLog(action = "上传消息图片")
+    @NoRepeatSubmit
+    @PostMapping("/image/upload")
+    @SaCheckPermission(
+            value = {SystemPermission.MESSAGE_CREATE, SystemPermission.MESSAGE_UPDATE},
+            mode = SaMode.OR,
+            type = LoginType.ADMIN)
+    public ApiResponse<FileUploadResp> uploadImage(
+            @RequestParam("file") @ImageFile MultipartFile file) {
+        var username =
+                StpKit.of(LoginType.ADMIN).getSession().getString(LoginSubjectSessionKey.USERNAME);
+        return ApiResponse.success(
+                fileApi.upload(file, FileFolderId.MESSAGE, LoginType.ADMIN, username));
     }
 
     @OperationLog(action = "推送消息")

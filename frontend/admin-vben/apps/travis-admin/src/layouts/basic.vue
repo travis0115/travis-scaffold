@@ -18,6 +18,7 @@ import { formatDateTime } from '@vben/utils';
 
 import {
   clearMessages,
+  createWebSocketTicketApi,
   deleteInboxMessage,
   getRecentMessages,
   getUnreadMessageCount,
@@ -93,7 +94,7 @@ onMounted(async () => {
     closeNotificationSocket,
   );
   await loadNotifications();
-  connectNotificationSocket();
+  void connectNotificationSocket();
 });
 
 onUnmounted(() => {
@@ -130,9 +131,10 @@ async function loadNotifications() {
   }
 }
 
-function buildNotificationSocketUrl() {
+async function buildNotificationSocketUrl() {
   const wsUrl = import.meta.env.VITE_GLOB_WS_URL;
   if (!wsUrl) return '';
+  const ticket = await createWebSocketTicketApi();
   const url = new URL(wsUrl, window.location.origin);
   if (url.protocol === 'http:') {
     url.protocol = 'ws:';
@@ -141,14 +143,21 @@ function buildNotificationSocketUrl() {
     url.protocol = 'wss:';
   }
   url.search = '';
-  url.searchParams.set('loginType', 'admin');
-  url.searchParams.set('token', accessStore.accessToken || '');
+  url.searchParams.set('ticket', ticket.ticket);
   return url.toString();
 }
 
-function connectNotificationSocket() {
+async function connectNotificationSocket() {
   if (!accessStore.accessToken || notificationSocket) return;
-  const socketUrl = buildNotificationSocketUrl();
+  let socketUrl = '';
+  try {
+    socketUrl = await buildNotificationSocketUrl();
+  } catch {
+    return;
+  }
+  if (notificationSocketClosedByClient || !accessStore.accessToken || notificationSocket) {
+    return;
+  }
   if (!socketUrl) return;
   notificationSocketClosedByClient = false;
   notificationSocket = new WebSocket(socketUrl);
@@ -193,7 +202,7 @@ function handleNotificationSocketClose(event: CloseEvent) {
     return;
   }
   notificationSocketReconnectTimer = setTimeout(
-    connectNotificationSocket,
+    () => void connectNotificationSocket(),
     notificationSocketReconnectDelay,
   );
   notificationSocketReconnectDelay = Math.min(
@@ -325,7 +334,7 @@ watch(
   () => accessStore.accessToken,
   (token) => {
     closeNotificationSocket();
-    if (token) connectNotificationSocket();
+    if (token) void connectNotificationSocket();
   },
 );
 </script>

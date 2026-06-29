@@ -4,7 +4,7 @@
 import type { RequestClientOptions } from '@vben/request';
 
 import { useAppConfig } from '@vben/hooks';
-import { alert as vbenAlert } from '@vben/common-ui';
+import { alert as vbenAlert, clearAllAlerts } from '@vben/common-ui';
 import { preferences } from '@vben/preferences';
 import {
   authenticateResponseInterceptor,
@@ -191,6 +191,7 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
         return;
       }
       isErrorModalOpen = true;
+      clearAllAlerts();
       vbenAlert({
         title: '操作失败',
         content: finalMessage,

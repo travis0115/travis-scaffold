@@ -14,6 +14,7 @@ import com.travis.infrastructure.framework.redis.core.util.RedisUtil;
 import com.travis.infrastructure.framework.satoken.core.LoginSubjectSessionKey;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.util.Ip2RegionUtil;
+import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.dept.api.SysDeptApi;
 import com.travis.monolith.system.file.api.SysFileApi;
@@ -196,6 +197,9 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         var user = getByIdOrThrow(id);
         user.setStatus(status);
         updateById(user);
+        if (Status.DISABLED.getValue().equals(status)) {
+            StpKit.of(LoginType.ADMIN).logout(id);
+        }
     }
 
     /** 删除用户，同时清除用户-角色关联并使其会话失效 */

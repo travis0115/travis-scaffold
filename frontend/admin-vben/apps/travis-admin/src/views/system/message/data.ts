@@ -3,6 +3,7 @@ import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { SystemMessageApi } from '#/api';
 
 import { z } from '#/adapter/form';
+import { uploadMessageImage } from '#/api';
 import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
 
 const requiredNumber = (message: string) =>
@@ -202,7 +203,19 @@ export const useFormSchema = (): VbenFormSchema[] => [
   },
   {
     component: 'RichEditor',
-    componentProps: { maxHeight: 420, minHeight: 240 },
+    componentProps: {
+      imageUpload: {
+        upload: async (file: File, onProgress?: (percent: number) => void) => {
+          const result = await uploadMessageImage(file, (event) => {
+            if (!event.total) return;
+            onProgress?.(Math.round((event.loaded / event.total) * 100));
+          });
+          return { id: result.id, url: result.url };
+        },
+      },
+      maxHeight: 420,
+      minHeight: 240,
+    },
     dependencies: { show: (values) => values.channels?.includes('IN_APP'), triggerFields: ['channels'] },
     fieldName: 'inAppContent',
     formFieldProps: {

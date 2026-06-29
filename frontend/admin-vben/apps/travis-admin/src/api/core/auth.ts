@@ -13,6 +13,11 @@ export namespace AuthApi {
     data: string;
     status: number;
   }
+
+  export interface WebSocketTicketResult {
+    expiresIn: number;
+    ticket: string;
+  }
 }
 
 function normalizeToken(token: string) {
@@ -55,6 +60,15 @@ export async function refreshTokenApi() {
  */
 export async function logoutApi() {
   return requestClient.post('/system/auth/logout');
+}
+
+/**
+ * 签发 WebSocket 握手 ticket
+ */
+export async function createWebSocketTicketApi() {
+  return requestClient.post<AuthApi.WebSocketTicketResult>(
+    '/system/auth/ws-ticket',
+  );
 }
 
 /**

@@ -2,13 +2,13 @@ package com.travis.infrastructure.framework.websocket.config;
 
 import com.travis.infrastructure.framework.redis.core.key.RedisKeyPrefixResolver;
 import com.travis.infrastructure.framework.redis.core.pubsub.RedisPubSubClient;
+import com.travis.infrastructure.framework.satoken.config.properties.SaTokenProperties;
 import com.travis.infrastructure.framework.websocket.config.properties.WebSocketProperties;
 import com.travis.infrastructure.framework.websocket.core.*;
 import com.travis.infrastructure.framework.websocket.interceptor.WebSocketAuthInterceptor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -18,6 +18,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
+
+import java.util.LinkedHashSet;
 
 /**
  * WebSocket 自动配置类，注册 Bean 和 WebSocket 端点。
@@ -40,14 +42,6 @@ public class TravisWebSocketAutoConfiguration {
 
     // ==================== Bean 注册 ====================
 
-    /** 认证拦截器（需 Sa-Token 在 classpath 上） */
-    @Bean
-    @ConditionalOnClass(name = "cn.dev33.satoken.stp.StpUtil")
-    @ConditionalOnMissingBean
-    public WebSocketAuthInterceptor webSocketAuthInterceptor() {
-        return new WebSocketAuthInterceptor();
-    }
-
     /**
      * Redis 消息分发器。
      *
@@ -64,6 +58,15 @@ public class TravisWebSocketAutoConfiguration {
                         redisPubSubClient, redisTemplate, redisKeyPrefixResolver, properties);
         dispatcher.subscribe();
         return dispatcher;
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public WebSocketTicketService webSocketTicketService(
+            RedisTemplate<String, Object> redisTemplate,
+            RedisKeyPrefixResolver redisKeyPrefixResolver,
+            WebSocketProperties properties) {
+        return new WebSocketTicketService(redisTemplate, redisKeyPrefixResolver, properties);
     }
 
     /**
@@ -124,34 +127,55 @@ public class TravisWebSocketAutoConfiguration {
 
         private final WebSocketProperties properties;
         private final LocalWebSocketSessionManager sessionManager;
-        private final ObjectProvider<WebSocketAuthInterceptor> authInterceptorProvider;
+        private final WebSocketTicketService ticketService;
+        private final ObjectProvider<SaTokenProperties> saTokenPropertiesProvider;
 
         public WebSocketEndpointConfigurer(
                 WebSocketProperties properties,
                 LocalWebSocketSessionManager sessionManager,
-                ObjectProvider<WebSocketAuthInterceptor> authInterceptorProvider) {
+                WebSocketTicketService ticketService,
+                ObjectProvider<SaTokenProperties> saTokenPropertiesProvider) {
             this.properties = properties;
             this.sessionManager = sessionManager;
-            this.authInterceptorProvider = authInterceptorProvider;
+            this.ticketService = ticketService;
+            this.saTokenPropertiesProvider = saTokenPropertiesProvider;
         }
 
         @Override
         public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-            var handlers =
-                    registry.addHandler(sessionManager, properties.getPath())
-                            .setAllowedOrigins(properties.getAllowedOrigins());
-
-            // 认证拦截器可选（Sa-Token 未引入时不存在）
-            var authInterceptor = authInterceptorProvider.getIfAvailable();
-            if (authInterceptor != null) {
-                handlers.addInterceptors(authInterceptor);
+            var loginTypes = getLoginTypes();
+            for (String loginType : loginTypes) {
+                var path = buildEndpointPath(loginType);
+                registry.addHandler(sessionManager, path)
+                        .setAllowedOrigins(properties.getAllowedOrigins())
+                        .addInterceptors(new WebSocketAuthInterceptor(loginType, ticketService));
+                log.info(
+                        "[WebSocket] 端点已注册: path={}, loginType={}, allowedOrigins={}, auth=Sa-Token",
+                        path,
+                        loginType,
+                        properties.getAllowedOrigins());
             }
+        }
 
-            log.info(
-                    "[WebSocket] 端点已注册: path={}, allowedOrigins={}, auth={}",
-                    properties.getPath(),
-                    properties.getAllowedOrigins(),
-                    authInterceptor != null ? "Sa-Token" : "无");
+        private LinkedHashSet<String> getLoginTypes() {
+            var loginTypes = new LinkedHashSet<String>();
+            var saTokenProperties = saTokenPropertiesProvider.getIfAvailable();
+            if (saTokenProperties != null) {
+                for (var rule : saTokenProperties.getAuthRules()) {
+                    if (rule.getLoginType() != null && !rule.getLoginType().isBlank()) {
+                        loginTypes.add(rule.getLoginType().trim());
+                    }
+                }
+            }
+            return loginTypes;
+        }
+
+        private String buildEndpointPath(String loginType) {
+            var path = properties.getPath();
+            if (path.endsWith("/")) {
+                return path + loginType;
+            }
+            return path + "/" + loginType;
         }
     }
 }

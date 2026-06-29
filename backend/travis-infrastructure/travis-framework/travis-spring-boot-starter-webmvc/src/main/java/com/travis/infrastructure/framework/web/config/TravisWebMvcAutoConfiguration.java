@@ -1,6 +1,5 @@
 package com.travis.infrastructure.framework.web.config;
 
-import com.travis.infrastructure.common.web.constant.CustomHttpHeader;
 import com.travis.infrastructure.common.web.constant.WebFilterOrder;
 import com.travis.infrastructure.framework.web.config.properties.WebProperties;
 import com.travis.infrastructure.framework.web.core.advice.ApiResponseBodyAdvice;
@@ -19,7 +18,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
-import org.springframework.http.HttpHeaders;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
@@ -75,10 +73,7 @@ public class TravisWebMvcAutoConfiguration implements WebMvcConfigurer {
                 .allowedMethods("*")
                 .allowedHeaders("*")
                 .allowCredentials(true)
-                .exposedHeaders(
-                        HttpHeaders.AUTHORIZATION,
-                        HttpHeaders.CONTENT_DISPOSITION,
-                        CustomHttpHeader.REQUEST_ID)
+                .exposedHeaders(webProperties.getCors().getExposedHeaders().toArray(String[]::new))
                 .maxAge(3600);
     }
 

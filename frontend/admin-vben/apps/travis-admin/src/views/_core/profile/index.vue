@@ -89,11 +89,13 @@ function onFileChange(event: Event) {
   // 校验文件类型
   if (!file.type.startsWith('image/')) {
     message.error('只能上传图片文件');
+    input.value = '';
     return;
   }
   // 校验文件大小
   if (file.size / (1024 * 1024) > UPLOAD_FILE_MAX_SIZE_MB) {
     message.error(`图片大小不能超过 ${UPLOAD_FILE_MAX_SIZE_TEXT}MB`);
+    input.value = '';
     return;
   }
 

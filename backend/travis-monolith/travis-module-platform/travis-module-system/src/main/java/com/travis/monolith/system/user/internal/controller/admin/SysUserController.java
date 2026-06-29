@@ -4,6 +4,7 @@ import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.travis.infrastructure.common.logging.annotation.OperationLog;
 import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
 import com.travis.infrastructure.common.validation.annotation.EnumValue;
+import com.travis.infrastructure.common.validation.annotation.ImageFile;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
@@ -173,7 +174,8 @@ public class SysUserController {
     @OperationLog(action = "上传头像")
     @NoRepeatSubmit
     @PostMapping("/avatar/upload")
-    public ApiResponse<FileUploadResp> uploadAvatar(@RequestParam("file") MultipartFile file) {
+    public ApiResponse<FileUploadResp> uploadAvatar(
+            @RequestParam("file") @ImageFile MultipartFile file) {
         var username =
                 StpKit.of(LoginType.ADMIN).getSession().getString(LoginSubjectSessionKey.USERNAME);
         return ApiResponse.success(

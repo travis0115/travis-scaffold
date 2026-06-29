@@ -1,4 +1,7 @@
+import type { AxiosProgressEvent } from '@vben/request';
 import type { Recordable } from '@vben/types';
+
+import type { FileUploadResult } from './file';
 
 import type { PageResp } from '#/api/types';
 
@@ -86,6 +89,21 @@ const pushMessage = (id: number) =>
   requestClient.put(`/system/message/${id}/push`);
 const revokeMessage = (id: number) =>
   requestClient.put(`/system/message/${id}/revoke`);
+const uploadMessageImage = (
+  file: File,
+  onUploadProgress?: (progressEvent: AxiosProgressEvent) => void,
+) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  return requestClient.post<FileUploadResult>(
+    '/system/message/image/upload',
+    formData,
+    {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress,
+    },
+  );
+};
 
 const getMessageTemplatePage = (params: Recordable<any>) =>
   requestClient.get<PageResp<SystemMessageApi.MessageTemplate>>(
@@ -152,6 +170,7 @@ export {
   pushMessage,
   revokeMessage,
   updateMessage,
-  updateMessageTemplate,
   updateMessageStatus,
+  updateMessageTemplate,
+  uploadMessageImage,
 };

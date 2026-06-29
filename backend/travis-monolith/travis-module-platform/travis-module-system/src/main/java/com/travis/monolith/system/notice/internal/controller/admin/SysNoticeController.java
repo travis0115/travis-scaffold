@@ -5,6 +5,7 @@ import cn.dev33.satoken.annotation.SaMode;
 import com.travis.infrastructure.common.logging.annotation.OperationLog;
 import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
 import com.travis.infrastructure.common.validation.annotation.EnumValue;
+import com.travis.infrastructure.common.validation.annotation.ImageFile;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
@@ -23,12 +24,14 @@ import com.travis.monolith.system.notice.api.response.SysNoticeResp;
 import com.travis.monolith.system.notice.internal.service.SysNoticeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/system/notice")
 @RequiredArgsConstructor
+@Validated
 @OperationLogModule("系统公告")
 public class SysNoticeController {
     private final SysNoticeService noticeService;
@@ -77,7 +80,8 @@ public class SysNoticeController {
             value = {SystemPermission.NOTICE_CREATE, SystemPermission.NOTICE_UPDATE},
             mode = SaMode.OR,
             type = LoginType.ADMIN)
-    public ApiResponse<FileUploadResp> uploadImage(@RequestParam("file") MultipartFile file) {
+    public ApiResponse<FileUploadResp> uploadImage(
+            @RequestParam("file") @ImageFile MultipartFile file) {
         var username =
                 StpKit.of(LoginType.ADMIN).getSession().getString(LoginSubjectSessionKey.USERNAME);
         return ApiResponse.success(

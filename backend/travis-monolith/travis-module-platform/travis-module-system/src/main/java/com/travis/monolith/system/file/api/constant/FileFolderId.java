@@ -14,5 +14,8 @@ public final class FileFolderId {
     /** 版本管理 */
     public static final Long VERSION = 5L;
 
+    /** 消息推送 */
+    public static final Long MESSAGE = 6L;
+
     private FileFolderId() {}
 }

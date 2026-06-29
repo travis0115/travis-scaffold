@@ -4,25 +4,27 @@ import cn.dev33.satoken.stp.StpLogic;
 import com.travis.infrastructure.common.web.constant.CommonConstant;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
-import java.util.Map;
+import com.travis.infrastructure.framework.websocket.core.WebSocketTicketService;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
+import java.util.Map;
+
 /**
  * WebSocket 握手拦截器，负责认证并将 loginType + userId 存入 Session attributes。
  *
- * <p>前端连接时需携带两个 query param：
+ * <p>前端连接时只需携带短期 ticket，loginType 由服务端注册的 WebSocket 入口绑定。
  *
  * <ul>
- *   <li>{@code token} — Sa-Token 凭证
- *   <li>{@code loginType} — 登录类型（admin / user），对应 {@link LoginType} 常量
+ *   <li>{@code ticket} — 由已认证 HTTP 接口签发的一次性握手凭证
  * </ul>
  *
- * <p>示例：{@code ws://host:8080/ws?token=xxx&loginType=admin}
+ * <p>示例：{@code ws://host:8080/ws/admin?ticket=xxx}
  *
  * <p>认证成功后将以下属性写入 WebSocketSession 的 attributes：
  *
@@ -42,46 +44,70 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor {
     public static final String ATTR_SESSION_KEY = "sessionKey";
     public static final String ATTR_TOKEN = "token";
 
+    private final String loginType;
+    private final WebSocketTicketService ticketService;
+
+    public WebSocketAuthInterceptor(String loginType, WebSocketTicketService ticketService) {
+        this.loginType = LoginType.from(loginType);
+        if (CommonConstant.UNKNOWN.equals(this.loginType)) {
+            throw new IllegalArgumentException("Unsupported WebSocket loginType: " + loginType);
+        }
+        this.ticketService = ticketService;
+    }
+
     @Override
     public boolean beforeHandshake(
-            ServerHttpRequest request,
-            ServerHttpResponse response,
-            WebSocketHandler wsHandler,
-            Map<String, Object> attributes) {
+            @NonNull ServerHttpRequest request,
+            @NonNull ServerHttpResponse response,
+            @NonNull WebSocketHandler wsHandler,
+            @NonNull Map<String, Object> attributes) {
 
         if (!(request instanceof ServletServerHttpRequest servletRequest)) {
             log.warn("[WebSocket] 非 Servlet 请求，拒绝握手");
             return false;
         }
 
-        // 提取 loginType
-        String loginTypeStr = servletRequest.getServletRequest().getParameter("loginType");
-        String loginType = LoginType.from(loginTypeStr);
-        if (CommonConstant.UNKNOWN.equals(loginType)) {
-            log.warn("[WebSocket] loginType 无效，拒绝握手: loginType={}", loginTypeStr);
-            return false;
-        }
-
-        // 提取 token
-        String token = extractToken(servletRequest);
-        if (token == null || token.isBlank()) {
+        String ticket = servletRequest.getServletRequest().getParameter("ticket");
+        if (ticket == null || ticket.isBlank()) {
             log.warn(
-                    "[WebSocket] 未携带 token，拒绝握手: loginType={}, remoteAddr={}",
+                    "[WebSocket] 未携带 ticket，拒绝握手: loginType={}, remoteAddr={}",
                     loginType,
                     servletRequest.getServletRequest().getRemoteAddr());
             return false;
         }
 
         try {
-            // 通过对应 loginType 的 StpLogic 校验 token 并获取 userId
+            var webSocketTicket = ticketService.consume(ticket);
+            if (webSocketTicket == null) {
+                log.warn("[WebSocket] ticket 无效或已过期，拒绝握手: loginType={}", loginType);
+                return false;
+            }
+            if (!loginType.equals(webSocketTicket.loginType())) {
+                log.warn(
+                        "[WebSocket] ticket loginType 不匹配，拒绝握手: expected={}, actual={}",
+                        loginType,
+                        webSocketTicket.loginType());
+                return false;
+            }
+
+            var token = webSocketTicket.token();
             StpLogic stpLogic = StpKit.of(loginType);
             Object loginId = stpLogic.getLoginIdByToken(token);
             if (loginId == null) {
-                log.warn("[WebSocket] token 无效或已过期，拒绝握手: loginType={}", loginType);
+                log.warn("[WebSocket] ticket 绑定的 token 无效或已过期，拒绝握手: loginType={}", loginType);
                 return false;
             }
 
             String userId = loginId.toString();
+            if (!userId.equals(webSocketTicket.userId())) {
+                log.warn(
+                        "[WebSocket] ticket userId 不匹配，拒绝握手: loginType={}, expected={}, actual={}",
+                        loginType,
+                        webSocketTicket.userId(),
+                        userId);
+                return false;
+            }
+
             String sessionKey = buildSessionKey(loginType, userId);
 
             attributes.put(ATTR_LOGIN_TYPE, loginType);
@@ -96,16 +122,16 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor {
                     sessionKey);
             return true;
         } catch (Exception e) {
-            log.warn("[WebSocket] token 校验异常，拒绝握手: loginType={}, {}", loginType, e.getMessage());
+            log.warn("[WebSocket] ticket 校验异常，拒绝握手: loginType={}, {}", loginType, e.getMessage());
             return false;
         }
     }
 
     @Override
     public void afterHandshake(
-            ServerHttpRequest request,
-            ServerHttpResponse response,
-            WebSocketHandler wsHandler,
+            @NonNull ServerHttpRequest request,
+            @NonNull ServerHttpResponse response,
+            @NonNull WebSocketHandler wsHandler,
             Exception exception) {
         // 握手完成，无需处理
     }
@@ -121,20 +147,4 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor {
         return loginType + ":" + userId;
     }
 
-    /** 从 query param 或 Authorization header 中提取 token */
-    private String extractToken(ServletServerHttpRequest request) {
-        // 1. 从 query param 提取
-        String token = request.getServletRequest().getParameter("token");
-        if (token != null && !token.isBlank()) {
-            return token.trim();
-        }
-
-        // 2. 从 Authorization header 提取
-        String authHeader = request.getServletRequest().getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7).trim();
-        }
-
-        return null;
-    }
 }

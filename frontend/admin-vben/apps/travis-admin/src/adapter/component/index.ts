@@ -69,7 +69,7 @@ import { isEmpty } from '@vben/utils';
 
 import { message, Modal, notification } from 'antdv-next';
 
-import { UPLOAD_FILE_MAX_SIZE_BYTES, uploadFileApi } from '#/api';
+import { UPLOAD_FILE_MAX_SIZE_BYTES } from '#/api';
 import { getFileFolders, getFilePage } from '#/api/system/file-management';
 
 type AdapterUploadProps = UploadProps & {
@@ -83,6 +83,8 @@ type AdapterUploadProps = UploadProps & {
 type FolderId = number | string;
 type FolderSelection = 'all' | 'unclassified' | FolderId;
 type RichEditorProps = TipTapProps;
+
+const RICH_EDITOR_IMAGE_ACCEPT = 'image/*';
 
 const AutoComplete = defineAsyncComponent(
   () => import('antdv-next/dist/auto-complete/index'),
@@ -827,6 +829,7 @@ const selectRichEditorImage = () => {
 const createRichEditorImageUpload = (
   imageUpload?: TipTapProps['imageUpload'],
 ): NonNullable<TipTapProps['imageUpload']> => ({
+  accept: RICH_EDITOR_IMAGE_ACCEPT,
   maxSize: UPLOAD_FILE_MAX_SIZE_BYTES,
   select: selectRichEditorImage,
   ...imageUpload,
@@ -843,13 +846,7 @@ const createRichEditorImageUpload = (
   },
   upload:
     imageUpload?.upload ??
-    (async (file: File, onProgress?: (percent: number) => void) => {
-      const result = await uploadFileApi(file, undefined, (event) => {
-        if (!event.total) return;
-        onProgress?.(Math.round((event.loaded / event.total) * 100));
-      });
-      return { id: result.id, url: result.url };
-    }),
+    (() => Promise.reject(new Error('当前富文本未配置图片上传接口'))),
 });
 
 const RichEditorComponent = defineComponent({

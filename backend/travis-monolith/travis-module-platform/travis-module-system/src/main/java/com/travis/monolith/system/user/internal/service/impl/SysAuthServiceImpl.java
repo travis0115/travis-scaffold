@@ -10,6 +10,8 @@ import com.travis.infrastructure.framework.web.core.model.UserAgentInfo;
 import com.travis.infrastructure.framework.web.core.util.IpUtil;
 import com.travis.infrastructure.framework.web.core.util.UserAgentUtil;
 import com.travis.infrastructure.framework.websocket.core.WebSocketSessionManager;
+import com.travis.infrastructure.framework.websocket.core.WebSocketTicketService;
+import com.travis.infrastructure.framework.websocket.config.properties.WebSocketProperties;
 import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.menu.api.SysMenuApi;
 import com.travis.monolith.system.menu.api.response.VbenMenuResp;
@@ -17,6 +19,7 @@ import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.api.event.UserLoginEvent;
 import com.travis.monolith.system.user.api.request.SysUserLoginReq;
 import com.travis.monolith.system.user.api.response.SysUserInfoResp;
+import com.travis.monolith.system.user.api.response.SysWebSocketTicketResp;
 import com.travis.monolith.system.user.internal.converter.SysUserConverter;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.service.SysAuthService;
@@ -41,6 +44,10 @@ public class SysAuthServiceImpl implements SysAuthService {
 
     /** WebSocket Session 管理器 */
     private final WebSocketSessionManager webSocketSessionManager;
+
+    private final WebSocketTicketService webSocketTicketService;
+
+    private final WebSocketProperties webSocketProperties;
 
     /** 角色 API */
     private final SysRoleApi roleApi;
@@ -127,6 +134,15 @@ public class SysAuthServiceImpl implements SysAuthService {
         if (userId != null) {
             webSocketSessionManager.closeByToken(LoginType.ADMIN, String.valueOf(userId), token);
         }
+    }
+
+    @Override
+    public SysWebSocketTicketResp createWebSocketTicket() {
+        var stpLogic = StpKit.of(LoginType.ADMIN);
+        var userId = stpLogic.getLoginIdAsLong();
+        var token = stpLogic.getTokenValue();
+        var ticket = webSocketTicketService.create(LoginType.ADMIN, String.valueOf(userId), token);
+        return new SysWebSocketTicketResp(ticket, webSocketProperties.getTicketTimeout() / 1000);
     }
 
     private void publishLoginEvent(UserLoginEvent event) {

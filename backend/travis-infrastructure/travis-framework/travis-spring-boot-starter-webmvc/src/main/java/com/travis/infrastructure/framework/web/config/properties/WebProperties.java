@@ -1,9 +1,11 @@
 package com.travis.infrastructure.framework.web.config.properties;
 
+import com.travis.infrastructure.common.web.constant.CustomHttpHeader;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.http.HttpHeaders;
 
 /**
  * Web 配置属性
@@ -22,6 +24,9 @@ public class WebProperties {
 
     /** 防重复提交配置 */
     private NoRepeatSubmit noRepeatSubmit = new NoRepeatSubmit();
+
+    /** CORS 配置 */
+    private Cors cors = new Cors();
 
     /** API 路径前缀配置 */
     @Data
@@ -43,5 +48,18 @@ public class WebProperties {
 
         /** Redis Key 前缀 */
         private String keyPrefix = "repeat-submit:";
+    }
+
+    /** CORS 配置 */
+    @Data
+    public static class Cors {
+
+        /** 允许前端读取的响应头 */
+        private List<String> exposedHeaders =
+                new ArrayList<>(
+                        List.of(
+                                HttpHeaders.AUTHORIZATION,
+                                HttpHeaders.CONTENT_DISPOSITION,
+                                CustomHttpHeader.REQUEST_ID));
     }
 }

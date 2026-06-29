@@ -24,6 +24,23 @@ import StarterKit from '@tiptap/starter-kit';
 
 const DEFAULT_ACCEPT = 'image/*';
 
+function isAcceptedFileType(file: File, accept: string) {
+  const acceptedTypes = accept
+    .split(',')
+    .map((type) => type.trim())
+    .filter(Boolean);
+
+  return acceptedTypes.some((type) => {
+    if (type.startsWith('.')) {
+      return file.name.toLowerCase().endsWith(type.toLowerCase());
+    }
+    if (type.endsWith('/*')) {
+      return file.type.startsWith(type.slice(0, -1));
+    }
+    return file.type === type;
+  });
+}
+
 function validateFile(
   file: File,
   options: ImageUploadOptions,
@@ -33,17 +50,8 @@ function validateFile(
   }
 
   const accept = options.accept ?? DEFAULT_ACCEPT;
-  if (accept && accept !== '*/*' && accept !== 'image/*') {
-    const acceptedTypes = accept.split(',').map((t) => t.trim());
-    const isAccepted = acceptedTypes.some((type) => {
-      if (type.endsWith('/*')) {
-        return file.type.startsWith(type.slice(0, -1));
-      }
-      return file.type === type;
-    });
-    if (!isAccepted) {
-      return $t('ui.tiptap.upload.fileTypeNotAllowed');
-    }
+  if (accept && accept !== '*/*' && !isAcceptedFileType(file, accept)) {
+    return $t('ui.tiptap.upload.fileTypeNotAllowed');
   }
 
   return undefined;

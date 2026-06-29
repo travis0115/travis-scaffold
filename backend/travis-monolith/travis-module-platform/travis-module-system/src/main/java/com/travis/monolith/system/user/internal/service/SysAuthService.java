@@ -3,6 +3,7 @@ package com.travis.monolith.system.user.internal.service;
 import com.travis.monolith.system.menu.api.response.VbenMenuResp;
 import com.travis.monolith.system.user.api.request.SysUserLoginReq;
 import com.travis.monolith.system.user.api.response.SysUserInfoResp;
+import com.travis.monolith.system.user.api.response.SysWebSocketTicketResp;
 import java.util.List;
 
 /**
@@ -21,6 +22,9 @@ public interface SysAuthService {
 
     /** 管理员登出 */
     void logout();
+
+    /** 签发 WebSocket 握手 ticket */
+    SysWebSocketTicketResp createWebSocketTicket();
 
     /**
      * 获取当前登录用户的详细信息，包含角色编码和权限列表
