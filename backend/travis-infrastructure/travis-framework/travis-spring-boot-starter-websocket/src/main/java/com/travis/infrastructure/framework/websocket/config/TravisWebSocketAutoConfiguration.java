@@ -2,13 +2,14 @@ package com.travis.infrastructure.framework.websocket.config;
 
 import com.travis.infrastructure.framework.redis.core.key.RedisKeyPrefixResolver;
 import com.travis.infrastructure.framework.redis.core.pubsub.RedisPubSubClient;
-import com.travis.infrastructure.framework.satoken.config.properties.SaTokenProperties;
 import com.travis.infrastructure.framework.websocket.config.properties.WebSocketProperties;
 import com.travis.infrastructure.framework.websocket.core.*;
 import com.travis.infrastructure.framework.websocket.interceptor.WebSocketAuthInterceptor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -19,14 +20,12 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
-import java.util.LinkedHashSet;
-
 /**
  * WebSocket 自动配置类，注册 Bean 和 WebSocket 端点。
  *
- * <p>通过 {@code travis.websocket.enabled=true/false} 控制是否启用（默认启用）。
+ * <p>通过 {@code travis.web.websocket.enabled=true/false} 控制是否启用（默认启用）。
  *
- * <p>当引入 {@code travis-spring-boot-starter-redis} 且 Redis 可用时，自动启用集群广播模式； 否则降级为单实例模式。
+ * <p>当 {@code travis.web.websocket.redis.enabled=true} 且 Redis 可用时启用集群广播模式；否则降级为单实例模式。
  *
  * @author travis
  */
@@ -34,40 +33,13 @@ import java.util.LinkedHashSet;
 @AutoConfiguration
 @EnableConfigurationProperties(WebSocketProperties.class)
 @ConditionalOnProperty(
-        prefix = "travis.websocket",
+        prefix = "travis.web.websocket",
         name = "enabled",
         havingValue = "true",
         matchIfMissing = true)
 public class TravisWebSocketAutoConfiguration {
 
     // ==================== Bean 注册 ====================
-
-    /**
-     * Redis 消息分发器。
-     *
-     * <p>通过 setter 注入 {@link LocalWebSocketSessionManager} 来打破循环依赖。
-     */
-    @Bean
-    public RedisWebSocketMessageDispatcher redisWebSocketMessageDispatcher(
-            RedisPubSubClient redisPubSubClient,
-            RedisTemplate<String, Object> redisTemplate,
-            RedisKeyPrefixResolver redisKeyPrefixResolver,
-            WebSocketProperties properties) {
-        var dispatcher =
-                new RedisWebSocketMessageDispatcher(
-                        redisPubSubClient, redisTemplate, redisKeyPrefixResolver, properties);
-        dispatcher.subscribe();
-        return dispatcher;
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    public WebSocketTicketService webSocketTicketService(
-            RedisTemplate<String, Object> redisTemplate,
-            RedisKeyPrefixResolver redisKeyPrefixResolver,
-            WebSocketProperties properties) {
-        return new WebSocketTicketService(redisTemplate, redisKeyPrefixResolver, properties);
-    }
 
     /**
      * 本地 Session 管理器。
@@ -80,24 +52,66 @@ public class TravisWebSocketAutoConfiguration {
     public LocalWebSocketSessionManager localSessionManager(
             WebSocketProperties properties,
             ObjectProvider<RedisWebSocketMessageDispatcher> dispatcherProvider,
+            ObjectProvider<WebSocketAuthService> authServiceProvider,
             ObjectProvider<WebSocketSessionListener> listenerProvider) {
         var dispatcher = dispatcherProvider.getIfAvailable();
+        var authService = authServiceProvider.getIfAvailable();
         var listeners = listenerProvider.orderedStream().toList();
         if (dispatcher != null) {
             log.info("[WebSocket] 集群模式已启用（Redis Pub/Sub）");
         } else {
-            log.info("[WebSocket] 单实例模式（Redis 未引入）");
+            log.info("[WebSocket] 单实例模式（Redis Pub/Sub 未启用）");
         }
         if (!listeners.isEmpty()) {
             log.info("[WebSocket] 已注册 {} 个 SessionListener", listeners.size());
         }
 
-        var manager = new LocalWebSocketSessionManager(properties, dispatcher, listeners);
+        var manager =
+                new LocalWebSocketSessionManager(properties, dispatcher, authService, listeners);
         if (dispatcher != null) {
             dispatcher.setSessionManager(manager);
         }
         manager.startHeartbeat();
         return manager;
+    }
+
+    /** Redis 相关能力：只有项目引入并成功装配 Redis starter 后才启用。 */
+    @Configuration(proxyBeanMethods = false)
+    @ConditionalOnClass(
+            name = {
+                "org.springframework.data.redis.core.RedisTemplate",
+                "com.travis.infrastructure.framework.redis.core.key.RedisKeyPrefixResolver",
+                "com.travis.infrastructure.framework.redis.core.pubsub.RedisPubSubClient"
+            })
+    static class RedisWebSocketConfiguration {
+
+        /**
+         * Redis 消息分发器。
+         *
+         * <p>通过 setter 注入 {@link LocalWebSocketSessionManager} 来打破循环依赖。
+         */
+        @Bean
+        @ConditionalOnBean({
+            RedisPubSubClient.class,
+            RedisTemplate.class,
+            RedisKeyPrefixResolver.class
+        })
+        @ConditionalOnProperty(
+                prefix = "travis.web.websocket.redis",
+                name = "enabled",
+                havingValue = "true",
+                matchIfMissing = true)
+        public RedisWebSocketMessageDispatcher redisWebSocketMessageDispatcher(
+                RedisPubSubClient redisPubSubClient,
+                RedisTemplate<String, Object> redisTemplate,
+                RedisKeyPrefixResolver redisKeyPrefixResolver,
+                WebSocketProperties properties) {
+            var dispatcher =
+                    new RedisWebSocketMessageDispatcher(
+                            redisPubSubClient, redisTemplate, redisKeyPrefixResolver, properties);
+            dispatcher.subscribe();
+            return dispatcher;
+        }
     }
 
     /** WebSocketSessionManager 接口暴露 */
@@ -127,55 +141,52 @@ public class TravisWebSocketAutoConfiguration {
 
         private final WebSocketProperties properties;
         private final LocalWebSocketSessionManager sessionManager;
-        private final WebSocketTicketService ticketService;
-        private final ObjectProvider<SaTokenProperties> saTokenPropertiesProvider;
+        private final ObjectProvider<WebSocketAuthService> authServiceProvider;
+        private final ObjectProvider<WebSocketEndpoint> endpointProvider;
+        private final ObjectProvider<WebSocketEndpointProvider> endpointProviderProvider;
 
         public WebSocketEndpointConfigurer(
                 WebSocketProperties properties,
                 LocalWebSocketSessionManager sessionManager,
-                WebSocketTicketService ticketService,
-                ObjectProvider<SaTokenProperties> saTokenPropertiesProvider) {
+                ObjectProvider<WebSocketAuthService> authServiceProvider,
+                ObjectProvider<WebSocketEndpoint> endpointProvider,
+                ObjectProvider<WebSocketEndpointProvider> endpointProviderProvider) {
             this.properties = properties;
             this.sessionManager = sessionManager;
-            this.ticketService = ticketService;
-            this.saTokenPropertiesProvider = saTokenPropertiesProvider;
+            this.authServiceProvider = authServiceProvider;
+            this.endpointProvider = endpointProvider;
+            this.endpointProviderProvider = endpointProviderProvider;
         }
 
         @Override
         public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-            var loginTypes = getLoginTypes();
-            for (String loginType : loginTypes) {
-                var path = buildEndpointPath(loginType);
-                registry.addHandler(sessionManager, path)
+            var authService = authServiceProvider.getIfAvailable();
+            if (authService == null) {
+                log.warn("[WebSocket] 未注册 WebSocketAuthService，跳过端点注册");
+                return;
+            }
+            var endpoints =
+                    java.util.stream.Stream.concat(
+                                    endpointProvider.orderedStream(),
+                                    endpointProviderProvider
+                                            .orderedStream()
+                                            .flatMap(provider -> provider.getEndpoints().stream()))
+                            .toList();
+            if (endpoints.isEmpty()) {
+                log.warn("[WebSocket] 未注册 WebSocketEndpoint，跳过端点注册");
+                return;
+            }
+            for (var endpoint : endpoints) {
+                registry.addHandler(sessionManager, endpoint.path())
                         .setAllowedOrigins(properties.getAllowedOrigins())
-                        .addInterceptors(new WebSocketAuthInterceptor(loginType, ticketService));
+                        .addInterceptors(
+                                new WebSocketAuthInterceptor(authService, properties, endpoint));
                 log.info(
-                        "[WebSocket] 端点已注册: path={}, loginType={}, allowedOrigins={}, auth=Sa-Token",
-                        path,
-                        loginType,
-                        properties.getAllowedOrigins());
+                        "[WebSocket] 端点已注册: path={}, allowedOrigins={}, auth={}",
+                        endpoint.path(),
+                        properties.getAllowedOrigins(),
+                        authService.getClass().getSimpleName());
             }
-        }
-
-        private LinkedHashSet<String> getLoginTypes() {
-            var loginTypes = new LinkedHashSet<String>();
-            var saTokenProperties = saTokenPropertiesProvider.getIfAvailable();
-            if (saTokenProperties != null) {
-                for (var rule : saTokenProperties.getAuthRules()) {
-                    if (rule.getLoginType() != null && !rule.getLoginType().isBlank()) {
-                        loginTypes.add(rule.getLoginType().trim());
-                    }
-                }
-            }
-            return loginTypes;
-        }
-
-        private String buildEndpointPath(String loginType) {
-            var path = properties.getPath();
-            if (path.endsWith("/")) {
-                return path + loginType;
-            }
-            return path + "/" + loginType;
         }
     }
 }

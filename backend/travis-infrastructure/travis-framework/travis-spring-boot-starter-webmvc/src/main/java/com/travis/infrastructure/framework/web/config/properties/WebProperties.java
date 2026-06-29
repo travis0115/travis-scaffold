@@ -1,11 +1,10 @@
 package com.travis.infrastructure.framework.web.config.properties;
 
-import com.travis.infrastructure.common.web.constant.CustomHttpHeader;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.http.HttpHeaders;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Web 配置属性
@@ -55,11 +54,6 @@ public class WebProperties {
     public static class Cors {
 
         /** 允许前端读取的响应头 */
-        private List<String> exposedHeaders =
-                new ArrayList<>(
-                        List.of(
-                                HttpHeaders.AUTHORIZATION,
-                                HttpHeaders.CONTENT_DISPOSITION,
-                                CustomHttpHeader.REQUEST_ID));
+        private List<String> exposedHeaders = new ArrayList<>();
     }
 }

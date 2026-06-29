@@ -5,13 +5,12 @@ import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.satoken.core.LoginSubjectSessionKey;
+import com.travis.infrastructure.framework.satoken.core.SaTokenWebSocketPrincipal;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.model.UserAgentInfo;
 import com.travis.infrastructure.framework.web.core.util.IpUtil;
 import com.travis.infrastructure.framework.web.core.util.UserAgentUtil;
 import com.travis.infrastructure.framework.websocket.core.WebSocketSessionManager;
-import com.travis.infrastructure.framework.websocket.core.WebSocketTicketService;
-import com.travis.infrastructure.framework.websocket.config.properties.WebSocketProperties;
 import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.menu.api.SysMenuApi;
 import com.travis.monolith.system.menu.api.response.VbenMenuResp;
@@ -24,6 +23,7 @@ import com.travis.monolith.system.user.internal.converter.SysUserConverter;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.service.SysAuthService;
 import com.travis.monolith.system.user.internal.service.SysUserService;
+import com.travis.monolith.system.user.internal.service.SysWebSocketTicketService;
 import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -45,9 +45,7 @@ public class SysAuthServiceImpl implements SysAuthService {
     /** WebSocket Session 管理器 */
     private final WebSocketSessionManager webSocketSessionManager;
 
-    private final WebSocketTicketService webSocketTicketService;
-
-    private final WebSocketProperties webSocketProperties;
+    private final SysWebSocketTicketService webSocketTicketService;
 
     /** 角色 API */
     private final SysRoleApi roleApi;
@@ -132,7 +130,7 @@ public class SysAuthServiceImpl implements SysAuthService {
         String token = stpLogic.getTokenValue();
         stpLogic.logout();
         if (userId != null) {
-            webSocketSessionManager.closeByToken(LoginType.ADMIN, String.valueOf(userId), token);
+            webSocketSessionManager.close(SaTokenWebSocketPrincipal.build(LoginType.ADMIN, userId));
         }
     }
 
@@ -141,8 +139,7 @@ public class SysAuthServiceImpl implements SysAuthService {
         var stpLogic = StpKit.of(LoginType.ADMIN);
         var userId = stpLogic.getLoginIdAsLong();
         var token = stpLogic.getTokenValue();
-        var ticket = webSocketTicketService.create(LoginType.ADMIN, String.valueOf(userId), token);
-        return new SysWebSocketTicketResp(ticket, webSocketProperties.getTicketTimeout() / 1000);
+        return webSocketTicketService.createAdminTicket(userId, token);
     }
 
     private void publishLoginEvent(UserLoginEvent event) {

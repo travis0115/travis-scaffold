@@ -14,8 +14,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "travis.web.security")
 public class SaTokenProperties {
     /**
-     * 登录类型鉴权规则列表，每条规则定义一种 loginType 的路径拦截策略。 starter 会为每条规则注册独立的 SaInterceptor，使用对应的 StpLogic
-     * 进行登录校验。
+     * 登录类型鉴权规则列表，每条规则定义一种 loginType 的认证入口。 starter 会为每条规则注册独立的 SaInterceptor，使用对应的 StpLogic 进行 HTTP
+     * 登录校验；配置 websocket-path 时，会为该 loginType 注册 WebSocket 握手入口。
      *
      * <p>示例配置：
      *
@@ -26,6 +26,7 @@ public class SaTokenProperties {
      *       - /api/admin/**
      *     exclude-path-patterns:
      *       - /api/admin/system/auth/login
+     *     websocket-path: /ws/admin
      * </pre>
      */
     private List<AuthRule> authRules = new ArrayList<>();
@@ -41,5 +42,8 @@ public class SaTokenProperties {
 
         /** 该登录类型下需要排除的路径模式（Ant 风格），如 /api/admin/system/auth/login */
         private List<String> excludePathPatterns = new ArrayList<>();
+
+        /** 该登录类型的 WebSocket 握手路径，如 /ws/admin；为空则不注册 WebSocket 端点 */
+        private String websocketPath;
     }
 }

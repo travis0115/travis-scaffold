@@ -1,10 +1,11 @@
 package com.travis.infrastructure.framework.websocket.interceptor;
 
-import cn.dev33.satoken.stp.StpLogic;
-import com.travis.infrastructure.common.web.constant.CommonConstant;
-import com.travis.infrastructure.common.web.constant.LoginType;
-import com.travis.infrastructure.framework.satoken.core.StpKit;
-import com.travis.infrastructure.framework.websocket.core.WebSocketTicketService;
+import com.travis.infrastructure.framework.websocket.config.properties.WebSocketProperties;
+import com.travis.infrastructure.framework.websocket.core.WebSocketAuthRequest;
+import com.travis.infrastructure.framework.websocket.core.WebSocketAuthService;
+import com.travis.infrastructure.framework.websocket.core.WebSocketEndpoint;
+import com.travis.infrastructure.framework.websocket.core.WebSocketPrincipal;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.http.server.ServerHttpRequest;
@@ -13,15 +14,13 @@ import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
-import java.util.Map;
-
 /**
- * WebSocket 握手拦截器，负责认证并将 loginType + userId 存入 Session attributes。
+ * WebSocket 握手拦截器，负责认证并将连接主体写入 Session attributes。
  *
- * <p>前端连接时只需携带短期 ticket，loginType 由服务端注册的 WebSocket 入口绑定。
+ * <p>前端连接时需携带认证适配器约定的握手凭证。
  *
  * <ul>
- *   <li>{@code ticket} — 由已认证 HTTP 接口签发的一次性握手凭证
+ *   <li>{@code ticket} — 默认参数名，可通过 {@code travis.web.websocket.credential-key} 调整
  * </ul>
  *
  * <p>示例：{@code ws://host:8080/ws/admin?ticket=xxx}
@@ -29,9 +28,7 @@ import java.util.Map;
  * <p>认证成功后将以下属性写入 WebSocketSession 的 attributes：
  *
  * <ul>
- *   <li>{@code loginType} — 登录类型字符串（如 "admin"）
- *   <li>{@code userId} — 用户 ID 字符串
- *   <li>{@code sessionKey} — 复合键 {@code loginType:userId}，作为本地 Session 和 Redis 的唯一标识
+ *   <li>{@code principal} — 连接主体标识，作为本地 Session 和 Redis 的唯一标识
  * </ul>
  *
  * @author travis
@@ -39,20 +36,17 @@ import java.util.Map;
 @Slf4j
 public class WebSocketAuthInterceptor implements HandshakeInterceptor {
 
-    public static final String ATTR_LOGIN_TYPE = "loginType";
-    public static final String ATTR_USER_ID = "userId";
-    public static final String ATTR_SESSION_KEY = "sessionKey";
-    public static final String ATTR_TOKEN = "token";
+    private final WebSocketAuthService authService;
+    private final WebSocketProperties properties;
+    private final WebSocketEndpoint endpoint;
 
-    private final String loginType;
-    private final WebSocketTicketService ticketService;
-
-    public WebSocketAuthInterceptor(String loginType, WebSocketTicketService ticketService) {
-        this.loginType = LoginType.from(loginType);
-        if (CommonConstant.UNKNOWN.equals(this.loginType)) {
-            throw new IllegalArgumentException("Unsupported WebSocket loginType: " + loginType);
-        }
-        this.ticketService = ticketService;
+    public WebSocketAuthInterceptor(
+            WebSocketAuthService authService,
+            WebSocketProperties properties,
+            WebSocketEndpoint endpoint) {
+        this.authService = authService;
+        this.properties = properties;
+        this.endpoint = endpoint;
     }
 
     @Override
@@ -67,62 +61,42 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor {
             return false;
         }
 
-        String ticket = servletRequest.getServletRequest().getParameter("ticket");
-        if (ticket == null || ticket.isBlank()) {
+        String credential =
+                servletRequest.getServletRequest().getParameter(properties.getCredentialKey());
+        if (credential == null || credential.isBlank()) {
             log.warn(
-                    "[WebSocket] 未携带 ticket，拒绝握手: loginType={}, remoteAddr={}",
-                    loginType,
+                    "[WebSocket] 未携带握手凭证，拒绝握手: parameter={}, remoteAddr={}",
+                    properties.getCredentialKey(),
                     servletRequest.getServletRequest().getRemoteAddr());
             return false;
         }
 
         try {
-            var webSocketTicket = ticketService.consume(ticket);
-            if (webSocketTicket == null) {
-                log.warn("[WebSocket] ticket 无效或已过期，拒绝握手: loginType={}", loginType);
+            var authContext =
+                    authService.authenticate(
+                            new WebSocketAuthRequest(
+                                    servletRequest.getServletRequest().getRequestURI(),
+                                    credential,
+                                    request.getHeaders(),
+                                    servletRequest.getServletRequest().getRemoteAddr(),
+                                    endpoint.attributes()));
+            if (authContext == null) {
+                log.warn("[WebSocket] 握手凭证无效或已过期，拒绝握手");
                 return false;
             }
-            if (!loginType.equals(webSocketTicket.loginType())) {
-                log.warn(
-                        "[WebSocket] ticket loginType 不匹配，拒绝握手: expected={}, actual={}",
-                        loginType,
-                        webSocketTicket.loginType());
-                return false;
-            }
-
-            var token = webSocketTicket.token();
-            StpLogic stpLogic = StpKit.of(loginType);
-            Object loginId = stpLogic.getLoginIdByToken(token);
-            if (loginId == null) {
-                log.warn("[WebSocket] ticket 绑定的 token 无效或已过期，拒绝握手: loginType={}", loginType);
+            String principal = authContext.principal();
+            if (principal == null || principal.isBlank()) {
+                log.warn("[WebSocket] principal 为空，拒绝握手");
                 return false;
             }
 
-            String userId = loginId.toString();
-            if (!userId.equals(webSocketTicket.userId())) {
-                log.warn(
-                        "[WebSocket] ticket userId 不匹配，拒绝握手: loginType={}, expected={}, actual={}",
-                        loginType,
-                        webSocketTicket.userId(),
-                        userId);
-                return false;
-            }
+            attributes.put(WebSocketPrincipal.ATTR_PRINCIPAL, principal);
+            attributes.putAll(authContext.attributes());
 
-            String sessionKey = buildSessionKey(loginType, userId);
-
-            attributes.put(ATTR_LOGIN_TYPE, loginType);
-            attributes.put(ATTR_USER_ID, userId);
-            attributes.put(ATTR_SESSION_KEY, sessionKey);
-            attributes.put(ATTR_TOKEN, token);
-
-            log.debug(
-                    "[WebSocket] 握手认证成功: loginType={}, userId={}, sessionKey={}",
-                    loginType,
-                    userId,
-                    sessionKey);
+            log.debug("[WebSocket] 握手认证成功: principal={}", principal);
             return true;
         } catch (Exception e) {
-            log.warn("[WebSocket] ticket 校验异常，拒绝握手: loginType={}, {}", loginType, e.getMessage());
+            log.warn("[WebSocket] 握手凭证校验异常，拒绝握手: {}", e.getMessage());
             return false;
         }
     }
@@ -135,16 +109,4 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor {
             Exception exception) {
         // 握手完成，无需处理
     }
-
-    /**
-     * 构建复合键：{@code loginType:userId}
-     *
-     * @param loginType 登录类型（如 "admin"）
-     * @param userId 用户 ID
-     * @return 复合键
-     */
-    public static String buildSessionKey(String loginType, String userId) {
-        return loginType + ":" + userId;
-    }
-
 }

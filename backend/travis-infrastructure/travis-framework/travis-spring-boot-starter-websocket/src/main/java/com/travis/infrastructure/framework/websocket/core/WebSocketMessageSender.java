@@ -15,8 +15,8 @@ import com.travis.infrastructure.framework.websocket.message.WebSocketMessage;
  *     private final WebSocketMessageSender wsSender;
  *
  *     public void notifyAdmin(Long adminId, String msg) {
- *         wsSender.sendToUser(LoginType.ADMIN, String.valueOf(adminId),
- *                 WebSocketMessage.toUser("system", String.valueOf(adminId), msg));
+ *         wsSender.sendToPrincipal("admin:" + adminId,
+ *                 WebSocketMessage.toPrincipal("system", "admin:" + adminId, msg));
  *     }
  *
  *     public void pushMarketData(MarketDataVO data) {
@@ -36,15 +36,13 @@ public class WebSocketMessageSender {
     }
 
     /**
-     * 发送消息给指定用户
+     * 发送消息给指定连接主体
      *
-     * @param loginType 登录类型（如 "admin"、"user"），对应 {@link
-     *     com.travis.infrastructure.common.web.constant.LoginType}
-     * @param userId 目标用户 ID
+     * @param principal 连接主体
      * @param message 消息体
      */
-    public void sendToUser(String loginType, String userId, WebSocketMessage message) {
-        sessionManager.sendToUser(loginType, userId, message);
+    public void sendToPrincipal(String principal, WebSocketMessage message) {
+        sessionManager.sendToPrincipal(principal, message);
     }
 
     /**
@@ -57,13 +55,12 @@ public class WebSocketMessageSender {
     }
 
     /**
-     * 判断用户是否在线
+     * 判断连接主体是否在线
      *
-     * @param loginType 登录类型
-     * @param userId 用户 ID
+     * @param principal 连接主体
      * @return 是否在线
      */
-    public boolean isOnline(String loginType, String userId) {
-        return sessionManager.isOnline(loginType, userId);
+    public boolean isOnline(String principal) {
+        return sessionManager.isOnline(principal);
     }
 }

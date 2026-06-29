@@ -1,1 +1,2 @@
 com.travis.infrastructure.framework.satoken.config.TravisSaTokenAutoConfiguration
+com.travis.infrastructure.framework.satoken.config.SaTokenWebSocketAutoConfiguration

@@ -122,9 +122,6 @@ spring:
     virtual:
       enabled: true
   web:
-    #    cors:
-    #      exposed-headers:
-    #        -Custom-Header  #自定义请求头
     locale: ${travis.web.locale:zh_CN}
 
 # Actuator 监控端点的配置项
@@ -162,12 +159,14 @@ sa-token:
   is-write-header: true
   # 是否输出操作日志
   is-log: true
+
+
 #################### 应用相关配置 ####################
 travis:
-  redis:
-    key-prefix: ${spring.application.name}
   info:
     base-package: com.travis.monolith
+  redis:
+    key-prefix: ${spring.application.name}
   web:
     # Web路径前缀配置
     apis:
@@ -192,8 +191,12 @@ travis:
     # 防重复提交配置
     no-repeat-submit:
       key-prefix: "repeat-submit:"
+    websocket:
+      credential-key: ticket
+      redis:
+        enabled: true  # 是否启用 Redis Pub/Sub 集群广播，false 时仅本实例投递
     security:
-      # 登录类型鉴权规则：每条规则对应一种 loginType 的路径拦截策略
+      # 登录类型鉴权规则：每条规则对应一种 loginType 的 HTTP 鉴权路径和可选 WebSocket 握手路径
       # starter 会自动发现对应 loginType 的 StpLogic Bean 并注册拦截器
       auth-rules:
         - login-type: admin
@@ -201,4 +204,5 @@ travis:
             - /api/admin/**
           exclude-path-patterns:
             - /api/admin/system/auth/login
+          websocket-path: /ws/admin
     time-zone: UTC  #全局time-zone配置，影响spring.jackson.time-zone以及日志配置

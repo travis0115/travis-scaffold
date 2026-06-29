@@ -19,12 +19,12 @@ import org.springframework.data.redis.core.RedisTemplate;
  * <p>工作流程：
  *
  * <ol>
- *   <li>业务调用 {@code sendToUser(userId, msg)} → 本地投递 + Redis Pub/Sub 发布
- *   <li>所有实例（包括自己）收到 Redis 消息 → 检查本地是否有目标用户的连接 → 有则投递
- *   <li>用户上线/下线 → Redis Set 维护 userId → instanceIds 映射
+ *   <li>业务调用 {@code sendToPrincipal(principal, msg)} → 本地投递 + Redis Pub/Sub 发布
+ *   <li>所有实例（包括自己）收到 Redis 消息 → 检查本地是否有目标连接主体的连接 → 有则投递
+ *   <li>连接主体上线/下线 → Redis Set 维护 principal → instanceIds 映射
  * </ol>
  *
- * <p>当 Redis 不可用时自动降级为单实例模式（仅本地投递）。
+ * <p>当 Redis Pub/Sub 不可用或未启用时降级为单实例模式（仅本地投递）。
  *
  * @author travis
  */
@@ -106,12 +106,8 @@ public class RedisWebSocketMessageDispatcher {
                 return;
             }
 
-            if (wsMessage.getType() == WebSocketMessageType.CLOSE_TOKEN
-                    && wsMessage.getLoginType() != null
-                    && wsMessage.getToUser() != null
-                    && wsMessage.getContent() instanceof String token) {
-                sessionManager.closeLocalByToken(
-                        wsMessage.getLoginType(), wsMessage.getToUser(), token);
+            if (wsMessage.getType() == WebSocketMessageType.CLOSE && wsMessage.getTo() != null) {
+                sessionManager.closeLocal(wsMessage.getTo());
                 return;
             }
 
@@ -119,10 +115,8 @@ public class RedisWebSocketMessageDispatcher {
             if (wsMessage.getType() == WebSocketMessageType.BROADCAST) {
                 sessionManager.deliverToAllLocal(wsMessage);
             } else if (wsMessage.getType() == WebSocketMessageType.USER
-                    && wsMessage.getLoginType() != null
-                    && wsMessage.getToUser() != null) {
-                String sessionKey = wsMessage.getLoginType() + ":" + wsMessage.getToUser();
-                sessionManager.deliverToLocal(sessionKey, wsMessage);
+                    && wsMessage.getTo() != null) {
+                sessionManager.deliverToLocal(wsMessage.getTo(), wsMessage);
             }
         } catch (Exception e) {
             log.error("[WebSocket] Redis 消息处理失败", e);
@@ -132,17 +126,17 @@ public class RedisWebSocketMessageDispatcher {
     // ==================== 用户在线状态管理 ====================
 
     /**
-     * 注册用户→实例映射（用户上线时调用）
+     * 注册连接主体→实例映射（连接主体上线时调用）
      *
-     * @param userId 用户 ID
+     * @param principal 连接主体
      * @param instanceId 当前实例 ID
      */
-    public void registerUserInstance(String userId, String instanceId) {
+    public void registerPrincipalInstance(String principal, String instanceId) {
         if (!redisAvailable) {
             return;
         }
         try {
-            String key = buildSessionKey(userId);
+            String key = buildSessionKey(principal);
             redisTemplate.opsForSet().add(key, instanceId);
             // 设置过期时间，防止僵尸 key（超时时间是心跳间隔的 3 倍）
             long ttl =
@@ -157,17 +151,17 @@ public class RedisWebSocketMessageDispatcher {
     }
 
     /**
-     * 移除用户→实例映射（用户下线时调用）
+     * 移除连接主体→实例映射（连接主体下线时调用）
      *
-     * @param userId 用户 ID
+     * @param principal 连接主体
      * @param instanceId 当前实例 ID
      */
-    public void unregisterUserInstance(String userId, String instanceId) {
+    public void unregisterPrincipalInstance(String principal, String instanceId) {
         if (!redisAvailable) {
             return;
         }
         try {
-            String key = buildSessionKey(userId);
+            String key = buildSessionKey(principal);
             redisTemplate.opsForSet().remove(key, instanceId);
             // 如果集合为空则删除 key
             Long size = redisTemplate.opsForSet().size(key);
@@ -180,17 +174,17 @@ public class RedisWebSocketMessageDispatcher {
     }
 
     /**
-     * 判断用户是否在线（集群范围，查 Redis）
+     * 判断连接主体是否在线（集群范围，查 Redis）
      *
-     * @param userId 用户 ID
+     * @param principal 连接主体
      * @return 是否在线
      */
-    public boolean isUserOnline(String userId) {
+    public boolean isPrincipalOnline(String principal) {
         if (!redisAvailable) {
             return false;
         }
         try {
-            String key = buildSessionKey(userId);
+            String key = buildSessionKey(principal);
             Long size = redisTemplate.opsForSet().size(key);
             return size != null && size > 0;
         } catch (Exception e) {
@@ -200,7 +194,7 @@ public class RedisWebSocketMessageDispatcher {
     }
 
     /**
-     * 获取所有在线用户 ID（集群范围）
+     * 获取所有在线连接主体（集群范围）
      *
      * @return 在线用户 ID 集合
      */
@@ -228,8 +222,8 @@ public class RedisWebSocketMessageDispatcher {
         return instanceId;
     }
 
-    private String buildSessionKey(String userId) {
-        return redisKeyPrefixResolver.apply(sessionKeyPrefix() + userId);
+    private String buildSessionKey(String principal) {
+        return redisKeyPrefixResolver.apply(sessionKeyPrefix() + principal);
     }
 
     private String sessionKeyPrefix() {

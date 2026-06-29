@@ -13,9 +13,8 @@ import lombok.NoArgsConstructor;
  * <pre>{@code
  * {
  *   "type": "USER",
- *   "loginType": "admin",
  *   "fromUser": "system",
- *   "toUser": "123",
+ *   "to": "admin:123",
  *   "content": "订单已创建",
  *   "timestamp": 1718000000000
  * }
@@ -32,14 +31,11 @@ public class WebSocketMessage {
     /** 消息类型 */
     private WebSocketMessageType type;
 
-    /** 登录类型（如 "admin"、"user"），点对点消息必填，广播消息为 null */
-    private String loginType;
-
     /** 发送者标识 */
     private String fromUser;
 
-    /** 接收者 userId（仅点对点消息） */
-    private String toUser;
+    /** 接收者连接主体（仅点对点消息） */
+    private String to;
 
     /** 消息内容，业务自定义 JSON 字符串或纯文本 */
     private Object content;
@@ -52,18 +48,15 @@ public class WebSocketMessage {
     /**
      * 创建点对点消息
      *
-     * @param loginType 接收者的登录类型（如 "admin"）
      * @param fromUser 发送者标识
-     * @param toUser 接收者 userId
+     * @param to 接收者连接主体
      * @param content 消息内容
      */
-    public static WebSocketMessage toUser(
-            String loginType, String fromUser, String toUser, Object content) {
+    public static WebSocketMessage toPrincipal(String fromUser, String to, Object content) {
         return WebSocketMessage.builder()
                 .type(WebSocketMessageType.USER)
-                .loginType(loginType)
                 .fromUser(fromUser)
-                .toUser(toUser)
+                .to(to)
                 .content(content)
                 .timestamp(System.currentTimeMillis())
                 .build();
@@ -87,13 +80,11 @@ public class WebSocketMessage {
                 .build();
     }
 
-    /** 创建关闭指定 token 连接的内部消息 */
-    public static WebSocketMessage closeToken(String loginType, String userId, String token) {
+    /** 创建关闭指定连接主体的内部消息 */
+    public static WebSocketMessage close(String principal) {
         return WebSocketMessage.builder()
-                .type(WebSocketMessageType.CLOSE_TOKEN)
-                .loginType(loginType)
-                .toUser(userId)
-                .content(token)
+                .type(WebSocketMessageType.CLOSE)
+                .to(principal)
                 .timestamp(System.currentTimeMillis())
                 .build();
     }

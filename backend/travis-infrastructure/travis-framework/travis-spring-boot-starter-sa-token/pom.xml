@@ -21,6 +21,12 @@
         </dependency>
 
         <dependency>
+            <groupId>com.travis</groupId>
+            <artifactId>travis-spring-boot-starter-websocket</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-autoconfigure</artifactId>
         </dependency>

@@ -1,16 +1,10 @@
 package com.travis.infrastructure.framework.websocket.core;
 
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
-import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.websocket.config.properties.WebSocketProperties;
-import com.travis.infrastructure.framework.websocket.interceptor.WebSocketAuthInterceptor;
 import com.travis.infrastructure.framework.websocket.message.WebSocketMessage;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledFuture;
@@ -25,14 +19,14 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 /**
  * 本地 WebSocket Session 管理器，维护本实例上所有活跃连接。
  *
- * <p>使用 {@code loginType:userId} 复合键作为 Session 标识，支持多端（admin/app）同 ID 用户共存。
+ * <p>使用认证适配器返回的 principal 作为 Session 标识。
  *
  * <p>核心职责：
  *
  * <ul>
- *   <li>维护 sessionKey（loginType:userId）→ Set&lt;WebSocketSession&gt; 的本地映射
- *   <li>Session 注册/移除时同步更新 Redis 中的用户→实例映射
- *   <li>用户首次连接/最后断开时回调 {@link WebSocketSessionListener}
+ *   <li>维护 principal → Set&lt;WebSocketSession&gt; 的本地映射
+ *   <li>Session 注册/移除时同步更新 Redis 中的连接主体→实例映射
+ *   <li>连接主体首次连接/最后断开时回调 {@link WebSocketSessionListener}
  *   <li>发送消息时：本地直接投递 + 通过 Redis Pub/Sub 广播到其他实例
  *   <li>定时心跳检测
  * </ul>
@@ -43,7 +37,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 public class LocalWebSocketSessionManager extends TextWebSocketHandler
         implements WebSocketSessionManager {
 
-    /** 本地 Session 存储：sessionKey（loginType:userId）→ sessions */
+    /** 本地 Session 存储：principal → sessions */
     private final ConcurrentMap<String, Set<WebSocketSession>> localSessions =
             new ConcurrentHashMap<>();
 
@@ -52,6 +46,9 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
 
     /** Redis 消息分发器，为 null 时降级为单实例模式 */
     @Nullable private final RedisWebSocketMessageDispatcher dispatcher;
+
+    /** WebSocket 认证适配器 */
+    @Nullable private final WebSocketAuthService authService;
 
     /** 业务层注册的会话生命周期监听器 */
     private final List<WebSocketSessionListener> listeners;
@@ -72,10 +69,12 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
     public LocalWebSocketSessionManager(
             WebSocketProperties properties,
             @Nullable RedisWebSocketMessageDispatcher dispatcher,
+            @Nullable WebSocketAuthService authService,
             @Nullable List<WebSocketSessionListener> listeners) {
         this.properties = properties;
         this.instanceId = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
         this.dispatcher = dispatcher;
+        this.authService = authService;
         this.listeners = listeners != null ? listeners : Collections.emptyList();
         this.heartbeatScheduler = createHeartbeatScheduler();
     }
@@ -102,28 +101,28 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        String sessionKey = extractSessionKey(session);
-        if (sessionKey == null) {
+        String principal = extractPrincipal(session);
+        if (principal == null) {
             session.close(CloseStatus.POLICY_VIOLATION);
             return;
         }
 
-        boolean wasOnline = isSessionKeyOnline(sessionKey);
-        cancelPendingDisconnect(sessionKey);
+        boolean wasOnline = isPrincipalOnline(principal);
+        cancelPendingDisconnect(principal);
         boolean isFirst =
                 localSessions
-                        .computeIfAbsent(sessionKey, k -> ConcurrentHashMap.newKeySet())
+                        .computeIfAbsent(principal, k -> ConcurrentHashMap.newKeySet())
                         .add(session);
         if (dispatcher != null) {
-            dispatcher.registerUserInstance(sessionKey, instanceId);
+            dispatcher.registerPrincipalInstance(principal, instanceId);
         }
 
         // 全局首次连接（从 0 → 1）时通知监听器
         if (isFirst && !wasOnline) {
-            fireConnect(sessionKey, getClientIp(session));
+            fireConnect(principal, getClientIp(session));
         }
 
-        log.debug("[WebSocket] 连接建立: sessionKey={}, sessionId={}", sessionKey, session.getId());
+        log.debug("[WebSocket] 连接建立: principal={}, sessionId={}", principal, session.getId());
     }
 
     @Override
@@ -136,29 +135,27 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
         }
 
         log.debug(
-                "[WebSocket] 收到上行消息: sessionKey={}, payload={}",
-                extractSessionKey(session),
-                payload);
+                "[WebSocket] 收到上行消息: principal={}, payload={}", extractPrincipal(session), payload);
     }
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
-        String sessionKey = extractSessionKey(session);
-        if (sessionKey == null) {
+        String principal = extractPrincipal(session);
+        if (principal == null) {
             return;
         }
 
-        Set<WebSocketSession> sessions = localSessions.get(sessionKey);
+        Set<WebSocketSession> sessions = localSessions.get(principal);
         if (sessions != null) {
             sessions.remove(session);
             if (sessions.isEmpty()) {
-                localSessions.remove(sessionKey);
-                scheduleDisconnect(sessionKey);
+                localSessions.remove(principal);
+                scheduleDisconnect(principal);
             }
         }
         log.debug(
-                "[WebSocket] 连接关闭: sessionKey={}, sessionId={}, status={}",
-                sessionKey,
+                "[WebSocket] 连接关闭: principal={}, sessionId={}, status={}",
+                principal,
                 session.getId(),
                 status);
     }
@@ -166,8 +163,8 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) {
         log.warn(
-                "[WebSocket] 传输错误: sessionKey={}, sessionId={}",
-                extractSessionKey(session),
+                "[WebSocket] 传输错误: principal={}, sessionId={}",
+                extractPrincipal(session),
                 session.getId(),
                 exception);
     }
@@ -175,10 +172,9 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
     // ==================== WebSocketSessionManager ====================
 
     @Override
-    public void sendToUser(String loginType, String userId, WebSocketMessage message) {
-        String sessionKey = loginType + ":" + userId;
+    public void sendToPrincipal(String principal, WebSocketMessage message) {
         // 本地投递
-        deliverToLocal(sessionKey, message);
+        deliverToLocal(principal, message);
         // 通过 Redis 广播到其他实例
         if (dispatcher != null) {
             dispatcher.publish(message);
@@ -188,7 +184,7 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
     @Override
     public void sendToAll(WebSocketMessage message) {
         // 本地投递给所有连接
-        localSessions.forEach((sessionKey, _) -> deliverToLocal(sessionKey, message));
+        localSessions.forEach((principal, _) -> deliverToLocal(principal, message));
         // 通过 Redis 广播到其他实例
         if (dispatcher != null) {
             dispatcher.publish(message);
@@ -196,33 +192,32 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
     }
 
     @Override
-    public void closeByToken(String loginType, String userId, String token) {
-        if (loginType == null || userId == null || token == null || token.isBlank()) {
+    public void close(String principal) {
+        if (principal == null || principal.isBlank()) {
             return;
         }
-        closeLocalByToken(loginType, userId, token);
+        closeLocal(principal);
         if (dispatcher != null) {
-            dispatcher.publish(WebSocketMessage.closeToken(loginType, userId, token));
+            dispatcher.publish(WebSocketMessage.close(principal));
         }
     }
 
     @Override
-    public boolean isOnline(String loginType, String userId) {
-        String sessionKey = loginType + ":" + userId;
-        return isSessionKeyOnline(sessionKey);
+    public boolean isOnline(String principal) {
+        return isPrincipalOnline(principal);
     }
 
-    private boolean isSessionKeyOnline(String sessionKey) {
-        if (pendingDisconnectTasks.containsKey(sessionKey)) {
+    private boolean isPrincipalOnline(String principal) {
+        if (pendingDisconnectTasks.containsKey(principal)) {
             return true;
         }
         // 先查本地
-        if (localSessions.containsKey(sessionKey)) {
+        if (localSessions.containsKey(principal)) {
             return true;
         }
         // 再查 Redis（集群范围）
         if (dispatcher != null) {
-            return dispatcher.isUserOnline(sessionKey);
+            return dispatcher.isPrincipalOnline(principal);
         }
         return false;
     }
@@ -240,11 +235,11 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
     /**
      * 将消息投递给本实例上的指定用户的所有 Session
      *
-     * @param sessionKey 复合键（loginType:userId）
+     * @param principal 连接主体
      * @param message 消息体
      */
-    public void deliverToLocal(String sessionKey, WebSocketMessage message) {
-        Set<WebSocketSession> sessions = localSessions.get(sessionKey);
+    public void deliverToLocal(String principal, WebSocketMessage message) {
+        Set<WebSocketSession> sessions = localSessions.get(principal);
         if (sessions == null || sessions.isEmpty()) {
             return;
         }
@@ -253,7 +248,7 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
         try {
             json = JsonUtil.toJsonString(message);
         } catch (Exception e) {
-            log.error("[WebSocket] 消息序列化失败: sessionKey={}", sessionKey, e);
+            log.error("[WebSocket] 消息序列化失败: principal={}", principal, e);
             return;
         }
 
@@ -264,8 +259,8 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
                     session.sendMessage(textMessage);
                 } catch (IOException e) {
                     log.warn(
-                            "[WebSocket] 消息发送失败: sessionKey={}, sessionId={}",
-                            sessionKey,
+                            "[WebSocket] 消息发送失败: principal={}, sessionId={}",
+                            principal,
                             session.getId(),
                             e);
                 }
@@ -279,102 +274,85 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
      * @param message 消息体
      */
     public void deliverToAllLocal(WebSocketMessage message) {
-        localSessions.forEach((sessionKey, _) -> deliverToLocal(sessionKey, message));
+        localSessions.forEach((principal, _) -> deliverToLocal(principal, message));
     }
 
-    public void closeLocalByToken(String loginType, String userId, String token) {
-        String sessionKey = loginType + ":" + userId;
-        Set<WebSocketSession> sessions = localSessions.get(sessionKey);
+    public void closeLocal(String principal) {
+        Set<WebSocketSession> sessions = localSessions.get(principal);
         if (sessions == null || sessions.isEmpty()) {
             return;
         }
         for (WebSocketSession session : new ArrayList<>(sessions)) {
-            Object sessionToken = session.getAttributes().get(WebSocketAuthInterceptor.ATTR_TOKEN);
-            if (!token.equals(sessionToken)) {
-                continue;
-            }
             try {
                 if (session.isOpen()) {
                     session.close(CloseStatus.NORMAL);
                 }
             } catch (IOException e) {
                 log.warn(
-                        "[WebSocket] 关闭 token 连接失败: sessionKey={}, sessionId={}",
-                        sessionKey,
+                        "[WebSocket] 关闭连接失败: principal={}, sessionId={}",
+                        principal,
                         session.getId(),
                         e);
             }
         }
     }
 
-    /** 从 Session attributes 中提取 sessionKey（loginType:userId） */
-    private String extractSessionKey(WebSocketSession session) {
-        Object sessionKey = session.getAttributes().get(WebSocketAuthInterceptor.ATTR_SESSION_KEY);
-        return sessionKey != null ? sessionKey.toString() : null;
+    /** 从 Session attributes 中提取 principal */
+    private String extractPrincipal(WebSocketSession session) {
+        return WebSocketPrincipal.get(session.getAttributes());
     }
 
-    /** 通知所有监听器：用户上线 */
-    private void fireConnect(String sessionKey, String ip) {
-        String[] parts = splitSessionKey(sessionKey);
+    /** 通知所有监听器：连接主体上线 */
+    private void fireConnect(String principal, String ip) {
         for (WebSocketSessionListener listener : listeners) {
             try {
-                listener.onConnect(parts[0], parts[1], ip);
+                listener.onConnect(principal, ip);
             } catch (Exception e) {
-                log.warn("[WebSocket] Listener.onConnect 异常: sessionKey={}", sessionKey, e);
+                log.warn("[WebSocket] Listener.onConnect 异常: principal={}", principal, e);
             }
         }
     }
 
-    /** 通知所有监听器：用户下线 */
-    private void fireDisconnect(String sessionKey) {
-        String[] parts = splitSessionKey(sessionKey);
+    /** 通知所有监听器：连接主体下线 */
+    private void fireDisconnect(String principal) {
         for (WebSocketSessionListener listener : listeners) {
             try {
-                listener.onDisconnect(parts[0], parts[1]);
+                listener.onDisconnect(principal);
             } catch (Exception e) {
-                log.warn("[WebSocket] Listener.onDisconnect 异常: sessionKey={}", sessionKey, e);
+                log.warn("[WebSocket] Listener.onDisconnect 异常: principal={}", principal, e);
             }
         }
     }
 
-    private void scheduleDisconnect(String sessionKey) {
-        cancelPendingDisconnect(sessionKey);
+    private void scheduleDisconnect(String principal) {
+        cancelPendingDisconnect(principal);
         var task =
                 heartbeatScheduler.schedule(
-                        () -> confirmDisconnect(sessionKey),
+                        () -> confirmDisconnect(principal),
                         java.time.Instant.now()
                                 .plusMillis(Math.max(properties.getOfflineGracePeriod(), 0)));
-        pendingDisconnectTasks.put(sessionKey, task);
+        pendingDisconnectTasks.put(principal, task);
     }
 
-    private void cancelPendingDisconnect(String sessionKey) {
-        var task = pendingDisconnectTasks.remove(sessionKey);
+    private void cancelPendingDisconnect(String principal) {
+        var task = pendingDisconnectTasks.remove(principal);
         if (task != null) {
             task.cancel(false);
         }
     }
 
-    private void confirmDisconnect(String sessionKey) {
-        pendingDisconnectTasks.remove(sessionKey);
-        if (localSessions.containsKey(sessionKey)) {
+    private void confirmDisconnect(String principal) {
+        pendingDisconnectTasks.remove(principal);
+        if (localSessions.containsKey(principal)) {
             return;
         }
         if (dispatcher != null) {
-            dispatcher.unregisterUserInstance(sessionKey, instanceId);
-            if (dispatcher.isUserOnline(sessionKey)) {
+            dispatcher.unregisterPrincipalInstance(principal, instanceId);
+            if (dispatcher.isPrincipalOnline(principal)) {
                 return;
             }
         }
-        fireDisconnect(sessionKey);
-    }
-
-    /** 拆分 sessionKey：{@code loginType:userId} → [loginType, userId] */
-    private String[] splitSessionKey(String sessionKey) {
-        int idx = sessionKey.indexOf(':');
-        if (idx < 0) {
-            return new String[] {"unknown", sessionKey};
-        }
-        return new String[] {sessionKey.substring(0, idx), sessionKey.substring(idx + 1)};
+        fireDisconnect(principal);
     }
 
     private String getClientIp(WebSocketSession session) {
@@ -407,15 +385,15 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
 
         TextMessage textMessage = new TextMessage(json);
         localSessions.forEach(
-                (sessionKey, sessions) -> {
+                (principal, sessions) -> {
                     for (WebSocketSession session : sessions) {
                         if (session.isOpen()) {
                             try {
                                 session.sendMessage(textMessage);
                             } catch (IOException e) {
                                 log.debug(
-                                        "[WebSocket] 心跳发送失败: sessionKey={}, sessionId={}",
-                                        sessionKey,
+                                        "[WebSocket] 心跳发送失败: principal={}, sessionId={}",
+                                        principal,
                                         session.getId());
                             }
                         }
@@ -425,7 +403,7 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
 
     private void closeInvalidTokenSessions() {
         localSessions.forEach(
-                (sessionKey, sessions) -> {
+                (principal, sessions) -> {
                     for (WebSocketSession session : new ArrayList<>(sessions)) {
                         if (!session.isOpen() || isSessionTokenValid(session)) {
                             continue;
@@ -433,13 +411,13 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
                         try {
                             session.close(CloseStatus.POLICY_VIOLATION);
                             log.debug(
-                                    "[WebSocket] token 已失效，关闭连接: sessionKey={}, sessionId={}",
-                                    sessionKey,
+                                    "[WebSocket] 连接认证已失效，关闭连接: principal={}, sessionId={}",
+                                    principal,
                                     session.getId());
                         } catch (IOException e) {
                             log.warn(
-                                    "[WebSocket] 关闭失效 token 连接失败: sessionKey={}, sessionId={}",
-                                    sessionKey,
+                                    "[WebSocket] 关闭失效连接失败: principal={}, sessionId={}",
+                                    principal,
                                     session.getId(),
                                     e);
                         }
@@ -449,15 +427,15 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
 
     private boolean isSessionTokenValid(WebSocketSession session) {
         var attrs = session.getAttributes();
-        Object loginType = attrs.get(WebSocketAuthInterceptor.ATTR_LOGIN_TYPE);
-        Object userId = attrs.get(WebSocketAuthInterceptor.ATTR_USER_ID);
-        Object token = attrs.get(WebSocketAuthInterceptor.ATTR_TOKEN);
-        if (loginType == null || userId == null || token == null) {
+        var principal = WebSocketPrincipal.get(attrs);
+        if (principal == null) {
+            return false;
+        }
+        if (authService == null) {
             return false;
         }
         try {
-            Object loginId = StpKit.of(loginType.toString()).getLoginIdByToken(token.toString());
-            return loginId != null && userId.toString().equals(loginId.toString());
+            return authService.isConnectionValid(new WebSocketAuthContext(principal, attrs));
         } catch (Exception e) {
             return false;
         }
@@ -469,7 +447,7 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
         }
         localSessions
                 .keySet()
-                .forEach(sessionKey -> dispatcher.registerUserInstance(sessionKey, instanceId));
+                .forEach(principal -> dispatcher.registerPrincipalInstance(principal, instanceId));
     }
 
     private ThreadPoolTaskScheduler createHeartbeatScheduler() {
