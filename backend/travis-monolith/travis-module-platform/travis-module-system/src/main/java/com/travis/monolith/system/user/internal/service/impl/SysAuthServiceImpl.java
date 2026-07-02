@@ -6,6 +6,7 @@ import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.satoken.core.LoginSubjectSessionKey;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
+import com.travis.infrastructure.framework.satoken.core.websocket.SaTokenWebSocketAuthService;
 import com.travis.infrastructure.framework.satoken.core.websocket.SaTokenWebSocketPrincipal;
 import com.travis.infrastructure.framework.web.core.model.UserAgentInfo;
 import com.travis.infrastructure.framework.web.core.util.IpUtil;
@@ -127,11 +128,16 @@ public class SysAuthServiceImpl implements SysAuthService {
     @Override
     public void logout() {
         var stpLogic = StpKit.of(LoginType.ADMIN);
-        Long userId = stpLogic.isLogin() ? stpLogic.getLoginIdAsLong() : null;
-        String token = stpLogic.getTokenValue();
+        var userId = stpLogic.isLogin() ? stpLogic.getLoginIdAsLong() : null;
+        var token = stpLogic.getTokenValue();
         stpLogic.logout();
-        if (userId != null) {
-            webSocketSessionManager.close(SaTokenWebSocketPrincipal.build(LoginType.ADMIN, userId));
+        if (userId != null && token != null) {
+            var principal = SaTokenWebSocketPrincipal.build(LoginType.ADMIN, userId);
+            webSocketSessionManager.close(
+                    principal, SaTokenWebSocketAuthService.ATTR_TOKEN, token);
+            if (!hasRemainingValidToken(userId)) {
+                webSocketSessionManager.closeImmediately(principal);
+            }
         }
     }
 
@@ -192,6 +198,11 @@ public class SysAuthServiceImpl implements SysAuthService {
                 .browser(uaInfo.getBrowser())
                 .os(uaInfo.getOs())
                 .build();
+    }
+
+    private boolean hasRemainingValidToken(Long userId) {
+        var stpLogic = StpKit.of(LoginType.ADMIN);
+        return stpLogic.getTokenValueListByLoginId(userId).stream().anyMatch(stpLogic::isValidToken);
     }
 
     /**

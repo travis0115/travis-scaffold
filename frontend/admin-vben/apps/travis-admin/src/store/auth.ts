@@ -6,7 +6,7 @@ import { LOGIN_PATH } from '@vben/constants';
 import { preferences } from '@vben/preferences';
 import { resetAllStores, useAccessStore, useUserStore } from '@vben/stores';
 
-import { notification } from 'antdv-next';
+import { message, notification } from 'antdv-next';
 import { defineStore } from 'pinia';
 
 import { getAccessCodesApi, getUserInfoApi, loginApi, logoutApi } from '#/api';
@@ -66,7 +66,8 @@ export const useAuthStore = defineStore('auth', () => {
           });
         }
       }
-    } catch {
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : '登录失败');
       // 登录失败，通知动画组件
       document.dispatchEvent(new CustomEvent('travis-login-error'));
     } finally {

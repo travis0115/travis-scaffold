@@ -18,6 +18,12 @@ export namespace AuthApi {
     expiresIn: number;
     ticket: string;
   }
+
+  export interface ApiResponse<T = unknown> {
+    code: string;
+    data?: T;
+    msg?: string;
+  }
 }
 
 function normalizeToken(token: string) {
@@ -28,13 +34,19 @@ function normalizeToken(token: string) {
  * 登录
  */
 export async function loginApi(data: AuthApi.LoginParams) {
-  const response = await requestClient.post<RequestResponse>(
+  const response = await requestClient.post<
+    RequestResponse<AuthApi.ApiResponse>
+  >(
     '/system/auth/login',
     data,
     {
       responseReturn: 'raw',
     },
   );
+  const responseData = response.data;
+  if (responseData?.code !== '200') {
+    throw new Error(responseData?.msg || '登录失败');
+  }
   const getHeader = response.headers.get;
   const token =
     (typeof getHeader === 'function'
@@ -43,6 +55,9 @@ export async function loginApi(data: AuthApi.LoginParams) {
     response.headers.Authorization ??
     response.headers.authorization ??
     '';
+  if (!token) {
+    throw new Error('登录失败：服务端未返回访问令牌');
+  }
   return normalizeToken(String(token));
 }
 

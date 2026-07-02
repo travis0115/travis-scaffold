@@ -20,5 +20,8 @@ public enum WebSocketMessageType {
     BROADCAST,
 
     /** 内部指令：关闭指定连接主体的连接 */
-    CLOSE
+    CLOSE,
+
+    /** 内部指令：立即关闭指定连接主体的连接 */
+    CLOSE_IMMEDIATELY
 }

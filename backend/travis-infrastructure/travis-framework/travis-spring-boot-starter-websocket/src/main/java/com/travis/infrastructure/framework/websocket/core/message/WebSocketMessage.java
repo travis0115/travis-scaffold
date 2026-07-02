@@ -1,5 +1,6 @@
 package com.travis.infrastructure.framework.websocket.core.message;
 
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -87,6 +88,25 @@ public class WebSocketMessage {
     public static WebSocketMessage close(String principal) {
         return WebSocketMessage.builder()
                 .type(WebSocketMessageType.CLOSE)
+                .to(principal)
+                .timestamp(System.currentTimeMillis())
+                .build();
+    }
+
+    /** 创建关闭指定连接主体下匹配属性连接的内部消息 */
+    public static WebSocketMessage close(String principal, String attributeName, Object attributeValue) {
+        return WebSocketMessage.builder()
+                .type(WebSocketMessageType.CLOSE)
+                .to(principal)
+                .content(Map.of("attributeName", attributeName, "attributeValue", attributeValue))
+                .timestamp(System.currentTimeMillis())
+                .build();
+    }
+
+    /** 创建立即关闭指定连接主体的内部消息 */
+    public static WebSocketMessage closeImmediately(String principal) {
+        return WebSocketMessage.builder()
+                .type(WebSocketMessageType.CLOSE_IMMEDIATELY)
                 .to(principal)
                 .timestamp(System.currentTimeMillis())
                 .build();

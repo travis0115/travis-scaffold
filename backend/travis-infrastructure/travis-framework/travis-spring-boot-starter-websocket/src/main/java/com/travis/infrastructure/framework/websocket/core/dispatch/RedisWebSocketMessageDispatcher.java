@@ -15,6 +15,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 
 import java.time.Duration;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -117,7 +118,20 @@ public class RedisWebSocketMessageDispatcher {
             }
 
             if (wsMessage.getType() == WebSocketMessageType.CLOSE && wsMessage.getTo() != null) {
-                sessionManager.closeLocal(wsMessage.getTo());
+                var attributeMatcher = parseAttributeMatcher(wsMessage.getContent());
+                if (attributeMatcher == null) {
+                    sessionManager.closeLocal(wsMessage.getTo());
+                } else {
+                    sessionManager.closeLocal(
+                            wsMessage.getTo(),
+                            attributeMatcher.attributeName(),
+                            attributeMatcher.attributeValue());
+                }
+                return;
+            }
+            if (wsMessage.getType() == WebSocketMessageType.CLOSE_IMMEDIATELY
+                    && wsMessage.getTo() != null) {
+                sessionManager.closeLocalImmediately(wsMessage.getTo());
                 return;
             }
 
@@ -132,6 +146,20 @@ public class RedisWebSocketMessageDispatcher {
             log.error("[WebSocket] Redis 消息处理失败", e);
         }
     }
+
+    private AttributeMatcher parseAttributeMatcher(Object content) {
+        if (!(content instanceof Map<?, ?> map)) {
+            return null;
+        }
+        Object name = map.get("attributeName");
+        Object value = map.get("attributeValue");
+        if (name == null || value == null || name.toString().isBlank()) {
+            return null;
+        }
+        return new AttributeMatcher(name.toString(), value);
+    }
+
+    private record AttributeMatcher(String attributeName, Object attributeValue) {}
 
     // ==================== 连接主体状态管理 ====================
 

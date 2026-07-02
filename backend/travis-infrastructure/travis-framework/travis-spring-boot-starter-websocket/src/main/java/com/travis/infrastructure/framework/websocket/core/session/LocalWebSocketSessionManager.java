@@ -209,6 +209,28 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
     }
 
     @Override
+    public void close(String principal, String attributeName, Object attributeValue) {
+        if (principal == null || principal.isBlank() || attributeName == null) {
+            return;
+        }
+        closeLocal(principal, attributeName, attributeValue);
+        if (dispatcher != null) {
+            dispatcher.publish(WebSocketMessage.close(principal, attributeName, attributeValue));
+        }
+    }
+
+    @Override
+    public void closeImmediately(String principal) {
+        if (principal == null || principal.isBlank()) {
+            return;
+        }
+        closeLocalImmediately(principal);
+        if (dispatcher != null) {
+            dispatcher.publish(WebSocketMessage.closeImmediately(principal));
+        }
+    }
+
+    @Override
     public boolean isConnected(String principal) {
         return isPrincipalConnected(principal);
     }
@@ -296,6 +318,38 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
         if (sessions == null || sessions.isEmpty()) {
             return;
         }
+        closeSessions(principal, sessions);
+    }
+
+    public void closeLocal(String principal, String attributeName, Object attributeValue) {
+        Set<WebSocketSession> sessions = localSessions.get(principal);
+        if (sessions == null || sessions.isEmpty()) {
+            return;
+        }
+        closeSessions(principal, filterSessions(sessions, attributeName, attributeValue));
+    }
+
+    public void closeLocalImmediately(String principal) {
+        boolean hadPendingDisconnect = cancelPendingDisconnect(principal);
+        Set<WebSocketSession> sessions = localSessions.remove(principal);
+        boolean hadLocalSessions = sessions != null && !sessions.isEmpty();
+        if (hadLocalSessions) {
+            closeSessions(principal, sessions);
+        }
+        if (dispatcher != null) {
+            if (hadLocalSessions || hadPendingDisconnect) {
+                dispatcher.unregisterPrincipalInstance(principal, instanceId);
+            }
+            if (dispatcher.isPrincipalConnected(principal)) {
+                return;
+            }
+        }
+        if (hadLocalSessions || hadPendingDisconnect) {
+            fireDisconnect(principal);
+        }
+    }
+
+    private void closeSessions(String principal, Set<WebSocketSession> sessions) {
         for (WebSocketSession session : new ArrayList<>(sessions)) {
             try {
                 if (session.isOpen()) {
@@ -309,6 +363,18 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
                         e);
             }
         }
+    }
+
+    private Set<WebSocketSession> filterSessions(
+            Set<WebSocketSession> sessions, String attributeName, Object attributeValue) {
+        Set<WebSocketSession> matchedSessions = new HashSet<>();
+        for (WebSocketSession session : sessions) {
+            Object sessionValue = session.getAttributes().get(attributeName);
+            if (Objects.equals(String.valueOf(sessionValue), String.valueOf(attributeValue))) {
+                matchedSessions.add(session);
+            }
+        }
+        return matchedSessions;
     }
 
     /** 从 Session attributes 中提取 principal */
@@ -348,11 +414,13 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
         pendingDisconnectTasks.put(principal, task);
     }
 
-    private void cancelPendingDisconnect(String principal) {
+    private boolean cancelPendingDisconnect(String principal) {
         var task = pendingDisconnectTasks.remove(principal);
         if (task != null) {
             task.cancel(false);
+            return true;
         }
+        return false;
     }
 
     private void confirmDisconnect(String principal) {

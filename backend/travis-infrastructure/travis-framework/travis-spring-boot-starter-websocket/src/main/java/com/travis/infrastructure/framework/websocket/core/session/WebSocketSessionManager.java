@@ -38,6 +38,22 @@ public interface WebSocketSessionManager {
     void close(String principal);
 
     /**
+     * 关闭指定连接主体下匹配属性的连接
+     *
+     * @param principal 连接主体
+     * @param attributeName Session 属性名
+     * @param attributeValue Session 属性值
+     */
+    void close(String principal, String attributeName, Object attributeValue);
+
+    /**
+     * 立即关闭指定连接主体的所有连接，并跳过延迟断连确认
+     *
+     * @param principal 连接主体
+     */
+    void closeImmediately(String principal);
+
+    /**
      * 判断连接主体是否已连接（集群范围）
      *
      * @param principal 连接主体
