@@ -31,6 +31,7 @@ import com.travis.monolith.system.user.internal.service.SysUserService;
 import java.time.LocalDateTime;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -67,7 +68,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
 
     private final ApplicationEventPublisher eventPublisher;
 
-    private final WebSocketSessionManager webSocketSessionManager;
+    private final ObjectProvider<WebSocketSessionManager> webSocketSessionManagerProvider;
 
     /** 对象转换器 */
     private final SysUserConverter converter;
@@ -404,6 +405,10 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     }
 
     private Set<Long> getConnectedAdminUserIds() {
+        var webSocketSessionManager = webSocketSessionManagerProvider.getIfAvailable();
+        if (webSocketSessionManager == null) {
+            return Collections.emptySet();
+        }
         var principals = webSocketSessionManager.getConnectedPrincipals();
         if (principals == null || principals.isEmpty()) {
             return Collections.emptySet();
@@ -436,7 +441,9 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     }
 
     private boolean isAdminUserConnected(Long userId) {
-        return webSocketSessionManager.isConnected(
+        var webSocketSessionManager = webSocketSessionManagerProvider.getIfAvailable();
+        return webSocketSessionManager != null
+                && webSocketSessionManager.isConnected(
                 SaTokenWebSocketPrincipal.build(LoginType.ADMIN, userId));
     }
 
