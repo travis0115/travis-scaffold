@@ -5,12 +5,12 @@ import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.satoken.core.LoginSubjectSessionKey;
-import com.travis.infrastructure.framework.satoken.core.SaTokenWebSocketPrincipal;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
+import com.travis.infrastructure.framework.satoken.core.websocket.SaTokenWebSocketPrincipal;
 import com.travis.infrastructure.framework.web.core.model.UserAgentInfo;
 import com.travis.infrastructure.framework.web.core.util.IpUtil;
 import com.travis.infrastructure.framework.web.core.util.UserAgentUtil;
-import com.travis.infrastructure.framework.websocket.core.WebSocketSessionManager;
+import com.travis.infrastructure.framework.websocket.core.session.WebSocketSessionManager;
 import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.menu.api.SysMenuApi;
 import com.travis.monolith.system.menu.api.response.VbenMenuResp;
@@ -24,11 +24,12 @@ import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.service.SysAuthService;
 import com.travis.monolith.system.user.internal.service.SysUserService;
 import com.travis.monolith.system.user.internal.service.SysWebSocketTicketService;
-import java.util.Collections;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * 后台认证服务实现，处理登录验证（BCrypt 密码校验）、用户信息获取及权限查询

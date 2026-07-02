@@ -1,20 +1,21 @@
 package com.travis.infrastructure.framework.web.core.filter;
 
 import cn.hutool.core.util.StrUtil;
-import com.travis.infrastructure.common.web.constant.CustomHttpHeader;
+import com.travis.infrastructure.common.web.constant.HttpHeader;
 import com.travis.infrastructure.common.web.constant.MdcKey;
 import com.travis.infrastructure.framework.web.core.http.MutableHttpServletRequest;
 import com.travis.infrastructure.framework.web.core.util.IpUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.MDC;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
+
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * MDCFilter
@@ -40,16 +41,16 @@ public class MdcFilter extends OncePerRequestFilter {
         var wrappedRequest = new MutableHttpServletRequest(request);
         try {
             // requestId
-            var requestId = wrappedRequest.getHeader(CustomHttpHeader.REQUEST_ID);
+            var requestId = wrappedRequest.getHeader(HttpHeader.REQUEST_ID);
             if (StrUtil.isBlank(requestId)) {
                 requestId = RequestIdGenerator.nextId();
-                wrappedRequest.putHeader(CustomHttpHeader.REQUEST_ID, requestId);
+                wrappedRequest.putHeader(HttpHeader.REQUEST_ID, requestId);
             }
             MDC.put(MdcKey.REQUEST_ID, requestId);
-            response.setHeader(CustomHttpHeader.REQUEST_ID, requestId);
+            response.setHeader(HttpHeader.REQUEST_ID, requestId);
 
             // tenant_id
-            var tenantId = request.getHeader(CustomHttpHeader.TENANT_ID);
+            var tenantId = request.getHeader(HttpHeader.TENANT_ID);
             if (tenantId != null) {
                 MDC.put(MdcKey.TENANT_ID, tenantId);
             }

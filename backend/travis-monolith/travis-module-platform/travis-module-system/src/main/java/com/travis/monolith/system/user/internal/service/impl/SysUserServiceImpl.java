@@ -13,7 +13,9 @@ import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.redis.core.util.RedisUtil;
 import com.travis.infrastructure.framework.satoken.core.LoginSubjectSessionKey;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
+import com.travis.infrastructure.framework.satoken.core.websocket.SaTokenWebSocketPrincipal;
 import com.travis.infrastructure.framework.web.core.util.Ip2RegionUtil;
+import com.travis.infrastructure.framework.websocket.core.session.WebSocketSessionManager;
 import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.dept.api.SysDeptApi;
@@ -48,8 +50,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         implements SysUserService {
 
-    private static final String ONLINE_USER_KEY = "system:user:online";
-
     private static final Map<String, SFunction<SysUser, ?>> SORT_COLUMNS =
             Map.ofEntries(
                     Map.entry("lastOnlineTime", SysUser::getLastOnlineTime),
@@ -67,14 +67,19 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
 
     private final ApplicationEventPublisher eventPublisher;
 
+    private final WebSocketSessionManager webSocketSessionManager;
+
     /** 对象转换器 */
     private final SysUserConverter converter;
 
     /** 分页查询用户列表 */
     @Override
     public PageResp<SysUserResp> page(SysUserPageReq req) {
-        var onlineUserIds = getOnlineUserIds();
-        if (Boolean.TRUE.equals(req.getOnlineOnly()) && onlineUserIds.isEmpty()) {
+        var connectedAdminUserIds =
+                Boolean.TRUE.equals(req.getOnlineOnly())
+                        ? getConnectedAdminUserIds()
+                        : Collections.<Long>emptySet();
+        if (Boolean.TRUE.equals(req.getOnlineOnly()) && connectedAdminUserIds.isEmpty()) {
             return PageResp.<SysUserResp>builder()
                     .records(List.of())
                     .total(0L)
@@ -98,11 +103,11 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
                                 false,
                                 SysUser::getCreateTime);
         if (Boolean.TRUE.equals(req.getOnlineOnly())) {
-            wrapper.in(SysUser::getId, onlineUserIds);
+            wrapper.in(SysUser::getId, connectedAdminUserIds);
         }
         var page = page(req.getPageNum(), req.getPageSize(), wrapper);
         var resp = PageConverter.toResp(page.convert(this::toResp));
-        fillOnlineStatus(resp.getRecords(), onlineUserIds);
+        fillOnlineStatus(resp.getRecords(), connectedAdminUserIds);
         return resp;
     }
 
@@ -214,7 +219,6 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     public void deleteById(Long id) {
         var user = getByIdOrThrow(id);
         removeById(id);
-        RedisUtil.setRemove(ONLINE_USER_KEY, String.valueOf(id));
         RedisUtil.deleteCacheKey("system:user", "list:id:dept:" + user.getDeptId());
         // 通过角色服务删除用户-角色关联
         roleApi.deleteUserRolesByUserId(id);
@@ -264,10 +268,6 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         if (userId == null) {
             return;
         }
-        var added = RedisUtil.setAdd(ONLINE_USER_KEY, String.valueOf(userId));
-        if (added == null || added == 0) {
-            return;
-        }
         lambdaUpdate()
                 .eq(SysUser::getId, userId)
                 .set(SysUser::getLastOnlineTime, LocalDateTime.now())
@@ -283,7 +283,6 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         if (userId == null) {
             return;
         }
-        RedisUtil.setRemove(ONLINE_USER_KEY, String.valueOf(userId));
         lambdaUpdate()
                 .eq(SysUser::getId, userId)
                 .set(SysUser::getLastOfflineTime, LocalDateTime.now())
@@ -293,8 +292,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     /** 获取在线用户数量 */
     @Override
     public Long countOnlineUsers() {
-        var count = RedisUtil.setSize(ONLINE_USER_KEY);
-        return count == null ? 0L : count;
+        return (long) getConnectedAdminUserIds().size();
     }
 
     /** 分配用户角色：委托给角色服务 */
@@ -405,31 +403,41 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         return resp;
     }
 
-    private Set<Long> getOnlineUserIds() {
-        var members = RedisUtil.setMembers(ONLINE_USER_KEY);
-        if (members == null || members.isEmpty()) {
+    private Set<Long> getConnectedAdminUserIds() {
+        var principals = webSocketSessionManager.getConnectedPrincipals();
+        if (principals == null || principals.isEmpty()) {
             return Collections.emptySet();
         }
         var userIds = new HashSet<Long>();
-        for (Object member : members) {
-            if (member == null) {
+        for (String principal : principals) {
+            var subject = SaTokenWebSocketPrincipal.parse(principal);
+            if (subject == null || !LoginType.ADMIN.equals(subject.loginType())) {
                 continue;
             }
             try {
-                userIds.add(Long.valueOf(member.toString()));
+                userIds.add(Long.valueOf(subject.loginId()));
             } catch (NumberFormatException ignored) {
             }
         }
         return userIds;
     }
 
-    private void fillOnlineStatus(List<SysUserResp> records, Set<Long> onlineUserIds) {
+    private void fillOnlineStatus(List<SysUserResp> records, Set<Long> connectedAdminUserIds) {
         if (records == null || records.isEmpty()) {
             return;
         }
         for (SysUserResp record : records) {
-            record.setOnline(onlineUserIds.contains(record.getId()));
+            if (connectedAdminUserIds.contains(record.getId())) {
+                record.setOnline(true);
+            } else {
+                record.setOnline(isAdminUserConnected(record.getId()));
+            }
         }
+    }
+
+    private boolean isAdminUserConnected(Long userId) {
+        return webSocketSessionManager.isConnected(
+                SaTokenWebSocketPrincipal.build(LoginType.ADMIN, userId));
     }
 
     private void syncCurrentSessionUsername(Long userId, String username) {

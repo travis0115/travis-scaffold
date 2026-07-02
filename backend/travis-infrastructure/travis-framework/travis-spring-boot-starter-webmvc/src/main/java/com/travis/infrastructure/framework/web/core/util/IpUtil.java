@@ -3,6 +3,7 @@ package com.travis.infrastructure.framework.web.core.util;
 import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
+import com.travis.infrastructure.common.web.constant.HttpHeader;
 import jakarta.servlet.http.HttpServletRequest;
 
 /** IP相关工具类封装 */
@@ -33,12 +34,12 @@ public class IpUtil {
     public static String getClientIp(HttpServletRequest request, String... otherHeaderNames) {
         var headers =
                 new String[] {
-                    "X-Forwarded-For",
-                    "X-Real-IP",
-                    "Proxy-Client-IP",
-                    "WL-Proxy-Client-IP",
-                    "HTTP_CLIENT_IP",
-                    "HTTP_X_FORWARDED_FOR"
+                    HttpHeader.X_FORWARDED_FOR,
+                    HttpHeader.X_REAL_IP,
+                    HttpHeader.PROXY_CLIENT_IP,
+                    HttpHeader.WL_PROXY_CLIENT_IP,
+                    HttpHeader.HTTP_CLIENT_IP,
+                    HttpHeader.HTTP_X_FORWARDED_FOR
                 };
         if (ArrayUtil.isNotEmpty(otherHeaderNames)) {
             headers = ArrayUtil.addAll(otherHeaderNames, headers);

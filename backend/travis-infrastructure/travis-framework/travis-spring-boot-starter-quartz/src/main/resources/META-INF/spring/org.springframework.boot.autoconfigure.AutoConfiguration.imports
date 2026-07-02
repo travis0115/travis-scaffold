@@ -1,1 +1,1 @@
-com.travis.infrastructure.framework.quartz.config.TravisQuartzAutoConfiguration
+com.travis.infrastructure.framework.quartz.config.QuartzAutoConfiguration

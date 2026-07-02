@@ -53,7 +53,22 @@ public class WebProperties {
     @Data
     public static class Cors {
 
+        /** 允许的来源模式 */
+        private List<String> allowedOriginPatterns = new ArrayList<>(List.of("*"));
+
+        /** 允许的请求方法 */
+        private List<String> allowedMethods = new ArrayList<>(List.of("*"));
+
+        /** 允许的请求头 */
+        private List<String> allowedHeaders = new ArrayList<>(List.of("*"));
+
+        /** 是否允许携带凭证 */
+        private boolean allowCredentials = true;
+
         /** 允许前端读取的响应头 */
         private List<String> exposedHeaders = new ArrayList<>();
+
+        /** 预检请求缓存时间，单位秒 */
+        private long maxAge = 3600;
     }
 }

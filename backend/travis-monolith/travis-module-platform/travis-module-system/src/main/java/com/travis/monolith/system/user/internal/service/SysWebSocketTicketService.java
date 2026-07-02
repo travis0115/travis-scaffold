@@ -1,7 +1,7 @@
 package com.travis.monolith.system.user.internal.service;
 
 import com.travis.infrastructure.common.web.constant.LoginType;
-import com.travis.infrastructure.framework.satoken.core.SaTokenWebSocketTicketStore;
+import com.travis.infrastructure.framework.satoken.core.websocket.ticket.SaTokenWebSocketTicketStore;
 import com.travis.monolith.system.user.api.response.SysWebSocketTicketResp;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

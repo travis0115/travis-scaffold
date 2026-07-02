@@ -1,1 +1,1 @@
-com.travis.infrastructure.framework.desensitize.config.TravisDesensitizeAutoConfiguration
+com.travis.infrastructure.framework.desensitize.config.DesensitizeAutoConfiguration

@@ -8,8 +8,8 @@ import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
-import com.travis.infrastructure.framework.websocket.core.WebSocketMessageSender;
-import com.travis.infrastructure.framework.websocket.message.WebSocketMessage;
+import com.travis.infrastructure.framework.websocket.core.sender.WebSocketMessageSender;
+import com.travis.infrastructure.framework.websocket.core.message.WebSocketMessage;
 import com.travis.monolith.system.file.api.SysFileApi;
 import com.travis.monolith.system.message.api.request.SysMessageCreateReq;
 import com.travis.monolith.system.message.api.request.SysMessagePageReq;
@@ -24,9 +24,6 @@ import com.travis.monolith.system.message.internal.mapper.SysMessageChannelConte
 import com.travis.monolith.system.message.internal.mapper.SysMessageMapper;
 import com.travis.monolith.system.message.internal.mapper.SysMessageReceiverMapper;
 import com.travis.monolith.system.message.internal.service.SysMessageService;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
 import org.springframework.beans.BeanUtils;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -35,6 +32,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @CacheConfig(cacheNames = "system:message")
@@ -289,7 +290,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
 
     private void validateReceiver(
             String receiverType, Integer receiverScope, List<Long> receiverValues) {
-        if (!LoginType.ADMIN.equals(receiverType) && !LoginType.CLIENT.equals(receiverType)) {
+        if (!LoginType.ADMIN.equals(receiverType) && !LoginType.APP.equals(receiverType)) {
             throw new BizException(CommonErrorCode.BAD_REQUEST);
         }
         if (receiverScope == null

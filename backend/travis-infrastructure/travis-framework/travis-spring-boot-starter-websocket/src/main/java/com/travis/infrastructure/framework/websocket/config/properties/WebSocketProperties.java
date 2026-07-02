@@ -14,7 +14,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *     websocket:
  *     enabled: true
  *     path: /ws
- *     allowed-origins: "*"
  *     heartbeat-interval: 30000
  *     session-timeout: 300000
  *     credential-key: ticket
@@ -22,6 +21,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *       enabled: true
  *       channel: "websocket:channel:broadcast"
  *       session-key-prefix: "websocket:session"
+ *       retry-interval: 30000
  * }</pre>
  *
  * @author travis
@@ -32,12 +32,6 @@ public class WebSocketProperties {
 
     /** 是否启用 WebSocket（默认 true） */
     private boolean enabled = true;
-
-    /** WebSocket 基础路径，具体端点由业务模块声明 */
-    private String path = "/ws";
-
-    /** 允许的跨域来源（默认 *，即允许所有） */
-    private String allowedOrigins = "*";
 
     /** 心跳间隔，单位毫秒（默认 30s，<=0 表示不启用心跳） */
     private long heartbeatInterval = 30000;
@@ -65,5 +59,8 @@ public class WebSocketProperties {
 
         /** Session 映射 Redis key 前缀 */
         private String sessionKeyPrefix = "websocket:session";
+
+        /** Redis 失败后的重试间隔，单位毫秒 */
+        private long retryInterval = 30000;
     }
 }

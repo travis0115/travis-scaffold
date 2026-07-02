@@ -177,10 +177,18 @@ travis:
       - prefix: /api/app
         package-pattern: controller.app
     cors:
+      allowed-origin-patterns:
+        - '*'
+      allowed-methods:
+        - '*'
+      allowed-headers:
+        - '*'
+      allow-credentials: true
       exposed-headers:
         - Authorization
         - Content-Disposition
         - X-Request-Id
+      max-age: 3600
     # 文件配置
     file:
       resource-handler: /files/**  # 文件访问URL

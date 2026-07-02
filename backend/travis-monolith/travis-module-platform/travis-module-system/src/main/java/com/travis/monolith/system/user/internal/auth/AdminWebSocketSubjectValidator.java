@@ -1,7 +1,7 @@
 package com.travis.monolith.system.user.internal.auth;
 
 import com.travis.infrastructure.common.web.constant.LoginType;
-import com.travis.infrastructure.framework.satoken.core.SaTokenWebSocketSubjectValidator;
+import com.travis.infrastructure.framework.satoken.core.websocket.SaTokenWebSocketSubjectValidator;
 import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.user.internal.service.SysUserService;
 import lombok.RequiredArgsConstructor;

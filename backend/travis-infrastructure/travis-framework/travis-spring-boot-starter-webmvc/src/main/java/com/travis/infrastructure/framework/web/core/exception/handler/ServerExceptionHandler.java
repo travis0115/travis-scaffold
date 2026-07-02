@@ -3,7 +3,6 @@ package com.travis.infrastructure.framework.web.core.exception.handler;
 import com.travis.infrastructure.common.web.constant.ExceptionHandlerOrder;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.ApiResponse;
-import java.io.FileNotFoundException;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
@@ -16,6 +15,8 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import java.io.FileNotFoundException;
+
 /**
  * Server 异常处理器
  *
@@ -23,7 +24,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
  */
 @RestControllerAdvice
 @Slf4j
-@Order(ExceptionHandlerOrder.SERVER_EXCEPTION_HANDLER)
+@Order(ExceptionHandlerOrder.SERVER_EXCEPTION)
 @NoArgsConstructor
 public class ServerExceptionHandler {
     /** 算数异常 */

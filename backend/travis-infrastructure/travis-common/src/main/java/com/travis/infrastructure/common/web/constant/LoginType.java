@@ -14,9 +14,9 @@ public final class LoginType {
     public static final String ADMIN = "admin";
 
     /** 客户端 */
-    public static final String CLIENT = "client";
+    public static final String APP = "app";
 
-    private static final Set<String> SUPPORTED_LOGIN_TYPES = Set.of(ADMIN, CLIENT);
+    private static final Set<String> SUPPORTED_LOGIN_TYPES = Set.of(ADMIN, APP);
 
     private LoginType() {}
 

@@ -34,7 +34,6 @@ const unreadCount = ref(0);
 let notificationSocket: undefined | WebSocket;
 let notificationSocketReconnectTimer: ReturnType<typeof setTimeout> | undefined;
 let notificationSocketClosedByClient = false;
-let notificationSocketConnectedOnce = false;
 let notificationSocketReconnectDelay = 5000;
 
 const router = useRouter();
@@ -171,7 +170,6 @@ async function connectNotificationSocket() {
 }
 
 function handleNotificationSocketOpen() {
-  notificationSocketConnectedOnce = true;
   notificationSocketReconnectDelay = 5000;
 }
 
@@ -196,8 +194,7 @@ function handleNotificationSocketClose(event: CloseEvent) {
   }
   if (
     notificationSocketClosedByClient ||
-    !accessStore.accessToken ||
-    !notificationSocketConnectedOnce
+    !accessStore.accessToken
   ) {
     return;
   }
@@ -219,7 +216,6 @@ function handleNotificationSocketError(event: Event) {
 
 function closeNotificationSocket() {
   notificationSocketClosedByClient = true;
-  notificationSocketConnectedOnce = false;
   notificationSocketReconnectDelay = 5000;
   if (notificationSocketReconnectTimer) {
     clearTimeout(notificationSocketReconnectTimer);

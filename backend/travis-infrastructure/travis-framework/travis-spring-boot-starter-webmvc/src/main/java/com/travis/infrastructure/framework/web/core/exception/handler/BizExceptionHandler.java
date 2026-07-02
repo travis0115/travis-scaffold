@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  * @author travis
  */
 @RestControllerAdvice
-@Order(ExceptionHandlerOrder.Biz_EXCEPTION_HANDLER)
+@Order(ExceptionHandlerOrder.BIZ_EXCEPTION)
 @Slf4j
 @NoArgsConstructor
 public class BizExceptionHandler {
