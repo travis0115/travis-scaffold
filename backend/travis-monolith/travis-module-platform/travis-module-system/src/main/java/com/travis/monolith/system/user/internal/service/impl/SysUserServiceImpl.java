@@ -409,7 +409,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         if (webSocketSessionManager == null) {
             return Collections.emptySet();
         }
-        var principals = webSocketSessionManager.getConnectedPrincipals();
+        var principals = webSocketSessionManager.getConnectedPrincipals(LoginType.ADMIN);
         if (principals == null || principals.isEmpty()) {
             return Collections.emptySet();
         }

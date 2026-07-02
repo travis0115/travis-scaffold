@@ -7,6 +7,7 @@ import com.travis.infrastructure.framework.websocket.config.properties.WebSocket
 import com.travis.infrastructure.framework.websocket.core.session.LocalWebSocketSessionManager;
 import com.travis.infrastructure.framework.websocket.core.message.WebSocketMessage;
 import com.travis.infrastructure.framework.websocket.core.message.WebSocketMessageType;
+import com.travis.infrastructure.framework.websocket.core.session.WebSocketNamespace;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -28,7 +29,7 @@ import java.util.stream.Collectors;
  * <ol>
  *   <li>业务调用 {@code sendToPrincipal(principal, msg)} → 本地投递 + Redis Pub/Sub 发布
  *   <li>所有实例（包括自己）收到 Redis 消息 → 检查本地是否有目标连接主体的连接 → 有则投递
- *   <li>连接主体上线/下线 → Redis Set 维护 principal → instanceIds 映射
+ *   <li>连接主体上线/下线 → Redis ZSet 维护 principal → instanceId 过期时间映射
  * </ol>
  *
  * <p>当 Redis Pub/Sub 不可用或未启用时降级为单实例模式（仅本地投递）。
@@ -169,18 +170,21 @@ public class RedisWebSocketMessageDispatcher {
      * @param principal 连接主体
      * @param instanceId 当前实例 ID
      */
-    public void registerPrincipalInstance(String principal, String instanceId) {
+    public void registerPrincipalInstance(String namespace, String principal, String instanceId) {
         if (!shouldTryRedis()) {
             return;
         }
         try {
             String key = buildSessionKey(principal);
-            redisTemplate.opsForSet().add(key, instanceId);
             long ttl = sessionTtl();
+            redisTemplate.opsForZSet().add(key, instanceId, expireAtMillis(ttl));
             redisTemplate.expire(key, Duration.ofMillis(ttl));
             redisTemplate
                     .opsForZSet()
-                    .add(buildConnectedPrincipalIndexKey(), principal, expireAtMillis(ttl));
+                    .add(
+                            buildConnectedPrincipalIndexKey(namespace),
+                            principal,
+                            expireAtMillis(ttl));
             markRedisAvailable();
         } catch (Exception e) {
             markRedisUnavailable("[WebSocket] Redis 注册连接主体实例映射失败，短暂降级为单实例模式", e);
@@ -193,18 +197,20 @@ public class RedisWebSocketMessageDispatcher {
      * @param principal 连接主体
      * @param instanceId 当前实例 ID
      */
-    public void unregisterPrincipalInstance(String principal, String instanceId) {
+    public void unregisterPrincipalInstance(String namespace, String principal, String instanceId) {
         if (!shouldTryRedis()) {
             return;
         }
         try {
             String key = buildSessionKey(principal);
-            redisTemplate.opsForSet().remove(key, instanceId);
-            // 如果集合为空则删除 key
-            Long size = redisTemplate.opsForSet().size(key);
+            redisTemplate.opsForZSet().remove(key, instanceId);
+            removeExpiredPrincipalInstances(key);
+            Long size = redisTemplate.opsForZSet().zCard(key);
             if (size != null && size == 0) {
                 redisTemplate.delete(key);
-                redisTemplate.opsForZSet().remove(buildConnectedPrincipalIndexKey(), principal);
+                redisTemplate
+                        .opsForZSet()
+                        .remove(buildConnectedPrincipalIndexKey(namespace), principal);
             }
             markRedisAvailable();
         } catch (Exception e) {
@@ -224,7 +230,8 @@ public class RedisWebSocketMessageDispatcher {
         }
         try {
             String key = buildSessionKey(principal);
-            Long size = redisTemplate.opsForSet().size(key);
+            removeExpiredPrincipalInstances(key);
+            Long size = redisTemplate.opsForZSet().zCard(key);
             markRedisAvailable();
             return size != null && size > 0;
         } catch (Exception e) {
@@ -234,21 +241,22 @@ public class RedisWebSocketMessageDispatcher {
     }
 
     /**
-     * 获取所有已连接主体（集群范围）
+     * 获取指定命名空间下所有已连接主体（集群范围）
      *
+     * @param namespace 连接命名空间
      * @return 已连接主体集合
      */
-    public Set<String> getConnectedPrincipals() {
+    public Set<String> getConnectedPrincipals(String namespace) {
         if (!shouldTryRedis()) {
             return Collections.emptySet();
         }
         try {
-            removeExpiredConnectedPrincipals();
+            removeExpiredConnectedPrincipals(namespace);
             var principals =
                     redisTemplate
                             .opsForZSet()
                             .rangeByScore(
-                                    buildConnectedPrincipalIndexKey(),
+                                    buildConnectedPrincipalIndexKey(namespace),
                                     System.currentTimeMillis(),
                                     Double.POSITIVE_INFINITY);
             markRedisAvailable();
@@ -263,21 +271,22 @@ public class RedisWebSocketMessageDispatcher {
     }
 
     /**
-     * 获取已连接主体数量（集群范围）
+     * 获取指定命名空间下已连接主体数量（集群范围）
      *
+     * @param namespace 连接命名空间
      * @return 已连接主体数量
      */
-    public long countConnectedPrincipals() {
+    public long countConnectedPrincipals(String namespace) {
         if (!shouldTryRedis()) {
             return 0L;
         }
         try {
-            removeExpiredConnectedPrincipals();
+            removeExpiredConnectedPrincipals(namespace);
             var count =
                     redisTemplate
                             .opsForZSet()
                             .count(
-                                    buildConnectedPrincipalIndexKey(),
+                                    buildConnectedPrincipalIndexKey(namespace),
                                     System.currentTimeMillis(),
                                     Double.POSITIVE_INFINITY);
             markRedisAvailable();
@@ -308,8 +317,9 @@ public class RedisWebSocketMessageDispatcher {
         return redisKeyPrefixResolver.apply(sessionKeyPrefix() + principal);
     }
 
-    private String buildConnectedPrincipalIndexKey() {
-        return redisKeyPrefixResolver.apply(sessionKeyPrefix() + "__index");
+    private String buildConnectedPrincipalIndexKey(String namespace) {
+        return redisKeyPrefixResolver.apply(
+                sessionKeyPrefix() + normalizeNamespace(namespace) + ":_index");
     }
 
     private String sessionKeyPrefix() {
@@ -325,11 +335,23 @@ public class RedisWebSocketMessageDispatcher {
         return System.currentTimeMillis() + ttl;
     }
 
-    private void removeExpiredConnectedPrincipals() {
+    private void removeExpiredPrincipalInstances(String key) {
+        redisTemplate
+                .opsForZSet()
+                .removeRangeByScore(key, Double.NEGATIVE_INFINITY, System.currentTimeMillis());
+    }
+
+    private String normalizeNamespace(String namespace) {
+        return namespace == null || namespace.isBlank()
+                ? WebSocketNamespace.DEFAULT_NAMESPACE
+                : namespace;
+    }
+
+    private void removeExpiredConnectedPrincipals(String namespace) {
         redisTemplate
                 .opsForZSet()
                 .removeRangeByScore(
-                        buildConnectedPrincipalIndexKey(),
+                        buildConnectedPrincipalIndexKey(namespace),
                         Double.NEGATIVE_INFINITY,
                         System.currentTimeMillis());
     }

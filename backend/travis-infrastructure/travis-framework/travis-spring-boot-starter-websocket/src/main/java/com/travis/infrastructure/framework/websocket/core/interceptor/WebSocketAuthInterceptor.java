@@ -91,6 +91,7 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor {
                 return false;
             }
 
+            attributes.putAll(endpoint.attributes());
             attributes.put(WebSocketPrincipal.ATTR_PRINCIPAL, principal);
             attributes.putAll(authContext.attributes());
 

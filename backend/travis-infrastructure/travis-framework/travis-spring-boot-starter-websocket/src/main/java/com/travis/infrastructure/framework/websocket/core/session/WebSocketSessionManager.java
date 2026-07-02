@@ -62,16 +62,18 @@ public interface WebSocketSessionManager {
     boolean isConnected(String principal);
 
     /**
-     * 获取所有已连接主体标识（集群范围）
+     * 获取指定命名空间下所有已连接主体标识（集群范围）
      *
+     * @param namespace 连接命名空间
      * @return 已连接主体标识集合
      */
-    Set<String> getConnectedPrincipals();
+    Set<String> getConnectedPrincipals(String namespace);
 
     /**
-     * 获取已连接主体数量（集群范围）
+     * 获取指定命名空间下已连接主体数量（集群范围）
      *
+     * @param namespace 连接命名空间
      * @return 已连接主体数量
      */
-    long countConnectedPrincipals();
+    long countConnectedPrincipals(String namespace);
 }

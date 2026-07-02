@@ -81,7 +81,13 @@ export async function logoutApi() {
  * 签发 WebSocket 握手 ticket
  */
 export async function createWebSocketTicketApi() {
-  return requestClient.post<AuthApi.WebSocketTicketResult>('/system/auth/ws-ticket');
+  return requestClient.post<AuthApi.WebSocketTicketResult>(
+    '/system/auth/ws-ticket',
+    undefined,
+    {
+      errorMessageType: false,
+    },
+  );
 }
 
 /**

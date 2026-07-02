@@ -11,6 +11,7 @@ import com.travis.infrastructure.framework.websocket.config.WebSocketAutoConfigu
 import com.travis.infrastructure.framework.websocket.core.auth.WebSocketAuthService;
 import com.travis.infrastructure.framework.websocket.core.endpoint.WebSocketEndpoint;
 import com.travis.infrastructure.framework.websocket.core.endpoint.WebSocketEndpointProvider;
+import com.travis.infrastructure.framework.websocket.core.session.WebSocketNamespace;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -57,6 +58,8 @@ public class SaTokenWebSocketAutoConfiguration {
                                                 normalizePath(rule.getWebsocketPath()),
                                                 Map.of(
                                                         SaTokenWebSocketAuthService.ATTR_LOGIN_TYPE,
+                                                        rule.getLoginType(),
+                                                        WebSocketNamespace.ATTR_NAMESPACE,
                                                         rule.getLoginType())))
                         .toList();
     }

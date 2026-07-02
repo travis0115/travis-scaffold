@@ -47,6 +47,7 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
     /** 本地 Session 存储：principal → sessions */
     private final ConcurrentMap<String, Set<WebSocketSession>> localSessions =
             new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, String> principalNamespaces = new ConcurrentHashMap<>();
 
     private final WebSocketProperties properties;
     private final String instanceId;
@@ -116,12 +117,13 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
 
         boolean wasConnected = isPrincipalConnected(principal);
         cancelPendingDisconnect(principal);
+        principalNamespaces.put(principal, getNamespace(session));
         boolean isFirst =
                 localSessions
                         .computeIfAbsent(principal, k -> ConcurrentHashMap.newKeySet())
                         .add(session);
         if (dispatcher != null) {
-            dispatcher.registerPrincipalInstance(principal, instanceId);
+            dispatcher.registerPrincipalInstance(getNamespace(session), principal, instanceId);
         }
 
         // 全局首次连接（从 0 → 1）时通知监听器
@@ -251,19 +253,28 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
     }
 
     @Override
-    public Set<String> getConnectedPrincipals() {
+    public Set<String> getConnectedPrincipals(String namespace) {
         if (dispatcher != null) {
-            return dispatcher.getConnectedPrincipals();
+            return dispatcher.getConnectedPrincipals(namespace);
         }
-        return Collections.unmodifiableSet(localSessions.keySet());
+        Set<String> principals = new HashSet<>();
+        localSessions
+                .keySet()
+                .forEach(
+                        principal -> {
+                            if (Objects.equals(normalizeNamespace(namespace), getNamespace(principal))) {
+                                principals.add(principal);
+                            }
+                        });
+        return principals;
     }
 
     @Override
-    public long countConnectedPrincipals() {
+    public long countConnectedPrincipals(String namespace) {
         if (dispatcher != null) {
-            return dispatcher.countConnectedPrincipals();
+            return dispatcher.countConnectedPrincipals(namespace);
         }
-        return localSessions.size();
+        return getConnectedPrincipals(namespace).size();
     }
 
     // ==================== 内部方法 ====================
@@ -338,7 +349,7 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
         }
         if (dispatcher != null) {
             if (hadLocalSessions || hadPendingDisconnect) {
-                dispatcher.unregisterPrincipalInstance(principal, instanceId);
+                dispatcher.unregisterPrincipalInstance(getNamespace(principal), principal, instanceId);
             }
             if (dispatcher.isPrincipalConnected(principal)) {
                 return;
@@ -346,6 +357,9 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
         }
         if (hadLocalSessions || hadPendingDisconnect) {
             fireDisconnect(principal);
+        }
+        if (!localSessions.containsKey(principal)) {
+            principalNamespaces.remove(principal);
         }
     }
 
@@ -380,6 +394,20 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
     /** 从 Session attributes 中提取 principal */
     private String extractPrincipal(WebSocketSession session) {
         return WebSocketPrincipal.get(session.getAttributes());
+    }
+
+    private String getNamespace(WebSocketSession session) {
+        return normalizeNamespace(WebSocketNamespace.get(session.getAttributes()));
+    }
+
+    private String getNamespace(String principal) {
+        return principalNamespaces.getOrDefault(principal, WebSocketNamespace.DEFAULT_NAMESPACE);
+    }
+
+    private String normalizeNamespace(String namespace) {
+        return namespace == null || namespace.isBlank()
+                ? WebSocketNamespace.DEFAULT_NAMESPACE
+                : namespace;
     }
 
     /** 通知所有监听器：连接主体上线 */
@@ -429,12 +457,13 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
             return;
         }
         if (dispatcher != null) {
-            dispatcher.unregisterPrincipalInstance(principal, instanceId);
+            dispatcher.unregisterPrincipalInstance(getNamespace(principal), principal, instanceId);
             if (dispatcher.isPrincipalConnected(principal)) {
                 return;
             }
         }
         fireDisconnect(principal);
+        principalNamespaces.remove(principal);
     }
 
     private String getClientIp(WebSocketSession session) {
@@ -529,7 +558,10 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
         }
         localSessions
                 .keySet()
-                .forEach(principal -> dispatcher.registerPrincipalInstance(principal, instanceId));
+                .forEach(
+                        principal ->
+                                dispatcher.registerPrincipalInstance(
+                                        getNamespace(principal), principal, instanceId));
     }
 
     private ThreadPoolTaskScheduler createHeartbeatScheduler() {
