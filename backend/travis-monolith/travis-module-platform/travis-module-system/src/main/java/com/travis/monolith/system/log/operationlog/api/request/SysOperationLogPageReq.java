@@ -1,11 +1,13 @@
 package com.travis.monolith.system.log.operationlog.api.request;
 
+import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.common.web.model.PageRequest;
-import java.time.LocalDateTime;
-
+import com.travis.monolith.system.common.api.enums.Status;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import java.time.LocalDateTime;
 
 /**
  * 操作日志分页查询请求参数
@@ -20,9 +22,23 @@ public class SysOperationLogPageReq extends PageRequest {
     private String username;
 
     /** 操作模块（模糊匹配） */
+    @Size(max = 50, message = "模块长度不能超过50个字符")
     private String module;
 
+    @Size(max = 50, message = "业务类型长度不能超过50个字符")
+    private String businessType;
+
+    @Size(max = 500, message = "请求地址长度不能超过500个字符")
+    private String requestUrl;
+
+    @Size(max = 100, message = "请求ID长度不能超过100个字符")
+    private String requestId;
+
+    @Size(max = 45, message = "IP地址长度不能超过45个字符")
+    private String ip;
+
     /** 操作状态（0-失败 1-成功） */
+    @EnumValue(value = Status.class, message = "状态值错误")
     private Integer status;
 
     /** 操作开始时间 */

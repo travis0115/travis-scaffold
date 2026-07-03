@@ -2,6 +2,8 @@ import type { VbenFormSchema } from '#/adapter/form';
 import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { SystemNoticeApi } from '#/api';
 
+import { BACKEND_DATETIME_FORMAT } from '@vben/utils';
+
 import { z } from '#/adapter/form';
 import { uploadNoticeImage } from '#/api';
 import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
@@ -57,7 +59,7 @@ export const useFormSchema = (): VbenFormSchema[] => [
   },
   {
     component: 'DatePicker',
-    componentProps: { showTime: true, valueFormat: 'YYYY-MM-DD HH:mm:ss' },
+    componentProps: { showTime: true, valueFormat: BACKEND_DATETIME_FORMAT },
     fieldName: 'publishTime',
     label: '发布时间',
     rules: z

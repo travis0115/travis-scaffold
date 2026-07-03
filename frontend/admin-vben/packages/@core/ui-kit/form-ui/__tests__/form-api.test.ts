@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { setCurrentTimezone } from '@vben-core/shared/utils';
+
 import { FormApi } from '../src/form-api';
 
 describe('formApi', () => {
@@ -7,6 +9,7 @@ describe('formApi', () => {
 
   beforeEach(() => {
     formApi = new FormApi();
+    setCurrentTimezone();
   });
 
   it('should initialize with default state', () => {
@@ -99,6 +102,28 @@ describe('formApi', () => {
       },
     });
     expect(formActions.values).toEqual(originalValuesSnapshot);
+  });
+
+  it('should convert mapped range time values to UTC when getting values', async () => {
+    setCurrentTimezone('Asia/Shanghai');
+    formApi.setState({
+      fieldMappingTime: [['loginTimeRange', ['startTime', 'endTime']]],
+    });
+
+    const formActions: any = {
+      meta: {},
+      values: {
+        loginTimeRange: ['2024-10-30 12:00:00', '2024-10-30 13:30:00'],
+      },
+    };
+
+    await formApi.mount(formActions, new Map());
+
+    const values = await formApi.getValues();
+    expect(values).toEqual({
+      endTime: '2024-10-30 05:30:00',
+      startTime: '2024-10-30 04:00:00',
+    });
   });
 
   it('should set field value', async () => {

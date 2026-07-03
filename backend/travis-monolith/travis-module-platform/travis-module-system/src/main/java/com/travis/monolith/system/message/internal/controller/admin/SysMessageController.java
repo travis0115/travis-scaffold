@@ -31,7 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/system/message")
 @RequiredArgsConstructor
 @Validated
-@OperationLogModule("消息推送")
+@OperationLogModule("Message")
 public class SysMessageController {
     private final SysMessageService messageService;
     private final SysFileApi fileApi;

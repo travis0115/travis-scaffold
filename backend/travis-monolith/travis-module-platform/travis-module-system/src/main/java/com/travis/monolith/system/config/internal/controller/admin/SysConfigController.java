@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/system/config")
 @RequiredArgsConstructor
 @Validated
-@OperationLogModule("系统配置")
+@OperationLogModule("Config")
 public class SysConfigController {
 
     private final SysConfigService sysConfigService;

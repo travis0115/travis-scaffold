@@ -3,6 +3,7 @@ package com.travis.monolith.system.log.operationlog.internal.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.log.operationlog.api.request.SysOperationLogPageReq;
+import com.travis.monolith.system.log.operationlog.api.response.SysOperationLogResp;
 import com.travis.monolith.system.log.operationlog.internal.entity.SysOperationLog;
 
 /**
@@ -18,8 +19,8 @@ public interface SysOperationLogService extends IService<SysOperationLog> {
      * @param req 分页查询参数
      * @return 分页结果
      */
-    PageResp<SysOperationLog> page(SysOperationLogPageReq req);
+    PageResp<SysOperationLogResp> page(SysOperationLogPageReq req);
 
     /** 使用独立事务保存操作日志。 */
-    void saveOperation(SysOperationLog operationLog);
+    void create(SysOperationLog operationLog);
 }

@@ -4,6 +4,7 @@ import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.common.validation.annotation.Mobile;
 import com.travis.infrastructure.common.validation.annotation.Password;
 import com.travis.infrastructure.common.validation.annotation.Username;
+import com.travis.infrastructure.framework.desensitize.core.annotation.slider.PasswordDesensitize;
 import com.travis.monolith.system.common.api.enums.Status;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -27,6 +28,7 @@ public class SysUserCreateReq {
     /** 密码（明文，服务端使用 BCrypt 加密后存储） */
     @NotBlank(message = "密码不能为空")
     @Password
+    @PasswordDesensitize
     private String password;
 
     /** 昵称 */
