@@ -273,6 +273,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
                 .eq(SysUser::getId, userId)
                 .set(SysUser::getLastOnlineTime, LocalDateTime.now())
                 .set(SysUser::getLastOnlineIp, ip)
+                .set(SysUser::getLastOnlineLocation, Ip2RegionUtil.getRegionByIP(ip))
                 .update();
     }
 
@@ -398,9 +399,6 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
             resp.setDeptName(deptName);
         }
         resp.setRoleNames(roleApi.getRoleNamesByUserId(user.getId()));
-        if (user.getLastOnlineIp() != null && !user.getLastOnlineIp().isEmpty()) {
-            resp.setLastOnlineLocation(Ip2RegionUtil.getRegionByIP(user.getLastOnlineIp()));
-        }
         return resp;
     }
 

@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/system/dept")
 @RequiredArgsConstructor
 @Validated
-@OperationLogModule("部门管理")
+@OperationLogModule("Dept")
 public class SysDeptController {
 
     /** 部门管理服务 */

@@ -24,7 +24,6 @@ import com.travis.monolith.system.message.internal.mapper.SysMessageChannelConte
 import com.travis.monolith.system.message.internal.mapper.SysMessageMapper;
 import com.travis.monolith.system.message.internal.mapper.SysMessageReceiverMapper;
 import com.travis.monolith.system.message.internal.service.SysMessageService;
-import org.springframework.beans.BeanUtils;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
@@ -228,8 +227,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                 .stream()
                 .map(
                         entity -> {
-                            var resp = new SysMessageChannelContentResp();
-                            BeanUtils.copyProperties(entity, resp);
+                            var resp = converter.toChannelContentResp(entity);
                             resp.setContent(fileApi.resolveManagedImageSources(resp.getContent()));
                             return resp;
                         })
@@ -254,8 +252,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
         contents.forEach(
                 item -> {
-                    var entity = new SysMessageChannelContent();
-                    BeanUtils.copyProperties(item, entity);
+                    var entity = converter.toChannelContentEntity(item);
                     entity.setMessageId(messageId);
                     entity.setContent(fileApi.stripManagedImageSources(entity.getContent()));
                     channelContentMapper.insert(entity);

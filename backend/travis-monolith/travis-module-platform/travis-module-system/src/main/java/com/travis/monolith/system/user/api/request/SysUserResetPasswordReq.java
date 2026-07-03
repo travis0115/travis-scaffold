@@ -1,6 +1,7 @@
 package com.travis.monolith.system.user.api.request;
 
 import com.travis.infrastructure.common.validation.annotation.Password;
+import com.travis.infrastructure.framework.desensitize.core.annotation.slider.PasswordDesensitize;
 import lombok.Data;
 
 /**
@@ -11,5 +12,7 @@ import lombok.Data;
 @Data
 public class SysUserResetPasswordReq {
     /** 新密码（可选，不传则使用默认密码） */
-    @Password private String newPassword;
+    @Password
+    @PasswordDesensitize
+    private String newPassword;
 }

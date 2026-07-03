@@ -4,6 +4,8 @@ import com.travis.infrastructure.common.web.constant.WebFilterOrder;
 import com.travis.infrastructure.framework.web.config.properties.WebProperties;
 import com.travis.infrastructure.framework.web.core.advice.ApiResponseBodyAdvice;
 import com.travis.infrastructure.framework.web.core.advice.I18nResponseBodyAdvice;
+import com.travis.infrastructure.framework.web.core.convert.StringToLocalDateTimeConverter;
+import com.travis.infrastructure.framework.web.core.event.TransactionalApplicationEventPublisher;
 import com.travis.infrastructure.framework.web.core.exception.handler.BizExceptionHandler;
 import com.travis.infrastructure.framework.web.core.exception.handler.ServerExceptionHandler;
 import com.travis.infrastructure.framework.web.core.exception.handler.ValidationExceptionHandler;
@@ -14,10 +16,16 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.jackson.autoconfigure.JacksonProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
+import org.springframework.format.FormatterRegistry;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
@@ -34,6 +42,14 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebMvcAutoConfiguration implements WebMvcConfigurer {
 
     private final WebProperties webProperties;
+    private final JacksonProperties jacksonProperties;
+
+    /** 注册 Query/Form 参数转换器。 */
+    @Override
+    public void addFormatters(@NonNull FormatterRegistry registry) {
+        registry.addConverter(
+                new StringToLocalDateTimeConverter(jacksonProperties.getDateFormat()));
+    }
 
     /**
      * 根据Controller所在包名自动添加路径前缀： controller.admin 包 → /api/admin controller.app 包 → /api/app 其他包不加前缀
@@ -104,6 +120,23 @@ public class WebMvcAutoConfiguration implements WebMvcConfigurer {
     @ConditionalOnMissingBean
     public ValidationExceptionHandler validationExceptionHandler() {
         return new ValidationExceptionHandler();
+    }
+
+    /** 配置事务模板。 */
+    @Bean
+    @ConditionalOnBean(PlatformTransactionManager.class)
+    @ConditionalOnMissingBean
+    public TransactionTemplate transactionTemplate(PlatformTransactionManager transactionManager) {
+        return new TransactionTemplate(transactionManager);
+    }
+
+    /** 配置事务事件发布器。 */
+    @Bean
+    @ConditionalOnBean(TransactionTemplate.class)
+    @ConditionalOnMissingBean
+    public TransactionalApplicationEventPublisher transactionalApplicationEventPublisher(
+            ApplicationEventPublisher eventPublisher, TransactionTemplate transactionTemplate) {
+        return new TransactionalApplicationEventPublisher(eventPublisher, transactionTemplate);
     }
 
     /** 配置请求上下文过滤器 */

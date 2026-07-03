@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/system/menu")
 @RequiredArgsConstructor
 @Validated
-@OperationLogModule("菜单管理")
+@OperationLogModule("Menu")
 public class SysMenuController {
 
     /** 菜单管理服务 */

@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/system/file/folder")
 @RequiredArgsConstructor
-@OperationLogModule("文件夹管理")
+@OperationLogModule("FileFolder")
 public class SysFileFolderController {
     private final SysFileFolderService folderService;
 

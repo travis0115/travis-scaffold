@@ -1,25 +1,16 @@
-package com.travis.monolith.system.log.operationlog.internal.entity;
+package com.travis.monolith.system.log.operationlog.api.response;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import lombok.Data;
-import java.io.Serial;
-import java.io.Serializable;
 import java.time.LocalDateTime;
+import lombok.Data;
 
 /**
- * 操作日志实体，对应 sys_operation_log 表，记录管理员的关键操作
+ * 操作日志响应对象
  *
  * @author travis
  */
 @Data
-public class SysOperationLog implements Serializable {
-    @Serial private static final long serialVersionUID = 1L;
+public class SysOperationLogResp {
 
-    /** 主键ID（雪花算法生成） */
-    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /** 操作用户ID */
@@ -80,6 +71,5 @@ public class SysOperationLog implements Serializable {
     private String errorMsg;
 
     /** 操作时间 */
-    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 }

@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/system/dict")
 @RequiredArgsConstructor
 @Validated
-@OperationLogModule("字典管理")
+@OperationLogModule("Dict")
 public class SysDictController {
 
     /** 字典管理服务 */

@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/system/message/template")
 @RequiredArgsConstructor
-@OperationLogModule("消息模板")
+@OperationLogModule("MessageTemplate")
 public class SysMessageTemplateController {
     private final SysMessageTemplateService templateService;
 

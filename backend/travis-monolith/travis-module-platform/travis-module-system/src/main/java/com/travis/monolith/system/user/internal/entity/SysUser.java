@@ -45,6 +45,9 @@ public class SysUser extends BaseEntity {
     /** 最近上线IP */
     private String lastOnlineIp;
 
+    /** 最近上线地点 */
+    private String lastOnlineLocation;
+
     /** 最近下线时间 */
     private LocalDateTime lastOfflineTime;
 

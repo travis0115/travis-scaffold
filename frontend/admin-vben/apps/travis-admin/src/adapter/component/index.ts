@@ -163,6 +163,7 @@ const withDefaultPlaceholder = (
       const placeholder =
         props?.placeholder ||
         attrs?.placeholder ||
+        componentProps?.placeholder ||
         $t(`ui.placeholder.${type}`);
       // 透传组件暴露的方法
       const innerRef = ref();
@@ -1480,6 +1481,7 @@ async function initComponentAdapter() {
     Radio,
     RadioGroup,
     RangePicker: withDefaultPlaceholder(RangePicker, 'select', {
+      placeholder: ['开始时间', '结束时间'],
       style: { width: '100%' },
     }),
     Rate,

@@ -35,7 +35,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/system/user")
 @RequiredArgsConstructor
 @Validated
-@OperationLogModule("用户管理")
+@OperationLogModule("User")
 public class SysUserController {
 
     /** 用户管理服务 */
