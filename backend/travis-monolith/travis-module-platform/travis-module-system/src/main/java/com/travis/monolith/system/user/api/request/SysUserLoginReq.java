@@ -2,7 +2,6 @@ package com.travis.monolith.system.user.api.request;
 
 import com.travis.infrastructure.common.validation.annotation.Password;
 import com.travis.infrastructure.common.validation.annotation.Username;
-import com.travis.infrastructure.framework.desensitize.core.annotation.slider.PasswordDesensitize;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -23,6 +22,5 @@ public class SysUserLoginReq {
     /** 密码（明文，服务端校验后不存储） */
     @NotBlank(message = "密码不能为空")
     @Password
-    @PasswordDesensitize
     private String password;
 }

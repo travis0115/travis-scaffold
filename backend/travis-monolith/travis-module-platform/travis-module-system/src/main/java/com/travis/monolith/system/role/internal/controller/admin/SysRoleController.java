@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/system/role")
 @RequiredArgsConstructor
 @Validated
-@OperationLogModule("Role")
+@OperationLogModule("角色管理")
 public class SysRoleController {
 
     /** 角色管理服务 */

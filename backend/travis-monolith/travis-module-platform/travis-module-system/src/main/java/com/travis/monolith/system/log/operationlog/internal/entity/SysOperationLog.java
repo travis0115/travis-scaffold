@@ -4,10 +4,10 @@ import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
-import lombok.Data;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import lombok.Data;
 
 /**
  * 操作日志实体，对应 sys_operation_log 表，记录管理员的关键操作
@@ -34,9 +34,6 @@ public class SysOperationLog implements Serializable {
     /** 所属业务模块 */
     private String module;
 
-    /** 业务类型 */
-    private String businessType;
-
     /** 请求方法全限定名 */
     private String method;
 
@@ -52,23 +49,8 @@ public class SysOperationLog implements Serializable {
     /** 响应结果（JSON 格式） */
     private String responseResult;
 
-    /** 请求ID */
-    private String requestId;
-
     /** 操作IP地址 */
     private String ip;
-
-    /** 操作地点 */
-    private String location;
-
-    /** User-Agent */
-    private String userAgent;
-
-    /** 浏览器类型 */
-    private String browser;
-
-    /** 操作系统 */
-    private String os;
 
     /** 执行耗时（毫秒） */
     private Long duration;

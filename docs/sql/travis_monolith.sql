@@ -1550,7 +1550,6 @@ CREATE TABLE `sys_user` (
   `last_login_ip` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '最近登录IP',
   `last_online_time` datetime DEFAULT NULL COMMENT '最近上线时间',
   `last_online_ip` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '最近上线IP',
-  `last_online_location` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '最近上线地点',
   `last_offline_time` datetime DEFAULT NULL COMMENT '最近下线时间',
   `is_deleted` tinyint(1) DEFAULT '0' COMMENT '是否删除 0-否  1-是',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -1568,8 +1567,8 @@ CREATE TABLE `sys_user` (
 -- Records of sys_user
 -- ----------------------------
 BEGIN;
-INSERT INTO `sys_user` (`id`, `username`, `password`, `nickname`, `avatar_file_id`, `email`, `mobile`, `dept_id`, `status`, `last_login_time`, `last_login_ip`, `last_online_time`, `last_online_ip`, `last_online_location`, `last_offline_time`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`, `version`) VALUES (1, 'travis0115', '$2a$10$0iPJdkb53DEVol1Un/cOYOV8vKU1Hfwpfhq913/yqvRD.fjSGlxxi', '鸭腿儿', 2071112511029383169, 'travis0115@163.com', '15700070718', 0, 1, '2026-06-28 05:58:26', '127.0.0.1', NULL, NULL, NULL, NULL, 0, '2026-05-01 00:00:00', 1, '2026-06-28 05:58:26', 1, 0);
-INSERT INTO `sys_user` (`id`, `username`, `password`, `nickname`, `avatar_file_id`, `email`, `mobile`, `dept_id`, `status`, `last_login_time`, `last_login_ip`, `last_online_time`, `last_online_ip`, `last_online_location`, `last_offline_time`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`, `version`) VALUES (2067566320808062977, 'test123456', '$2a$10$/YXe6yzIGxAodOibXFq0DujvMB4ULnmcVymf6K2rb39/ubsDzpRsm', 'test123456', NULL, NULL, NULL, 0, 1, NULL, NULL, NULL, NULL, NULL, NULL, 0, '2026-06-18 11:13:19', 1, '2026-06-26 17:28:16', 1, 0);
+INSERT INTO `sys_user` (`id`, `username`, `password`, `nickname`, `avatar_file_id`, `email`, `mobile`, `dept_id`, `status`, `last_login_time`, `last_login_ip`, `last_online_time`, `last_online_ip`, `last_offline_time`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`, `version`) VALUES (1, 'travis0115', '$2a$10$0iPJdkb53DEVol1Un/cOYOV8vKU1Hfwpfhq913/yqvRD.fjSGlxxi', '鸭腿儿', 2071112511029383169, 'travis0115@163.com', '15700070718', 0, 1, '2026-06-28 05:58:26', '127.0.0.1', NULL, NULL, NULL, 0, '2026-05-01 00:00:00', 1, '2026-06-28 05:58:26', 1, 0);
+INSERT INTO `sys_user` (`id`, `username`, `password`, `nickname`, `avatar_file_id`, `email`, `mobile`, `dept_id`, `status`, `last_login_time`, `last_login_ip`, `last_online_time`, `last_online_ip`, `last_offline_time`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`, `version`) VALUES (2067566320808062977, 'test123456', '$2a$10$/YXe6yzIGxAodOibXFq0DujvMB4ULnmcVymf6K2rb39/ubsDzpRsm', 'test123456', NULL, NULL, NULL, 0, 1, NULL, NULL, NULL, NULL, NULL, 0, '2026-06-18 11:13:19', 1, '2026-06-26 17:28:16', 1, 0);
 COMMIT;
 
 -- ----------------------------

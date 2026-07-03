@@ -15,7 +15,6 @@ import { isRef, toRaw } from 'vue';
 
 import { Store } from '@vben-core/shared/store';
 import {
-  BACKEND_DATETIME_FORMAT,
   bindMethods,
   cloneDeep,
   createMerge,
@@ -579,11 +578,7 @@ export class FormApi {
     }
 
     fieldMappingTime.forEach(
-      ([
-        field,
-        [startTimeKey, endTimeKey],
-        format = BACKEND_DATETIME_FORMAT,
-      ]) => {
+      ([field, [startTimeKey, endTimeKey], format = 'YYYY-MM-DD']) => {
         if (startTimeKey && endTimeKey && values[field] === null) {
           Reflect.deleteProperty(values, startTimeKey);
           Reflect.deleteProperty(values, endTimeKey);
@@ -610,10 +605,10 @@ export class FormApi {
             : [format, format];
 
           values[startTimeKey] = startTime
-            ? formatLocalDateToUtc(startTime, startTimeFormat)
+            ? formatDate(startTime, startTimeFormat)
             : undefined;
           values[endTimeKey] = endTime
-            ? formatLocalDateToUtc(endTime, endTimeFormat)
+            ? formatDate(endTime, endTimeFormat)
             : undefined;
         }
         // delete values[field];
@@ -702,9 +697,9 @@ export class FormApi {
   private resolveDatePickerFormat(schema: FormSchema) {
     const componentProps = schema.componentProps;
     if (isFunction(componentProps)) {
-      return BACKEND_DATETIME_FORMAT;
+      return 'YYYY-MM-DD HH:mm:ss';
     }
-    return componentProps?.valueFormat ?? BACKEND_DATETIME_FORMAT;
+    return componentProps?.valueFormat ?? 'YYYY-MM-DD HH:mm:ss';
   }
 
   private processFields = (

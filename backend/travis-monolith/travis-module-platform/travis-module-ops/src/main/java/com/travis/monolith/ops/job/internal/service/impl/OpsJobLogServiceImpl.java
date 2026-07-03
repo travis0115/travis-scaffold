@@ -12,7 +12,6 @@ import com.travis.infrastructure.framework.redis.core.util.RedisUtil;
 import com.travis.monolith.ops.job.api.OpsJobErrorCode;
 import com.travis.monolith.ops.job.api.request.OpsJobLogPageReq;
 import com.travis.monolith.ops.job.api.response.*;
-import com.travis.monolith.ops.job.internal.converter.OpsJobConverter;
 import com.travis.monolith.ops.job.internal.entity.OpsJob;
 import com.travis.monolith.ops.job.internal.entity.OpsJobLog;
 import com.travis.monolith.ops.job.internal.mapper.OpsJobLogMapper;
@@ -28,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -53,7 +53,6 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
                     "createTime", OpsJobLog::getCreateTime);
 
     private final OpsJobMapper jobMapper;
-    private final OpsJobConverter converter;
 
     @Override
     public PageResp<OpsJobLogPageResp> page(OpsJobLogPageReq req) {
@@ -67,7 +66,7 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
                                         SORT_COLUMNS,
                                         false,
                                         OpsJobLog::getCreateTime));
-        return PageConverter.toResp(page.convert(converter::toLogPageResp));
+        return PageConverter.toResp(page.convert(log -> toResponse(log, new OpsJobLogPageResp())));
     }
 
     @Override
@@ -77,13 +76,13 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
         if (log == null) {
             throw new BizException(OpsJobErrorCode.LOG_NOT_FOUND);
         }
-        return converter.toLogDetailResp(log);
+        return toResponse(log, new OpsJobLogDetailResp());
     }
 
     @Override
     public List<OpsJobLogExportResp> exportLogs(OpsJobLogPageReq req) {
         return list(buildWrapper(req).orderByDesc(OpsJobLog::getCreateTime)).stream()
-                .map(converter::toLogExportResp)
+                .map(log -> toResponse(log, new OpsJobLogExportResp()))
                 .toList();
     }
 
@@ -275,4 +274,8 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
                 trend);
     }
 
+    private <T extends OpsJobLogBaseResp> T toResponse(OpsJobLog log, T response) {
+        BeanUtils.copyProperties(log, response);
+        return response;
+    }
 }

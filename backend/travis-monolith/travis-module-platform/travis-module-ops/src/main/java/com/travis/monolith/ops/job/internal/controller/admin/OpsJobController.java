@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/ops/job")
 @RequiredArgsConstructor
 @Validated
-@OperationLogModule("Job")
+@OperationLogModule("任务调度")
 public class OpsJobController {
 
     private final OpsJobService jobService;

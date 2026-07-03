@@ -1,8 +1,6 @@
 import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridColumns } from '#/adapter/vxe-table';
 
-import { BACKEND_DATETIME_FORMAT } from '@vben/utils';
-
 import { $t } from '#/locales';
 import { getDictOptions } from '#/utils/dict';
 
@@ -30,8 +28,9 @@ export function useGridFormSchema(): VbenFormSchema[] {
     {
       component: 'RangePicker',
       componentProps: {
+        placeholder: ['开始时间', '结束时间'],
         showTime: true,
-        valueFormat: BACKEND_DATETIME_FORMAT,
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
       fieldName: 'loginTimeRange',
       label: $t('system.loginLog.loginTime'),

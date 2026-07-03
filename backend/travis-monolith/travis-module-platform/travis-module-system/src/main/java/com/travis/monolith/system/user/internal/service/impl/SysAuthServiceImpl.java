@@ -8,7 +8,7 @@ import com.travis.infrastructure.framework.satoken.core.LoginSubjectSessionKey;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.satoken.core.websocket.SaTokenWebSocketAuthService;
 import com.travis.infrastructure.framework.satoken.core.websocket.SaTokenWebSocketPrincipal;
-import com.travis.infrastructure.framework.web.core.event.TransactionalApplicationEventPublisher;
+import com.travis.infrastructure.framework.web.core.model.UserAgentInfo;
 import com.travis.infrastructure.framework.web.core.util.IpUtil;
 import com.travis.infrastructure.framework.web.core.util.UserAgentUtil;
 import com.travis.infrastructure.framework.websocket.core.session.WebSocketSessionManager;
@@ -26,6 +26,7 @@ import com.travis.monolith.system.user.internal.service.SysAuthService;
 import com.travis.monolith.system.user.internal.service.SysUserService;
 import com.travis.monolith.system.user.internal.service.SysWebSocketTicketService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -54,7 +55,7 @@ public class SysAuthServiceImpl implements SysAuthService {
     /** 菜单 API */
     private final SysMenuApi menuApi;
 
-    private final TransactionalApplicationEventPublisher eventPublisher;
+    private final ApplicationEventPublisher eventPublisher;
 
     /** 对象转换器 */
     private final SysUserConverter converter;
@@ -78,43 +79,37 @@ public class SysAuthServiceImpl implements SysAuthService {
                                 SysUser::getStatus)
                         .one();
         if (user == null) {
-            eventPublisher.publishEvent(
-                    UserLoginEvent.builder()
-                            .username(req.getUsername())
-                            .status(Status.DISABLED.getValue())
-                            .message("用户不存在")
-                            .ip(clientIp)
-                            .browser(uaInfo.getBrowser())
-                            .os(uaInfo.getOs())
-                            .build());
+            publishLoginEvent(
+                    buildLoginEvent(
+                            req.getUsername(),
+                            Status.DISABLED.getValue(),
+                            "用户不存在",
+                            clientIp,
+                            uaInfo));
             throw new BizException(CommonErrorCode.AUTH_LOGIN_BAD_CREDENTIALS);
         }
 
         // BCrypt 校验密码
         if (!BCrypt.checkpw(req.getPassword(), user.getPassword())) {
-            eventPublisher.publishEvent(
-                    UserLoginEvent.builder()
-                            .username(req.getUsername())
-                            .status(Status.DISABLED.getValue())
-                            .message("密码错误")
-                            .ip(clientIp)
-                            .browser(uaInfo.getBrowser())
-                            .os(uaInfo.getOs())
-                            .build());
+            publishLoginEvent(
+                    buildLoginEvent(
+                            req.getUsername(),
+                            Status.DISABLED.getValue(),
+                            "密码错误",
+                            clientIp,
+                            uaInfo));
             throw new BizException(CommonErrorCode.AUTH_LOGIN_BAD_CREDENTIALS);
         }
 
         // 检查账号是否被禁用
         if (user.getStatus() != null && user.getStatus().equals(Status.DISABLED.getValue())) {
-            eventPublisher.publishEvent(
-                    UserLoginEvent.builder()
-                            .username(req.getUsername())
-                            .status(Status.DISABLED.getValue())
-                            .message("账号已被禁用")
-                            .ip(clientIp)
-                            .browser(uaInfo.getBrowser())
-                            .os(uaInfo.getOs())
-                            .build());
+            publishLoginEvent(
+                    buildLoginEvent(
+                            req.getUsername(),
+                            Status.DISABLED.getValue(),
+                            "账号已被禁用",
+                            clientIp,
+                            uaInfo));
             throw new BizException(CommonErrorCode.AUTH_LOGIN_USER_DISABLED);
         }
 
@@ -124,14 +119,9 @@ public class SysAuthServiceImpl implements SysAuthService {
         stpLogic.getSession().set(LoginSubjectSessionKey.USERNAME, user.getUsername());
 
         // 记录登录成功日志
-        eventPublisher.publishEvent(
-                UserLoginEvent.builder()
-                        .username(req.getUsername())
-                        .status(Status.ENABLED.getValue())
-                        .ip(clientIp)
-                        .browser(uaInfo.getBrowser())
-                        .os(uaInfo.getOs())
-                        .build());
+        publishLoginEvent(
+                buildLoginEvent(
+                        req.getUsername(), Status.ENABLED.getValue(), null, clientIp, uaInfo));
     }
 
     /** 管理员登出：清理 Sa-Token 登录态，并关闭当前 token 对应的 WebSocket 连接 */
@@ -157,6 +147,10 @@ public class SysAuthServiceImpl implements SysAuthService {
         var userId = stpLogic.getLoginIdAsLong();
         var token = stpLogic.getTokenValue();
         return webSocketTicketService.createAdminTicket(userId, token);
+    }
+
+    private void publishLoginEvent(UserLoginEvent event) {
+        eventPublisher.publishEvent(event);
     }
 
     /** 获取当前登录用户信息，包含角色编码和权限列表 */
@@ -192,6 +186,18 @@ public class SysAuthServiceImpl implements SysAuthService {
     @Override
     public List<String> getAccessCodes(Long userId) {
         return getPermissionsByUserId(userId);
+    }
+
+    private static UserLoginEvent buildLoginEvent(
+            String username, int status, String message, String ip, UserAgentInfo uaInfo) {
+        return UserLoginEvent.builder()
+                .username(username)
+                .status(status)
+                .message(message)
+                .ip(ip)
+                .browser(uaInfo.getBrowser())
+                .os(uaInfo.getOs())
+                .build();
     }
 
     private boolean hasRemainingValidToken(Long userId) {

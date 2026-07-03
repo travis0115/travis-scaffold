@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/ops/job-log")
 @RequiredArgsConstructor
-@OperationLogModule("JobLog")
+@OperationLogModule("任务执行日志")
 public class OpsJobLogController {
 
     private final OpsJobLogService logService;

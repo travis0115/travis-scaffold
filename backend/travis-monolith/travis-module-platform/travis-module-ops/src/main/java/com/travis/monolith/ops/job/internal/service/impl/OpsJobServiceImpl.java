@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.quartz.core.QuartzJobHandlerRegistry;
@@ -27,6 +28,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -76,18 +78,18 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         return PageConverter.toResp(
                 page.convert(
                         job ->
-                                enrichResponse(
-                                        converter.toPageResp(job),
+                                toResponse(
                                         job,
-                                        ownerNames.get(job.getOwnerUserId()))));
+                                        ownerNames.get(job.getOwnerUserId()),
+                                        new OpsJobPageResp())));
     }
 
     @Override
     @Cacheable(key = "'detail:'+#id")
     public OpsJobDetailResp get(Long id) {
         OpsJob job = getRequired(id);
-        return enrichResponse(
-                converter.toDetailResp(job), job, userApi.getUsernameById(job.getOwnerUserId()));
+        return toResponse(
+                job, userApi.getUsernameById(job.getOwnerUserId()), new OpsJobDetailResp());
     }
 
     @Override
@@ -155,7 +157,16 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
     @CacheEvict(allEntries = true)
     public void copy(Long id) {
         OpsJob source = getRequired(id);
-        var copy = converter.copy(source);
+        var copy = new OpsJob();
+        BeanUtils.copyProperties(
+                source,
+                copy,
+                "id",
+                "createTime",
+                "createBy",
+                "updateTime",
+                "updateBy",
+                "isDeleted");
         copy.setJobName(source.getJobName() + "-副本");
         copy.setStatus(0);
         save(copy);
@@ -185,10 +196,10 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         return list(new LambdaQueryWrapperX<OpsJob>().orderByAsc(OpsJob::getJobName)).stream()
                 .map(
                         job ->
-                                enrichResponse(
-                                        converter.toExportResp(job),
+                                toResponse(
                                         job,
-                                        userApi.getUsernameById(job.getOwnerUserId())))
+                                        userApi.getUsernameById(job.getOwnerUserId()),
+                                        new OpsJobExportResp()))
                 .toList();
     }
 
@@ -253,10 +264,26 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         return job;
     }
 
-    private <T extends OpsJobBaseResp> T enrichResponse(T response, OpsJob job, String ownerUsername) {
+    private <T extends OpsJobBaseResp> T toResponse(OpsJob job, String ownerUsername, T response) {
+        BeanUtils.copyProperties(job, response);
         response.setOwnerUsername(ownerUsername);
         response.setHandlerAvailable(handlerRegistry.contains(job.getHandlerName()));
+        response.setAlertUserIds(parseIds(job.getAlertUserIds()));
+        if (job.getCalendarConfig() != null) {
+            OpsJobCalendarConfig config =
+                    JsonUtil.parseObject(job.getCalendarConfig(), OpsJobCalendarConfig.class);
+            response.setExcludedDates(config.excludedDates());
+            response.setExcludedWeekdays(config.excludedWeekdays());
+            response.setDailyStartTime(config.dailyStartTime());
+            response.setDailyEndTime(config.dailyEndTime());
+        }
         response.setNextFireTime(quartzJobManager.nextFireTime(job.getId()));
         return response;
+    }
+
+    private List<Long> parseIds(String ids) {
+        return ids == null || ids.isBlank()
+                ? List.of()
+                : java.util.Arrays.stream(ids.split(",")).map(Long::valueOf).toList();
     }
 }

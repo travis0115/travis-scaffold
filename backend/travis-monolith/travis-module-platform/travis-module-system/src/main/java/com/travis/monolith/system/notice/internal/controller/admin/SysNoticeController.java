@@ -32,7 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/system/notice")
 @RequiredArgsConstructor
 @Validated
-@OperationLogModule("Notice")
+@OperationLogModule("系统公告")
 public class SysNoticeController {
     private final SysNoticeService noticeService;
     private final SysFileApi fileApi;

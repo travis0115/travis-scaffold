@@ -10,10 +10,7 @@ import { getOperationLogPage } from '#/api';
 import { useColumns, useGridFormSchema } from './data';
 
 const [Grid] = useVbenVxeGrid({
-  formOptions: {
-    fieldMappingTime: [['operationTimeRange', ['startTime', 'endTime']]],
-    schema: useGridFormSchema(),
-  },
+  formOptions: { schema: useGridFormSchema() },
   gridOptions: {
     columns: useColumns(),
     height: 'auto',

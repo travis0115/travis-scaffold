@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/system/file/storage")
 @RequiredArgsConstructor
-@OperationLogModule("FileStorageConfig")
+@OperationLogModule("文件存储配置")
 public class SysFileStorageConfigController {
     private final SysFileStorageConfigService storageConfigService;
     private final List<FileStorageStrategy> storageStrategies;

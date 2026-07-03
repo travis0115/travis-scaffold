@@ -2,8 +2,6 @@ import type { VbenFormSchema } from '#/adapter/form';
 import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { OpsJobApi } from '#/api';
 
-import { BACKEND_DATETIME_FORMAT } from '@vben/utils';
-
 import { z } from '#/adapter/form';
 import { getDictOptions } from '#/utils/dict';
 import { filterAccessOptions, OPS_PERMS } from '#/utils/permissions';
@@ -60,7 +58,7 @@ export function useJobFormSchema(): VbenFormSchema[] {
       componentProps: {
         class: 'w-full',
         showTime: true,
-        valueFormat: BACKEND_DATETIME_FORMAT,
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
       dependencies: {
         show: (values) => values.scheduleType === 'ONCE',

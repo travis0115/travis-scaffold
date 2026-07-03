@@ -2,8 +2,6 @@ import type { VbenFormSchema } from '#/adapter/form';
 import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { SystemVersionLogApi } from '#/api';
 
-import { BACKEND_DATETIME_FORMAT } from '@vben/utils';
-
 import { z } from '#/adapter/form';
 import { uploadVersionLogImage } from '#/api';
 import { $t } from '#/locales';
@@ -91,7 +89,7 @@ export function useFormSchema(): VbenFormSchema[] {
         .min(1, '发布时间不能为空'),
       componentProps: {
         showTime: true,
-        valueFormat: BACKEND_DATETIME_FORMAT,
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
         style: { width: '100%' },
       },
     },

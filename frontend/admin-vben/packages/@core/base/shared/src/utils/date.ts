@@ -19,14 +19,11 @@ type Format =
   | 'YYYY-MM-DD HH:mm:ss'
   | (string & {});
 
-export const BACKEND_DATETIME_FORMAT = 'YYYY-MM-DD HH:mm:ss';
-
-const ISO_OFFSET_DATETIME_REGEX =
-  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:?\d{2})$/;
-const ISO_LOCAL_DATETIME_REGEX =
-  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?$/;
-const BACKEND_DATETIME_REGEX =
-  /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
+/**
+ * 判断时间字符串是否包含时区信息
+ * 匹配：Z、z、+HH:mm、+HHmm、-HH:mm、-HHmm 等时区后缀
+ */
+const TIMEZONE_REGEX = /[Zz]|[+-]\d{2}:?\d{2}$/;
 
 export function formatDate(time?: FormatDate, format: Format = 'YYYY-MM-DD') {
   if (time === undefined || time === null || time === '') {
@@ -36,13 +33,8 @@ export function formatDate(time?: FormatDate, format: Format = 'YYYY-MM-DD') {
     let date: dayjs.Dayjs;
     if (dayjs.isDayjs(time)) {
       date = time;
-    } else if (typeof time === 'string' && ISO_OFFSET_DATETIME_REGEX.test(time)) {
-      date = dayjs(time);
-    } else if (
-      typeof time === 'string' &&
-      (BACKEND_DATETIME_REGEX.test(time) || ISO_LOCAL_DATETIME_REGEX.test(time))
-    ) {
-      // 后端返回的无时区时间字符串视为UTC时间
+    } else if (typeof time === 'string' && !TIMEZONE_REGEX.test(time)) {
+      // 无时区标记的字符串视为UTC时间（后端统一使用UTC）
       date = dayjs.utc(time);
     } else {
       date = dayjs(time);
@@ -58,12 +50,12 @@ export function formatDate(time?: FormatDate, format: Format = 'YYYY-MM-DD') {
 }
 
 export function formatDateTime(time?: FormatDate) {
-  return formatDate(time, BACKEND_DATETIME_FORMAT);
+  return formatDate(time, 'YYYY-MM-DD HH:mm:ss');
 }
 
 export function formatLocalDateToUtc(
   time?: FormatDate,
-  format: Format = BACKEND_DATETIME_FORMAT,
+  format: Format = 'YYYY-MM-DD HH:mm:ss',
 ) {
   if (time === undefined || time === null || time === '') {
     return '';
@@ -72,12 +64,7 @@ export function formatLocalDateToUtc(
     let date: dayjs.Dayjs;
     if (dayjs.isDayjs(time)) {
       date = time;
-    } else if (typeof time === 'string' && ISO_OFFSET_DATETIME_REGEX.test(time)) {
-      date = dayjs(time);
-    } else if (
-      typeof time === 'string' &&
-      (BACKEND_DATETIME_REGEX.test(time) || ISO_LOCAL_DATETIME_REGEX.test(time))
-    ) {
+    } else if (typeof time === 'string' && !TIMEZONE_REGEX.test(time)) {
       date = dayjs.tz(time, currentTimezone);
     } else {
       date = dayjs(time);

@@ -1,6 +1,5 @@
 package com.travis.infrastructure.common.logging.annotation;
 
-import com.travis.infrastructure.common.logging.enums.OperationBusinessType;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -15,9 +14,6 @@ public @interface OperationLog {
 
     /** 业务行为 */
     String action();
-
-    /** 业务类型 */
-    OperationBusinessType businessType() default OperationBusinessType.AUTO;
 
     /** 是否记录请求参数 */
     boolean recordRequest() default true;

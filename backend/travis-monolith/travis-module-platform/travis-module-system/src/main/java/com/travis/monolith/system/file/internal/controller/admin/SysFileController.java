@@ -30,7 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/system/file")
 @RequiredArgsConstructor
-@OperationLogModule("File")
+@OperationLogModule("文件管理")
 public class SysFileController {
 
     private final SysFileService fileService;
