@@ -2,6 +2,7 @@ import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridColumns } from '#/adapter/vxe-table';
 
 import { $t } from '#/locales';
+import { getDictOptions } from '#/utils/dict';
 
 export function useGridFormSchema(): VbenFormSchema[] {
   return [
@@ -11,16 +12,28 @@ export function useGridFormSchema(): VbenFormSchema[] {
       label: $t('system.loginLog.username'),
     },
     {
+      component: 'Input',
+      fieldName: 'ip',
+      label: $t('system.loginLog.ip'),
+    },
+    {
       component: 'Select',
       componentProps: {
         allowClear: true,
-        options: [
-          { label: $t('system.loginLog.success'), value: 1 },
-          { label: $t('system.loginLog.fail'), value: 0 },
-        ],
+        options: getDictOptions('operation_status'),
       },
       fieldName: 'status',
       label: $t('system.loginLog.status'),
+    },
+    {
+      component: 'RangePicker',
+      componentProps: {
+        placeholder: ['开始时间', '结束时间'],
+        showTime: true,
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
+      fieldName: 'loginTimeRange',
+      label: $t('system.loginLog.loginTime'),
     },
   ];
 }
@@ -31,6 +44,13 @@ export function useColumns(): VxeTableGridColumns {
       field: 'username',
       title: $t('system.loginLog.username'),
       width: 150,
+    },
+    {
+      field: 'loginTime',
+      title: $t('system.loginLog.loginTime'),
+      width: 180,
+      formatter: 'formatDateTime',
+      sortable: true,
     },
     {
       field: 'ip',
@@ -53,31 +73,21 @@ export function useColumns(): VxeTableGridColumns {
       width: 150,
     },
     {
+      field: 'message',
+      title: $t('system.loginLog.message'),
+      minWidth: 150,
+      fixed: 'right',
+    },
+
+    {
       cellRender: {
+        attrs: { dictCode: 'operation_status' },
         name: 'CellTag',
-        props: (row: any) => ({
-          color: row.status === 1 ? 'success' : 'error',
-        }),
       },
       field: 'status',
       title: $t('system.loginLog.status'),
       width: 100,
-      formatter({ cellValue }: { cellValue: number }) {
-        return cellValue === 1
-          ? $t('system.loginLog.success')
-          : $t('system.loginLog.fail');
-      },
-    },
-    {
-      field: 'message',
-      title: $t('system.loginLog.message'),
-      width: 150,
-    },
-    {
-      field: 'loginTime',
-      title: $t('system.loginLog.loginTime'),
-      width: 180,
-      formatter: 'formatDateTime',
+      fixed: 'right',
     },
   ];
 }

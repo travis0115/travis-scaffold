@@ -2,6 +2,8 @@ package com.travis.monolith.system.log.operationlog.api.request;
 
 import com.travis.infrastructure.common.web.model.PageRequest;
 import java.time.LocalDateTime;
+
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -14,6 +16,7 @@ import lombok.EqualsAndHashCode;
 @Data
 public class SysOperationLogPageReq extends PageRequest {
     /** 操作用户名（模糊匹配） */
+    @Size(max = 16, message = "用户名长度不能超过16个字符")
     private String username;
 
     /** 操作模块（模糊匹配） */

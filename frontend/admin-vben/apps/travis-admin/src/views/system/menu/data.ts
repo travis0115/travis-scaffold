@@ -80,7 +80,7 @@ export function useColumns(
     },
     {
       cellRender: {
-        attrs: { beforeChange: onStatusChange, dictCode: 'status' },
+        attrs: { beforeChange: onStatusChange, dictCode: 'enable_status' },
         name: onStatusChange ? 'CellSwitch' : 'CellTag',
       },
       field: 'status',

@@ -121,7 +121,7 @@ export function useColumns(
     { field: 'platformTemplateId', title: '平台模板ID', width: 180 },
     {
       cellRender: {
-        attrs: { dictCode: 'status' },
+        attrs: { dictCode: 'enable_status' },
         name: 'CellTag',
       },
       field: 'status',

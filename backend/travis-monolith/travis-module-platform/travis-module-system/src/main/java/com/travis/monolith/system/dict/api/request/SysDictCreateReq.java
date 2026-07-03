@@ -3,10 +3,7 @@ package com.travis.monolith.system.dict.api.request;
 import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.monolith.system.common.api.constant.ValidationPattern;
 import com.travis.monolith.system.common.api.enums.Status;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 /**
@@ -31,6 +28,12 @@ public class SysDictCreateReq {
     @EnumValue(value = Status.class, message = "状态值错误")
     @NotNull(message = "状态值不允许为空")
     private Integer status;
+
+    /** 排序号 */
+    @NotNull(message = "排序号不能为空")
+    @Min(value = 0, message = "排序号不能小于0")
+    @Max(value = 9999, message = "排序号不能大于9999")
+    private Integer sort;
 
     /** 备注 */
     @Size(max = 255, message = "备注长度不能超过255个字符")

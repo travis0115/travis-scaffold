@@ -58,7 +58,7 @@ const columns: VxeTableGridColumns<SystemDictApi.SysDictItem> = [
         beforeChange: hasAccessCode(SYSTEM_PERMS.dictUpdate)
           ? onStatusChange
           : undefined,
-        dictCode: 'status',
+        dictCode: 'enable_status',
       },
       name: hasAccessCode(SYSTEM_PERMS.dictUpdate) ? 'CellSwitch' : 'CellTag',
     },

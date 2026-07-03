@@ -3,6 +3,7 @@ package com.travis.monolith.system.log.loginlog.internal.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.log.loginlog.api.request.SysLoginLogPageReq;
+import com.travis.monolith.system.log.loginlog.api.response.SysLoginLogResp;
 import com.travis.monolith.system.log.loginlog.internal.entity.SysLoginLog;
 
 /**
@@ -18,7 +19,7 @@ public interface SysLoginLogService extends IService<SysLoginLog> {
      * @param req 分页查询参数
      * @return 分页结果
      */
-    PageResp<SysLoginLog> page(SysLoginLogPageReq req);
+    PageResp<SysLoginLogResp> page(SysLoginLogPageReq req);
 
     /**
      * 记录登录日志（使用独立事务，不受外层事务回滚影响）

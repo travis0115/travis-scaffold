@@ -9,6 +9,7 @@ export namespace SystemDictApi {
     dictName: string;
     dictCode: string;
     status: 0 | 1;
+    sort?: number;
     remark?: string;
     createTime?: string;
     children?: SysDictItem[];

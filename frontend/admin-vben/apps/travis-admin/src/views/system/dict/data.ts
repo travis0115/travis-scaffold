@@ -33,6 +33,13 @@ export function useFormSchema(): VbenFormSchema[] {
         .regex(/^[a-zA-Z][a-zA-Z0-9_]+$/, '字典编码必须以字母开头，只能包含字母、数字和下划线'),
     },
     {
+      component: 'InputNumber',
+      componentProps: { max: 9999, min: 0 },
+      defaultValue: 1,
+      fieldName: 'sort',
+      label: $t('system.dict.sort'),
+    },
+    {
       component: 'Textarea',
       fieldName: 'remark',
       label: $t('system.dict.remark'),
@@ -46,7 +53,7 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'RadioGroup',
       componentProps: {
         buttonStyle: 'solid',
-        options: getDictOptions('status'),
+        options: getDictOptions('enable_status'),
         optionType: 'button',
       },
       defaultValue: 1,
@@ -72,7 +79,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
       component: 'Select',
       componentProps: {
         allowClear: true,
-        options: getDictOptions('status'),
+        options: getDictOptions('enable_status'),
       },
       fieldName: 'status',
       label: $t('system.dict.status'),
@@ -96,6 +103,11 @@ export function useColumns(
       title: $t('system.dict.dictCode'),
     },
     {
+      field: 'sort',
+      title: $t('system.dict.sort'),
+      width: 80,
+    },
+    {
       field: 'remark',
       formatter: 'emptyPlaceholder',
       minWidth: 140,
@@ -103,7 +115,7 @@ export function useColumns(
     },
     {
       cellRender: {
-        attrs: { beforeChange: onStatusChange, dictCode: 'status' },
+        attrs: { beforeChange: onStatusChange, dictCode: 'enable_status' },
         name: onStatusChange ? 'CellSwitch' : 'CellTag',
       },
       field: 'status',

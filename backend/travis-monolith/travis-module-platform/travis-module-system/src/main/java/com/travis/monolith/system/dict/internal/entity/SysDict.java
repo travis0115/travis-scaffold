@@ -21,6 +21,9 @@ public class SysDict extends BaseEntity {
     /** 状态（0-禁用 1-启用） */
     private Integer status;
 
+    /** 排序号（升序） */
+    private Integer sort;
+
     /** 备注 */
     private String remark;
 }

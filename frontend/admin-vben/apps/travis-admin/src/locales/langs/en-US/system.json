@@ -120,6 +120,7 @@
     "dictName": "Dictionary Name",
     "dictCode": "Dictionary Code",
     "status": "Status",
+    "sort": "Sort",
     "remark": "Remark",
     "createTime": "Created At",
     "operation": "Operation",

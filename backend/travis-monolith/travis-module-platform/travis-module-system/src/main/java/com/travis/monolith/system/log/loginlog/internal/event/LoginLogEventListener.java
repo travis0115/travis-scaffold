@@ -1,4 +1,4 @@
-package com.travis.monolith.system.log.loginlog.internal.event.consumer;
+package com.travis.monolith.system.log.loginlog.internal.event;
 
 import com.travis.monolith.system.log.loginlog.internal.service.SysLoginLogService;
 import com.travis.monolith.system.user.api.event.UserLoginEvent;

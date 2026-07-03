@@ -86,7 +86,7 @@
     "owner": "Owner"
   },
   "preferencesExtensionConfig": {
-    "tabLabel": "Extension",
+    "tabLabel": "Playground Extension",
     "title": "Playground Business Preferences",
     "fields": {
       "reportTitle": {

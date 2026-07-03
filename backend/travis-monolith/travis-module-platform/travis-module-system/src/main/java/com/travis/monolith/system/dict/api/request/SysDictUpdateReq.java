@@ -1,9 +1,7 @@
 package com.travis.monolith.system.dict.api.request;
 
 import com.travis.monolith.system.common.api.constant.ValidationPattern;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 /**
@@ -23,6 +21,12 @@ public class SysDictUpdateReq {
     @Pattern(regexp = ValidationPattern.CODE, message = "字典编码必须以字母开头，只能包含字母、数字和下划线")
     @Size(max = 100, message = "字典编码长度不能超过100个字符")
     private String dictCode;
+
+    /** 排序号 */
+    @NotNull(message = "排序号不能为空")
+    @Min(value = 0, message = "排序号不能小于0")
+    @Max(value = 9999, message = "排序号不能大于9999")
+    private Integer sort;
 
     /** 备注 */
     @Size(max = 255, message = "备注长度不能超过255个字符")

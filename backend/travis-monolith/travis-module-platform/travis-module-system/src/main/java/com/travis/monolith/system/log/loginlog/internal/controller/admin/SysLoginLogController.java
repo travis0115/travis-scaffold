@@ -6,11 +6,13 @@ import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.common.api.constant.SystemPermission;
 import com.travis.monolith.system.log.loginlog.api.request.SysLoginLogPageReq;
-import com.travis.monolith.system.log.loginlog.internal.entity.SysLoginLog;
+import com.travis.monolith.system.log.loginlog.api.response.SysLoginLogResp;
 import com.travis.monolith.system.log.loginlog.internal.service.SysLoginLogService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 登录日志查询控制器，提供只读的分页查询接口
@@ -33,7 +35,7 @@ public class SysLoginLogController {
      */
     @GetMapping("/page")
     @SaCheckPermission(value = SystemPermission.LOGIN_LOG_QUERY, type = LoginType.ADMIN)
-    public ApiResponse<PageResp<SysLoginLog>> page(@Valid SysLoginLogPageReq req) {
+    public ApiResponse<PageResp<SysLoginLogResp>> page(@Valid SysLoginLogPageReq req) {
         return ApiResponse.success(loginLogService.page(req));
     }
 }

@@ -177,7 +177,7 @@ export function useFormSchema(deptTreeData?: any[]): VbenFormSchema[] {
       component: 'RadioGroup',
       componentProps: {
         buttonStyle: 'solid',
-        options: getDictOptions('status'),
+        options: getDictOptions('enable_status'),
         optionType: 'button',
       },
       defaultValue: 1,
@@ -205,7 +205,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
       component: 'Select',
       componentProps: {
         allowClear: true,
-        options: getDictOptions('status'),
+        options: getDictOptions('enable_status'),
       },
       fieldName: 'status',
       label: $t('system.user.status'),
@@ -285,7 +285,7 @@ export function useColumns<T = SystemUserApi.SysUser>(
       title: $t('system.user.lastLogin'),
       minWidth: 260,
     },
-    
+
     {
       field: 'createTime',
       title: $t('system.user.createTime'),
@@ -295,7 +295,7 @@ export function useColumns<T = SystemUserApi.SysUser>(
     },
     {
       cellRender: {
-        attrs: { beforeChange: onStatusChange, dictCode: 'status' },
+        attrs: { beforeChange: onStatusChange, dictCode: 'enable_status' },
         name: onStatusChange ? 'CellSwitch' : 'CellTag',
       },
       field: 'status',

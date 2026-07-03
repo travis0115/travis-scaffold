@@ -108,7 +108,7 @@ spring:
   modulith:
     detection-strategy: explicitly-annotated  #只选择显式注释的包作为应用程序模块的基础包（通过 @ApplicationModules 或 jMolecules 的 DDD @Module）。
     events:
-      #      completion-mode: DELETE
+      completion-mode: DELETE
       jdbc:
         schema-initialization:
           enabled: true

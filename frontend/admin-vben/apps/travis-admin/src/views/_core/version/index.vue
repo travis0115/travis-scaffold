@@ -11,7 +11,7 @@ import { Card } from 'antdv-next';
 import { getPublishedVersionLogs } from '#/api';
 import { $t } from '#/locales';
 
-import VersionLogTimeline from './components/version-log-timeline.vue';
+import VersionTimeline from './components/version-timeline.vue';
 
 const logs = ref<SystemVersionLogApi.VersionLog[]>([]);
 const loading = ref(false);
@@ -74,7 +74,7 @@ onMounted(() => {
           <EmptyIcon class="mx-auto" />
           <div class="mt-2 text-sm">{{ $t('common.noData') }}</div>
         </div>
-        <VersionLogTimeline
+        <VersionTimeline
           v-else
           :has-more="hasMore"
           :loading="loading"

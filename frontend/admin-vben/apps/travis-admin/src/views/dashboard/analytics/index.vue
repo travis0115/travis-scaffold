@@ -15,7 +15,7 @@ import { OPS_PERMS } from '#/utils/permissions';
 
 import NoticeList from '../../_core/notice/components/notice-list.vue';
 import NoticePreviewModal from '../../_core/notice/components/notice-preview-modal.vue';
-import VersionLogTimeline from '../../_core/version/components/version-log-timeline.vue';
+import VersionTimeline from '../../_core/version/components/version-timeline.vue';
 
 const router = useRouter();
 const { hasAccessByCodes } = useAccess();
@@ -260,7 +260,7 @@ onMounted(async () => {
               <EmptyIcon class="mx-auto" />
               <div class="mt-2 text-sm">{{ $t('common.noData') }}</div>
             </div>
-            <VersionLogTimeline
+            <VersionTimeline
               v-else
               compact
               :has-more="versionHasMore"
