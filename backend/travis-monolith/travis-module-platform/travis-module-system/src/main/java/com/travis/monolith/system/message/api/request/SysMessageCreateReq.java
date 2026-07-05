@@ -27,9 +27,10 @@ public class SysMessageCreateReq {
 
     private String sourceType;
     private String sourceId;
-    private String channels;
+    private String channel;
+    private Boolean enableInboxCopy;
 
-    /** 接收端登录体系，与 LoginType 常量取值保持一致：admin/user */
+    /** 接收端登录体系，与 LoginType 常量取值保持一致：admin/app */
     @NotBlank(message = "接收端不能为空")
     private String receiverType;
 

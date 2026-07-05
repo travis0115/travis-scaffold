@@ -17,7 +17,6 @@ import com.travis.monolith.ops.job.api.response.OpsJobPageResp;
 import com.travis.monolith.ops.job.internal.converter.OpsJobConverter;
 import com.travis.monolith.ops.job.internal.entity.OpsJob;
 import com.travis.monolith.ops.job.internal.mapper.OpsJobMapper;
-import com.travis.monolith.ops.job.internal.model.OpsJobCalendarConfig;
 import com.travis.monolith.ops.job.internal.service.OpsJobParamValidator;
 import com.travis.monolith.ops.job.internal.service.OpsJobService;
 import com.travis.monolith.ops.job.internal.service.QuartzJobManager;
@@ -253,7 +252,8 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         return job;
     }
 
-    private <T extends OpsJobBaseResp> T enrichResponse(T response, OpsJob job, String ownerUsername) {
+    private <T extends OpsJobBaseResp> T enrichResponse(
+            T response, OpsJob job, String ownerUsername) {
         response.setOwnerUsername(ownerUsername);
         response.setHandlerAvailable(handlerRegistry.contains(job.getHandlerName()));
         response.setNextFireTime(quartzJobManager.nextFireTime(job.getId()));

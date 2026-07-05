@@ -442,7 +442,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         var webSocketSessionManager = webSocketSessionManagerProvider.getIfAvailable();
         return webSocketSessionManager != null
                 && webSocketSessionManager.isConnected(
-                SaTokenWebSocketPrincipal.build(LoginType.ADMIN, userId));
+                        SaTokenWebSocketPrincipal.build(LoginType.ADMIN, userId));
     }
 
     private void syncCurrentSessionUsername(Long userId, String username) {

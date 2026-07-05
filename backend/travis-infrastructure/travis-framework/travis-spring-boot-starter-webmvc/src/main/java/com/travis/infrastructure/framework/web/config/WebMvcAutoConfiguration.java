@@ -36,7 +36,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  *
  * @author travis
  */
-@AutoConfiguration
+@AutoConfiguration(
+        afterName = {
+            "org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration",
+            "org.springframework.boot.transaction.autoconfigure.TransactionAutoConfiguration"
+        })
 @EnableConfigurationProperties(WebProperties.class)
 @RequiredArgsConstructor
 public class WebMvcAutoConfiguration implements WebMvcConfigurer {
@@ -122,21 +126,14 @@ public class WebMvcAutoConfiguration implements WebMvcConfigurer {
         return new ValidationExceptionHandler();
     }
 
-    /** 配置事务模板。 */
+    /** 配置事务事件发布器。 */
     @Bean
     @ConditionalOnBean(PlatformTransactionManager.class)
     @ConditionalOnMissingBean
-    public TransactionTemplate transactionTemplate(PlatformTransactionManager transactionManager) {
-        return new TransactionTemplate(transactionManager);
-    }
-
-    /** 配置事务事件发布器。 */
-    @Bean
-    @ConditionalOnBean(TransactionTemplate.class)
-    @ConditionalOnMissingBean
     public TransactionalApplicationEventPublisher transactionalApplicationEventPublisher(
             ApplicationEventPublisher eventPublisher, TransactionTemplate transactionTemplate) {
-        return new TransactionalApplicationEventPublisher(eventPublisher, transactionTemplate);
+        return new TransactionalApplicationEventPublisher(
+                eventPublisher, transactionTemplate);
     }
 
     /** 配置请求上下文过滤器 */

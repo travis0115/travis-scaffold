@@ -15,6 +15,7 @@ import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.log.operationlog.api.event.OperationLogEvent;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
+import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.http.Method;
@@ -27,8 +28,6 @@ import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.Arrays;
 
 /** 采集带有 {@link OperationLog} 注解的后台操作并发布异步落库事件。 */
 @Aspect
@@ -145,6 +144,9 @@ public class OperationLogAspect {
                     || action.contains("重置")
                     || action.contains("设置")
                     || action.contains("启停")
+                    || action.contains("启动")
+                    || action.contains("停止")
+                    || action.contains("关闭")
                     || action.contains("撤回")
                     || action.contains("上移")
                     || action.contains("下移")) {

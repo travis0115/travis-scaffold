@@ -20,27 +20,23 @@ import com.travis.monolith.system.message.internal.mapper.SysMessageReceiverMapp
 import com.travis.monolith.system.message.internal.service.SysMessageReceiverService;
 import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.api.SysUserApi;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 @Service
 @CacheConfig(cacheNames = "system:message-inbox")
 public class SysMessageReceiverServiceImpl
         extends ServiceImplX<SysMessageReceiverMapper, SysMessageReceiver>
         implements SysMessageReceiverService {
-    private static final String RECEIVER_TYPE_ADMIN = LoginType.ADMIN;
-    private static final int RECEIVER_SCOPE_ALL = 0;
-    private static final int RECEIVER_SCOPE_USER = 1;
-    private static final int RECEIVER_SCOPE_ROLE = 2;
-    private static final int RECEIVER_SCOPE_DEPT = 3;
     private static final int READ_UNREAD = 0;
     private static final int READ_READ = 1;
     private static final int READ_DELETED = 2;
@@ -63,37 +59,50 @@ public class SysMessageReceiverServiceImpl
 
     @Override
     public List<SysUserMessageRecentResp> listRecent(Long userId, Integer limit) {
+        return listRecent(LoginType.ADMIN, userId, limit);
+    }
+
+    @Override
+    public List<SysUserMessageRecentResp> listRecent(
+            String receiverType, Long userId, Integer limit) {
         int actualLimit = limit == null || limit <= 0 ? 10 : Math.min(limit, 50);
-        var context = audienceContext(userId);
+        var context = audienceContext(receiverType, userId);
         Page<SysMessage> page =
                 messageMapper.selectInboxPage(
                         new Page<>(1, actualLimit),
                         userId,
-                        RECEIVER_TYPE_ADMIN,
+                        receiverType,
                         context.roleIds(),
                         context.deptId(),
                         null,
                         null);
-        return toResponses(page.getRecords(), stateMap(userId, page.getRecords())).stream()
+        return toResponses(page.getRecords(), stateMap(receiverType, userId, page.getRecords()))
+                .stream()
                 .map(item -> converter.toRecentResp(item.message(), item.receiver()))
                 .toList();
     }
 
     @Override
     public PageResp<SysUserMessagePageResp> page(Long userId, SysUserMessagePageReq req) {
-        var context = audienceContext(userId);
+        return page(LoginType.ADMIN, userId, req);
+    }
+
+    @Override
+    public PageResp<SysUserMessagePageResp> page(
+            String receiverType, Long userId, SysUserMessagePageReq req) {
+        var context = audienceContext(receiverType, userId);
         Page<SysMessage> page =
                 messageMapper.selectInboxPage(
                         new Page<>(req.getPageNum(), req.getPageSize()),
                         userId,
-                        RECEIVER_TYPE_ADMIN,
+                        receiverType,
                         context.roleIds(),
                         context.deptId(),
                         req.getTitle(),
                         req.getReadStatus());
         Page<SysUserMessagePageResp> responsePage =
                 new Page<>(page.getCurrent(), page.getSize(), page.getTotal());
-        var stateMap = stateMap(userId, page.getRecords());
+        var stateMap = stateMap(receiverType, userId, page.getRecords());
         responsePage.setRecords(
                 toResponses(page.getRecords(), stateMap).stream()
                         .map(item -> converter.toPageResp(item.message(), item.receiver()))
@@ -104,65 +113,99 @@ public class SysMessageReceiverServiceImpl
     @Override
     @Cacheable(key = "'unread:'+#userId")
     public Long countUnread(Long userId) {
-        var context = audienceContext(userId);
+        return countUnread(LoginType.ADMIN, userId);
+    }
+
+    @Override
+    @Cacheable(key = "'unread:'+#receiverType+':' + #userId")
+    public Long countUnread(String receiverType, Long userId) {
+        var context = audienceContext(receiverType, userId);
         return messageMapper.countUnreadInbox(
-                userId, RECEIVER_TYPE_ADMIN, context.roleIds(), context.deptId());
+                userId, receiverType, context.roleIds(), context.deptId());
     }
 
     @Override
     @Transactional
     @CacheEvict(key = "'unread:'+#userId")
     public void markRead(Long userId, Long id) {
-        ensureVisible(userId, id);
-        upsertState(userId, id, READ_READ);
+        markRead(LoginType.ADMIN, userId, id);
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(key = "'unread:'+#receiverType+':' + #userId")
+    public void markRead(String receiverType, Long userId, Long id) {
+        ensureVisible(receiverType, userId, id);
+        upsertState(receiverType, userId, id, READ_READ);
     }
 
     @Override
     @Transactional
     @CacheEvict(key = "'unread:'+#userId")
     public void markAllRead(Long userId) {
-        var context = audienceContext(userId);
+        markAllRead(LoginType.ADMIN, userId);
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(key = "'unread:'+#receiverType+':' + #userId")
+    public void markAllRead(String receiverType, Long userId) {
+        var context = audienceContext(receiverType, userId);
         messageMapper
                 .selectInboxMessageIds(
-                        userId,
-                        RECEIVER_TYPE_ADMIN,
-                        context.roleIds(),
-                        context.deptId(),
-                        READ_UNREAD)
-                .forEach(messageId -> upsertState(userId, messageId, READ_READ));
+                        userId, receiverType, context.roleIds(), context.deptId(), READ_UNREAD)
+                .forEach(messageId -> upsertState(receiverType, userId, messageId, READ_READ));
     }
 
     @Override
     @Transactional
     @CacheEvict(key = "'unread:'+#userId")
     public void delete(Long userId, Long id) {
-        ensureVisible(userId, id);
-        upsertState(userId, id, READ_DELETED);
+        delete(LoginType.ADMIN, userId, id);
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(key = "'unread:'+#receiverType+':' + #userId")
+    public void delete(String receiverType, Long userId, Long id) {
+        ensureVisible(receiverType, userId, id);
+        upsertState(receiverType, userId, id, READ_DELETED);
     }
 
     @Override
     @Transactional
     @CacheEvict(key = "'unread:'+#userId")
     public void clear(Long userId) {
-        var context = audienceContext(userId);
-        messageMapper
-                .selectInboxMessageIds(
-                        userId, RECEIVER_TYPE_ADMIN, context.roleIds(), context.deptId(), null)
-                .forEach(messageId -> upsertState(userId, messageId, READ_DELETED));
+        clear(LoginType.ADMIN, userId);
     }
 
-    private LambdaQueryWrapperX<SysMessageReceiver> baseWrapper(Long userId) {
+    @Override
+    @Transactional
+    @CacheEvict(key = "'unread:'+#receiverType+':' + #userId")
+    public void clear(String receiverType, Long userId) {
+        var context = audienceContext(receiverType, userId);
+        messageMapper
+                .selectInboxMessageIds(
+                        userId, receiverType, context.roleIds(), context.deptId(), null)
+                .forEach(messageId -> upsertState(receiverType, userId, messageId, READ_DELETED));
+    }
+
+    private LambdaQueryWrapperX<SysMessageReceiver> baseWrapper(String receiverType, Long userId) {
         return new LambdaQueryWrapperX<SysMessageReceiver>()
-                .eq(SysMessageReceiver::getReceiverType, RECEIVER_TYPE_ADMIN)
+                .eq(SysMessageReceiver::getReceiverType, receiverType)
                 .eq(SysMessageReceiver::getReceiverId, userId);
     }
 
-    private Map<Long, SysMessageReceiver> stateMap(Long userId, List<SysMessage> messages) {
+    private Map<Long, SysMessageReceiver> stateMap(
+            String receiverType, Long userId, List<SysMessage> messages) {
         if (messages.isEmpty()) {
             return Map.of();
         }
         var messageIds = messages.stream().map(SysMessage::getId).distinct().toList();
-        return list(baseWrapper(userId).in(SysMessageReceiver::getMessageId, messageIds)).stream()
+        return list(
+                        baseWrapper(receiverType, userId)
+                                .in(SysMessageReceiver::getMessageId, messageIds))
+                .stream()
                 .collect(Collectors.toMap(SysMessageReceiver::getMessageId, Function.identity()));
     }
 
@@ -173,42 +216,42 @@ public class SysMessageReceiverServiceImpl
                 .toList();
     }
 
-    private void ensureVisible(Long userId, Long messageId) {
+    private void ensureVisible(String receiverType, Long userId, Long messageId) {
         var message = messageMapper.selectById(messageId);
         if (message == null
                 || !Integer.valueOf(2).equals(message.getStatus())
                 || message.getPublishTime() == null
                 || message.getPublishTime().isAfter(java.time.LocalDateTime.now())
-                || !matchesAudience(userId, message)) {
+                || !matchesAudience(receiverType, userId, message)) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
-        var state = getState(userId, messageId);
+        var state = getState(receiverType, userId, messageId);
         if (state != null && Integer.valueOf(READ_DELETED).equals(state.getReadStatus())) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
     }
 
-    private boolean matchesAudience(Long userId, SysMessage message) {
-        if (!RECEIVER_TYPE_ADMIN.equals(message.getReceiverType())) {
+    private boolean matchesAudience(String receiverType, Long userId, SysMessage message) {
+        if (!receiverType.equals(message.getReceiverType())) {
             return false;
         }
         var receiverValues = parseReceiverValues(message.getReceiverValues());
         return switch (message.getReceiverScope()) {
-            case RECEIVER_SCOPE_ALL -> true;
-            case RECEIVER_SCOPE_USER -> receiverValues.contains(userId);
-            case RECEIVER_SCOPE_ROLE ->
+            case 0 -> true;
+            case 1 -> receiverValues.contains(userId);
+            case 2 ->
                     roleApi.getRoleIdsByUserId(userId).stream().anyMatch(receiverValues::contains);
-            case RECEIVER_SCOPE_DEPT -> receiverValues.contains(userApi.getDeptIdByUserId(userId));
+            case 3 -> receiverValues.contains(userApi.getDeptIdByUserId(userId));
             default -> false;
         };
     }
 
-    private void upsertState(Long userId, Long messageId, Integer readStatus) {
-        var state = getState(userId, messageId);
+    private void upsertState(String receiverType, Long userId, Long messageId, Integer readStatus) {
+        var state = getState(receiverType, userId, messageId);
         if (state == null) {
             state = new SysMessageReceiver();
             state.setMessageId(messageId);
-            state.setReceiverType(RECEIVER_TYPE_ADMIN);
+            state.setReceiverType(receiverType);
             state.setReceiverId(userId);
         }
         state.setReadStatus(readStatus);
@@ -217,11 +260,16 @@ public class SysMessageReceiverServiceImpl
         saveOrUpdate(state);
     }
 
-    private SysMessageReceiver getState(Long userId, Long messageId) {
-        return getOne(baseWrapper(userId).eq(SysMessageReceiver::getMessageId, messageId), false);
+    private SysMessageReceiver getState(String receiverType, Long userId, Long messageId) {
+        return getOne(
+                baseWrapper(receiverType, userId).eq(SysMessageReceiver::getMessageId, messageId),
+                false);
     }
 
-    private AudienceContext audienceContext(Long userId) {
+    private AudienceContext audienceContext(String receiverType, Long userId) {
+        if (!LoginType.ADMIN.equals(receiverType)) {
+            return new AudienceContext(List.of(), null);
+        }
         return new AudienceContext(
                 roleApi.getRoleIdsByUserId(userId), userApi.getDeptIdByUserId(userId));
     }

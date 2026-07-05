@@ -48,7 +48,8 @@ public class SysMessageApiImpl implements SysMessageApi {
         request.setPushType(0);
         request.setSourceType(sourceType);
         request.setSourceId(sourceId);
-        request.setChannels("IN_APP");
+        request.setChannel("IN_APP");
+        request.setEnableInboxCopy(true);
         request.setReceiverType(receiverType);
         request.setReceiverScope(1);
         request.setReceiverValues(List.copyOf(userIds));

@@ -16,11 +16,14 @@ import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.file.api.SysFileApi;
 import com.travis.monolith.system.file.api.constant.FileFolderId;
 import com.travis.monolith.system.file.api.response.FileUploadResp;
+import com.travis.monolith.system.user.api.SysUserApi;
 import com.travis.monolith.system.user.api.request.*;
+import com.travis.monolith.system.user.api.response.SysUserOptionResp;
 import com.travis.monolith.system.user.api.response.SysUserResp;
 import com.travis.monolith.system.user.internal.service.SysUserService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -41,6 +44,8 @@ public class SysUserController {
     /** 用户管理服务 */
     private final SysUserService userService;
 
+    private final SysUserApi userApi;
+
     private final SysFileApi fileApi;
 
     /**
@@ -60,6 +65,22 @@ public class SysUserController {
     @SaCheckPermission(value = SystemPermission.USER_QUERY, type = LoginType.ADMIN)
     public ApiResponse<Long> onlineCount() {
         return ApiResponse.success(userService.countOnlineUsers());
+    }
+
+    /** 查询当前登录用户数据范围内的用户选项。 */
+    @GetMapping("/options")
+    @SaCheckPermission(value = SystemPermission.USER_QUERY, type = LoginType.ADMIN)
+    public ApiResponse<List<SysUserOptionResp>> options(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "20") int limit) {
+        return ApiResponse.success(userApi.listCurrentUserScopedOptions(keyword, limit));
+    }
+
+    /** 根据ID回显当前登录用户数据范围内的用户选项。 */
+    @GetMapping("/options/by-ids")
+    @SaCheckPermission(value = SystemPermission.USER_QUERY, type = LoginType.ADMIN)
+    public ApiResponse<List<SysUserOptionResp>> optionsByIds(@RequestParam List<Long> ids) {
+        return ApiResponse.success(userApi.listCurrentUserScopedOptionsByIds(ids));
     }
 
     /**

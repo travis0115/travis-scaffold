@@ -27,6 +27,14 @@ export namespace SystemUserApi {
     onlineStatus?: 0 | 1;
     createTime?: string;
   }
+
+  export interface UserOption {
+    deptName?: string;
+    id: number;
+    mobile?: string;
+    nickname?: string;
+    username: string;
+  }
 }
 
 /**
@@ -41,6 +49,32 @@ async function getUserPage(params: Recordable<any>) {
 
 async function getOnlineUserCount() {
   return requestClient.get<number>('/system/user/online-count');
+}
+
+async function getUserOptions(params: { keyword?: string; limit?: number }) {
+  return requestClient.get<SystemUserApi.UserOption[]>('/system/user/options', {
+    params,
+  });
+}
+
+async function getUserOptionsByIds(ids: number[]) {
+  return requestClient.get<SystemUserApi.UserOption[]>(
+    '/system/user/options/by-ids',
+    { params: { ids } },
+  );
+}
+
+async function getAppUserOptions(params: { keyword?: string; limit?: number }) {
+  return requestClient.get<SystemUserApi.UserOption[]>('/app/user/options', {
+    params,
+  });
+}
+
+async function getAppUserOptionsByIds(ids: number[]) {
+  return requestClient.get<SystemUserApi.UserOption[]>(
+    '/app/user/options/by-ids',
+    { params: { ids } },
+  );
 }
 
 /**
@@ -102,7 +136,11 @@ export {
   createUser,
   deleteUser,
   getOnlineUserCount,
+  getAppUserOptions,
+  getAppUserOptionsByIds,
   getUserDetail,
+  getUserOptions,
+  getUserOptionsByIds,
   getUserPage,
   resetUserPassword,
   updateUser,

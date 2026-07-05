@@ -22,6 +22,7 @@
     <modules>
         <module>travis-module-dependencies</module>
         <module>travis-module-platform</module>
+        <module>travis-module-app</module>
         <module>travis-server</module>
     </modules>
 

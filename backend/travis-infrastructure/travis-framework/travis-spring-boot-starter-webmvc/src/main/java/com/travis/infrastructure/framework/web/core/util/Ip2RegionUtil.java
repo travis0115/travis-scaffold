@@ -87,7 +87,7 @@ public class Ip2RegionUtil {
                                 getName(response.city().names()))
                         .stream()
                         .filter(StrUtil::isNotBlank)
-                        .collect(Collectors.joining(" "));
+                        .collect(Collectors.joining(" / "));
 
         return StrUtil.blankToDefault(result, UNKNOWN);
     }

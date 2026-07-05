@@ -12,13 +12,12 @@ import com.travis.monolith.system.log.loginlog.internal.converter.SysLoginLogCon
 import com.travis.monolith.system.log.loginlog.internal.entity.SysLoginLog;
 import com.travis.monolith.system.log.loginlog.internal.mapper.SysLoginLogMapper;
 import com.travis.monolith.system.log.loginlog.internal.service.SysLoginLogService;
+import java.time.LocalDateTime;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.Map;
 
 /**
  * 登录日志服务实现，按登录时间倒序分页查询，记录登录日志

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.travis</groupId>
+        <artifactId>travis-monolith</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>travis-module-app</artifactId>
+
+    <description>
+        通用客户端模块，提供客户端用户、认证、消息收件箱等基础能力。
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.travis</groupId>
+            <artifactId>travis-module-system</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.travis</groupId>
+            <artifactId>travis-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.travis</groupId>
+            <artifactId>travis-spring-boot-starter-mybatis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.travis</groupId>
+            <artifactId>travis-spring-boot-starter-sa-token</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.travis</groupId>
+            <artifactId>travis-spring-boot-starter-webmvc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.travis</groupId>
+            <artifactId>travis-spring-boot-starter-websocket</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.modulith</groupId>
+            <artifactId>spring-modulith-core</artifactId>
+        </dependency>
+    </dependencies>
+</project>

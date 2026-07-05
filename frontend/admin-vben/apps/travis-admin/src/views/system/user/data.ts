@@ -7,8 +7,6 @@ import type { SystemUserApi } from '#/api';
 
 import { h } from 'vue';
 
-import { formatDateTime } from '@vben/utils';
-
 import { Button } from 'antdv-next';
 
 import { z } from '#/adapter/form';
@@ -35,36 +33,6 @@ function generateRandomPassword() {
 
 function pickChar(chars: string) {
   return chars.charAt(Math.floor(Math.random() * chars.length));
-}
-
-function formatIp(ip?: string, location?: string) {
-  if (!ip && !location) {
-    return '-';
-  }
-  return `${ip || '-'}${location ? `（${location}）` : ''}`;
-}
-
-function formatLastOnline(row: SystemUserApi.SysUser) {
-  if (!row.lastOnlineTime && !row.lastOnlineIp && !row.lastOfflineTime) {
-    return '-';
-  }
-  const timeLabel = row.online ? '上线' : '离线';
-  const time = row.online ? row.lastOnlineTime : row.lastOfflineTime;
-  const formattedTime = formatDateTime(time);
-  return [
-    `${timeLabel}：${formattedTime || '-'}`,
-    `IP：${formatIp(row.lastOnlineIp, row.lastOnlineLocation)}`,
-  ].join('\n');
-}
-
-function formatContactInfo(row: SystemUserApi.SysUser) {
-  if (!row.mobile && !row.email) {
-    return '-';
-  }
-  return [
-    `${$t('system.user.mobile')}：${row.mobile || '-'}`,
-    `${$t('system.user.email')}：${row.email || '-'}`,
-  ].join('\n');
 }
 
 export function useFormSchema(deptTreeData?: any[]): VbenFormSchema[] {
@@ -267,19 +235,15 @@ export function useColumns<T = SystemUserApi.SysUser>(
       formatter: 'emptyPlaceholder',
     },
     {
-      className: 'whitespace-pre-line text-center leading-6',
       field: 'contactInfo',
-      formatter: ({ row }) => formatContactInfo(row),
-      headerAlign: 'center',
+      slots: { default: 'contactInfo' },
       showOverflow: false,
       title: $t('system.user.contactInfo'),
       minWidth: 210,
     },
     {
-      className: 'whitespace-pre-line text-center leading-6',
       field: 'lastOnlineTime',
-      formatter: ({ row }) => formatLastOnline(row),
-      headerAlign: 'center',
+      slots: { default: 'lastOnlineInfo' },
       showOverflow: false,
       sortable: true,
       title: $t('system.user.lastLogin'),

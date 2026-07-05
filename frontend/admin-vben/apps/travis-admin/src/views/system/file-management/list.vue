@@ -7,7 +7,13 @@ import type { SystemFileApi } from '#/api';
 
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
-import { ColPage, Tree, useVbenDrawer, useVbenModal } from '@vben/common-ui';
+import {
+  ColPage,
+  EllipsisText,
+  Tree,
+  useVbenDrawer,
+  useVbenModal,
+} from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 
 import {
@@ -1204,7 +1210,9 @@ onBeforeUnmount(() => {
         >
           <span class="folder-row-spacer"></span>
           <IconifyIcon icon="lucide:folder" class="folder-icon" />
-          <span class="folder-name">全部</span>
+          <EllipsisText :tooltip="false" class="folder-name">
+            全部
+          </EllipsisText>
         </div>
 
         <div
@@ -1219,7 +1227,9 @@ onBeforeUnmount(() => {
         >
           <span class="folder-row-spacer"></span>
           <IconifyIcon icon="lucide:folder" class="folder-icon" />
-          <span class="folder-name">未分类</span>
+          <EllipsisText :tooltip="false" class="folder-name">
+            未分类
+          </EllipsisText>
         </div>
 
         <Tree
@@ -1242,7 +1252,9 @@ onBeforeUnmount(() => {
           <template #node="{ value: folder }">
             <div class="folder-node group">
               <IconifyIcon icon="lucide:folder" class="folder-icon" />
-              <span class="folder-name">{{ folder.folderName }}</span>
+              <EllipsisText :tooltip="false" class="folder-name">
+                {{ folder.folderName }}
+              </EllipsisText>
               <div class="folder-actions" @click.stop>
                 <button
                   v-access:code="SYSTEM_PERMS.fileUpload"
@@ -1391,7 +1403,9 @@ onBeforeUnmount(() => {
       >
         <div class="storage-config-main">
           <div class="storage-config-name-row">
-            <span class="storage-config-name">{{ config.configName }}</span>
+            <EllipsisText :tooltip="false" class="storage-config-name">
+              {{ config.configName }}
+            </EllipsisText>
             <Tag v-if="config.isDefault === 1" color="blue">默认</Tag>
             <Tag :color="config.status === 1 ? 'green' : 'default'">
               {{ config.status === 1 ? '启用' : '禁用' }}
@@ -1402,8 +1416,12 @@ onBeforeUnmount(() => {
           </div>
         </div>
         <div class="storage-config-detail">
-          <span>访问域名：{{ config.domain || '未配置' }}</span>
-          <span>存储路径：{{ config.storagePath || '-' }}</span>
+          <EllipsisText :tooltip="false">
+            访问域名：{{ config.domain || '未配置' }}
+          </EllipsisText>
+          <EllipsisText :tooltip="false">
+            存储路径：{{ config.storagePath || '-' }}
+          </EllipsisText>
         </div>
         <div class="storage-config-actions">
           <Button
@@ -1499,7 +1517,9 @@ onBeforeUnmount(() => {
           :class="`upload-progress-item-${task.status}`"
         >
           <div class="upload-progress-header">
-            <span class="upload-progress-name">{{ task.name }}</span>
+            <EllipsisText :tooltip="false" class="upload-progress-name">
+              {{ task.name }}
+            </EllipsisText>
             <span
               class="upload-progress-status"
               :class="`upload-progress-status-${task.status}`"
@@ -1632,10 +1652,7 @@ onBeforeUnmount(() => {
 
 .folder-name {
   min-width: 0;
-  overflow: hidden;
   flex: 1;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .folder-actions {
@@ -1746,10 +1763,8 @@ onBeforeUnmount(() => {
 
 .upload-progress-name {
   min-width: 0;
-  overflow: hidden;
+  flex: 1;
   color: hsl(var(--foreground));
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .upload-progress-status {
@@ -1848,12 +1863,10 @@ onBeforeUnmount(() => {
 
 .storage-config-name {
   min-width: 0;
-  overflow: hidden;
+  flex: 1;
   color: hsl(var(--foreground));
   font-size: 14px;
   font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .storage-config-meta,
@@ -1871,12 +1884,6 @@ onBeforeUnmount(() => {
   display: flex;
   min-width: 0;
   flex-direction: column;
-}
-
-.storage-config-detail span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .storage-config-actions {

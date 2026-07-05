@@ -11,15 +11,30 @@ import java.util.List;
 public interface SysMessageReceiverService extends IService<SysMessageReceiver> {
     List<SysUserMessageRecentResp> listRecent(Long userId, Integer limit);
 
+    List<SysUserMessageRecentResp> listRecent(String receiverType, Long userId, Integer limit);
+
     PageResp<SysUserMessagePageResp> page(Long userId, SysUserMessagePageReq req);
+
+    PageResp<SysUserMessagePageResp> page(
+            String receiverType, Long userId, SysUserMessagePageReq req);
 
     Long countUnread(Long userId);
 
+    Long countUnread(String receiverType, Long userId);
+
     void markRead(Long userId, Long id);
+
+    void markRead(String receiverType, Long userId, Long id);
 
     void markAllRead(Long userId);
 
+    void markAllRead(String receiverType, Long userId);
+
     void delete(Long userId, Long id);
 
+    void delete(String receiverType, Long userId, Long id);
+
     void clear(Long userId);
+
+    void clear(String receiverType, Long userId);
 }

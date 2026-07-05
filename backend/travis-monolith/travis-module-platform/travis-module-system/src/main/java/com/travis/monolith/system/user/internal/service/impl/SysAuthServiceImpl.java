@@ -25,11 +25,10 @@ import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.service.SysAuthService;
 import com.travis.monolith.system.user.internal.service.SysUserService;
 import com.travis.monolith.system.user.internal.service.SysWebSocketTicketService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.util.Collections;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 /**
  * 后台认证服务实现，处理登录验证（BCrypt 密码校验）、用户信息获取及权限查询
@@ -143,8 +142,7 @@ public class SysAuthServiceImpl implements SysAuthService {
         stpLogic.logout();
         if (userId != null && token != null) {
             var principal = SaTokenWebSocketPrincipal.build(LoginType.ADMIN, userId);
-            webSocketSessionManager.close(
-                    principal, SaTokenWebSocketAuthService.ATTR_TOKEN, token);
+            webSocketSessionManager.close(principal, SaTokenWebSocketAuthService.ATTR_TOKEN, token);
             if (!hasRemainingValidToken(userId)) {
                 webSocketSessionManager.closeImmediately(principal);
             }
@@ -196,7 +194,8 @@ public class SysAuthServiceImpl implements SysAuthService {
 
     private boolean hasRemainingValidToken(Long userId) {
         var stpLogic = StpKit.of(LoginType.ADMIN);
-        return stpLogic.getTokenValueListByLoginId(userId).stream().anyMatch(stpLogic::isValidToken);
+        return stpLogic.getTokenValueListByLoginId(userId).stream()
+                .anyMatch(stpLogic::isValidToken);
     }
 
     /**

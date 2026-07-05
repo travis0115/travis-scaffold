@@ -39,6 +39,18 @@ export const useFormSchema = (): VbenFormSchema[] => [
   },
   {
     component: 'Input',
+    fieldName: 'templateType',
+    label: '模板分类',
+    rules: optionalString(64, '模板分类长度不能超过64个字符'),
+  },
+  {
+    component: 'Input',
+    fieldName: 'title',
+    label: '模板标题',
+    rules: optionalString(255, '模板标题长度不能超过255个字符'),
+  },
+  {
+    component: 'Input',
     fieldName: 'platformTemplateId',
     label: '平台模板ID',
     rules: optionalString(128, '平台模板ID长度不能超过128个字符'),
@@ -59,15 +71,9 @@ export const useFormSchema = (): VbenFormSchema[] => [
   },
   {
     component: 'Input',
-    fieldName: 'pagePath',
-    label: '页面路径',
-    rules: optionalString(500, '页面路径长度不能超过500个字符'),
-  },
-  {
-    component: 'Input',
-    fieldName: 'jumpUrl',
-    label: '跳转链接',
-    rules: optionalString(500, '跳转链接长度不能超过500个字符'),
+    fieldName: 'redirectUrl',
+    label: '跳转地址',
+    rules: optionalString(500, '跳转地址长度不能超过500个字符'),
   },
   {
     component: 'RadioGroup',
@@ -91,6 +97,7 @@ export const useFormSchema = (): VbenFormSchema[] => [
 export const useGridFormSchema = (): VbenFormSchema[] => [
   { component: 'Input', fieldName: 'templateCode', label: '模板编码' },
   { component: 'Input', fieldName: 'templateName', label: '模板名称' },
+  { component: 'Input', fieldName: 'templateType', label: '模板分类' },
   {
     component: 'Select',
     componentProps: { allowClear: true, options: messageChannelOptions },
@@ -111,6 +118,7 @@ export function useColumns(
   return [
     { field: 'templateCode', minWidth: 180, title: '模板编码' },
     { field: 'templateName', minWidth: 180, title: '模板名称' },
+    { field: 'templateType', title: '模板分类', width: 130 },
     {
       field: 'channel',
       formatter: ({ cellValue }: any) =>

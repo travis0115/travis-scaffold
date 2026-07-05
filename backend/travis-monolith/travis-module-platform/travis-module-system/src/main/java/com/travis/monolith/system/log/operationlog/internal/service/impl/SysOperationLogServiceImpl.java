@@ -11,12 +11,12 @@ import com.travis.monolith.system.log.operationlog.internal.converter.SysOperati
 import com.travis.monolith.system.log.operationlog.internal.entity.SysOperationLog;
 import com.travis.monolith.system.log.operationlog.internal.mapper.SysOperationLogMapper;
 import com.travis.monolith.system.log.operationlog.internal.service.SysOperationLogService;
+import java.util.Locale;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Map;
 
 /**
  * 操作日志服务实现，支持按用户名、模块、状态及时间范围分页查询
@@ -38,11 +38,13 @@ public class SysOperationLogServiceImpl extends ServiceImplX<SysOperationLogMapp
     /** 分页查询操作日志，支持多条件筛选，按创建时间倒序排列 */
     @Override
     public PageResp<SysOperationLogResp> page(SysOperationLogPageReq req) {
+        var requestMethod = normalizeRequestMethod(req.getRequestMethod());
         var wrapper =
                 new LambdaQueryWrapperX<SysOperationLog>()
                         .likeIfPresent(SysOperationLog::getUsername, req.getUsername())
                         .likeIfPresent(SysOperationLog::getModule, req.getModule())
                         .likeIfPresent(SysOperationLog::getBusinessType, req.getBusinessType())
+                        .eqIfPresent(SysOperationLog::getRequestMethod, requestMethod)
                         .likeIfPresent(SysOperationLog::getRequestUrl, req.getRequestUrl())
                         .likeIfPresent(SysOperationLog::getRequestId, req.getRequestId())
                         .likeIfPresent(SysOperationLog::getIp, req.getIp())
@@ -57,6 +59,10 @@ public class SysOperationLogServiceImpl extends ServiceImplX<SysOperationLogMapp
                                 SysOperationLog::getCreateTime);
         var page = page(req.getPageNum(), req.getPageSize(), wrapper);
         return PageConverter.toResp(page.convert(converter::toResp));
+    }
+
+    private String normalizeRequestMethod(String requestMethod) {
+        return requestMethod == null ? null : requestMethod.trim().toUpperCase(Locale.ROOT);
     }
 
     @Override

@@ -75,9 +75,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
     rowConfig: {
       keyField: 'id',
     },
-    sortConfig: {
-      remote: true,
-    },
     toolbarConfig: {
       custom: true,
       export: false,

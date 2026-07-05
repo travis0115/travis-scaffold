@@ -25,6 +25,10 @@
             <groupId>com.travis</groupId>
             <artifactId>travis-module-ops</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.travis</groupId>
+            <artifactId>travis-module-app</artifactId>
+        </dependency>
 
         <!-- spring 过时配置检测 -->
         <dependency>

@@ -10,5 +10,6 @@ public class SysMessageTemplatePageReq extends PageRequest {
     private String templateCode;
     private String templateName;
     private String channel;
+    private String templateType;
     private Integer status;
 }

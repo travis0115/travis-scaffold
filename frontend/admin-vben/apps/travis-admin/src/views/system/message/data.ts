@@ -6,6 +6,8 @@ import { BACKEND_DATETIME_FORMAT } from '@vben/utils';
 
 import { z } from '#/adapter/form';
 import { uploadMessageImage } from '#/api';
+import { isDeptEnabled } from '#/features';
+import { getDictLabel, getDictOptions } from '#/utils/dict';
 import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
 
 const requiredNumber = (message: string) =>
@@ -30,13 +32,7 @@ function hasRichTextContent(value?: string) {
   );
 }
 
-export const messageChannelOptions = [
-  { label: '站内信', value: 'IN_APP' },
-  { label: 'App推送', value: 'APP_PUSH' },
-  { label: '短信', value: 'SMS' },
-  { label: '微信小程序', value: 'WECHAT_MP' },
-  { label: '抖音小程序', value: 'DOUYIN_MP' },
-];
+export const messageChannelOptions = getDictOptions('sys_message_channel');
 
 export const messageStatusOptions = [
   { label: '待推送', value: 0 },
@@ -50,26 +46,33 @@ export const messagePushTypeOptions = [
   { label: '定时推送', value: 1 },
 ];
 
-export const messageSourceTypeOptions = [
-  { label: '后台人工推送', value: 'MANUAL' },
-  { label: '系统触发', value: 'SYSTEM' },
-  { label: '订单', value: 'ORDER' },
-  { label: '用户', value: 'USER' },
-  { label: '定时任务', value: 'OPS_JOB' },
-  { label: '运营活动', value: 'ACTIVITY' },
-];
+export const messageSourceTypeOptions = getDictOptions('sys_message_source_type');
+export const messageTypeOptions = getDictOptions('sys_message_type');
 
 export const messageReceiverTypeOptions = [
-  { label: '管理后台用户', value: 'admin' },
-  { label: '前端用户', value: 'user' },
+  { label: '后台账号', value: 'admin' },
+  { label: '客户端用户', value: 'app' },
 ];
 
-export const messageReceiverScopeOptions = [
-  { label: '全部用户', value: 0 },
-  { label: '指定用户', value: 1 },
-  { label: '指定角色', value: 2 },
-  { label: '指定部门', value: 3 },
-];
+const externalChannels = ['SMS', 'WECHAT_MP', 'WECHAT_OA'];
+
+function isExternalChannel(channel?: string) {
+  return channel ? externalChannels.includes(channel) : false;
+}
+
+function getReceiverScopeOptions(receiverType?: string) {
+  const options = [
+    { label: '全部用户', value: 0 },
+    { label: '指定用户', value: 1 },
+  ];
+  if (receiverType === 'admin') {
+    options.push({ label: '指定角色', value: 2 });
+    if (isDeptEnabled()) {
+      options.push({ label: '指定部门', value: 3 });
+    }
+  }
+  return options;
+}
 
 export const useFormSchema = (): VbenFormSchema[] => [
   {
@@ -84,22 +87,13 @@ export const useFormSchema = (): VbenFormSchema[] => [
   {
     component: 'Select',
     componentProps: {
-      options: [
-        { label: '系统消息', value: 1 },
-        { label: '业务消息', value: 2 },
-      ],
+      options: messageTypeOptions,
     },
     defaultValue: 1,
     fieldName: 'messageType',
+    hideRequiredMark: true,
     label: '消息类型',
     rules: requiredNumber('消息类型不能为空'),
-  },
-  {
-    component: 'Select',
-    componentProps: { options: messageSourceTypeOptions },
-    defaultValue: 'MANUAL',
-    fieldName: 'sourceType',
-    label: '来源类型',
   },
   {
     component: 'Input',
@@ -112,12 +106,36 @@ export const useFormSchema = (): VbenFormSchema[] => [
     label: '来源ID',
   },
   {
-    component: 'CheckboxGroup',
+    component: 'Select',
     componentProps: { options: messageChannelOptions },
-    defaultValue: ['IN_APP'],
-    fieldName: 'channels',
+    defaultValue: 'IN_APP',
+    fieldName: 'channel',
+    hideRequiredMark: true,
     label: '推送通道',
-    rules: z.array(z.string()).min(1, '请至少选择一个推送通道'),
+    rules: z
+      .string({ required_error: '请选择推送通道' })
+      .min(1, '请选择推送通道'),
+  },
+  {
+    component: 'Select',
+    componentProps: {
+      allowClear: true,
+      options: [],
+      placeholder: '可选择模板快速填充内容',
+      showSearch: true,
+    },
+    fieldName: 'templateId',
+    label: '消息模板',
+  },
+  {
+    component: 'Switch',
+    defaultValue: false,
+    dependencies: {
+      show: (values) => isExternalChannel(values.channel),
+      triggerFields: ['channel'],
+    },
+    fieldName: 'enableInboxCopy',
+    label: '同步站内信副本',
   },
   {
     component: 'RadioGroup',
@@ -128,6 +146,7 @@ export const useFormSchema = (): VbenFormSchema[] => [
     },
     defaultValue: 'admin',
     fieldName: 'receiverType',
+    hideRequiredMark: true,
     label: '接收端',
     rules: z
       .string({ required_error: '接收端不能为空' })
@@ -135,13 +154,14 @@ export const useFormSchema = (): VbenFormSchema[] => [
   },
   {
     component: 'RadioGroup',
-    componentProps: {
+    componentProps: (values) => ({
       buttonStyle: 'solid',
       optionType: 'button',
-      options: messageReceiverScopeOptions,
-    },
+      options: getReceiverScopeOptions(values.receiverType),
+    }),
     defaultValue: 0,
     fieldName: 'receiverScope',
+    hideRequiredMark: true,
     label: '接收范围',
     rules: requiredNumber('接收范围不能为空').refine(
       (value) => [0, 1, 2, 3].includes(value),
@@ -150,7 +170,14 @@ export const useFormSchema = (): VbenFormSchema[] => [
   },
   {
     component: 'Select',
-    componentProps: { class: 'w-full', mode: 'multiple', options: [], placeholder: '请选择用户' },
+    componentProps: {
+      class: 'w-full',
+      filterOption: false,
+      mode: 'multiple',
+      options: [],
+      placeholder: '请输入用户名/昵称/手机号搜索',
+      showSearch: true,
+    },
     dependencies: { show: (values) => values.receiverScope === 1, triggerFields: ['receiverScope'] },
     fieldName: 'userIds',
     label: '接收用户',
@@ -159,7 +186,12 @@ export const useFormSchema = (): VbenFormSchema[] => [
   {
     component: 'Select',
     componentProps: { class: 'w-full', mode: 'multiple', options: [], placeholder: '请选择角色' },
-    dependencies: { show: (values) => values.receiverScope === 2, triggerFields: ['receiverScope'] },
+    dependencies: {
+      show: (values) =>
+        values.receiverType === 'admin' &&
+        values.receiverScope === 2,
+      triggerFields: ['receiverType', 'receiverScope'],
+    },
     fieldName: 'roleIds',
     label: '接收角色',
     rules: requiredIdList('请选择接收角色'),
@@ -171,9 +203,18 @@ export const useFormSchema = (): VbenFormSchema[] => [
       fieldNames: { children: 'children', label: 'deptName', value: 'id' },
       multiple: true,
       placeholder: '请选择部门',
+      showCheckedStrategy: 'SHOW_PARENT',
       treeData: [],
+      treeCheckable: true,
+      treeCheckStrictly: false,
     },
-    dependencies: { show: (values) => values.receiverScope === 3, triggerFields: ['receiverScope'] },
+    dependencies: {
+      show: (values) =>
+        isDeptEnabled() &&
+        values.receiverType === 'admin' &&
+        values.receiverScope === 3,
+      triggerFields: ['receiverType', 'receiverScope'],
+    },
     fieldName: 'deptIds',
     label: '接收部门',
     rules: requiredIdList('请选择接收部门'),
@@ -187,6 +228,7 @@ export const useFormSchema = (): VbenFormSchema[] => [
     },
     defaultValue: 0,
     fieldName: 'pushType',
+    hideRequiredMark: true,
     label: '推送方式',
     rules: requiredNumber('推送方式不能为空'),
   },
@@ -218,7 +260,7 @@ export const useFormSchema = (): VbenFormSchema[] => [
       maxHeight: 420,
       minHeight: 240,
     },
-    dependencies: { show: (values) => values.channels?.includes('IN_APP'), triggerFields: ['channels'] },
+    dependencies: { show: (values) => values.channel === 'IN_APP', triggerFields: ['channel'] },
     fieldName: 'inAppContent',
     formFieldProps: {
       validateOnBlur: false,
@@ -233,37 +275,9 @@ export const useFormSchema = (): VbenFormSchema[] => [
       .refine(hasRichTextContent, '站内信内容不能为空'),
   },
   {
-    component: 'Input',
-    dependencies: { show: (values) => values.channels?.includes('APP_PUSH'), triggerFields: ['channels'] },
-    fieldName: 'appPushTitle',
-    label: 'App主标题',
-    rules: optionalString(255, 'App主标题长度不能超过255个字符'),
-  },
-  {
-    component: 'Input',
-    dependencies: { show: (values) => values.channels?.includes('APP_PUSH'), triggerFields: ['channels'] },
-    fieldName: 'appPushSubtitle',
-    label: 'App副标题',
-    rules: optionalString(255, 'App副标题长度不能超过255个字符'),
-  },
-  {
-    component: 'Input',
-    dependencies: { show: (values) => values.channels?.includes('APP_PUSH'), triggerFields: ['channels'] },
-    fieldName: 'appPushImageUrl',
-    label: 'App大图URL',
-    rules: optionalString(500, 'App大图URL长度不能超过500个字符'),
-  },
-  {
-    component: 'Input',
-    dependencies: { show: (values) => values.channels?.includes('APP_PUSH'), triggerFields: ['channels'] },
-    fieldName: 'appPushJumpUrl',
-    label: 'App跳转链接',
-    rules: optionalString(500, 'App跳转链接长度不能超过500个字符'),
-  },
-  {
     component: 'Textarea',
     componentProps: { rows: 4 },
-    dependencies: { show: (values) => values.channels?.includes('SMS'), triggerFields: ['channels'] },
+    dependencies: { show: (values) => values.channel === 'SMS', triggerFields: ['channel'] },
     fieldName: 'smsContent',
     label: '短信内容',
     rules: optionalString(5000, '短信内容长度不能超过5000个字符'),
@@ -271,11 +285,11 @@ export const useFormSchema = (): VbenFormSchema[] => [
   {
     component: 'Input',
     dependencies: {
-      show: (values) => values.channels?.includes('WECHAT_MP') || values.channels?.includes('DOUYIN_MP'),
-      triggerFields: ['channels'],
+      show: (values) => values.channel === 'WECHAT_MP' || values.channel === 'WECHAT_OA',
+      triggerFields: ['channel'],
     },
     fieldName: 'miniProgramTemplateParams',
-    label: '小程序参数',
+    label: '微信模板参数',
     rules: optionalString(4000, '模板参数长度不能超过4000个字符'),
   },
   { component: 'Textarea', fieldName: 'remark', label: '备注' },
@@ -304,14 +318,14 @@ export function useColumns<T>(
     { field: 'title', minWidth: 220, title: '消息标题' },
     {
       field: 'messageType',
-      formatter: ({ cellValue }: any) => (cellValue === 1 ? '系统消息' : '业务消息'),
+      formatter: ({ cellValue }: any) => getDictLabel('sys_message_type', cellValue),
       title: '类型',
       width: 100,
     },
     {
       field: 'receiverType',
       formatter: ({ cellValue }: any) =>
-        cellValue === 'user' ? '前端用户' : '管理后台用户',
+        cellValue === 'app' ? '客户端用户' : '后台账号',
       title: '接收端',
       width: 120,
     },

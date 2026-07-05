@@ -54,6 +54,7 @@ setupVbenVxeTable({
         },
         round: true,
         sortConfig: {
+          remote: true,
           trigger: 'cell',
         },
         showOverflow: true,

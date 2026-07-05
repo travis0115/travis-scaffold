@@ -9,11 +9,12 @@ public class SysMessageTemplateResp {
     private String templateCode;
     private String templateName;
     private String channel;
+    private String templateType;
+    private String title;
     private String platformTemplateId;
     private String contentSchema;
     private String content;
-    private String pagePath;
-    private String jumpUrl;
+    private String redirectUrl;
     private Integer status;
     private String remark;
     private LocalDateTime createTime;

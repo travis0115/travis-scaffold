@@ -213,4 +213,10 @@ travis:
           exclude-path-patterns:
             - /api/admin/system/auth/login
           websocket-path: /ws/admin
+        - login-type: app
+          path-patterns:
+            - /api/app/**
+          exclude-path-patterns:
+            - /api/app/auth/login
+          websocket-path: /ws/app
     time-zone: UTC  #全局time-zone配置，影响spring.jackson.time-zone以及日志配置

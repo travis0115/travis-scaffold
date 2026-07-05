@@ -13,8 +13,10 @@ import {
   Tree,
   useVbenDrawer,
   useVbenModal,
+  EllipsisText,
 } from '@vben/common-ui';
 import { IconifyIcon, Plus } from '@vben/icons';
+import { formatDateTime } from '@vben/utils';
 
 import { Button, Card, Input, message } from 'antdv-next';
 
@@ -88,6 +90,36 @@ const userTableTitle = computed(() => {
   if (!showDeptTree && !onlineOnly.value) return title;
   return `${title} - ${selectedDeptName.value}`;
 });
+
+function formatUserIp(ip?: string, location?: string) {
+  if (!ip && !location) {
+    return '-';
+  }
+  return `${ip || '-'}${location ? `（${location}）` : ''}`;
+}
+
+function getLastOnlineLabel(row: SystemUserApi.SysUser) {
+  return row.online ? '上线' : '离线';
+}
+
+function getLastOnlineTime(row: SystemUserApi.SysUser) {
+  const time = row.online ? row.lastOnlineTime : row.lastOfflineTime;
+  return formatDateTime(time) || '-';
+}
+
+function getContactInfoTitle(row: SystemUserApi.SysUser) {
+  if (!row.mobile && !row.email) {
+    return '-';
+  }
+  return `${$t('system.user.mobile')}：${row.mobile || '-'}\n${$t('system.user.email')}：${row.email || '-'}`;
+}
+
+function getLastOnlineTitle(row: SystemUserApi.SysUser) {
+  if (!row.lastOnlineTime && !row.lastOnlineIp && !row.lastOfflineTime) {
+    return '-';
+  }
+  return `${getLastOnlineLabel(row)}：${getLastOnlineTime(row)}\nIP：${formatUserIp(row.lastOnlineIp, row.lastOnlineLocation)}`;
+}
 const selectedDeptName = computed(() => {
   if (selectedDeptId.value === undefined) {
     return $t('system.user.allDepts');
@@ -296,9 +328,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
     rowConfig: {
       keyField: 'id',
     },
-    sortConfig: {
-      remote: true,
-    },
     toolbarConfig: {
       custom: true,
       export: false,
@@ -439,7 +468,9 @@ onMounted(() => {
           >
             <span class="folder-row-spacer"></span>
             <IconifyIcon icon="lucide:folder" class="folder-icon" />
-            <span class="folder-name">{{ $t('system.user.allDepts') }}</span>
+            <EllipsisText :tooltip="false" class="folder-name">
+              {{ $t('system.user.allDepts') }}
+            </EllipsisText>
           </div>
           <div
             v-if="showUnassignedDeptEntry"
@@ -453,7 +484,9 @@ onMounted(() => {
           >
             <span class="folder-row-spacer"></span>
             <IconifyIcon icon="lucide:folder" class="folder-icon" />
-            <span class="folder-name">未归属</span>
+            <EllipsisText :tooltip="false" class="folder-name">
+              未归属
+            </EllipsisText>
           </div>
           <Tree
             v-if="deptList.length > 0"
@@ -474,7 +507,9 @@ onMounted(() => {
             <template #node="{ value: dept }">
               <div class="folder-node">
                 <IconifyIcon icon="lucide:folder" class="folder-icon" />
-                <span class="folder-name">{{ dept.deptName }}</span>
+                <EllipsisText :tooltip="false" class="folder-name">
+                  {{ dept.deptName }}
+                </EllipsisText>
               </div>
             </template>
           </Tree>
@@ -482,6 +517,26 @@ onMounted(() => {
       </template>
       <!-- 右侧表格 -->
       <Grid :table-title="userTableTitle">
+        <template #contactInfo="{ row }">
+          <div class="table-cell-pre-line" :title="getContactInfoTitle(row)">
+            <template v-if="row.mobile || row.email">
+              <div>{{ $t('system.user.mobile') }}：{{ row.mobile || '-' }}</div>
+              <div>{{ $t('system.user.email') }}：{{ row.email || '-' }}</div>
+            </template>
+            <div v-else>-</div>
+          </div>
+        </template>
+        <template #lastOnlineInfo="{ row }">
+          <div class="table-cell-pre-line" :title="getLastOnlineTitle(row)">
+            <template
+              v-if="row.lastOnlineTime || row.lastOnlineIp || row.lastOfflineTime"
+            >
+              <div>{{ getLastOnlineLabel(row) }}：{{ getLastOnlineTime(row) }}</div>
+              <div>IP：{{ formatUserIp(row.lastOnlineIp, row.lastOnlineLocation) }}</div>
+            </template>
+            <div v-else>-</div>
+          </div>
+        </template>
         <template #toolbar-tools>
           <Button @click="onToggleOnlineOnly">
             <IconifyIcon
@@ -508,6 +563,26 @@ onMounted(() => {
     <!-- 未启用部门时只显示表格 -->
     <Page v-else auto-content-height>
       <Grid :table-title="userTableTitle">
+        <template #contactInfo="{ row }">
+          <div class="table-cell-pre-line" :title="getContactInfoTitle(row)">
+            <template v-if="row.mobile || row.email">
+              <div>{{ $t('system.user.mobile') }}：{{ row.mobile || '-' }}</div>
+              <div>{{ $t('system.user.email') }}：{{ row.email || '-' }}</div>
+            </template>
+            <div v-else>-</div>
+          </div>
+        </template>
+        <template #lastOnlineInfo="{ row }">
+          <div class="table-cell-pre-line" :title="getLastOnlineTitle(row)">
+            <template
+              v-if="row.lastOnlineTime || row.lastOnlineIp || row.lastOfflineTime"
+            >
+              <div>{{ getLastOnlineLabel(row) }}：{{ getLastOnlineTime(row) }}</div>
+              <div>IP：{{ formatUserIp(row.lastOnlineIp, row.lastOnlineLocation) }}</div>
+            </template>
+            <div v-else>-</div>
+          </div>
+        </template>
         <template #toolbar-tools>
           <Button @click="onToggleOnlineOnly">
             <IconifyIcon
@@ -539,6 +614,12 @@ onMounted(() => {
   min-height: 100%;
   border-color: hsl(var(--border));
   border-radius: 12px;
+}
+
+.table-cell-pre-line {
+  line-height: 1.5rem;
+  text-align: center;
+  white-space: pre-line;
 }
 
 .folder-panel :deep(.ant-card-body) {
@@ -622,10 +703,7 @@ onMounted(() => {
 
 .folder-name {
   min-width: 0;
-  overflow: hidden;
   flex: 1;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .folder-tree {

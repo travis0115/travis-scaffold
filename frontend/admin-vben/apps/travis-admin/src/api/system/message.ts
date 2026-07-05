@@ -10,9 +10,10 @@ import { requestClient } from '#/api/request';
 export namespace SystemMessageApi {
   export interface Message {
     [key: string]: any;
+    channel?: string;
     channelContents?: MessageChannelContent[];
-    channels?: string;
     content: string;
+    enableInboxCopy?: boolean;
     id: number;
     messageType: number;
     pushType: number;
@@ -46,13 +47,14 @@ export namespace SystemMessageApi {
     contentSchema?: string;
     createTime?: string;
     id: number;
-    jumpUrl?: string;
-    pagePath?: string;
     platformTemplateId?: string;
+    redirectUrl?: string;
     remark?: string;
     status: number;
+    templateType?: string;
     templateCode: string;
     templateName: string;
+    title?: string;
   }
 
   export interface UserMessage {

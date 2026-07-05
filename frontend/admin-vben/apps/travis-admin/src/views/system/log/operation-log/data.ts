@@ -6,24 +6,6 @@ import { BACKEND_DATETIME_FORMAT } from '@vben/utils';
 
 import { getDictOptions } from '#/utils/dict';
 
-const BUSINESS_TYPE_OPTIONS = [
-  { label: '新增', value: 'CREATE' },
-  { label: '修改', value: 'UPDATE' },
-  { label: '删除', value: 'DELETE' },
-  { label: '授权', value: 'GRANT' },
-  { label: '上传', value: 'UPLOAD' },
-  { label: '导入', value: 'IMPORT' },
-  { label: '导出', value: 'EXPORT' },
-  { label: '其他', value: 'OTHER' },
-];
-
-function formatIp(ip?: string, location?: string) {
-  if (!ip && !location) {
-    return '-';
-  }
-  return `${ip || '-'}${location ? `（${location}）` : ''}`;
-}
-
 export function useGridFormSchema(): VbenFormSchema[] {
   return [
     { component: 'Input', fieldName: 'username', label: '操作用户' },
@@ -32,7 +14,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
       component: 'Select',
       componentProps: {
         allowClear: true,
-        options: BUSINESS_TYPE_OPTIONS,
+        options: getDictOptions('operation_business_type'),
       },
       fieldName: 'businessType',
       label: '业务类型',
@@ -47,6 +29,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
       label: '请求方式',
     },
     { component: 'Input', fieldName: 'requestUrl', label: '请求地址' },
+    { component: 'Input', fieldName: 'requestId', label: '请求 ID' },
     { component: 'Input', fieldName: 'ip', label: '操作 IP' },
     {
       component: 'Select',
@@ -72,25 +55,49 @@ export function useGridFormSchema(): VbenFormSchema[] {
 export function useColumns(): VxeTableGridColumns<SystemOperationLogApi.OperationLog> {
   return [
     { field: 'username', title: '操作用户', width: 130 },
-    { field: 'module', title: '操作模块', width: 140 },
-    { field: 'businessType', title: '业务类型', width: 110 },
-    { field: 'description', minWidth: 180, title: '操作描述' },
+    {
+      field: 'operationInfo',
+      minWidth: 180,
+      slots: { default: 'operationInfo' },
+      showOverflow: false,
+      title: '操作模块',
+    },
+    {
+      cellRender: {
+        attrs: { dictCode: 'operation_business_type' },
+        name: 'CellTag',
+      },
+      field: 'businessType',
+      title: '业务类型',
+      width: 110,
+    },
     {
       cellRender: { attrs: { dictCode: 'http_method' }, name: 'CellTag' },
       field: 'requestMethod',
       title: '请求方式',
       width: 100,
     },
-    { field: 'requestUrl', minWidth: 220, title: '请求地址' },
+    {
+      field: 'requestInfo',
+      minWidth: 260,
+      slots: { default: 'requestInfo' },
+      showOverflow: false,
+      title: '请求信息',
+    },
+    {
+      field: 'deviceInfo',
+      minWidth: 150,
+      slots: { default: 'deviceInfo' },
+      showOverflow: false,
+      title: '设备信息',
+    },
     {
       field: 'ip',
-      formatter: ({ row }) => formatIp(row.ip, row.location),
       minWidth: 180,
+      slots: { default: 'ipInfo' },
+      showOverflow: false,
       title: '操作 IP',
     },
-    { field: 'browser', title: '浏览器', width: 130 },
-    { field: 'os', title: '操作系统', width: 130 },
-    { field: 'requestId', title: '请求 ID', width: 180 },
     {
       field: 'createTime',
       formatter: 'formatDateTime',

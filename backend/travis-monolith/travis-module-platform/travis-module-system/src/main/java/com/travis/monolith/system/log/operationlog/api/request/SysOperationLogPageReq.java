@@ -4,10 +4,9 @@ import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.common.web.model.PageRequest;
 import com.travis.monolith.system.common.api.enums.Status;
 import jakarta.validation.constraints.Size;
+import java.time.LocalDateTime;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-
-import java.time.LocalDateTime;
 
 /**
  * 操作日志分页查询请求参数
@@ -27,6 +26,9 @@ public class SysOperationLogPageReq extends PageRequest {
 
     @Size(max = 50, message = "业务类型长度不能超过50个字符")
     private String businessType;
+
+    @Size(max = 10, message = "请求方式长度不能超过10个字符")
+    private String requestMethod;
 
     @Size(max = 500, message = "请求地址长度不能超过500个字符")
     private String requestUrl;

@@ -274,5 +274,4 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
                 consecutiveFailures,
                 trend);
     }
-
 }

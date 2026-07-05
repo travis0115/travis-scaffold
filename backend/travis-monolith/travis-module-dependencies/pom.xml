@@ -38,6 +38,11 @@
                 <artifactId>travis-module-system</artifactId>
                 <version>${revision}</version>
             </dependency>
+            <dependency>
+                <groupId>com.travis</groupId>
+                <artifactId>travis-module-app</artifactId>
+                <version>${revision}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

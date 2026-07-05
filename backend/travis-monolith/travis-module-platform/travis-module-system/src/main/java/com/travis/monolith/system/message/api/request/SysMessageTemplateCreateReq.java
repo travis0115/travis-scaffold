@@ -20,6 +20,12 @@ public class SysMessageTemplateCreateReq {
     @Size(max = 32, message = "推送通道长度不能超过32个字符")
     private String channel;
 
+    @Size(max = 64, message = "模板分类长度不能超过64个字符")
+    private String templateType;
+
+    @Size(max = 255, message = "模板标题长度不能超过255个字符")
+    private String title;
+
     @Size(max = 128, message = "平台模板ID长度不能超过128个字符")
     private String platformTemplateId;
 
@@ -30,11 +36,8 @@ public class SysMessageTemplateCreateReq {
     @Size(max = 5000, message = "模板内容长度不能超过5000个字符")
     private String content;
 
-    @Size(max = 500, message = "页面路径长度不能超过500个字符")
-    private String pagePath;
-
-    @Size(max = 500, message = "跳转链接长度不能超过500个字符")
-    private String jumpUrl;
+    @Size(max = 500, message = "跳转地址长度不能超过500个字符")
+    private String redirectUrl;
 
     @NotNull(message = "状态不能为空")
     private Integer status;

@@ -6,6 +6,7 @@ import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
+import com.travis.monolith.system.message.api.enums.SysMessageChannel;
 import com.travis.monolith.system.message.api.request.SysMessageTemplateCreateReq;
 import com.travis.monolith.system.message.api.request.SysMessageTemplatePageReq;
 import com.travis.monolith.system.message.api.request.SysMessageTemplateUpdateReq;
@@ -37,6 +38,7 @@ public class SysMessageTemplateServiceImpl
                         .likeIfPresent(SysMessageTemplate::getTemplateCode, req.getTemplateCode())
                         .likeIfPresent(SysMessageTemplate::getTemplateName, req.getTemplateName())
                         .eqIfPresent(SysMessageTemplate::getChannel, req.getChannel())
+                        .eqIfPresent(SysMessageTemplate::getTemplateType, req.getTemplateType())
                         .eqIfPresent(SysMessageTemplate::getStatus, req.getStatus())
                         .orderByDesc(SysMessageTemplate::getCreateTime);
         return PageConverter.toResp(
@@ -52,6 +54,7 @@ public class SysMessageTemplateServiceImpl
     @Override
     @Transactional
     public void create(SysMessageTemplateCreateReq req) {
+        validateChannel(req.getChannel());
         validateUnique(req.getTemplateCode(), req.getChannel(), null);
         save(converter.toEntity(req));
     }
@@ -61,6 +64,7 @@ public class SysMessageTemplateServiceImpl
     @CacheEvict(key = "'detail:'+#id")
     public void update(Long id, SysMessageTemplateUpdateReq req) {
         var entity = getByIdOrThrow(id);
+        validateChannel(req.getChannel());
         validateUnique(req.getTemplateCode(), req.getChannel(), id);
         converter.update(req, entity);
         updateById(entity);
@@ -81,6 +85,12 @@ public class SysMessageTemplateServiceImpl
                         .neIfPresent(SysMessageTemplate::getId, excludeId);
         if (exists(wrapper)) {
             throw new BizException(CommonErrorCode.BAD_REQUEST, "同通道下模板编码已存在");
+        }
+    }
+
+    private void validateChannel(String channel) {
+        if (!SysMessageChannel.contains(channel)) {
+            throw new BizException(CommonErrorCode.BAD_REQUEST, "消息通道不支持");
         }
     }
 }

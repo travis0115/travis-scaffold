@@ -24,6 +24,7 @@ public interface SysMessageMapper extends BaseMapperX<SysMessage> {
             WHERE m.is_deleted = 0
               AND m.status = 2
               AND m.receiver_type = #{receiverType}
+              AND (m.channel = 'IN_APP' OR m.enable_inbox_copy = 1)
               AND m.publish_time &lt;= NOW()
               AND (r.id IS NULL OR r.read_status != 2)
               <if test="readStatus != null">
@@ -90,6 +91,7 @@ public interface SysMessageMapper extends BaseMapperX<SysMessage> {
             WHERE m.is_deleted = 0
               AND m.status = 2
               AND m.receiver_type = #{receiverType}
+              AND (m.channel = 'IN_APP' OR m.enable_inbox_copy = 1)
               AND m.publish_time &lt;= NOW()
               AND (r.id IS NULL OR r.read_status = 0)
               AND (
@@ -139,6 +141,7 @@ public interface SysMessageMapper extends BaseMapperX<SysMessage> {
             WHERE m.is_deleted = 0
               AND m.status = 2
               AND m.receiver_type = #{receiverType}
+              AND (m.channel = 'IN_APP' OR m.enable_inbox_copy = 1)
               AND m.publish_time &lt;= NOW()
               AND (r.id IS NULL OR r.read_status != 2)
               <if test="readStatus != null">

@@ -4,10 +4,9 @@ import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.common.web.model.PageRequest;
 import com.travis.monolith.system.common.api.enums.Status;
 import jakarta.validation.constraints.Size;
+import java.time.LocalDateTime;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-
-import java.time.LocalDateTime;
 
 /**
  * 登录日志分页查询请求参数

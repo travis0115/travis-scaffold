@@ -38,7 +38,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
       await formApi.setValues(detail);
     } else {
       formData.value = undefined;
-      await formApi.setValues({ channel: 'WECHAT_MP', status: 1 });
+      await formApi.setValues({ channel: 'IN_APP', status: 1 });
     }
   },
 });
