@@ -2,6 +2,7 @@ package com.travis.monolith.system.menu.api.request;
 
 import cn.hutool.core.util.StrUtil;
 import com.travis.infrastructure.common.validation.annotation.EnumValue;
+import com.travis.infrastructure.common.validation.annotation.JsonValue;
 import com.travis.monolith.system.menu.api.enums.MenuType;
 import jakarta.validation.constraints.*;
 import java.util.Objects;
@@ -39,6 +40,7 @@ public class SysMenuUpdateReq {
     private Integer sort;
 
     @Size(max = 5000, message = "扩展配置不能超过5000字符")
+    @JsonValue(message = "扩展配置必须是合法JSON对象")
     private String meta;
 
     @AssertTrue(message = "目录和菜单的路由路径不能为空")

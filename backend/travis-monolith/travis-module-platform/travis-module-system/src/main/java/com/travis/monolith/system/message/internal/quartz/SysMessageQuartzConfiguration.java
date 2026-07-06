@@ -12,6 +12,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/** 消息定时推送 Quartz 配置。 */
 @Configuration(proxyBeanMethods = false)
 public class SysMessageQuartzConfiguration {
     private static final JobKey JOB_KEY = JobKey.jobKey("scheduled-message-push", "system-message");

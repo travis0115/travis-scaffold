@@ -3,6 +3,7 @@ import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { SystemMessageApi } from '#/api';
 
 import { z } from '#/adapter/form';
+import { uploadMessageImage } from '#/api';
 import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
 import { messageChannelOptions } from '#/views/system/message/data';
 
@@ -11,6 +12,33 @@ const requiredString = (message: string) =>
 
 const optionalString = (max: number, message: string) =>
   z.string().max(max, message).optional().or(z.literal(''));
+
+const externalChannels = ['SMS', 'WECHAT_MP', 'WECHAT_OA'];
+const titleChannels = ['IN_APP', 'WECHAT_MP', 'WECHAT_OA'];
+const redirectChannels = ['WECHAT_MP', 'WECHAT_OA'];
+
+function isExternalChannel(channel?: string) {
+  return channel ? externalChannels.includes(channel) : false;
+}
+
+function needsTitle(channel?: string) {
+  return channel ? titleChannels.includes(channel) : false;
+}
+
+function needsRedirect(channel?: string) {
+  return channel ? redirectChannels.includes(channel) : false;
+}
+
+function hasRichTextContent(value?: string) {
+  if (!value) return false;
+  return (
+    value
+      .replaceAll('&nbsp;', ' ')
+      .replaceAll(/<br\s*\/?>/gi, '')
+      .replaceAll(/<[^>]*>/g, '')
+      .trim().length > 0
+  );
+}
 
 const statusOptions = [
   { label: '禁用', value: 0 },
@@ -39,65 +67,80 @@ export const useFormSchema = (): VbenFormSchema[] => [
   },
   {
     component: 'Input',
-    fieldName: 'templateType',
-    label: '模板分类',
-    rules: optionalString(64, '模板分类长度不能超过64个字符'),
-  },
-  {
-    component: 'Input',
-    fieldName: 'title',
-    label: '模板标题',
-    rules: optionalString(255, '模板标题长度不能超过255个字符'),
-  },
-  {
-    component: 'Input',
+    dependencies: {
+      show: (values) => isExternalChannel(values.channel),
+      triggerFields: ['channel'],
+    },
     fieldName: 'platformTemplateId',
     label: '平台模板ID',
-    rules: optionalString(128, '平台模板ID长度不能超过128个字符'),
-  },
-  {
-    component: 'Textarea',
-    componentProps: { rows: 4 },
-    fieldName: 'contentSchema',
-    label: '字段结构',
-    rules: optionalString(4000, '字段结构长度不能超过4000个字符'),
-  },
-  {
-    component: 'Textarea',
-    componentProps: { rows: 5 },
-    fieldName: 'content',
-    label: '模板内容',
-    rules: optionalString(5000, '模板内容长度不能超过5000个字符'),
+    rules: requiredString('平台模板ID不能为空').max(128, '平台模板ID长度不能超过128个字符'),
   },
   {
     component: 'Input',
+    dependencies: {
+      show: (values) => needsRedirect(values.channel),
+      triggerFields: ['channel'],
+    },
     fieldName: 'redirectUrl',
     label: '跳转地址',
     rules: optionalString(500, '跳转地址长度不能超过500个字符'),
   },
   {
-    component: 'RadioGroup',
-    componentProps: {
-      buttonStyle: 'solid',
-      optionType: 'button',
-      options: statusOptions,
+    component: 'Input',
+    dependencies: {
+      show: (values) => needsTitle(values.channel),
+      triggerFields: ['channel'],
     },
-    defaultValue: 1,
-    fieldName: 'status',
-    label: '状态',
+    fieldName: 'title',
+    label: '模板标题',
+    rules: requiredString('模板标题不能为空').max(255, '模板标题长度不能超过255个字符'),
+  },
+  {
+    component: 'RichEditor',
+    componentProps: {
+      imageUpload: {
+        upload: async (file: File, onProgress?: (percent: number) => void) => {
+          const result = await uploadMessageImage(file, (event) => {
+            if (!event.total) return;
+            onProgress?.(Math.round((event.loaded / event.total) * 100));
+          });
+          return { id: result.id, url: result.url };
+        },
+      },
+      maxHeight: 420,
+      minHeight: 240,
+      placeholder: '请输入模板内容，可使用 {{name}} 格式引用模板参数，例如 {{nickname}}',
+    },
+    dependencies: { show: (values) => values.channel === 'IN_APP', triggerFields: ['channel'] },
+    fieldName: 'inAppContent',
+    formFieldProps: {
+      validateOnBlur: false,
+      validateOnChange: false,
+      validateOnInput: false,
+      validateOnModelUpdate: false,
+    },
+    label: '模板内容',
+    rules: z
+      .string({ required_error: '模板内容不能为空' })
+      .max(5000, '模板内容长度不能超过5000个字符')
+      .refine(hasRichTextContent, '模板内容不能为空'),
   },
   {
     component: 'Textarea',
-    fieldName: 'remark',
-    label: '备注',
-    rules: optionalString(255, '备注长度不能超过255个字符'),
+    componentProps: { rows: 5 },
+    dependencies: {
+      show: (values) => isExternalChannel(values.channel),
+      triggerFields: ['channel'],
+    },
+    fieldName: 'content',
+    label: '模板内容',
+    rules: requiredString('模板内容不能为空').max(5000, '模板内容长度不能超过5000个字符'),
   },
 ];
 
 export const useGridFormSchema = (): VbenFormSchema[] => [
   { component: 'Input', fieldName: 'templateCode', label: '模板编码' },
   { component: 'Input', fieldName: 'templateName', label: '模板名称' },
-  { component: 'Input', fieldName: 'templateType', label: '模板分类' },
   {
     component: 'Select',
     componentProps: { allowClear: true, options: messageChannelOptions },
@@ -118,11 +161,12 @@ export function useColumns(
   return [
     { field: 'templateCode', minWidth: 180, title: '模板编码' },
     { field: 'templateName', minWidth: 180, title: '模板名称' },
-    { field: 'templateType', title: '模板分类', width: 130 },
     {
+      cellRender: {
+        attrs: { dictCode: 'sys_message_channel' },
+        name: 'CellTag',
+      },
       field: 'channel',
-      formatter: ({ cellValue }: any) =>
-        messageChannelOptions.find((item) => item.value === cellValue)?.label || cellValue,
       title: '推送通道',
       width: 130,
     },

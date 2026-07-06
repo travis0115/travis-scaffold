@@ -1,13 +1,18 @@
 package com.travis.monolith.system.message.api.request;
 
+import com.travis.infrastructure.common.validation.annotation.EnumValue;
+import com.travis.infrastructure.common.validation.annotation.JsonValue;
 import com.travis.infrastructure.framework.web.core.annotation.SanitizeHtml;
+import com.travis.monolith.system.message.api.enums.SysMessageChannel;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+/** 消息渠道内容请求参数。 */
 @Data
 public class SysMessageChannelContentReq {
     @NotBlank(message = "推送通道不能为空")
+    @EnumValue(value = SysMessageChannel.class, message = "推送通道错误")
     private String channel;
 
     @Size(max = 255, message = "渠道标题长度不能超过255个字符")
@@ -29,6 +34,7 @@ public class SysMessageChannelContentReq {
     private Long templateId;
 
     @Size(max = 4000, message = "模板参数长度不能超过4000个字符")
+    @JsonValue(message = "模板参数必须是合法JSON对象")
     private String templateParams;
 
     private Integer wordCount;

@@ -2,6 +2,7 @@ package com.travis.monolith.system.message.api.response;
 
 import lombok.Data;
 
+/** 消息渠道内容响应对象。 */
 @Data
 public class SysMessageChannelContentResp {
     private Long id;

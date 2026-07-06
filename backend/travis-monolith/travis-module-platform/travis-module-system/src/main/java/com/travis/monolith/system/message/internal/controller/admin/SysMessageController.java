@@ -27,6 +27,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+/** 管理后台消息推送控制器。 */
 @RestController
 @RequestMapping("/system/message")
 @RequiredArgsConstructor
@@ -38,7 +39,7 @@ public class SysMessageController {
 
     @GetMapping("/page")
     @SaCheckPermission(value = SystemPermission.MESSAGE_QUERY, type = LoginType.ADMIN)
-    public ApiResponse<PageResp<SysMessagePageResp>> page(SysMessagePageReq req) {
+    public ApiResponse<PageResp<SysMessagePageResp>> page(@Valid SysMessagePageReq req) {
         return ApiResponse.success(messageService.page(req));
     }
 

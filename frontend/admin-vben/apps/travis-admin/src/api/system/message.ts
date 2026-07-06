@@ -51,7 +51,6 @@ export namespace SystemMessageApi {
     redirectUrl?: string;
     remark?: string;
     status: number;
-    templateType?: string;
     templateCode: string;
     templateName: string;
     title?: string;

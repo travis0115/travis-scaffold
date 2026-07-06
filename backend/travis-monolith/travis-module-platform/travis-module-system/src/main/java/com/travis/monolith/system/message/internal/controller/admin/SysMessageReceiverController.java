@@ -8,14 +8,18 @@ import com.travis.monolith.system.message.api.request.SysUserMessagePageReq;
 import com.travis.monolith.system.message.api.response.SysUserMessagePageResp;
 import com.travis.monolith.system.message.api.response.SysUserMessageRecentResp;
 import com.travis.monolith.system.message.internal.service.SysMessageReceiverService;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+/** 管理后台消息收件箱控制器。 */
 @RestController
 @RequestMapping("/system/message/inbox")
 @RequiredArgsConstructor
+@Validated
 public class SysMessageReceiverController {
     private final SysMessageReceiverService messageService;
 
@@ -26,7 +30,7 @@ public class SysMessageReceiverController {
     }
 
     @GetMapping("/page")
-    public ApiResponse<PageResp<SysUserMessagePageResp>> page(SysUserMessagePageReq req) {
+    public ApiResponse<PageResp<SysUserMessagePageResp>> page(@Valid SysUserMessagePageReq req) {
         return ApiResponse.success(messageService.page(currentUserId(), req));
     }
 

@@ -13,7 +13,6 @@ public class SysMessageTemplate extends BaseEntity {
     private String templateCode;
     private String templateName;
     private String channel;
-    private String templateType;
     private String title;
     private String platformTemplateId;
     private String contentSchema;

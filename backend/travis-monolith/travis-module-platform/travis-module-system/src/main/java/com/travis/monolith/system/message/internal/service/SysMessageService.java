@@ -9,6 +9,7 @@ import com.travis.monolith.system.message.api.response.SysMessageDetailResp;
 import com.travis.monolith.system.message.api.response.SysMessagePageResp;
 import com.travis.monolith.system.message.internal.entity.SysMessage;
 
+/** 消息推送服务。 */
 public interface SysMessageService extends IService<SysMessage> {
     PageResp<SysMessagePageResp> page(SysMessagePageReq req);
 

@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+/** 消息接收记录实体。 */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("sys_message_receiver")

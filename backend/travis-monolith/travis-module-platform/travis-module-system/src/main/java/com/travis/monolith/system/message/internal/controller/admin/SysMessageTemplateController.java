@@ -15,18 +15,22 @@ import com.travis.monolith.system.message.api.response.SysMessageTemplateResp;
 import com.travis.monolith.system.message.internal.service.SysMessageTemplateService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+/** 管理后台消息模板控制器。 */
 @RestController
 @RequestMapping("/system/message/template")
 @RequiredArgsConstructor
+@Validated
 @OperationLogModule("MessageTemplate")
 public class SysMessageTemplateController {
     private final SysMessageTemplateService templateService;
 
     @GetMapping("/page")
     @SaCheckPermission(value = SystemPermission.MESSAGE_TEMPLATE_QUERY, type = LoginType.ADMIN)
-    public ApiResponse<PageResp<SysMessageTemplateResp>> page(SysMessageTemplatePageReq req) {
+    public ApiResponse<PageResp<SysMessageTemplateResp>> page(
+            @Valid SysMessageTemplatePageReq req) {
         return ApiResponse.success(templateService.page(req));
     }
 

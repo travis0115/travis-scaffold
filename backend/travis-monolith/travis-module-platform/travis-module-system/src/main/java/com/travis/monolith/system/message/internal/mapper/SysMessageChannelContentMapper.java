@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+/** 消息渠道内容 Mapper。 */
 @Mapper
 public interface SysMessageChannelContentMapper extends BaseMapperX<SysMessageChannelContent> {
     @Delete("DELETE FROM sys_message_channel_content WHERE message_id = #{messageId}")

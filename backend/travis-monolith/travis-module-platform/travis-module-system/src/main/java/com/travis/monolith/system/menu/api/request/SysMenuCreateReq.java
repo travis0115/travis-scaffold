@@ -2,6 +2,7 @@ package com.travis.monolith.system.menu.api.request;
 
 import cn.hutool.core.util.StrUtil;
 import com.travis.infrastructure.common.validation.annotation.EnumValue;
+import com.travis.infrastructure.common.validation.annotation.JsonValue;
 import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.menu.api.enums.MenuType;
 import jakarta.validation.constraints.*;
@@ -53,11 +54,12 @@ public class SysMenuCreateReq {
 
     /** 状态（0-禁用 1-启用） */
     @EnumValue(value = Status.class, message = "状态值错误")
-    @NotNull(message = "状态值不允许为空")
+    @NotNull(message = "状态值不能为空")
     private Integer status;
 
     /** 路由元信息JSON（Vben Admin RouteMeta 扩展字段） */
     @Size(max = 5000, message = "扩展配置不能超过5000字符")
+    @JsonValue(message = "扩展配置必须是合法JSON对象")
     private String meta;
 
     @AssertTrue(message = "目录和菜单的路由路径不能为空")

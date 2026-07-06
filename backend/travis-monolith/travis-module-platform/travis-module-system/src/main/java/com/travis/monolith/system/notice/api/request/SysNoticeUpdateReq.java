@@ -22,7 +22,7 @@ public class SysNoticeUpdateReq {
     private LocalDateTime publishTime;
 
     @EnumValue(value = IsPinned.class, message = "置顶值错误")
-    @NotNull(message = "置顶值不允许为空")
+    @NotNull(message = "置顶值不能为空")
     private Integer isPinned;
 
     @NotNull(message = "排序号不能为空")

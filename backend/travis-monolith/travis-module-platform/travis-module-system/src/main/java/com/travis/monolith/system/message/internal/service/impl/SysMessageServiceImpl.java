@@ -6,6 +6,7 @@ import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.websocket.core.message.WebSocketMessage;
@@ -14,8 +15,10 @@ import com.travis.monolith.system.file.api.SysFileApi;
 import com.travis.monolith.system.message.api.enums.SysMessageChannel;
 import com.travis.monolith.system.message.api.enums.SysMessageReceiverScope;
 import com.travis.monolith.system.message.api.enums.SysMessageSourceType;
+import com.travis.monolith.system.message.api.enums.SysMessageTemplateParamType;
 import com.travis.monolith.system.message.api.request.SysMessageCreateReq;
 import com.travis.monolith.system.message.api.request.SysMessagePageReq;
+import com.travis.monolith.system.message.api.request.SysMessageTemplateParamConfig;
 import com.travis.monolith.system.message.api.request.SysMessageUpdateReq;
 import com.travis.monolith.system.message.api.response.SysMessageChannelContentResp;
 import com.travis.monolith.system.message.api.response.SysMessageDetailResp;
@@ -26,11 +29,15 @@ import com.travis.monolith.system.message.internal.entity.SysMessageChannelConte
 import com.travis.monolith.system.message.internal.mapper.SysMessageChannelContentMapper;
 import com.travis.monolith.system.message.internal.mapper.SysMessageMapper;
 import com.travis.monolith.system.message.internal.mapper.SysMessageReceiverMapper;
+import com.travis.monolith.system.message.internal.mapper.SysMessageTemplateMapper;
 import com.travis.monolith.system.message.internal.service.SysMessageService;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
@@ -38,7 +45,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import tools.jackson.core.type.TypeReference;
 
+/** 消息推送服务实现。 */
 @Service
 @CacheConfig(cacheNames = "system:message")
 public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMessage>
@@ -49,9 +58,12 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     private static final int STATUS_SCHEDULED = 1;
     private static final int STATUS_SENT = 2;
     private static final int STATUS_REVOKED = 3;
+    private static final Pattern TEMPLATE_VARIABLE_PATTERN =
+            Pattern.compile("\\{\\{\\s*([A-Za-z0-9_.-]+)\\s*}}");
 
     private final SysMessageReceiverMapper messageReceiverMapper;
     private final SysMessageChannelContentMapper channelContentMapper;
+    private final SysMessageTemplateMapper messageTemplateMapper;
     private final SysMessageConverter converter;
     private final WebSocketMessageSender webSocketMessageSender;
     private final SysFileApi fileApi;
@@ -59,11 +71,13 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     public SysMessageServiceImpl(
             SysMessageReceiverMapper messageReceiverMapper,
             SysMessageChannelContentMapper channelContentMapper,
+            SysMessageTemplateMapper messageTemplateMapper,
             SysMessageConverter converter,
             WebSocketMessageSender webSocketMessageSender,
             SysFileApi fileApi) {
         this.messageReceiverMapper = messageReceiverMapper;
         this.channelContentMapper = channelContentMapper;
+        this.messageTemplateMapper = messageTemplateMapper;
         this.converter = converter;
         this.webSocketMessageSender = webSocketMessageSender;
         this.fileApi = fileApi;
@@ -97,6 +111,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         validateReceiver(req.getReceiverType(), req.getReceiverScope(), req.getReceiverValues());
         validateChannel(req.getReceiverType(), req.getChannel(), req.getChannelContents());
         validatePush(req.getPushType(), req.getPublishTime());
+        var channelContents = renderChannelContents(req.getChannel(), req.getChannelContents());
         var entity = converter.toEntity(req);
         entity.setSourceType(SysMessageSourceType.MANUAL.getValue());
         entity.setEnableInboxCopy(
@@ -107,9 +122,9 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
         entity.setContent(
                 fileApi.stripManagedImageSources(
-                        resolveInAppContent(req.getChannelContents(), req.getContent())));
+                        resolveInAppContent(channelContents, req.getContent())));
         save(entity);
-        syncChannelContents(entity.getId(), req);
+        syncChannelContents(entity.getId(), channelContents);
         return entity.getId();
     }
 
@@ -143,6 +158,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         validateReceiver(req.getReceiverType(), req.getReceiverScope(), req.getReceiverValues());
         validateChannel(req.getReceiverType(), req.getChannel(), req.getChannelContents());
         validatePush(req.getPushType(), req.getPublishTime());
+        var channelContents = renderChannelContents(req.getChannel(), req.getChannelContents());
         var entity = getByIdOrThrow(id);
         if (Integer.valueOf(STATUS_SENT).equals(entity.getStatus())) {
             throw new BizException(CommonErrorCode.BAD_REQUEST);
@@ -157,9 +173,9 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
         entity.setContent(
                 fileApi.stripManagedImageSources(
-                        resolveInAppContent(req.getChannelContents(), req.getContent())));
+                        resolveInAppContent(channelContents, req.getContent())));
         updateById(entity);
-        syncChannelContents(id, req);
+        syncChannelContents(id, channelContents);
     }
 
     @Override
@@ -241,14 +257,6 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                 .toList();
     }
 
-    private void syncChannelContents(Long messageId, SysMessageCreateReq req) {
-        syncChannelContents(messageId, req.getChannelContents());
-    }
-
-    private void syncChannelContents(Long messageId, SysMessageUpdateReq req) {
-        syncChannelContents(messageId, req.getChannelContents());
-    }
-
     private void syncChannelContents(
             Long messageId,
             List<com.travis.monolith.system.message.api.request.SysMessageChannelContentReq>
@@ -306,7 +314,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         if (LoginType.APP.equals(receiverType)
                 && !SysMessageReceiverScope.ALL.getValue().equals(receiverScope)
                 && !SysMessageReceiverScope.USER.getValue().equals(receiverScope)) {
-            throw new BizException(CommonErrorCode.BAD_REQUEST, "客户端用户不支持按角色或部门接收");
+            throw new BizException(CommonErrorCode.VALIDATE_FAILED, "客户端用户不支持按角色或部门接收");
         }
         if (!SysMessageReceiverScope.ALL.getValue().equals(receiverScope)
                 && (receiverValues == null || receiverValues.isEmpty())) {
@@ -320,10 +328,10 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
             List<com.travis.monolith.system.message.api.request.SysMessageChannelContentReq>
                     contents) {
         if (channel == null || channel.isBlank()) {
-            throw new BizException(CommonErrorCode.BAD_REQUEST, "请选择推送通道");
+            throw new BizException(CommonErrorCode.VALIDATE_FAILED, "请选择推送通道");
         }
         if (!SysMessageChannel.contains(channel)) {
-            throw new BizException(CommonErrorCode.BAD_REQUEST, "消息通道不支持");
+            throw new BizException(CommonErrorCode.VALIDATE_FAILED, "消息通道不支持");
         }
         if (contents == null) {
             return;
@@ -337,7 +345,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                         .filter(Objects::nonNull)
                         .anyMatch(contentChannel -> !channel.equals(contentChannel));
         if (hasUnsupportedContentChannel) {
-            throw new BizException(CommonErrorCode.BAD_REQUEST, "渠道内容与推送通道不一致");
+            throw new BizException(CommonErrorCode.VALIDATE_FAILED, "渠道内容与推送通道不一致");
         }
     }
 
@@ -380,6 +388,118 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                                 ::getContent)
                 .filter(content -> content != null && !content.isBlank())
                 .findFirst()
-                .orElse(fallback);
+                .orElseGet(
+                        () ->
+                                contents.stream()
+                                        .map(
+                                                com.travis.monolith.system.message.api.request
+                                                                .SysMessageChannelContentReq
+                                                        ::getContent)
+                                        .filter(content -> content != null && !content.isBlank())
+                                        .findFirst()
+                                        .orElse(fallback));
+    }
+
+    private List<com.travis.monolith.system.message.api.request.SysMessageChannelContentReq>
+            renderChannelContents(
+                    String channel,
+                    List<com.travis.monolith.system.message.api.request.SysMessageChannelContentReq>
+                            contents) {
+        if (contents == null || contents.isEmpty()) {
+            return contents;
+        }
+        contents.forEach(
+                item -> {
+                    if (item.getTemplateId() == null) {
+                        return;
+                    }
+                    var template = messageTemplateMapper.selectById(item.getTemplateId());
+                    if (template == null || !Objects.equals(template.getChannel(), channel)) {
+                        throw new BizException(CommonErrorCode.VALIDATE_FAILED, "消息模板不存在或通道不匹配");
+                    }
+                    var params = parseTemplateParams(item.getTemplateParams());
+                    validateTemplateParams(template.getContentSchema(), params);
+                    item.setContent(renderTemplate(template.getContent(), params));
+                    item.setTitle(template.getTitle());
+                    item.setJumpUrl(template.getRedirectUrl());
+                });
+        return contents;
+    }
+
+    private Map<String, Object> parseTemplateParams(String templateParams) {
+        if (templateParams == null || templateParams.isBlank()) {
+            return Map.of();
+        }
+        Object value;
+        try {
+            value = JsonUtil.parseObject(templateParams, Object.class);
+        } catch (RuntimeException ex) {
+            throw new BizException(CommonErrorCode.VALIDATE_FAILED, "模板参数必须是合法JSON对象");
+        }
+        if (!(value instanceof Map<?, ?> params)) {
+            throw new BizException(CommonErrorCode.VALIDATE_FAILED, "模板参数必须是JSON对象");
+        }
+        return params.entrySet().stream()
+                .collect(
+                        java.util.stream.Collectors.toMap(
+                                entry -> String.valueOf(entry.getKey()),
+                                Map.Entry::getValue,
+                                (left, right) -> right,
+                                LinkedHashMap::new));
+    }
+
+    private Map<String, SysMessageTemplateParamConfig> parseContentSchema(String contentSchema) {
+        if (contentSchema == null || contentSchema.isBlank()) {
+            return Map.of();
+        }
+        try {
+            return JsonUtil.parseObject(
+                    contentSchema,
+                    new TypeReference<LinkedHashMap<String, SysMessageTemplateParamConfig>>() {});
+        } catch (RuntimeException ex) {
+            throw new BizException(CommonErrorCode.VALIDATE_FAILED, "模板字段结构配置错误");
+        }
+    }
+
+    private void validateTemplateParams(String contentSchema, Map<String, Object> params) {
+        var schema = parseContentSchema(contentSchema);
+        schema.forEach(
+                (key, config) -> {
+                    var value = params.get(key);
+                    var text = value == null ? "" : String.valueOf(value).trim();
+                    var label =
+                            config.getLabel() == null || config.getLabel().isBlank()
+                                    ? key
+                                    : config.getLabel();
+                    if (Boolean.TRUE.equals(config.getRequired()) && text.isBlank()) {
+                        throw new BizException(
+                                CommonErrorCode.VALIDATE_FAILED, "模板参数【" + label + "】不能为空");
+                    }
+                    var type = SysMessageTemplateParamType.of(config.getType());
+                    if (type == null) {
+                        throw new BizException(
+                                CommonErrorCode.VALIDATE_FAILED, "模板参数【" + label + "】类型不支持");
+                    }
+                    if (!type.validate(text)) {
+                        throw new BizException(
+                                CommonErrorCode.VALIDATE_FAILED,
+                                "模板参数【" + label + "】" + type.getInvalidMessage());
+                    }
+                });
+    }
+
+    private String renderTemplate(String templateContent, Map<String, Object> params) {
+        if (templateContent == null || templateContent.isBlank()) {
+            return templateContent;
+        }
+        var matcher = TEMPLATE_VARIABLE_PATTERN.matcher(templateContent);
+        var result = new StringBuffer();
+        while (matcher.find()) {
+            var value = params.get(matcher.group(1));
+            matcher.appendReplacement(
+                    result, Matcher.quoteReplacement(value == null ? "" : String.valueOf(value)));
+        }
+        matcher.appendTail(result);
+        return result.toString();
     }
 }

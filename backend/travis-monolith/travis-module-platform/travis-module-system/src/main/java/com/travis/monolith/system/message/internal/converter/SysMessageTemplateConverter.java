@@ -8,6 +8,7 @@ import com.travis.monolith.system.message.internal.entity.SysMessageTemplate;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
 
+/** 消息模板对象转换器。 */
 @Mapper(config = BaseMapperConfig.class)
 public interface SysMessageTemplateConverter {
     SysMessageTemplate toEntity(SysMessageTemplateCreateReq req);

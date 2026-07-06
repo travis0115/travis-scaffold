@@ -10,6 +10,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+/** 消息收件箱对外 API 默认实现。 */
 @Component
 @RequiredArgsConstructor
 public class SysMessageInboxApiImpl implements SysMessageInboxApi {

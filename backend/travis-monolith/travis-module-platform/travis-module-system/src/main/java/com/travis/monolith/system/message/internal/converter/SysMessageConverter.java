@@ -17,6 +17,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
 
+/** 消息推送对象转换器。 */
 @Mapper(config = BaseMapperConfig.class)
 public interface SysMessageConverter {
 

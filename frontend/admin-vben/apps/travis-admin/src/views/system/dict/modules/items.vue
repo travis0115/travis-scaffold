@@ -20,6 +20,7 @@ import { reloadDictOptions } from '#/utils/dict';
 import { filterAccessOptions, hasAccessCode, SYSTEM_PERMS } from '#/utils/permissions';
 
 import ItemModalComponent from './item-modal.vue';
+import { tagStyleOptions } from './tag-style-options';
 
 const props = defineProps<{
   dict?: SystemDictApi.SysDict;
@@ -32,14 +33,7 @@ const columns: VxeTableGridColumns<SystemDictApi.SysDictItem> = [
   {
     cellRender: {
       name: 'CellTag',
-      options: [
-        { color: 'default', label: '默认', value: 'default' },
-        { color: 'processing', label: '主要', value: 'primary' },
-        { color: 'success', label: '成功', value: 'success' },
-        { color: 'warning', label: '警告', value: 'warning' },
-        { color: 'error', label: '危险', value: 'danger' },
-        { color: 'blue', label: '信息', value: 'info' },
-      ],
+      options: tagStyleOptions,
     },
     field: 'tagStyle',
     title: $t('system.dict.item.tagStyle'),

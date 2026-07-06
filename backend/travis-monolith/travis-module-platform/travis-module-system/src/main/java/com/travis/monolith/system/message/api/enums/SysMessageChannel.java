@@ -6,12 +6,20 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+/** 消息推送通道枚举。 */
 @Getter
 @AllArgsConstructor
 public enum SysMessageChannel {
+    /** 站内信。 */
     IN_APP("IN_APP"),
+
+    /** 短信。 */
     SMS("SMS"),
+
+    /** 微信小程序。 */
     WECHAT_MP("WECHAT_MP"),
+
+    /** 微信公众号。 */
     WECHAT_OA("WECHAT_OA");
 
     private static final Set<String> VALUES =

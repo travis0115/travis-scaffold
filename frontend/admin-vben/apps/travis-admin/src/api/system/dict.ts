@@ -21,7 +21,7 @@ export namespace SystemDictApi {
     dictId: number;
     label: string;
     value: string;
-    tagStyle?: 'danger' | 'default' | 'info' | 'primary' | 'success' | 'warning';
+    tagStyle?: string;
     sort?: number;
     status: 0 | 1;
     remark?: string;

@@ -282,16 +282,6 @@ export const useFormSchema = (): VbenFormSchema[] => [
     label: '短信内容',
     rules: optionalString(5000, '短信内容长度不能超过5000个字符'),
   },
-  {
-    component: 'Input',
-    dependencies: {
-      show: (values) => values.channel === 'WECHAT_MP' || values.channel === 'WECHAT_OA',
-      triggerFields: ['channel'],
-    },
-    fieldName: 'miniProgramTemplateParams',
-    label: '微信模板参数',
-    rules: optionalString(4000, '模板参数长度不能超过4000个字符'),
-  },
   { component: 'Textarea', fieldName: 'remark', label: '备注' },
 ];
 

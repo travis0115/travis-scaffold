@@ -8,6 +8,7 @@ import com.travis.monolith.system.message.api.response.SysUserMessageRecentResp;
 import com.travis.monolith.system.message.internal.entity.SysMessageReceiver;
 import java.util.List;
 
+/** 消息接收记录服务。 */
 public interface SysMessageReceiverService extends IService<SysMessageReceiver> {
     List<SysUserMessageRecentResp> listRecent(Long userId, Integer limit);
 

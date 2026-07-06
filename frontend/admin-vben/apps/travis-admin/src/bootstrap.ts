@@ -1,7 +1,7 @@
 import { createApp, watchEffect } from 'vue';
 
 import { registerAccessDirective } from '@vben/access';
-import { setDefaultDrawerProps,setDefaultModalProps } from '@vben/common-ui';
+import { setDefaultDrawerProps, setDefaultModalProps } from '@vben/common-ui';
 import { registerLoadingDirective } from '@vben/common-ui/es/loading';
 import { preferences } from '@vben/preferences';
 import { initStores, setTimezoneHandler, useAccessStore } from '@vben/stores';
@@ -25,10 +25,11 @@ async function bootstrap(namespace: string) {
   // 初始化表单组件
   await initSetupVbenForm();
 
-    // 设置弹窗的默认配置
+  // 设置弹窗的默认配置
   setDefaultModalProps({
-    fullscreenButton: false,
+    class: 'w-[760px]',
     closeOnClickModal: false,
+    fullscreenButton: false,
   });
 
   // 设置抽屉的默认配置

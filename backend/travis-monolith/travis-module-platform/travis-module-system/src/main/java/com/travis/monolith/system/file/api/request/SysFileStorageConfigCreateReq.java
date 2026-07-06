@@ -2,6 +2,7 @@ package com.travis.monolith.system.file.api.request;
 
 import cn.hutool.core.util.StrUtil;
 import com.travis.infrastructure.common.validation.annotation.EnumValue;
+import com.travis.infrastructure.common.validation.annotation.JsonValue;
 import com.travis.monolith.system.common.api.enums.IsDefault;
 import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.file.api.enums.FileStorageType;
@@ -50,6 +51,7 @@ public class SysFileStorageConfigCreateReq {
     private String secretKey;
 
     @Size(max = 5000, message = "扩展配置长度不能超过5000")
+    @JsonValue(message = "扩展配置必须是合法JSON对象")
     private String meta;
 
     @NotNull(message = "是否默认不能为空")

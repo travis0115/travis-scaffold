@@ -6,6 +6,7 @@ import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
+/** 到期定时消息推送任务。 */
 @Slf4j
 public class SysMessageScheduledPushJob implements Job {
     private final SysMessageService messageService;

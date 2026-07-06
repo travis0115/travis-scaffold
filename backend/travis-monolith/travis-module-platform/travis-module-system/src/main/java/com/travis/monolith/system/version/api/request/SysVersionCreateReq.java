@@ -38,6 +38,6 @@ public class SysVersionCreateReq {
 
     /** 状态（0-草稿 1-已发布） */
     @EnumValue(value = Status.class, message = "状态值错误")
-    @NotNull(message = "状态值不允许为空")
+    @NotNull(message = "状态值不能为空")
     private Integer status;
 }

@@ -9,6 +9,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+/** 消息推送对外 API 默认实现。 */
 @Component
 @RequiredArgsConstructor
 public class SysMessageApiImpl implements SysMessageApi {

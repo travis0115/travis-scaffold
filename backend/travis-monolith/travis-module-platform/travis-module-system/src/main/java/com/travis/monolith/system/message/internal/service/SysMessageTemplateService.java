@@ -8,6 +8,7 @@ import com.travis.monolith.system.message.api.request.SysMessageTemplateUpdateRe
 import com.travis.monolith.system.message.api.response.SysMessageTemplateResp;
 import com.travis.monolith.system.message.internal.entity.SysMessageTemplate;
 
+/** 消息模板服务。 */
 public interface SysMessageTemplateService extends IService<SysMessageTemplate> {
     PageResp<SysMessageTemplateResp> page(SysMessageTemplatePageReq req);
 

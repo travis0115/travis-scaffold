@@ -1496,7 +1496,6 @@ onBeforeUnmount(() => {
     </template>
   </StorageConfigDrawer>
   <StorageModal
-    class="w-[760px]"
     :fullscreen-button="false"
     :title="storageModalTitle"
   >

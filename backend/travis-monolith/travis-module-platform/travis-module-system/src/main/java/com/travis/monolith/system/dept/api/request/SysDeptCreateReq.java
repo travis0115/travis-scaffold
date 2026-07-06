@@ -36,6 +36,6 @@ public class SysDeptCreateReq {
 
     /** 状态（0-禁用 1-启用） */
     @EnumValue(value = Status.class, message = "状态值错误")
-    @NotNull(message = "状态值不允许为空")
+    @NotNull(message = "状态值不能为空")
     private Integer status;
 }

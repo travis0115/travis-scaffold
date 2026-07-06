@@ -10,18 +10,12 @@ import { createDictItem, updateDictItem } from '#/api';
 import { $t } from '#/locales';
 import { getDictOptions, reloadDictOptions } from '#/utils/dict';
 
+import { tagStyleOptions } from './tag-style-options';
+
 const emit = defineEmits(['success']);
 const formData = ref<Record<string, any>>({});
 const dictId = ref(0);
 const dictName = ref('');
-const tagStyleOptions = [
-  { color: 'default', label: '默认', value: 'default' },
-  { color: 'processing', label: '主要', value: 'primary' },
-  { color: 'success', label: '成功', value: 'success' },
-  { color: 'warning', label: '警告', value: 'warning' },
-  { color: 'error', label: '危险', value: 'danger' },
-  { color: 'blue', label: '信息', value: 'info' },
-];
 
 const getTitle = computed(() => {
   return formData.value?.itemId

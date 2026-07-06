@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+/** 消息接收记录 Mapper。 */
 @Mapper
 public interface SysMessageReceiverMapper extends BaseMapperX<SysMessageReceiver> {
     @Delete(
