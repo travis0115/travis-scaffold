@@ -1,7 +1,7 @@
 package com.travis.monolith.system.message.internal.converter;
 
 import com.travis.infrastructure.common.mapstruct.BaseMapperConfig;
-import com.travis.monolith.system.message.api.response.SysUserMessagePageResp;
+import com.travis.monolith.system.message.api.response.SysUserMessageResp;
 import com.travis.monolith.system.message.api.response.SysUserMessageRecentResp;
 import com.travis.monolith.system.message.internal.entity.SysMessage;
 import com.travis.monolith.system.message.internal.entity.SysMessageReceiver;
@@ -26,7 +26,7 @@ public interface SysMessageReceiverConverter {
             expression = "java(receiver == null ? null : receiver.getReadTime())")
     @Mapping(target = "publishTime", source = "message.publishTime")
     @Mapping(target = "createTime", source = "message.createTime")
-    SysUserMessagePageResp toPageResp(SysMessage message, SysMessageReceiver receiver);
+    SysUserMessageResp toPageResp(SysMessage message, SysMessageReceiver receiver);
 
     @Mapping(target = "id", source = "message.id")
     @Mapping(target = "messageId", source = "message.id")

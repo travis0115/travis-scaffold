@@ -1,4 +1,18 @@
 package com.travis.monolith.system.message.api.response;
 
+import java.time.LocalDateTime;
+import lombok.Data;
+
 /** 用户收件箱最近消息响应对象。 */
-public class SysUserMessageRecentResp extends SysUserMessageBaseResp {}
+@Data
+public class SysUserMessageRecentResp {
+    private Long id;
+    private Long messageId;
+    private String title;
+    private String content;
+    private Integer messageType;
+    private Integer readStatus;
+    private LocalDateTime readTime;
+    private LocalDateTime publishTime;
+    private LocalDateTime createTime;
+}

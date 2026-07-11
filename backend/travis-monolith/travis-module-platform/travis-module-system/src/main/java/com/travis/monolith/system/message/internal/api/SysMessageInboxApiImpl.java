@@ -3,7 +3,7 @@ package com.travis.monolith.system.message.internal.api;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.message.api.SysMessageInboxApi;
 import com.travis.monolith.system.message.api.request.SysUserMessagePageReq;
-import com.travis.monolith.system.message.api.response.SysUserMessagePageResp;
+import com.travis.monolith.system.message.api.response.SysUserMessageResp;
 import com.travis.monolith.system.message.api.response.SysUserMessageRecentResp;
 import com.travis.monolith.system.message.internal.service.SysMessageReceiverService;
 import java.util.List;
@@ -24,7 +24,7 @@ public class SysMessageInboxApiImpl implements SysMessageInboxApi {
     }
 
     @Override
-    public PageResp<SysUserMessagePageResp> page(
+    public PageResp<SysUserMessageResp> page(
             String receiverType, Long userId, SysUserMessagePageReq req) {
         return messageReceiverService.page(receiverType, userId, req);
     }

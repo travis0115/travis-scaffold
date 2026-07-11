@@ -1,12 +1,13 @@
 package com.travis.monolith.system.message.api.response;
 
+import lombok.Data;
+
 import java.time.LocalDateTime;
 import java.util.List;
-import lombok.Data;
 
 /** 消息推送详情响应对象。 */
 @Data
-public class SysMessageDetailResp {
+public class SysMessageResp {
     private Long id;
     private String title;
     private String content;

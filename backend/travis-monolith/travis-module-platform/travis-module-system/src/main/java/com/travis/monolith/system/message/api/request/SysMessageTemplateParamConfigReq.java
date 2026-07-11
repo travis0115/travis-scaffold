@@ -6,7 +6,7 @@ import lombok.Data;
 
 /** 消息模板参数配置。 */
 @Data
-public class SysMessageTemplateParamConfig {
+public class SysMessageTemplateParamConfigReq {
     private String label;
 
     @EnumValue(value = SysMessageTemplateParamType.class, message = "参数类型错误")

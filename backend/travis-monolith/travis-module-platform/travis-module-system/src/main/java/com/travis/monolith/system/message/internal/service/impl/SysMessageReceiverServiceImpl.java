@@ -10,7 +10,7 @@ import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.monolith.system.message.api.request.SysUserMessagePageReq;
-import com.travis.monolith.system.message.api.response.SysUserMessagePageResp;
+import com.travis.monolith.system.message.api.response.SysUserMessageResp;
 import com.travis.monolith.system.message.api.response.SysUserMessageRecentResp;
 import com.travis.monolith.system.message.internal.converter.SysMessageReceiverConverter;
 import com.travis.monolith.system.message.internal.entity.SysMessage;
@@ -83,12 +83,12 @@ public class SysMessageReceiverServiceImpl
     }
 
     @Override
-    public PageResp<SysUserMessagePageResp> page(Long userId, SysUserMessagePageReq req) {
+    public PageResp<SysUserMessageResp> page(Long userId, SysUserMessagePageReq req) {
         return page(LoginType.ADMIN, userId, req);
     }
 
     @Override
-    public PageResp<SysUserMessagePageResp> page(
+    public PageResp<SysUserMessageResp> page(
             String receiverType, Long userId, SysUserMessagePageReq req) {
         var context = audienceContext(receiverType, userId);
         Page<SysMessage> page =
@@ -100,7 +100,7 @@ public class SysMessageReceiverServiceImpl
                         context.deptId(),
                         req.getTitle(),
                         req.getReadStatus());
-        Page<SysUserMessagePageResp> responsePage =
+        Page<SysUserMessageResp> responsePage =
                 new Page<>(page.getCurrent(), page.getSize(), page.getTotal());
         var stateMap = stateMap(receiverType, userId, page.getRecords());
         responsePage.setRecords(

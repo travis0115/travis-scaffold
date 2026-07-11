@@ -3,18 +3,30 @@ package com.travis.monolith.system.message.api.request;
 import cn.hutool.core.util.StrUtil;
 import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.common.validation.annotation.JsonValue;
+import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.web.core.annotation.SanitizeHtml;
 import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.message.api.enums.SysMessageChannel;
+import com.travis.monolith.system.message.api.enums.SysMessageTemplateParamType;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import tools.jackson.core.type.TypeReference;
+
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 /** 新增消息模板请求参数。 */
 @Data
 public class SysMessageTemplateCreateReq {
+    private static final Pattern PARAM_KEY_PATTERN = Pattern.compile("^[A-Za-z][A-Za-z0-9_]*$");
+    private static final Pattern TEMPLATE_PARAM_PATTERN =
+            Pattern.compile("\\{\\{\\s*([^{}]+?)\\s*}}");
+
     @NotBlank(message = "模板编码不能为空")
     @Size(max = 64, message = "模板编码长度不能超过64个字符")
     private String templateCode;
@@ -64,5 +76,64 @@ public class SysMessageTemplateCreateReq {
     @AssertTrue(message = "外部通道平台模板ID不能为空")
     public boolean isPlatformTemplateIdValid() {
         return !SysMessageChannel.isExternal(channel) || StrUtil.isNotBlank(platformTemplateId);
+    }
+
+    @AssertTrue(message = "字段参数配置错误")
+    public boolean isContentSchemaConfigValid() {
+        var schema = parseContentSchema();
+        return schema == null || schema.entrySet().stream().allMatch(this::isParamConfigValid);
+    }
+
+    @AssertTrue(message = "模板参数引用与字段结构不一致")
+    public boolean isTemplateParamUsageValid() {
+        var schema = parseContentSchema();
+        if (schema == null) {
+            return true;
+        }
+        var contentKeys = extractTemplateParamKeys();
+        return contentKeys != null && contentKeys.equals(schema.keySet());
+    }
+
+    private Map<String, SysMessageTemplateParamConfigReq> parseContentSchema() {
+        if (StrUtil.isBlank(contentSchema)) {
+            return Map.of();
+        }
+        try {
+            return JsonUtil.parseObject(
+                    contentSchema,
+                    new TypeReference<LinkedHashMap<String, SysMessageTemplateParamConfigReq>>() {});
+        } catch (RuntimeException ex) {
+            return null;
+        }
+    }
+
+    private boolean isParamConfigValid(Map.Entry<String, SysMessageTemplateParamConfigReq> entry) {
+        var key = entry.getKey();
+        var config = entry.getValue();
+        return StrUtil.isNotBlank(key)
+                && PARAM_KEY_PATTERN.matcher(key).matches()
+                && config != null
+                && StrUtil.isNotBlank(config.getType())
+                && SysMessageTemplateParamType.contains(config.getType())
+                && config.getRequired() != null
+                && isLengthValid(config.getLabel(), 100)
+                && isLengthValid(config.getDescription(), 255);
+    }
+
+    private LinkedHashSet<String> extractTemplateParamKeys() {
+        var keys = new LinkedHashSet<String>();
+        var matcher = TEMPLATE_PARAM_PATTERN.matcher(content);
+        while (matcher.find()) {
+            var key = matcher.group(1).trim();
+            if (!PARAM_KEY_PATTERN.matcher(key).matches()) {
+                return null;
+            }
+            keys.add(key);
+        }
+        return keys;
+    }
+
+    private boolean isLengthValid(String value, int max) {
+        return value == null || value.length() <= max;
     }
 }

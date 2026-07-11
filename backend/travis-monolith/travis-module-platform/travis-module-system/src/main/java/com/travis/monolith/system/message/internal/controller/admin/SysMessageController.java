@@ -18,8 +18,7 @@ import com.travis.monolith.system.file.api.response.FileUploadResp;
 import com.travis.monolith.system.message.api.request.SysMessageCreateReq;
 import com.travis.monolith.system.message.api.request.SysMessagePageReq;
 import com.travis.monolith.system.message.api.request.SysMessageUpdateReq;
-import com.travis.monolith.system.message.api.response.SysMessageDetailResp;
-import com.travis.monolith.system.message.api.response.SysMessagePageResp;
+import com.travis.monolith.system.message.api.response.SysMessageResp;
 import com.travis.monolith.system.message.internal.service.SysMessageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -39,13 +38,13 @@ public class SysMessageController {
 
     @GetMapping("/page")
     @SaCheckPermission(value = SystemPermission.MESSAGE_QUERY, type = LoginType.ADMIN)
-    public ApiResponse<PageResp<SysMessagePageResp>> page(@Valid SysMessagePageReq req) {
+    public ApiResponse<PageResp<SysMessageResp>> page(@Valid SysMessagePageReq req) {
         return ApiResponse.success(messageService.page(req));
     }
 
     @GetMapping("/{id}")
     @SaCheckPermission(value = SystemPermission.MESSAGE_QUERY, type = LoginType.ADMIN)
-    public ApiResponse<SysMessageDetailResp> getById(@PathVariable Long id) {
+    public ApiResponse<SysMessageResp> getById(@PathVariable Long id) {
         return ApiResponse.success(messageService.get(id));
     }
 

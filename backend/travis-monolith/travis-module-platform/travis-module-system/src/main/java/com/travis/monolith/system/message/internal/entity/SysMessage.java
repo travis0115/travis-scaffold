@@ -9,7 +9,6 @@ import lombok.EqualsAndHashCode;
 /** 消息推送实体。 */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("sys_message")
 public class SysMessage extends BaseEntity {
     private String title;
     private String content;

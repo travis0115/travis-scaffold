@@ -18,11 +18,10 @@ import com.travis.monolith.system.message.api.enums.SysMessageSourceType;
 import com.travis.monolith.system.message.api.enums.SysMessageTemplateParamType;
 import com.travis.monolith.system.message.api.request.SysMessageCreateReq;
 import com.travis.monolith.system.message.api.request.SysMessagePageReq;
-import com.travis.monolith.system.message.api.request.SysMessageTemplateParamConfig;
+import com.travis.monolith.system.message.api.request.SysMessageTemplateParamConfigReq;
 import com.travis.monolith.system.message.api.request.SysMessageUpdateReq;
 import com.travis.monolith.system.message.api.response.SysMessageChannelContentResp;
-import com.travis.monolith.system.message.api.response.SysMessageDetailResp;
-import com.travis.monolith.system.message.api.response.SysMessagePageResp;
+import com.travis.monolith.system.message.api.response.SysMessageResp;
 import com.travis.monolith.system.message.internal.converter.SysMessageConverter;
 import com.travis.monolith.system.message.internal.entity.SysMessage;
 import com.travis.monolith.system.message.internal.entity.SysMessageChannelContent;
@@ -84,7 +83,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     }
 
     @Override
-    public PageResp<SysMessagePageResp> page(SysMessagePageReq req) {
+    public PageResp<SysMessageResp> page(SysMessagePageReq req) {
         var wrapper =
                 new LambdaQueryWrapperX<SysMessage>()
                         .likeIfPresent(SysMessage::getTitle, req.getTitle())
@@ -97,7 +96,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     }
 
     @Override
-    public SysMessageDetailResp get(Long id) {
+    public SysMessageResp get(Long id) {
         var resp = converter.toDetailResp(getByIdOrThrow(id));
         resp.setContent(fileApi.resolveManagedImageSources(resp.getContent()));
         resp.setChannelContents(listChannelContents(id));
@@ -448,14 +447,14 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                                 LinkedHashMap::new));
     }
 
-    private Map<String, SysMessageTemplateParamConfig> parseContentSchema(String contentSchema) {
+    private Map<String, SysMessageTemplateParamConfigReq> parseContentSchema(String contentSchema) {
         if (contentSchema == null || contentSchema.isBlank()) {
             return Map.of();
         }
         try {
             return JsonUtil.parseObject(
                     contentSchema,
-                    new TypeReference<LinkedHashMap<String, SysMessageTemplateParamConfig>>() {});
+                    new TypeReference<LinkedHashMap<String, SysMessageTemplateParamConfigReq>>() {});
         } catch (RuntimeException ex) {
             throw new BizException(CommonErrorCode.VALIDATE_FAILED, "模板字段结构配置错误");
         }

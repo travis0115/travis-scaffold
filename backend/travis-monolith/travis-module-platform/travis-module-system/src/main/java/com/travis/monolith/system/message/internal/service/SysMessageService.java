@@ -5,15 +5,14 @@ import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.message.api.request.SysMessageCreateReq;
 import com.travis.monolith.system.message.api.request.SysMessagePageReq;
 import com.travis.monolith.system.message.api.request.SysMessageUpdateReq;
-import com.travis.monolith.system.message.api.response.SysMessageDetailResp;
-import com.travis.monolith.system.message.api.response.SysMessagePageResp;
+import com.travis.monolith.system.message.api.response.SysMessageResp;
 import com.travis.monolith.system.message.internal.entity.SysMessage;
 
 /** 消息推送服务。 */
 public interface SysMessageService extends IService<SysMessage> {
-    PageResp<SysMessagePageResp> page(SysMessagePageReq req);
+    PageResp<SysMessageResp> page(SysMessagePageReq req);
 
-    SysMessageDetailResp get(Long id);
+    SysMessageResp get(Long id);
 
     Long create(SysMessageCreateReq req);
 

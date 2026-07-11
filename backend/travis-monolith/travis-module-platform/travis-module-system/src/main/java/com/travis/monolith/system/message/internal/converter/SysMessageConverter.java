@@ -6,16 +6,16 @@ import com.travis.monolith.system.message.api.request.SysMessageChannelContentRe
 import com.travis.monolith.system.message.api.request.SysMessageCreateReq;
 import com.travis.monolith.system.message.api.request.SysMessageUpdateReq;
 import com.travis.monolith.system.message.api.response.SysMessageChannelContentResp;
-import com.travis.monolith.system.message.api.response.SysMessageDetailResp;
-import com.travis.monolith.system.message.api.response.SysMessagePageResp;
+import com.travis.monolith.system.message.api.response.SysMessageResp;
 import com.travis.monolith.system.message.internal.entity.SysMessage;
 import com.travis.monolith.system.message.internal.entity.SysMessageChannelContent;
-import java.util.Collection;
-import java.util.List;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
+
+import java.util.Collection;
+import java.util.List;
 
 /** 消息推送对象转换器。 */
 @Mapper(config = BaseMapperConfig.class)
@@ -28,10 +28,10 @@ public interface SysMessageConverter {
     void update(SysMessageUpdateReq req, @MappingTarget SysMessage message);
 
     @Mapping(target = "receiverValues", qualifiedByName = "parseReceiverValues")
-    SysMessagePageResp toPageResp(SysMessage message);
+    SysMessageResp toPageResp(SysMessage message);
 
     @Mapping(target = "receiverValues", qualifiedByName = "parseReceiverValues")
-    SysMessageDetailResp toDetailResp(SysMessage message);
+    SysMessageResp toDetailResp(SysMessage message);
 
     SysMessageChannelContent toChannelContentEntity(SysMessageChannelContentReq req);
 
