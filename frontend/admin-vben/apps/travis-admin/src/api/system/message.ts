@@ -47,6 +47,7 @@ export namespace SystemMessageApi {
     contentSchema?: string;
     createTime?: string;
     id: number;
+    isBuiltin: 0 | 1;
     platformTemplateId?: string;
     redirectUrl?: string;
     remark?: string;

@@ -19,5 +19,6 @@ public class SysMessageTemplate extends BaseEntity {
     private String content;
     private String redirectUrl;
     private Integer status;
+    private Integer isBuiltin;
     private String remark;
 }

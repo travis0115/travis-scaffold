@@ -19,6 +19,7 @@ public enum SystemErrorCode implements ErrorCode {
     ROLE_BUILTIN_NOT_DELETABLE("SYS_100", "系统内置角色不允许删除"),
     ROLE_NOT_MODIFIABLE("SYS_101", "该角色不允许修改或删除"),
     ROLE_CODE_EXISTS("SYS_102", "角色编码已存在"),
+    ROLE_ADMIN_BUILTIN_MODIFIABLE_ONLY("SYS_103", "系统内置数据不允许修改"),
 
     /* dept模块 200-299 */
     DEPT_PARENT_INVALID("SYS_200", "上级部门不能是当前部门或其下级部门"),
@@ -37,6 +38,8 @@ public enum SystemErrorCode implements ErrorCode {
     VERSION_EXISTS("SYS_800", "版本号已存在"),
 
     /* notice模块 900-999 */
+    MESSAGE_TEMPLATE_BUILTIN_NOT_DELETABLE("SYS_900", "系统内置消息模板不允许删除"),
+
     /* file模块 1000-1099 */
     FILE_STORAGE_DEFAULT_REQUIRED("SYS_1000", "系统内必须存在默认存储配置"),
     FILE_STORAGE_DEFAULT_NOT_DELETABLE("SYS_1001", "默认存储配置不允许删除或禁用"),

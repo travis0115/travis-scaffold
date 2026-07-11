@@ -957,6 +957,7 @@ CREATE TABLE `sys_message_template` (
   `content` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT '模板内容',
   `redirect_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '跳转地址',
   `status` tinyint NOT NULL DEFAULT '1' COMMENT '状态：0-禁用 1-启用',
+  `is_builtin` tinyint unsigned NOT NULL DEFAULT '0' COMMENT '是否系统内置 0-否 1-是',
   `remark` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '备注',
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
   `create_by` bigint DEFAULT NULL COMMENT '创建人ID',

@@ -225,6 +225,9 @@ const [Drawer, drawerApi] = useVbenDrawer({
     }
     if (!validateTemplateParamUsage(values.content)) return;
     delete values.inAppContent;
+    if (formData.value?.id) {
+      delete values.templateCode;
+    }
     await (formData.value?.id
       ? updateMessageTemplate(formData.value.id, values)
       : createMessageTemplate(values));
@@ -238,6 +241,14 @@ const [Drawer, drawerApi] = useVbenDrawer({
     if (data?.id) {
       const detail = await getMessageTemplateDetail(data.id);
       formData.value = detail;
+      formApi.updateSchema([
+        {
+          componentProps: {
+            disabled: true,
+          },
+          fieldName: 'templateCode',
+        },
+      ]);
       remark.value = detail.remark || '';
       status.value = detail.status ?? 1;
       setVariableRows(schemaToRows(detail.contentSchema));
@@ -247,6 +258,14 @@ const [Drawer, drawerApi] = useVbenDrawer({
       });
     } else {
       formData.value = undefined;
+      formApi.updateSchema([
+        {
+          componentProps: {
+            disabled: false,
+          },
+          fieldName: 'templateCode',
+        },
+      ]);
       remark.value = '';
       status.value = 1;
       setVariableRows([]);

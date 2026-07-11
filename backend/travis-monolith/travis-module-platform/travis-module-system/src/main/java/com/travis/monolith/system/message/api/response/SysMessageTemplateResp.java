@@ -16,6 +16,7 @@ public class SysMessageTemplateResp {
     private String content;
     private String redirectUrl;
     private Integer status;
+    private Integer isBuiltin;
     private String remark;
     private LocalDateTime createTime;
 }

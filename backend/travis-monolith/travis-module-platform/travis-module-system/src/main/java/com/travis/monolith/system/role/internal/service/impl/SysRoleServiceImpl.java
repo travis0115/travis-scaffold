@@ -5,6 +5,7 @@ import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
+import com.travis.monolith.system.common.api.BuiltinResourceGuard;
 import com.travis.monolith.system.common.api.enums.IsBuiltin;
 import com.travis.monolith.system.common.api.enums.Modifiable;
 import com.travis.monolith.system.common.api.enums.Status;
@@ -52,6 +53,8 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
 
     /** 对象转换器 */
     private final SysRoleConverter converter;
+
+    private final BuiltinResourceGuard builtinResourceGuard;
 
     /** 分页查询角色列表，支持按角色名称、编码、状态筛选 */
     @Override
@@ -114,6 +117,7 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
             })
     public void update(Long id, SysRoleUpdateReq req) {
         var role = getByIdOrThrow(id);
+        builtinResourceGuard.checkUpdate(role.getIsBuiltin());
         checkModifiable(role);
         // 检查角色编码唯一性（排除自身）
         if (req.getRoleCode() != null) {
@@ -141,6 +145,7 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
             })
     public void updateStatus(Long id, Integer status) {
         var role = getByIdOrThrow(id);
+        builtinResourceGuard.checkUpdate(role.getIsBuiltin());
         checkModifiable(role);
         role.setStatus(status);
         updateById(role);
@@ -183,6 +188,7 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
             })
     public void assignMenus(SysRoleMenuReq req) {
         var role = getByIdOrThrow(req.getRoleId());
+        builtinResourceGuard.checkUpdate(role.getIsBuiltin());
         checkModifiable(role);
         roleMenuMapper.delete(
                 new LambdaQueryWrapperX<SysRoleMenu>().eq(SysRoleMenu::getRoleId, req.getRoleId()));

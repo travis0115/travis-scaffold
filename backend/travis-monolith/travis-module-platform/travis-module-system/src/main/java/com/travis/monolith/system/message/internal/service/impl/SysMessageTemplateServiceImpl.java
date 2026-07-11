@@ -7,6 +7,9 @@ import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
+import com.travis.monolith.system.common.api.BuiltinResourceGuard;
+import com.travis.monolith.system.common.api.enums.IsBuiltin;
+import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.message.api.enums.SysMessageChannel;
 import com.travis.monolith.system.message.api.enums.SysMessageTemplateParamType;
 import com.travis.monolith.system.message.api.request.SysMessageTemplateCreateReq;
@@ -42,6 +45,7 @@ public class SysMessageTemplateServiceImpl
             Pattern.compile("\\{\\{\\s*([^{}]+?)\\s*}}");
 
     private final SysMessageTemplateConverter converter;
+    private final BuiltinResourceGuard builtinResourceGuard;
 
     @Override
     public PageResp<SysMessageTemplateResp> page(SysMessageTemplatePageReq req) {
@@ -76,9 +80,10 @@ public class SysMessageTemplateServiceImpl
     @CacheEvict(key = "'detail:'+#id")
     public void update(Long id, SysMessageTemplateUpdateReq req) {
         var entity = getByIdOrThrow(id);
+        builtinResourceGuard.checkUpdate(entity.getIsBuiltin());
         validateChannel(req.getChannel());
         validateAndNormalizeContent(req);
-        validateUnique(req.getTemplateCode(), req.getChannel(), id);
+        validateUnique(entity.getTemplateCode(), req.getChannel(), id);
         converter.update(req, entity);
         updateById(entity);
     }
@@ -87,6 +92,10 @@ public class SysMessageTemplateServiceImpl
     @Transactional
     @CacheEvict(key = "'detail:'+#id")
     public void delete(Long id) {
+        var entity = getByIdOrThrow(id);
+        if (IsBuiltin.YES.getValue().equals(entity.getIsBuiltin())) {
+            throw new BizException(SystemErrorCode.MESSAGE_TEMPLATE_BUILTIN_NOT_DELETABLE);
+        }
         removeById(id);
     }
 
@@ -135,12 +144,65 @@ public class SysMessageTemplateServiceImpl
         validateTemplateParamUsage(req.getContent(), schema);
     }
 
+    private void validateAndNormalizeContent(SysMessageTemplateUpdateReq req) {
+        if (SysMessageChannel.IN_APP.getValue().equals(req.getChannel())) {
+            if (!hasText(req.getTitle())) {
+                throw new BizException(CommonErrorCode.VALIDATE_FAILED, "模板标题不能为空");
+            }
+            if (!hasText(req.getContent())) {
+                throw new BizException(CommonErrorCode.VALIDATE_FAILED, "站内信模板内容不能为空");
+            }
+            req.setPlatformTemplateId(null);
+            var schema = validateAndNormalizeContentSchema(req);
+            validateTemplateParamUsage(req.getContent(), schema);
+            return;
+        }
+        if (SysMessageChannel.SMS.getValue().equals(req.getChannel())) {
+            req.setTitle(null);
+        } else if (!hasText(req.getTitle())) {
+            throw new BizException(CommonErrorCode.VALIDATE_FAILED, "模板标题不能为空");
+        }
+        if (!hasText(req.getPlatformTemplateId())) {
+            throw new BizException(CommonErrorCode.VALIDATE_FAILED, "平台模板ID不能为空");
+        }
+        if (!hasText(req.getContent())) {
+            throw new BizException(CommonErrorCode.VALIDATE_FAILED, "模板内容不能为空");
+        }
+        var schema = validateAndNormalizeContentSchema(req);
+        validateTemplateParamUsage(req.getContent(), schema);
+    }
+
     private boolean hasText(String value) {
         return value != null && !value.isBlank();
     }
 
     private Map<String, SysMessageTemplateParamConfig> validateAndNormalizeContentSchema(
             SysMessageTemplateCreateReq req) {
+        if (!hasText(req.getContentSchema())) {
+            req.setContentSchema(null);
+            return Map.of();
+        }
+        Map<String, SysMessageTemplateParamConfig> schema;
+        try {
+            schema =
+                    JsonUtil.parseObject(
+                            req.getContentSchema(),
+                            new TypeReference<
+                                    LinkedHashMap<String, SysMessageTemplateParamConfig>>() {});
+        } catch (RuntimeException ex) {
+            throw new BizException(CommonErrorCode.VALIDATE_FAILED, "字段结构必须是合法JSON对象");
+        }
+        if (schema == null || schema.isEmpty()) {
+            req.setContentSchema(null);
+            return Map.of();
+        }
+        schema.forEach(this::validateParamConfig);
+        req.setContentSchema(JsonUtil.toJsonString(schema));
+        return schema;
+    }
+
+    private Map<String, SysMessageTemplateParamConfig> validateAndNormalizeContentSchema(
+            SysMessageTemplateUpdateReq req) {
         if (!hasText(req.getContentSchema())) {
             req.setContentSchema(null);
             return Map.of();

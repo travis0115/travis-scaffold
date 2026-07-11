@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
+import com.travis.monolith.system.common.api.BuiltinResourceGuard;
 import com.travis.monolith.system.common.api.enums.IsBuiltin;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.file.api.request.SysFileFolderCreateReq;
@@ -31,6 +32,7 @@ public class SysFileFolderServiceImpl extends ServiceImplX<SysFileFolderMapper, 
 
     private final SysFileFolderConverter converter;
     private final SysFileService sysFileService;
+    private final BuiltinResourceGuard builtinResourceGuard;
 
     @Override
     @Cacheable(key = "'list:all'")
@@ -52,6 +54,7 @@ public class SysFileFolderServiceImpl extends ServiceImplX<SysFileFolderMapper, 
     @CacheEvict(key = "'list:all'")
     public void update(Long id, SysFileFolderUpdateReq req) {
         var folder = getByIdOrThrow(id);
+        builtinResourceGuard.checkUpdate(folder.getIsBuiltin());
         converter.update(req, folder);
         updateById(folder);
     }

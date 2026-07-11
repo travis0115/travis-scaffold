@@ -7,6 +7,7 @@ import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.redis.core.util.RedisUtil;
+import com.travis.monolith.system.common.api.BuiltinResourceGuard;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.config.api.request.SysConfigCreateReq;
 import com.travis.monolith.system.config.api.request.SysConfigPageReq;
@@ -38,6 +39,7 @@ public class SysConfigServiceImpl extends ServiceImplX<SysConfigMapper, SysConfi
     private static final Map<String, SFunction<SysConfig, ?>> SORT_COLUMNS = Map.of();
 
     private final SysConfigConverter converter;
+    private final BuiltinResourceGuard builtinResourceGuard;
 
     @Override
     public PageResp<SysConfigResp> page(SysConfigPageReq req) {
@@ -89,6 +91,7 @@ public class SysConfigServiceImpl extends ServiceImplX<SysConfigMapper, SysConfi
     @CacheEvict(key = "'detail:id:'+#id")
     public void update(Long id, SysConfigUpdateReq req) {
         var entity = getByIdOrThrow(id);
+        builtinResourceGuard.checkUpdate(entity.getIsBuiltin());
         converter.update(req, entity);
         updateById(entity);
         RedisUtil.deleteCacheKey("system:config", "detail:key:" + entity.getConfigKey());

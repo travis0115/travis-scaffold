@@ -158,6 +158,9 @@ export const useGridFormSchema = (): VbenFormSchema[] => [
 export function useColumns(
   onActionClick: OnActionClickFn<SystemMessageApi.MessageTemplate>,
 ): VxeTableGridColumns<SystemMessageApi.MessageTemplate> {
+  const isBuiltin = (row: Pick<SystemMessageApi.MessageTemplate, 'isBuiltin'>) =>
+    row.isBuiltin === 1;
+
   return [
     { field: 'templateCode', minWidth: 180, title: '模板编码' },
     { field: 'templateName', minWidth: 180, title: '模板名称' },
@@ -169,6 +172,15 @@ export function useColumns(
       field: 'channel',
       title: '推送通道',
       width: 130,
+    },
+    {
+      cellRender: {
+        attrs: { dictCode: 'sys_config_type' },
+        name: 'CellTag',
+      },
+      field: 'isBuiltin',
+      title: '模板类型',
+      width: 110,
     },
     { field: 'platformTemplateId', title: '平台模板ID', width: 180 },
     {
@@ -189,10 +201,19 @@ export function useColumns(
           onClick: onActionClick,
         },
         name: 'CellOperation',
-        options: filterAccessOptions(['edit', 'delete'], {
-          delete: SYSTEM_PERMS.messageTemplateDelete,
-          edit: SYSTEM_PERMS.messageTemplateUpdate,
-        }),
+        options: filterAccessOptions(
+          [
+            'edit',
+            {
+              code: 'delete',
+              show: (row: SystemMessageApi.MessageTemplate) => !isBuiltin(row),
+            },
+          ],
+          {
+            delete: SYSTEM_PERMS.messageTemplateDelete,
+            edit: SYSTEM_PERMS.messageTemplateUpdate,
+          },
+        ),
       },
       field: 'operation',
       fixed: 'right',

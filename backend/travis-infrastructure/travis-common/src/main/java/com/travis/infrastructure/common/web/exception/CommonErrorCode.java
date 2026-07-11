@@ -76,8 +76,9 @@ public enum CommonErrorCode implements ErrorCode {
     DISTRIBUTED_LOCK_FAILED("2205", "获取分布式锁失败，请稍后重试"),
 
     /** 授权 */
-    AUTH_LOGIN_BAD_CREDENTIALS("3000", "用户名或密码错误"),
-    AUTH_LOGIN_USER_DISABLED("3001", "账号已被禁用"),
+    AUTH_LOGIN_BAD_CREDENTIALS("2300", "用户名或密码错误"),
+    AUTH_LOGIN_USER_DISABLED("2301", "账号已被禁用"),
+
     ;
 
     private final String code;
