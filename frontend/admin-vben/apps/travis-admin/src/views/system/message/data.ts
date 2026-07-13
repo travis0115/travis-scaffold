@@ -39,6 +39,9 @@ function hasRichTextContent(value?: string) {
 export const messageStatusOptions = getDictOptions('sys_message_status');
 
 export const messagePushTypeOptions = getDictOptions('sys_message_push_type');
+const manualPushTypeOptions = messagePushTypeOptions.filter(
+  (option) => Number(option.value) !== 2,
+);
 
 export const messageChannelOptions = getDictOptions('sys_message_channel');
 
@@ -216,7 +219,7 @@ export const useFormSchema = (
     componentProps: {
       buttonStyle: 'solid',
       optionType: 'button',
-      options: messagePushTypeOptions,
+      options: manualPushTypeOptions,
     },
     defaultValue: 0,
     fieldName: 'pushType',
@@ -293,7 +296,7 @@ export const useGridFormSchema = (): VbenFormSchema[] => [
   { component: 'Input', fieldName: 'title', label: '消息标题' },
   {
     component: 'Select',
-    componentProps: { allowClear: true, options: messagePushTypeOptions },
+    componentProps: { allowClear: true, options: manualPushTypeOptions },
     fieldName: 'pushType',
     label: '推送方式',
   },

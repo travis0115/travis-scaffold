@@ -23,6 +23,8 @@ public interface SysMessageService extends IService<SysMessage> {
 
     void push(Long id);
 
+    void pushAutomatic(Long id);
+
     void revoke(Long id);
 
     void publishSourceMessage(SysSourceMessagePublishReq req);

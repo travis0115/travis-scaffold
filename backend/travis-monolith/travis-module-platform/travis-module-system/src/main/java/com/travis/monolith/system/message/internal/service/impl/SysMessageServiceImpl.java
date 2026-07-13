@@ -83,12 +83,13 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
 
     @Override
     public PageResp<SysMessageResp> page(SysMessagePageReq req) {
-        var wrapper =
-                new LambdaQueryWrapperX<SysMessage>()
-                        .likeIfPresent(SysMessage::getTitle, req.getTitle())
-                        .eqIfPresent(SysMessage::getPushType, req.getPushType())
-                        .eqIfPresent(SysMessage::getStatus, req.getStatus())
-                        .orderByDesc(SysMessage::getCreateTime);
+        var wrapper = new LambdaQueryWrapperX<SysMessage>();
+        wrapper.likeIfPresent(SysMessage::getTitle, req.getTitle())
+                .eqIfPresent(SysMessage::getPushType, req.getPushType())
+                .eqIfPresent(SysMessage::getStatus, req.getStatus());
+        wrapper.eq(SysMessage::getSourceType, SysMessageSourceType.MANUAL.getValue())
+                .ne(SysMessage::getPushType, SysMessagePushType.AUTO.getValue())
+                .orderByDesc(SysMessage::getCreateTime);
         if (req.getHasTemplate() != null) {
             wrapper.apply(
                     Boolean.TRUE.equals(req.getHasTemplate())
@@ -228,6 +229,23 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                 @CacheEvict(key = "'detail:'+#id"),
                 @CacheEvict(cacheNames = "system:message:inbox", allEntries = true)
             })
+    public void pushAutomatic(Long id) {
+        var entity = getByIdOrThrow(id);
+        ensureManualMessage(entity);
+        if (!SysMessageStatus.PENDING.getValue().equals(entity.getStatus())) {
+            throw new BizException(CommonErrorCode.BAD_REQUEST);
+        }
+        entity.setPushType(SysMessagePushType.AUTO.getValue());
+        publish(entity);
+    }
+
+    @Override
+    @Transactional
+    @Caching(
+            evict = {
+                @CacheEvict(key = "'detail:'+#id"),
+                @CacheEvict(cacheNames = "system:message:inbox", allEntries = true)
+            })
     public void revoke(Long id) {
         var entity = getByIdOrThrow(id);
         ensureManualMessage(entity);
@@ -296,7 +314,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
             return;
         }
 
-        entity.setPushType(SysMessagePushType.MANUAL.getValue());
+        entity.setPushType(SysMessagePushType.AUTO.getValue());
         entity.setStatus(SysMessageStatus.SENT.getValue());
         saveOrUpdate(entity);
         if (!created

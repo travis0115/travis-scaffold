@@ -11,7 +11,10 @@ public enum SysMessagePushType {
     MANUAL(0),
 
     /** 定时推送。 */
-    SCHEDULED(1);
+    SCHEDULED(1),
+
+    /** 自动推送。 */
+    AUTO(2);
 
     private final Integer value;
 }

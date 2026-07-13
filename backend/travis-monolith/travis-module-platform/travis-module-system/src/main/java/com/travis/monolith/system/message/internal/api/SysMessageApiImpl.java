@@ -60,7 +60,7 @@ public class SysMessageApiImpl implements SysMessageApi {
         request.setReceiverScope(SysMessageReceiverScope.USER.getValue());
         request.setReceiverValues(List.copyOf(userIds));
         Long messageId = messageService.create(request);
-        messageService.push(messageId);
+        messageService.pushAutomatic(messageId);
     }
 
     @Override
