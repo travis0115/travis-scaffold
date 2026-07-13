@@ -1,24 +1,34 @@
 <script lang="ts" setup>
+import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { SystemMessageApi } from '#/api';
 
 import { ref } from 'vue';
 
 import { JsonViewer, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
-import { Button, Checkbox, Input, message, RadioGroup, Select } from 'antdv-next';
+
+import {
+  Button,
+  Checkbox,
+  Input,
+  message,
+  RadioGroup,
+  Select,
+} from 'antdv-next';
 
 import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   createMessageTemplate,
   getMessageTemplateDetail,
   updateMessageTemplate,
 } from '#/api';
 
-import { useFormSchema } from './data';
 import {
   isMessageTemplateParamType,
   messageTemplateParamTypeOptions,
 } from '../message/param-types';
+import { useFormSchema } from './data';
 
 const emit = defineEmits(['success']);
 const formData = ref<SystemMessageApi.MessageTemplate>();
@@ -27,20 +37,68 @@ const remark = ref('');
 const status = ref(1);
 const variableRows = ref<VariableRow[]>([]);
 const editingVariableRows = ref<VariableRow[]>([]);
-const [Form, formApi] = useVbenForm({ schema: useFormSchema(), showDefaultActions: false });
+const [Form, formApi] = useVbenForm({
+  schema: useFormSchema(syncTemplateParamsFromContent),
+  showDefaultActions: false,
+});
 const [ParamModal, paramModalApi] = useVbenModal({
   onConfirm() {
     confirmParamConfig();
   },
+  async onOpened() {
+    await paramGridApi.grid.loadData(editingVariableRows.value);
+  },
 });
 
 type VariableRow = {
+  _rowId: number;
   description?: string;
   key: string;
   label?: string;
   required: boolean;
   type: string;
 };
+let variableRowSequence = 0;
+
+const [ParamGrid, paramGridApi] = useVbenVxeGrid({
+  gridOptions: {
+    columns: [
+      { field: 'key', minWidth: 150, slots: { default: 'key' }, title: '参数名' },
+      {
+        field: 'label',
+        minWidth: 150,
+        slots: { default: 'label' },
+        title: '显示名称',
+      },
+      { field: 'type', minWidth: 140, slots: { default: 'type' }, title: '类型' },
+      {
+        align: 'center',
+        field: 'required',
+        slots: { default: 'required' },
+        title: '必填',
+        width: 80,
+      },
+      {
+        field: 'description',
+        minWidth: 180,
+        slots: { default: 'description' },
+        title: '说明',
+      },
+      {
+        align: 'center',
+        field: 'action',
+        fixed: 'right',
+        slots: { default: 'action' },
+        title: '操作',
+        width: 80,
+      },
+    ],
+    height: '100%',
+    pagerConfig: false as unknown as VxeTableGridOptions<VariableRow>['pagerConfig'],
+    rowConfig: { keyField: '_rowId' },
+    toolbarConfig: { enabled: false },
+  } as VxeTableGridOptions<VariableRow>,
+});
 
 const statusOptions = [
   { label: '禁用', value: 0 },
@@ -53,7 +111,9 @@ function parseJsonObject(value?: string) {
   if (!value) return undefined;
   try {
     const parsed = JSON.parse(value);
-    return parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)
+    return parsed !== null &&
+      typeof parsed === 'object' &&
+      !Array.isArray(parsed)
       ? (parsed as Record<string, any>)
       : undefined;
   } catch {
@@ -65,8 +125,10 @@ function schemaToRows(value?: string) {
   const schema = parseJsonObject(value);
   if (!schema) return [];
   return Object.entries(schema).map(([key, item]) => {
-    const config = item && typeof item === 'object' && !Array.isArray(item) ? item : {};
+    const config =
+      item && typeof item === 'object' && !Array.isArray(item) ? item : {};
     return {
+      _rowId: ++variableRowSequence,
       description: config.description ? String(config.description) : undefined,
       key,
       label: config.label ? String(config.label) : undefined,
@@ -91,10 +153,12 @@ function rowsToSchema(rows = variableRows.value) {
       .map((row) => [
         row.key,
         {
-          ...(row.label?.trim() ? { label: row.label.trim() } : {}),
+          label: row.label?.trim() ?? '',
           type: row.type || 'text',
           required: row.required,
-          ...(row.description?.trim() ? { description: row.description.trim() } : {}),
+          ...(row.description?.trim()
+            ? { description: row.description.trim() }
+            : {}),
         },
       ]),
   );
@@ -102,24 +166,35 @@ function rowsToSchema(rows = variableRows.value) {
 
 function updateContentSchemaPreview() {
   const schema = rowsToSchema();
-  contentSchemaPreview.value = Object.keys(schema).length > 0 ? schema : undefined;
+  contentSchemaPreview.value =
+    Object.keys(schema).length > 0 ? schema : undefined;
 }
 
 function setVariableRows(rows: VariableRow[]) {
-  variableRows.value = rows;
+  variableRows.value = rows.map((row) => ({
+    ...row,
+    _rowId: row._rowId || ++variableRowSequence,
+  }));
   updateContentSchemaPreview();
 }
 
-function addVariableRow() {
-  editingVariableRows.value.push({
+async function addVariableRow() {
+  const row = {
+    _rowId: ++variableRowSequence,
     key: '',
+    label: '',
     required: true,
     type: 'text',
-  });
+  };
+  editingVariableRows.value.push(row);
+  await paramGridApi.grid.insertAt(row, -1);
 }
 
-function removeVariableRow(index: number) {
-  editingVariableRows.value.splice(index, 1);
+async function removeVariableRow(row: VariableRow) {
+  editingVariableRows.value = editingVariableRows.value.filter(
+    (item) => item !== row,
+  );
+  await paramGridApi.grid.remove(row);
 }
 
 function validateVariableRows(rows = variableRows.value) {
@@ -168,6 +243,30 @@ function extractTemplateParamKeys(content?: string) {
   return [...new Set(keys)];
 }
 
+async function syncTemplateParamsFromContent() {
+  const values = await formApi.getValues();
+  if (values.channel !== 'IN_APP') return;
+  const keys = extractTemplateParamKeys(values.inAppContent);
+  if (!keys) return;
+  const existingRows = new Map(
+    variableRows.value.map((row) => [row.key.trim(), row]),
+  );
+  setVariableRows(
+    keys.map((key) => {
+      const existingRow = existingRows.get(key);
+      return existingRow
+        ? { ...existingRow }
+        : {
+            _rowId: ++variableRowSequence,
+            key,
+            label: '',
+            required: true,
+            type: 'text',
+          };
+    }),
+  );
+}
+
 function validateTemplateParamUsage(content?: string) {
   const contentKeys = extractTemplateParamKeys(content);
   if (!contentKeys) return false;
@@ -193,6 +292,9 @@ function openParamModal() {
 }
 
 function confirmParamConfig() {
+  editingVariableRows.value = [
+    ...paramGridApi.grid.getTableData().fullData,
+  ] as VariableRow[];
   if (!validateVariableRows(editingVariableRows.value)) return;
   setVariableRows(cloneRows(editingVariableRows.value));
   paramModalApi.close();
@@ -276,16 +378,23 @@ const [Drawer, drawerApi] = useVbenDrawer({
 </script>
 
 <template>
-  <Drawer class="w-full max-w-220" :title="formData?.id ? '编辑消息模板' : '新增消息模板'">
+  <Drawer
+    class="w-full max-w-220"
+    :title="formData?.id ? '编辑消息模板' : '新增消息模板'"
+  >
     <Form />
     <div class="relative flex flex-row items-start pb-4">
-      <div class="mr-2 flex w-[100px] shrink-0 justify-end pt-1 text-sm font-medium leading-6">
+      <div
+        class="mr-2 flex w-[100px] shrink-0 justify-end pt-1 text-sm font-medium leading-6"
+      >
         模板参数
       </div>
       <div class="min-w-0 flex-auto overflow-hidden p-px">
         <div class="w-full rounded border p-3">
           <div class="mb-2 flex justify-end">
-            <Button size="small" type="primary" @click="openParamModal">参数配置</Button>
+            <Button size="small" type="primary" @click="openParamModal">
+              参数配置
+            </Button>
           </div>
           <JsonViewer
             v-if="contentSchemaPreview"
@@ -301,7 +410,9 @@ const [Drawer, drawerApi] = useVbenDrawer({
       </div>
     </div>
     <div class="relative flex flex-row items-start pb-4">
-      <div class="mr-2 flex w-[100px] shrink-0 justify-end pt-1 text-sm font-medium leading-6">
+      <div
+        class="mr-2 flex w-[100px] shrink-0 justify-end pt-1 text-sm font-medium leading-6"
+      >
         备注
       </div>
       <div class="min-w-0 flex-auto overflow-hidden p-px">
@@ -309,11 +420,13 @@ const [Drawer, drawerApi] = useVbenDrawer({
           v-model="remark"
           class="min-h-20 w-full rounded border px-3 py-2 text-sm"
           maxlength="255"
-        />
+        ></textarea>
       </div>
     </div>
     <div class="relative flex flex-row items-center pb-4">
-      <div class="mr-2 flex w-[100px] shrink-0 justify-end text-sm font-medium leading-6">
+      <div
+        class="mr-2 flex w-[100px] shrink-0 justify-end text-sm font-medium leading-6"
+      >
         状态
       </div>
       <div class="min-w-0 flex-auto overflow-hidden p-px">
@@ -325,9 +438,13 @@ const [Drawer, drawerApi] = useVbenDrawer({
         />
       </div>
     </div>
-    <ParamModal class="h-[620px] w-[760px]" content-class="min-h-0">
+    <ParamModal
+      class="h-[620px] w-[1000px]"
+      content-class="min-h-0"
+      header-class="py-3!"
+    >
       <template #title>
-        <div class="flex w-full items-center justify-between pr-6">
+        <div class="flex w-full items-center justify-between pr-10">
           <span>参数配置</span>
           <Button size="small" type="primary" @click="addVariableRow">
             <Plus class="size-4" />
@@ -335,79 +452,52 @@ const [Drawer, drawerApi] = useVbenDrawer({
           </Button>
         </div>
       </template>
-      <div class="h-full rounded border p-3">
-        <div class="h-full overflow-x-auto overflow-y-scroll [scrollbar-gutter:stable]">
-          <table class="w-full min-w-180 table-fixed text-left text-sm">
-            <colgroup>
-              <col style="width: 18%" />
-              <col style="width: 18%" />
-              <col style="width: 18%" />
-              <col style="width: 10%" />
-              <col style="width: 24%" />
-              <col style="width: 12%" />
-            </colgroup>
-            <thead class="text-xs text-gray-500">
-              <tr>
-                <th class="px-2 py-2">参数名</th>
-                <th class="px-2 py-2">显示名称</th>
-                <th class="px-2 py-2">类型</th>
-                <th class="px-2 py-2 text-center">必填</th>
-                <th class="px-2 py-2">说明</th>
-                <th class="px-2 py-2 text-center">操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="editingVariableRows.length === 0">
-                <td class="px-2 py-6 text-center text-gray-400" colspan="6">
-                  暂无参数
-                </td>
-              </tr>
-              <tr v-for="(row, index) in editingVariableRows" :key="index" class="border-t">
-                <td class="px-2 py-2">
-                  <Input
-                    v-model:value="row.key"
-                    class="w-full"
-                    placeholder="请输入参数名"
-                    size="small"
-                  />
-                </td>
-                <td class="px-2 py-2">
-                  <Input
-                    v-model:value="row.label"
-                    class="w-full"
-                    placeholder="请输入显示名称"
-                    size="small"
-                  />
-                </td>
-                <td class="px-2 py-2">
-                  <Select
-                    v-model:value="row.type"
-                    class="w-full"
-                    :options="messageTemplateParamTypeOptions"
-                    size="small"
-                  />
-                </td>
-                <td class="px-2 py-2 text-center">
-                  <Checkbox v-model:checked="row.required" />
-                </td>
-                <td class="px-2 py-2">
-                  <Input
-                    v-model:value="row.description"
-                    class="w-full"
-                    placeholder="请输入说明"
-                    size="small"
-                  />
-                </td>
-                <td class="px-2 py-2 text-center">
-                  <Button danger size="small" type="link" @click="removeVariableRow(index)">
-                    删除
-                  </Button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <ParamGrid>
+        <template #key="{ row }">
+          <Input v-model:value="row.key" placeholder="请输入参数名" size="small" />
+        </template>
+        <template #label="{ row }">
+          <Input
+            v-model:value="row.label"
+            placeholder="请输入显示名称"
+            size="small"
+          />
+        </template>
+        <template #type="{ row }">
+          <Select
+            v-model:value="row.type"
+            class="param-type-select w-full"
+            :options="messageTemplateParamTypeOptions"
+            size="small"
+          />
+        </template>
+        <template #required="{ row }">
+          <Checkbox v-model:checked="row.required" />
+        </template>
+        <template #description="{ row }">
+          <Input
+            v-model:value="row.description"
+            placeholder="请输入说明"
+            size="small"
+          />
+        </template>
+        <template #action="{ row }">
+          <Button danger size="small" type="link" @click="removeVariableRow(row)">
+            删除
+          </Button>
+        </template>
+      </ParamGrid>
     </ParamModal>
   </Drawer>
 </template>
+
+<style scoped>
+:deep(.param-type-select),
+:deep(.param-type-select .ant-select-selector),
+:deep(.param-type-select .ant-select-selection-item),
+:deep(.param-type-select .ant-select-selection-placeholder),
+:deep(.param-type-select .ant-select-selection-wrap) {
+  justify-content: flex-start !important;
+  text-align: left !important;
+}
+</style>

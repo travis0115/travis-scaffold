@@ -23,7 +23,7 @@ public interface SysMessageMapper extends BaseMapperX<SysMessage> {
              AND r.receiver_id = #{userId}
              AND r.is_deleted = 0
             WHERE m.is_deleted = 0
-              AND m.status = 2
+              AND m.status = 1
               AND m.receiver_type = #{receiverType}
               AND (m.channel = 'IN_APP' OR m.enable_inbox_copy = 1)
               AND m.publish_time &lt;= NOW()
@@ -40,6 +40,9 @@ public interface SysMessageMapper extends BaseMapperX<SysMessage> {
               </if>
               <if test="title != null and title != ''">
                 AND m.title LIKE CONCAT('%', #{title}, '%')
+              </if>
+              <if test="messageType != null">
+                AND m.message_type = #{messageType}
               </if>
               AND (
                 m.receiver_scope = 0
@@ -77,6 +80,7 @@ public interface SysMessageMapper extends BaseMapperX<SysMessage> {
             @Param("roleIds") List<Long> roleIds,
             @Param("deptId") Long deptId,
             @Param("title") String title,
+            @Param("messageType") Integer messageType,
             @Param("readStatus") Integer readStatus);
 
     @Select(
@@ -90,7 +94,7 @@ public interface SysMessageMapper extends BaseMapperX<SysMessage> {
              AND r.receiver_id = #{userId}
              AND r.is_deleted = 0
             WHERE m.is_deleted = 0
-              AND m.status = 2
+              AND m.status = 1
               AND m.receiver_type = #{receiverType}
               AND (m.channel = 'IN_APP' OR m.enable_inbox_copy = 1)
               AND m.publish_time &lt;= NOW()
@@ -140,7 +144,7 @@ public interface SysMessageMapper extends BaseMapperX<SysMessage> {
              AND r.receiver_id = #{userId}
              AND r.is_deleted = 0
             WHERE m.is_deleted = 0
-              AND m.status = 2
+              AND m.status = 1
               AND m.receiver_type = #{receiverType}
               AND (m.channel = 'IN_APP' OR m.enable_inbox_copy = 1)
               AND m.publish_time &lt;= NOW()

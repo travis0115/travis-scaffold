@@ -51,30 +51,25 @@ async function getOnlineUserCount() {
   return requestClient.get<number>('/system/user/online-count');
 }
 
-async function getUserOptions(params: { keyword?: string; limit?: number }) {
-  return requestClient.get<SystemUserApi.UserOption[]>('/system/user/options', {
-    params,
-  });
-}
-
-async function getUserOptionsByIds(ids: number[]) {
-  return requestClient.get<SystemUserApi.UserOption[]>(
-    '/system/user/options/by-ids',
-    { params: { ids } },
+async function getAppUserPage(params: Recordable<any>) {
+  return requestClient.get<PageResp<SystemUserApi.UserOption>>(
+    '/app/user/page',
+    { params },
   );
 }
 
-async function getAppUserOptions(params: { keyword?: string; limit?: number }) {
-  return requestClient.get<SystemUserApi.UserOption[]>('/app/user/options', {
-    params,
+async function getUserOptionsByIds(ids: Array<number | string>) {
+  return requestClient.get<SystemUserApi.UserOption[]>('/system/user/options/by-ids', {
+    params: { ids },
+    paramsSerializer: 'repeat',
   });
 }
 
-async function getAppUserOptionsByIds(ids: number[]) {
-  return requestClient.get<SystemUserApi.UserOption[]>(
-    '/app/user/options/by-ids',
-    { params: { ids } },
-  );
+async function getAppUserOptionsByIds(ids: Array<number | string>) {
+  return requestClient.get<SystemUserApi.UserOption[]>('/app/user/options/by-ids', {
+    params: { ids },
+    paramsSerializer: 'repeat',
+  });
 }
 
 /**
@@ -135,11 +130,10 @@ export {
   assignUserRoles,
   createUser,
   deleteUser,
-  getOnlineUserCount,
-  getAppUserOptions,
   getAppUserOptionsByIds,
+  getAppUserPage,
+  getOnlineUserCount,
   getUserDetail,
-  getUserOptions,
   getUserOptionsByIds,
   getUserPage,
   resetUserPassword,

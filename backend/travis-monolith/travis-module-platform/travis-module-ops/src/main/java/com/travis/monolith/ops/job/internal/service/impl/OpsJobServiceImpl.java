@@ -9,6 +9,7 @@ import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.quartz.core.QuartzJobHandlerRegistry;
 import com.travis.monolith.ops.job.api.OpsJobErrorCode;
+import com.travis.monolith.ops.job.api.enums.OpsJobStatus;
 import com.travis.monolith.ops.job.api.request.*;
 import com.travis.monolith.ops.job.api.response.OpsJobBaseResp;
 import com.travis.monolith.ops.job.api.response.OpsJobDetailResp;
@@ -99,7 +100,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
     private void createJob(OpsJobWriteReq req) {
         validateUserScope(req);
         OpsJob job = buildEntity(req);
-        job.setStatus(0);
+        job.setStatus(OpsJobStatus.DISABLED.getValue());
         save(job);
         quartzJobManager.schedule(job);
     }
@@ -129,13 +130,13 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
     @CacheEvict(key = "'detail:'+#id")
     public void changeStatus(Long id, Integer status) {
         OpsJob job = getRequired(id);
-        if (Integer.valueOf(1).equals(status)) {
+        if (OpsJobStatus.ENABLED.getValue().equals(status)) {
             ensureHandlerExists(job.getHandlerName());
             quartzJobManager.resume(id);
-            job.setStatus(1);
+            job.setStatus(OpsJobStatus.ENABLED.getValue());
         } else {
             quartzJobManager.pause(id);
-            job.setStatus(0);
+            job.setStatus(OpsJobStatus.DISABLED.getValue());
         }
         updateById(job);
     }
@@ -156,7 +157,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         OpsJob source = getRequired(id);
         var copy = converter.copy(source);
         copy.setJobName(source.getJobName() + "-副本");
-        copy.setStatus(0);
+        copy.setStatus(OpsJobStatus.DISABLED.getValue());
         save(copy);
         quartzJobManager.schedule(copy);
     }

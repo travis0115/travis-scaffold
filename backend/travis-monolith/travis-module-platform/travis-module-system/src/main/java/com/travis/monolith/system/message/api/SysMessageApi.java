@@ -1,5 +1,6 @@
 package com.travis.monolith.system.message.api;
 
+import com.travis.monolith.system.message.api.request.SysSourceMessagePublishReq;
 import java.util.Collection;
 
 /** 消息推送模块对外发布 API。 */
@@ -21,4 +22,10 @@ public interface SysMessageApi {
             Collection<Long> userIds,
             String sourceType,
             String sourceId);
+
+    void publishSourceMessage(SysSourceMessagePublishReq req);
+
+    void revokeSourceMessage(String sourceType, String sourceId, String receiverType);
+
+    void deleteSourceMessage(String sourceType, String sourceId, String receiverType);
 }

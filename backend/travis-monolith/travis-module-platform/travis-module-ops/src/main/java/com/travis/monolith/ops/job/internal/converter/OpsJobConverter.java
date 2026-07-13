@@ -2,6 +2,7 @@ package com.travis.monolith.ops.job.internal.converter;
 
 import com.travis.infrastructure.common.mapstruct.BaseMapperConfig;
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
+import com.travis.monolith.ops.job.api.enums.OpsJobMisfirePolicy;
 import com.travis.monolith.ops.job.api.request.OpsJobWriteReq;
 import com.travis.monolith.ops.job.api.response.OpsJobDetailResp;
 import com.travis.monolith.ops.job.api.response.OpsJobExportResp;
@@ -166,7 +167,7 @@ public interface OpsJobConverter {
 
     @Named("defaultMisfirePolicy")
     default Integer defaultMisfirePolicy(Integer misfirePolicy) {
-        return misfirePolicy == null ? 0 : misfirePolicy;
+        return misfirePolicy == null ? OpsJobMisfirePolicy.SMART.getValue() : misfirePolicy;
     }
 
     @Named("defaultLogRetentionDays")

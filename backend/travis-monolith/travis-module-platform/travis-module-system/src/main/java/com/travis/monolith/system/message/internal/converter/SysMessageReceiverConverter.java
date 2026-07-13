@@ -1,8 +1,9 @@
 package com.travis.monolith.system.message.internal.converter;
 
 import com.travis.infrastructure.common.mapstruct.BaseMapperConfig;
-import com.travis.monolith.system.message.api.response.SysUserMessageResp;
+import com.travis.monolith.system.message.api.response.SysUserMessageDetailResp;
 import com.travis.monolith.system.message.api.response.SysUserMessageRecentResp;
+import com.travis.monolith.system.message.api.response.SysUserMessageResp;
 import com.travis.monolith.system.message.internal.entity.SysMessage;
 import com.travis.monolith.system.message.internal.entity.SysMessageReceiver;
 import org.mapstruct.Mapper;
@@ -20,7 +21,7 @@ public interface SysMessageReceiverConverter {
     @Mapping(
             target = "readStatus",
             expression =
-                    "java(receiver == null || receiver.getReadStatus() == null ? 0 : receiver.getReadStatus())")
+                    "java(receiver == null || receiver.getReadStatus() == null ? com.travis.monolith.system.message.api.enums.SysMessageReadStatus.UNREAD.getValue() : receiver.getReadStatus())")
     @Mapping(
             target = "readTime",
             expression = "java(receiver == null ? null : receiver.getReadTime())")
@@ -36,11 +37,24 @@ public interface SysMessageReceiverConverter {
     @Mapping(
             target = "readStatus",
             expression =
-                    "java(receiver == null || receiver.getReadStatus() == null ? 0 : receiver.getReadStatus())")
+                    "java(receiver == null || receiver.getReadStatus() == null ? com.travis.monolith.system.message.api.enums.SysMessageReadStatus.UNREAD.getValue() : receiver.getReadStatus())")
     @Mapping(
             target = "readTime",
             expression = "java(receiver == null ? null : receiver.getReadTime())")
     @Mapping(target = "publishTime", source = "message.publishTime")
     @Mapping(target = "createTime", source = "message.createTime")
     SysUserMessageRecentResp toRecentResp(SysMessage message, SysMessageReceiver receiver);
+
+    @Mapping(target = "id", source = "message.id")
+    @Mapping(target = "messageId", source = "message.id")
+    @Mapping(
+            target = "readStatus",
+            expression =
+                    "java(receiver == null || receiver.getReadStatus() == null ? com.travis.monolith.system.message.api.enums.SysMessageReadStatus.UNREAD.getValue() : receiver.getReadStatus())")
+    @Mapping(
+            target = "readTime",
+            expression = "java(receiver == null ? null : receiver.getReadTime())")
+    @Mapping(target = "createTime", source = "message.createTime")
+    @Mapping(target = "metadata", ignore = true)
+    SysUserMessageDetailResp toDetailResp(SysMessage message, SysMessageReceiver receiver);
 }

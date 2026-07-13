@@ -21,5 +21,7 @@ public interface SysNoticeService extends IService<SysNotice> {
 
     void updateStatus(Long id, Integer status);
 
+    void updatePinned(Long id, Integer isPinned);
+
     void delete(Long id);
 }

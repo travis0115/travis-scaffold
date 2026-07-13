@@ -3,9 +3,12 @@ package com.travis.monolith.app.user.internal.controller.admin;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
+import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.monolith.app.user.api.request.AppUserPageReq;
 import com.travis.monolith.app.user.api.response.AppUserOptionResp;
 import com.travis.monolith.app.user.internal.service.AppUserService;
 import com.travis.monolith.system.common.api.constant.SystemPermission;
+import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -22,17 +25,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class AppUserController {
     private final AppUserService userService;
 
-    @GetMapping("/options")
+    @GetMapping("/page")
     @SaCheckPermission(value = SystemPermission.USER_QUERY, type = LoginType.ADMIN)
-    public ApiResponse<List<AppUserOptionResp>> options(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(defaultValue = "20") int limit) {
-        return ApiResponse.success(userService.listOptions(keyword, limit));
+    public ApiResponse<PageResp<AppUserOptionResp>> page(@Valid AppUserPageReq req) {
+        return ApiResponse.success(userService.page(req));
     }
 
     @GetMapping("/options/by-ids")
     @SaCheckPermission(value = SystemPermission.USER_QUERY, type = LoginType.ADMIN)
-    public ApiResponse<List<AppUserOptionResp>> optionsByIds(@RequestParam List<Long> ids) {
+    public ApiResponse<List<AppUserOptionResp>> listOptionsByIds(@RequestParam List<Long> ids) {
         return ApiResponse.success(userService.listOptionsByIds(ids));
     }
 }

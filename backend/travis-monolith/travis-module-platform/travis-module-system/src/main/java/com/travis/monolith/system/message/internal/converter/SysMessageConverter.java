@@ -9,13 +9,12 @@ import com.travis.monolith.system.message.api.response.SysMessageChannelContentR
 import com.travis.monolith.system.message.api.response.SysMessageResp;
 import com.travis.monolith.system.message.internal.entity.SysMessage;
 import com.travis.monolith.system.message.internal.entity.SysMessageChannelContent;
+import java.util.Collection;
+import java.util.List;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
-
-import java.util.Collection;
-import java.util.List;
 
 /** 消息推送对象转换器。 */
 @Mapper(config = BaseMapperConfig.class)

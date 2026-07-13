@@ -2,16 +2,27 @@ import type { VbenFormSchema } from '#/adapter/form';
 import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { SystemMessageApi } from '#/api';
 
+import { getDictOptions } from '#/utils/dict';
+
+const messageReadStatusOptions = getDictOptions('sys_message_read_status');
+const messageTypeOptions = getDictOptions('sys_message_type');
+
 export const useGridFormSchema = (): VbenFormSchema[] => [
   { component: 'Input', fieldName: 'title', label: '消息标题' },
   {
     component: 'Select',
     componentProps: {
       allowClear: true,
-      options: [
-        { label: '未读', value: 0 },
-        { label: '已读', value: 1 },
-      ],
+      options: messageTypeOptions,
+    },
+    fieldName: 'messageType',
+    label: '消息类型',
+  },
+  {
+    component: 'Select',
+    componentProps: {
+      allowClear: true,
+      options: messageReadStatusOptions,
     },
     fieldName: 'readStatus',
     label: '阅读状态',
@@ -22,17 +33,28 @@ export function useColumns(
   onActionClick: OnActionClickFn<SystemMessageApi.UserMessage>,
 ): VxeTableGridColumns<SystemMessageApi.UserMessage> {
   return [
-    { field: 'title', minWidth: 200, title: '消息标题' },
-    { field: 'content', minWidth: 300, showOverflow: true, title: '消息内容' },
     {
+      align: 'center',
+      field: 'title',
+      minWidth: 260,
+      slots: { default: 'title' },
+      title: '消息标题',
+    },
+    {
+      cellRender: {
+        attrs: { dictCode: 'sys_message_type' },
+        name: 'CellTag',
+      },
       field: 'messageType',
-      formatter: ({ cellValue }: any) => (cellValue === 1 ? '系统消息' : '业务消息'),
       title: '类型',
       width: 90,
     },
     {
+      cellRender: {
+        attrs: { dictCode: 'sys_message_read_status' },
+        name: 'CellTag',
+      },
       field: 'readStatus',
-      formatter: ({ cellValue }: any) => (cellValue === 1 ? '已读' : '未读'),
       title: '状态',
       width: 90,
     },
@@ -46,14 +68,15 @@ export function useColumns(
         },
         name: 'CellOperation',
         options: [
-          { code: 'read', show: (row: SystemMessageApi.UserMessage) => row.readStatus === 0, text: '标记已读' },
+          { code: 'preview', text: '预览' },
+          { code: 'read', show: (row: SystemMessageApi.UserMessage) => row.readStatus === 0, text: '已读' },
           'delete',
         ],
       },
       field: 'operation',
       fixed: 'right',
       title: '操作',
-      width: 160,
+      width: 210,
     },
   ];
 }

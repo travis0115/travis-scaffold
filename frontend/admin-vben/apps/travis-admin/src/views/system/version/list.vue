@@ -7,7 +7,12 @@ import type { SystemVersionLogApi } from '#/api';
 
 import { ref } from 'vue';
 
-import { Page, useVbenDrawer, useVbenModal } from '@vben/common-ui';
+import {
+  Page,
+  useVbenDrawer,
+  useVbenModal,
+  confirm as vbenConfirm,
+} from '@vben/common-ui';
 import { Plus } from '@vben/icons';
 import { formatDate } from '@vben/utils';
 
@@ -21,7 +26,7 @@ import {
 } from '#/api';
 import RichTextPreview from '#/components/rich-text-preview/index.vue';
 import { $t } from '#/locales';
-import { hasAccessCode, SYSTEM_PERMS } from '#/utils/permissions';
+import { SYSTEM_PERMS } from '#/utils/permissions';
 
 import { useColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
@@ -48,10 +53,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     submitOnChange: false,
   },
   gridOptions: {
-    columns: useColumns(
-      onActionClick,
-      hasAccessCode(SYSTEM_PERMS.versionUpdate) ? onStatusChange : undefined,
-    ),
+    columns: useColumns(onActionClick),
     height: 'auto',
     keepSource: true,
     proxyConfig: {
@@ -90,7 +92,9 @@ const [PreviewModal, previewModalApi] = useVbenModal({
   footer: false,
 });
 
-function onActionClick(e: OnActionClickParams<SystemVersionLogApi.VersionLog>) {
+async function onActionClick(
+  e: OnActionClickParams<SystemVersionLogApi.VersionLog>,
+) {
   switch (e.code) {
     case 'delete': {
       onDelete(e.row);
@@ -102,6 +106,16 @@ function onActionClick(e: OnActionClickParams<SystemVersionLogApi.VersionLog>) {
     }
     case 'preview': {
       onPreview(e.row);
+      break;
+    }
+    case 'publish': {
+      try {
+        await vbenConfirm(`确认发布版本“${e.row.title}”吗？`, '发布版本');
+      } catch {
+        return;
+      }
+      await updateVersionLogStatus(e.row.id, 1);
+      onRefresh();
       break;
     }
   }
@@ -141,15 +155,6 @@ function onRefresh() {
 
 function onCreate() {
   formDrawerApi.setData({}).open();
-}
-
-async function onStatusChange(
-  newStatus: number,
-  row: SystemVersionLogApi.VersionLog,
-) {
-  await updateVersionLogStatus(row.id, newStatus as 0 | 1);
-  onRefresh();
-  return true;
 }
 </script>
 <template>

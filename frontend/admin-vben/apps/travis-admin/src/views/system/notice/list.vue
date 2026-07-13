@@ -7,14 +7,24 @@ import type { SystemNoticeApi } from '#/api';
 
 import { ref } from 'vue';
 
-import { Page, useVbenDrawer, useVbenModal } from '@vben/common-ui';
+import {
+  Page,
+  useVbenDrawer,
+  useVbenModal,
+  confirm as vbenConfirm,
+} from '@vben/common-ui';
 import { Plus } from '@vben/icons';
 import { formatDate } from '@vben/utils';
 
 import { Button, Tag } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { deleteNotice, getNoticePage, updateNoticeStatus } from '#/api';
+import {
+  deleteNotice,
+  getNoticePage,
+  updateNoticePinned,
+  updateNoticeStatus,
+} from '#/api';
 import RichTextPreview from '#/components/rich-text-preview/index.vue';
 import { hasAccessCode, SYSTEM_PERMS } from '#/utils/permissions';
 
@@ -36,7 +46,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useColumns(
       onActionClick,
-      hasAccessCode(SYSTEM_PERMS.noticeUpdate) ? onStatusChange : undefined,
+      hasAccessCode(SYSTEM_PERMS.noticeUpdate) ? onPinnedChange : undefined,
     ),
     height: 'auto',
     proxyConfig: {
@@ -59,13 +69,37 @@ const [PreviewModal, previewModalApi] = useVbenModal({
   footer: false,
 });
 
-function onActionClick({
+async function onActionClick({
   code,
   row,
 }: OnActionClickParams<SystemNoticeApi.Notice>) {
   if (code === 'preview') onPreview(row);
   if (code === 'edit') formDrawerApi.setData(row).open();
   if (code === 'delete') deleteNotice(row.id).then(() => gridApi.query());
+  if (code === 'publish') {
+    try {
+      const isRepublish = row.status === 2;
+      await vbenConfirm(
+        isRepublish
+          ? `确认重新发布公告“${row.title}”吗？`
+          : `确认发布公告“${row.title}”吗？`,
+        isRepublish ? '重新发布' : '发布公告',
+      );
+    } catch {
+      return;
+    }
+    await updateNoticeStatus(row.id, 1);
+    await gridApi.query();
+  }
+  if (code === 'revoke') {
+    try {
+      await vbenConfirm(`确认撤回公告“${row.title}”吗？`, '撤回公告');
+    } catch {
+      return;
+    }
+    await updateNoticeStatus(row.id, 2);
+    await gridApi.query();
+  }
 }
 
 function onPreview(row: SystemNoticeApi.Notice) {
@@ -73,8 +107,8 @@ function onPreview(row: SystemNoticeApi.Notice) {
   previewModalApi.open();
 }
 
-async function onStatusChange(newStatus: number, row: SystemNoticeApi.Notice) {
-  await updateNoticeStatus(row.id, newStatus);
+async function onPinnedChange(isPinned: number, row: SystemNoticeApi.Notice) {
+  await updateNoticePinned(row.id, isPinned);
   await gridApi.query();
   return true;
 }

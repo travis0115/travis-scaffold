@@ -5,6 +5,7 @@ import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.message.api.request.SysMessageCreateReq;
 import com.travis.monolith.system.message.api.request.SysMessagePageReq;
 import com.travis.monolith.system.message.api.request.SysMessageUpdateReq;
+import com.travis.monolith.system.message.api.request.SysSourceMessagePublishReq;
 import com.travis.monolith.system.message.api.response.SysMessageResp;
 import com.travis.monolith.system.message.internal.entity.SysMessage;
 
@@ -23,6 +24,12 @@ public interface SysMessageService extends IService<SysMessage> {
     void push(Long id);
 
     void revoke(Long id);
+
+    void publishSourceMessage(SysSourceMessagePublishReq req);
+
+    void revokeSourceMessage(String sourceType, String sourceId, String receiverType);
+
+    void deleteSourceMessage(String sourceType, String sourceId, String receiverType);
 
     int pushDueScheduledMessages();
 

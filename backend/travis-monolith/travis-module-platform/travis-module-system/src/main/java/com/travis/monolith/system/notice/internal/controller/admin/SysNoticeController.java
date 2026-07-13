@@ -13,7 +13,8 @@ import com.travis.infrastructure.framework.satoken.core.LoginSubjectSessionKey;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
 import com.travis.monolith.system.common.api.constant.SystemPermission;
-import com.travis.monolith.system.common.api.enums.Status;
+import com.travis.monolith.system.common.api.enums.IsPinned;
+import com.travis.monolith.system.common.api.enums.PublishStatus;
 import com.travis.monolith.system.file.api.SysFileApi;
 import com.travis.monolith.system.file.api.constant.FileFolderId;
 import com.travis.monolith.system.file.api.response.FileUploadResp;
@@ -94,8 +95,20 @@ public class SysNoticeController {
     @SaCheckPermission(value = SystemPermission.NOTICE_UPDATE, type = LoginType.ADMIN)
     public ApiResponse<Void> updateStatus(
             @PathVariable Long id,
-            @RequestParam @EnumValue(value = Status.class, message = "状态值错误") Integer status) {
+            @RequestParam @EnumValue(value = PublishStatus.class, message = "状态值错误")
+                    Integer status) {
         noticeService.updateStatus(id, status);
+        return ApiResponse.success();
+    }
+
+    @OperationLog(action = "修改公告置顶状态")
+    @NoRepeatSubmit
+    @PutMapping("/{id}/pinned")
+    @SaCheckPermission(value = SystemPermission.NOTICE_UPDATE, type = LoginType.ADMIN)
+    public ApiResponse<Void> updatePinned(
+            @PathVariable Long id,
+            @RequestParam @EnumValue(value = IsPinned.class, message = "置顶值错误") Integer isPinned) {
+        noticeService.updatePinned(id, isPinned);
         return ApiResponse.success();
     }
 

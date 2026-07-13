@@ -15,6 +15,7 @@ export namespace SystemMessageApi {
     content: string;
     enableInboxCopy?: boolean;
     id: number;
+    hasTemplate: boolean;
     messageType: number;
     pushType: number;
     publishTime?: string;
@@ -58,7 +59,7 @@ export namespace SystemMessageApi {
   }
 
   export interface UserMessage {
-    content: string;
+    content?: string;
     createTime: string;
     id: number;
     messageId: number;
@@ -66,7 +67,14 @@ export namespace SystemMessageApi {
     publishTime?: string;
     readStatus: number;
     readTime?: string;
+    sourceId?: string;
+    sourceType?: string;
     title: string;
+  }
+
+  export interface UserMessageDetail extends UserMessage {
+    content: string;
+    metadata?: Record<string, any>;
   }
 }
 
@@ -141,6 +149,10 @@ const getInboxMessagePage = (params: Recordable<any>) =>
       params,
     },
   );
+const getInboxMessageDetail = (id: number | string) =>
+  requestClient.get<SystemMessageApi.UserMessageDetail>(
+    `/system/message/inbox/${id}`,
+  );
 const getUnreadMessageCount = () =>
   requestClient.get<{ count: number }>('/system/message/inbox/unread-count', {
     errorMessageType: false,
@@ -160,6 +172,7 @@ export {
   deleteInboxMessage,
   deleteMessage,
   deleteMessageTemplate,
+  getInboxMessageDetail,
   getInboxMessagePage,
   getMessageDetail,
   getMessagePage,

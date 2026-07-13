@@ -27,6 +27,8 @@ const ISO_LOCAL_DATETIME_REGEX =
   /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?$/;
 const BACKEND_DATETIME_REGEX =
   /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
+const BACKEND_DATETIME_GLOBAL_REGEX =
+  /\b\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\b/g;
 
 export function formatDate(time?: FormatDate, format: Format = 'YYYY-MM-DD') {
   if (time === undefined || time === null || time === '') {
@@ -59,6 +61,13 @@ export function formatDate(time?: FormatDate, format: Format = 'YYYY-MM-DD') {
 
 export function formatDateTime(time?: FormatDate) {
   return formatDate(time, BACKEND_DATETIME_FORMAT);
+}
+
+export function formatUtcDateTimesInText(value?: string) {
+  if (!value) return value ?? '';
+  return value.replaceAll(BACKEND_DATETIME_GLOBAL_REGEX, (dateTime) =>
+    formatDateTime(dateTime),
+  );
 }
 
 export function formatLocalDateToUtc(

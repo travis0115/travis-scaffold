@@ -60,27 +60,17 @@ public class SysUserController {
         return ApiResponse.success(userService.page(req));
     }
 
+    @GetMapping("/options/by-ids")
+    @SaCheckPermission(value = SystemPermission.USER_QUERY, type = LoginType.ADMIN)
+    public ApiResponse<List<SysUserOptionResp>> listOptionsByIds(@RequestParam List<Long> ids) {
+        return ApiResponse.success(userApi.listCurrentUserScopedOptionsByIds(ids));
+    }
+
     /** 获取在线用户数量 */
     @GetMapping("/online-count")
     @SaCheckPermission(value = SystemPermission.USER_QUERY, type = LoginType.ADMIN)
     public ApiResponse<Long> onlineCount() {
         return ApiResponse.success(userService.countOnlineUsers());
-    }
-
-    /** 查询当前登录用户数据范围内的用户选项。 */
-    @GetMapping("/options")
-    @SaCheckPermission(value = SystemPermission.USER_QUERY, type = LoginType.ADMIN)
-    public ApiResponse<List<SysUserOptionResp>> options(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(defaultValue = "20") int limit) {
-        return ApiResponse.success(userApi.listCurrentUserScopedOptions(keyword, limit));
-    }
-
-    /** 根据ID回显当前登录用户数据范围内的用户选项。 */
-    @GetMapping("/options/by-ids")
-    @SaCheckPermission(value = SystemPermission.USER_QUERY, type = LoginType.ADMIN)
-    public ApiResponse<List<SysUserOptionResp>> optionsByIds(@RequestParam List<Long> ids) {
-        return ApiResponse.success(userApi.listCurrentUserScopedOptionsByIds(ids));
     }
 
     /**

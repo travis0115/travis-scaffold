@@ -34,9 +34,7 @@
   /* table */
   --vxe-ui-table-header-background-color: hsl(var(--accent));
   --vxe-ui-table-border-color: hsl(var(--border));
-  --vxe-ui-table-row-hover-background-color: var(
-    --vxe-ui-table-row-current-background-color
-  );
+  --vxe-ui-table-row-hover-background-color: hsl(var(--accent) / 60%);
   --vxe-ui-table-row-striped-background-color: hsl(var(--accent) / 60%);
   --vxe-ui-table-row-hover-striped-background-color: hsl(var(--accent));
   --vxe-ui-table-row-radio-checked-background-color: hsl(var(--accent));
@@ -47,8 +45,8 @@
   --vxe-ui-table-row-hover-checkbox-checked-background-color: hsl(
     var(--accent-hover)
   );
-  --vxe-ui-table-row-current-background-color: hsl(var(--accent));
-  --vxe-ui-table-row-hover-current-background-color: hsl(var(--accent-dark));
+  --vxe-ui-table-row-current-background-color: hsl(var(--primary) / 12%);
+  --vxe-ui-table-row-hover-current-background-color: hsl(var(--primary) / 18%);
   --vxe-ui-font-primary-tinge-color: hsl(var(--primary));
   --vxe-ui-font-primary-lighten-color: hsl(var(--primary) / 60%);
   --vxe-ui-font-primary-darken-color: hsl(var(--primary));

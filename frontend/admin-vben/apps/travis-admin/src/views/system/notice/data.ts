@@ -2,11 +2,12 @@ import type { VbenFormSchema } from '#/adapter/form';
 import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { SystemNoticeApi } from '#/api';
 
-import { BACKEND_DATETIME_FORMAT } from '@vben/utils';
-
 import { z } from '#/adapter/form';
 import { uploadNoticeImage } from '#/api';
+import { getDictOptions } from '#/utils/dict';
 import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
+
+const publishStatusOptions = getDictOptions('sys_publish_status');
 
 function hasRichTextContent(value?: string) {
   if (!value) return false;
@@ -58,18 +59,9 @@ export const useFormSchema = (): VbenFormSchema[] => [
       .refine(hasRichTextContent, '公告内容不能为空'),
   },
   {
-    component: 'DatePicker',
-    componentProps: { showTime: true, valueFormat: BACKEND_DATETIME_FORMAT },
-    fieldName: 'publishTime',
-    label: '发布时间',
-    rules: z
-      .string({ required_error: '发布时间不能为空' })
-      .min(1, '发布时间不能为空'),
-  },
-  {
     component: 'InputNumber',
     componentProps: { max: 9999, min: 0 },
-    defaultValue: 1,
+    defaultValue: 999,
     fieldName: 'sort',
     label: '排序',
   },
@@ -92,10 +84,9 @@ export const useFormSchema = (): VbenFormSchema[] => [
     componentProps: {
       buttonStyle: 'solid',
       optionType: 'button',
-      options: [
-        { label: '草稿', value: 0 },
-        { label: '发布', value: 1 },
-      ],
+      options: publishStatusOptions.filter(
+        (option) => Number(option.value) !== 2,
+      ),
     },
     defaultValue: 0,
     fieldName: 'status',
@@ -119,10 +110,7 @@ export const useGridFormSchema = (): VbenFormSchema[] => [
     component: 'Select',
     componentProps: {
       allowClear: true,
-      options: [
-        { label: '草稿', value: 0 },
-        { label: '已发布', value: 1 },
-      ],
+      options: publishStatusOptions,
     },
     fieldName: 'status',
     label: '状态',
@@ -131,8 +119,8 @@ export const useGridFormSchema = (): VbenFormSchema[] => [
 
 export function useColumns(
   onActionClick: OnActionClickFn<SystemNoticeApi.Notice>,
-  onStatusChange?: (
-    newStatus: number,
+  onPinnedChange?: (
+    isPinned: number,
     row: SystemNoticeApi.Notice,
   ) => Promise<boolean>,
 ): VxeTableGridColumns<SystemNoticeApi.Notice> {
@@ -152,9 +140,10 @@ export function useColumns(
     {
       cellRender: {
         attrs: {
+          beforeChange: onPinnedChange,
           dictCode: 'is_pinned',
         },
-        name: 'CellTag',
+        name: onPinnedChange ? 'CellSwitch' : 'CellTag',
       },
       field: 'isPinned',
       title: '置顶',
@@ -163,14 +152,8 @@ export function useColumns(
     { field: 'sort', title: '排序', width: 80 },
     {
       cellRender: {
-        attrs: {
-          beforeChange: onStatusChange,
-        },
-        name: onStatusChange ? 'CellSwitch' : 'CellTag',
-        options: [
-          { label: '草稿', value: 0 },
-          { label: '已发布', value: 1 },
-        ],
+        attrs: { dictCode: 'sys_publish_status' },
+        name: 'CellTag',
       },
       field: 'status',
       fixed: 'right',
@@ -186,17 +169,45 @@ export function useColumns(
         },
         name: 'CellOperation',
         options: filterAccessOptions(
-          [{ code: 'preview', text: '预览' }, 'edit', 'delete'],
+          [
+            { code: 'preview', text: '预览' },
+            {
+              code: 'publish',
+              show: (row: SystemNoticeApi.Notice) => row.status === 0,
+              text: '发布',
+            },
+            {
+              code: 'publish',
+              show: (row: SystemNoticeApi.Notice) => row.status === 2,
+              text: '重新发布',
+            },
+            {
+              code: 'revoke',
+              danger: true,
+              show: (row: SystemNoticeApi.Notice) => row.status === 1,
+              text: '撤回',
+            },
+            {
+              code: 'edit',
+              show: (row: SystemNoticeApi.Notice) => row.status !== 1,
+            },
+            {
+              code: 'delete',
+              show: (row: SystemNoticeApi.Notice) => row.status !== 1,
+            },
+          ],
           {
             delete: SYSTEM_PERMS.noticeDelete,
             edit: SYSTEM_PERMS.noticeUpdate,
+            publish: SYSTEM_PERMS.noticeUpdate,
+            revoke: SYSTEM_PERMS.noticeUpdate,
           },
         ),
       },
       field: 'operation',
       fixed: 'right',
       title: '操作',
-      width: 190,
+      width: 210,
     },
   ];
 }

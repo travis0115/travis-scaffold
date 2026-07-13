@@ -12,7 +12,7 @@ import com.travis.infrastructure.framework.satoken.core.LoginSubjectSessionKey;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
 import com.travis.monolith.system.common.api.constant.SystemPermission;
-import com.travis.monolith.system.common.api.enums.Status;
+import com.travis.monolith.system.common.api.enums.PublishStatus;
 import com.travis.monolith.system.file.api.SysFileApi;
 import com.travis.monolith.system.file.api.constant.FileFolderId;
 import com.travis.monolith.system.file.api.response.FileUploadResp;
@@ -92,7 +92,8 @@ public class SysVersionController {
     @SaCheckPermission(value = SystemPermission.VERSION_UPDATE, type = LoginType.ADMIN)
     public ApiResponse<Void> updateStatus(
             @PathVariable Long id,
-            @RequestParam @EnumValue(value = Status.class, message = "状态值错误") Integer status) {
+            @RequestParam @EnumValue(value = PublishStatus.class, message = "状态值错误")
+                    Integer status) {
         versionService.updateStatus(id, status);
         return ApiResponse.success();
     }

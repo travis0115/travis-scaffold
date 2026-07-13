@@ -2,14 +2,21 @@ package com.travis.monolith.system.version.internal.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
+import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.exception.BizException;
+import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageRequest;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
-import com.travis.monolith.system.common.api.enums.Status;
+import com.travis.monolith.system.common.api.enums.PublishStatus;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.file.api.SysFileApi;
+import com.travis.monolith.system.message.api.SysMessageApi;
+import com.travis.monolith.system.message.api.enums.SysMessageReceiverScope;
+import com.travis.monolith.system.message.api.enums.SysMessageSourceType;
+import com.travis.monolith.system.message.api.enums.SysMessageType;
+import com.travis.monolith.system.message.api.request.SysSourceMessagePublishReq;
 import com.travis.monolith.system.version.api.request.SysVersionCreateReq;
 import com.travis.monolith.system.version.api.request.SysVersionPageReq;
 import com.travis.monolith.system.version.api.request.SysVersionUpdateReq;
@@ -40,6 +47,8 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
     private final SysVersionConverter converter;
 
     private final SysFileApi fileApi;
+
+    private final SysMessageApi messageApi;
 
     private static final Map<String, SFunction<SysVersion, ?>> SORT_COLUMNS =
             Map.of(
@@ -73,6 +82,9 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
     @Override
     @Transactional
     public void create(SysVersionCreateReq req) {
+        if (PublishStatus.REVOKED.getValue().equals(req.getStatus())) {
+            throw new BizException(CommonErrorCode.BAD_REQUEST, "新建版本不能设置为已撤回");
+        }
         var count =
                 count(
                         new LambdaQueryWrapperX<SysVersion>()
@@ -82,7 +94,14 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
         }
         var entity = converter.toEntity(req);
         entity.setContent(fileApi.stripManagedImageSources(entity.getContent()));
+        entity.setPublishTime(
+                PublishStatus.PUBLISHED.getValue().equals(entity.getStatus())
+                        ? LocalDateTime.now()
+                        : null);
         save(entity);
+        if (PublishStatus.PUBLISHED.getValue().equals(entity.getStatus())) {
+            messageApi.publishSourceMessage(toMessageRequest(entity, false));
+        }
     }
 
     @Override
@@ -98,9 +117,13 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
         if (count > 0) {
             throw new BizException(SystemErrorCode.VERSION_EXISTS);
         }
+        var normalizedContent = fileApi.stripManagedImageSources(req.getContent());
         converter.update(req, entity);
-        entity.setContent(fileApi.stripManagedImageSources(entity.getContent()));
+        entity.setContent(normalizedContent);
         updateById(entity);
+        if (PublishStatus.PUBLISHED.getValue().equals(entity.getStatus())) {
+            messageApi.publishSourceMessage(toMessageRequest(entity, false));
+        }
     }
 
     @Override
@@ -108,14 +131,24 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
     @CacheEvict(key = "'detail:'+#id")
     public void updateStatus(Long id, Integer status) {
         var entity = getByIdOrThrow(id);
-        entity.setStatus(status);
-        updateById(entity);
+        if (status.equals(entity.getStatus())) {
+            return;
+        }
+        if (PublishStatus.PUBLISHED.getValue().equals(status)) {
+            boolean republish = PublishStatus.REVOKED.getValue().equals(entity.getStatus());
+            entity.setStatus(status);
+            entity.setPublishTime(LocalDateTime.now());
+            updateById(entity);
+            messageApi.publishSourceMessage(toMessageRequest(entity, republish));
+        } else {
+            throw new BizException(CommonErrorCode.BAD_REQUEST, "版本发布状态流转不合法");
+        }
     }
 
     @Override
     public PageResp<SysVersionResp> pagePublished(PageRequest req) {
         var wrapper = new LambdaQueryWrapperX<SysVersion>();
-        wrapper.eq(SysVersion::getStatus, Status.ENABLED.getValue())
+        wrapper.eq(SysVersion::getStatus, PublishStatus.PUBLISHED.getValue())
                 .le(SysVersion::getPublishTime, LocalDateTime.now())
                 .orderByDesc(SysVersion::getPublishTime)
                 .orderByDesc(SysVersion::getCreateTime);
@@ -127,7 +160,23 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
     @Transactional
     @CacheEvict(key = "'detail:'+#id")
     public void deleteById(Long id) {
+        getByIdOrThrow(id);
+        messageApi.deleteSourceMessage(
+                SysMessageSourceType.VERSION.getValue(), id.toString(), LoginType.ADMIN);
         removeById(id);
+    }
+
+    private SysSourceMessagePublishReq toMessageRequest(SysVersion version, boolean republish) {
+        var req = new SysSourceMessagePublishReq();
+        req.setMessageType(SysMessageType.VERSION_UPDATE.getValue());
+        req.setSourceType(SysMessageSourceType.VERSION.getValue());
+        req.setSourceId(version.getId().toString());
+        req.setTitle(version.getTitle());
+        req.setReceiverType(LoginType.ADMIN);
+        req.setReceiverScope(SysMessageReceiverScope.ALL.getValue());
+        req.setPublishTime(version.getPublishTime());
+        req.setRepublish(republish);
+        return req;
     }
 
     private SysVersionResp toResp(SysVersion entity) {

@@ -1,10 +1,10 @@
 import type { AxiosProgressEvent } from '@vben/request';
 
+import type { FileUploadResult } from './file';
+
 import type { PageResp } from '#/api/types';
 
 import { requestClient } from '#/api/request';
-
-import type { FileUploadResult } from './file';
 
 export namespace SystemVersionLogApi {
   export interface VersionLog {
@@ -40,7 +40,9 @@ async function getVersionLogPage(params: {
  * 获取版本日志详情
  */
 async function getVersionLogDetail(id: number) {
-  return requestClient.get<SystemVersionLogApi.VersionLog>(`/system/version/${id}`);
+  return requestClient.get<SystemVersionLogApi.VersionLog>(
+    `/system/version/${id}`,
+  );
 }
 
 /**
@@ -53,7 +55,10 @@ async function createVersionLog(data: Partial<SystemVersionLogApi.VersionLog>) {
 /**
  * 更新版本日志
  */
-async function updateVersionLog(id: number, data: Partial<SystemVersionLogApi.VersionLog>) {
+async function updateVersionLog(
+  id: number,
+  data: Partial<SystemVersionLogApi.VersionLog>,
+) {
   return requestClient.put(`/system/version/${id}`, data);
 }
 

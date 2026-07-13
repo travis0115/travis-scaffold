@@ -82,7 +82,9 @@ public class SysUserApiImpl implements SysUserApi {
                                     .or()
                                     .like(SysUser::getNickname, keyword)
                                     .or()
-                                    .like(SysUser::getMobile, keyword));
+                                    .like(SysUser::getMobile, keyword)
+                                    .or()
+                                    .like(SysUser::getEmail, keyword));
         }
         wrapper.orderByAsc(SysUser::getUsername).last("LIMIT " + Math.clamp(limit, 1, 50));
         return toOptions(userService.list(wrapper));

@@ -26,10 +26,10 @@ export type AlertProps = {
   cancelText?: string;
   /** 是否居中显示 */
   centered?: boolean;
-  /** 确认按钮的标题 */
-  confirmText?: string;
   /** 确认按钮属性 */
   confirmButtonProps?: Recordable<any>;
+  /** 确认按钮的标题 */
+  confirmText?: string;
   /** 弹窗容器的额外样式 */
   containerClass?: string;
   /** 弹窗提示内容 */
@@ -52,6 +52,8 @@ export type AlertProps = {
   showCancel?: boolean;
   /** 弹窗标题 */
   title?: string;
+  /** 弹窗层级 */
+  zIndex?: number;
 };
 
 /** Prompt属性 */

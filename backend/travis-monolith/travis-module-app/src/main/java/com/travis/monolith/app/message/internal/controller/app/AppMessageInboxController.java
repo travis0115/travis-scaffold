@@ -6,8 +6,9 @@ import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.monolith.system.message.api.SysMessageInboxApi;
 import com.travis.monolith.system.message.api.request.SysUserMessagePageReq;
-import com.travis.monolith.system.message.api.response.SysUserMessageResp;
 import com.travis.monolith.system.message.api.response.SysUserMessageRecentResp;
+import com.travis.monolith.system.message.api.response.SysUserMessageDetailResp;
+import com.travis.monolith.system.message.api.response.SysUserMessageResp;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,11 @@ public class AppMessageInboxController {
     @GetMapping("/page")
     public ApiResponse<PageResp<SysUserMessageResp>> page(SysUserMessagePageReq req) {
         return ApiResponse.success(messageInboxApi.page(LoginType.APP, currentUserId(), req));
+    }
+
+    @GetMapping("/{id}")
+    public ApiResponse<SysUserMessageDetailResp> get(@PathVariable Long id) {
+        return ApiResponse.success(messageInboxApi.get(LoginType.APP, currentUserId(), id));
     }
 
     @GetMapping("/unread-count")

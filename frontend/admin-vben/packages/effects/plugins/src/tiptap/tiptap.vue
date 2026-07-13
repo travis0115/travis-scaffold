@@ -34,6 +34,7 @@ const props = withDefaults(defineProps<TipTapProps>(), {
   toolbar: true,
 });
 const emit = defineEmits<{
+  blur: [payload: VbenTiptapChangeEvent];
   change: [payload: VbenTiptapChangeEvent];
 }>();
 const modelValue = defineModel<string>({ default: '' });
@@ -74,6 +75,13 @@ const editor = useEditor({
     }
     emit('change', {
       html,
+      json: editor.getJSON(),
+      text: editor.getText(),
+    });
+  },
+  onBlur: ({ editor }) => {
+    emit('blur', {
+      html: editor.getHTML(),
       json: editor.getJSON(),
       text: editor.getText(),
     });
@@ -176,14 +184,14 @@ onBeforeUnmount(() => {
         class="flex items-center gap-1"
       >
         <template v-for="action in group" :key="action.label">
-            <VbenPopover
-              v-if="action.menu || action.palette"
-              :open="action.menu ? getMenuOpen(action) : undefined"
-              :content-props="{ align: 'start', side: 'bottom', sideOffset: 8 }"
-              content-class="w-auto p-2"
-              trigger-as-child
-              @update:open="action.menu ? setMenuOpen(action, $event) : undefined"
-            >
+          <VbenPopover
+            v-if="action.menu || action.palette"
+            :open="action.menu ? getMenuOpen(action) : undefined"
+            :content-props="{ align: 'start', side: 'bottom', sideOffset: 8 }"
+            content-class="w-auto p-2"
+            trigger-as-child
+            @update:open="action.menu ? setMenuOpen(action, $event) : undefined"
+          >
             <template #trigger>
               <VbenIconButton
                 :aria-label="action.label"

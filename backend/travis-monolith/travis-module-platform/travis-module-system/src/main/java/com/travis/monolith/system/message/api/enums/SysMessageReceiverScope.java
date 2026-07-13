@@ -1,5 +1,6 @@
 package com.travis.monolith.system.message.api.enums;
 
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -21,15 +22,19 @@ public enum SysMessageReceiverScope {
 
     private final Integer value;
 
-    public static boolean contains(Integer value) {
+    public static Optional<SysMessageReceiverScope> findByValue(Integer value) {
         if (value == null) {
-            return false;
+            return Optional.empty();
         }
         for (SysMessageReceiverScope item : values()) {
             if (item.value.equals(value)) {
-                return true;
+                return Optional.of(item);
             }
         }
-        return false;
+        return Optional.empty();
+    }
+
+    public static boolean contains(Integer value) {
+        return findByValue(value).isPresent();
     }
 }

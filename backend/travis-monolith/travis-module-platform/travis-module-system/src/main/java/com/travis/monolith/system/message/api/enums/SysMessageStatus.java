@@ -10,14 +10,11 @@ public enum SysMessageStatus {
     /** 待推送。 */
     PENDING(0),
 
-    /** 定时推送。 */
-    SCHEDULED(1),
-
     /** 已推送。 */
-    SENT(2),
+    SENT(1),
 
     /** 已撤回。 */
-    REVOKED(3);
+    REVOKED(2);
 
     private final Integer value;
 }

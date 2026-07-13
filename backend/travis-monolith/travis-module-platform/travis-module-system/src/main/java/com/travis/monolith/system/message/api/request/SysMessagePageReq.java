@@ -12,7 +12,7 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 public class SysMessagePageReq extends PageRequest {
     private String title;
-    private Integer messageType;
+    private Boolean hasTemplate;
 
     @EnumValue(value = SysMessagePushType.class, message = "推送方式错误")
     private Integer pushType;

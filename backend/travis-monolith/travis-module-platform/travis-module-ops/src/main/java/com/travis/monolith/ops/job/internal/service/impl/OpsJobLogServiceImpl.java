@@ -10,6 +10,8 @@ import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.redis.core.util.RedisUtil;
 import com.travis.monolith.ops.job.api.OpsJobErrorCode;
+import com.travis.monolith.ops.job.api.enums.OpsJobLogStatus;
+import com.travis.monolith.ops.job.api.enums.OpsJobStatus;
 import com.travis.monolith.ops.job.api.request.OpsJobLogPageReq;
 import com.travis.monolith.ops.job.api.response.*;
 import com.travis.monolith.ops.job.internal.converter.OpsJobConverter;
@@ -137,10 +139,18 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
         }
         long totalJobs = jobMapper.countAll();
         long enabledJobs =
-                jobMapper.selectCount(new LambdaQueryWrapperX<OpsJob>().eq(OpsJob::getStatus, 1));
+                jobMapper.selectCount(
+                        new LambdaQueryWrapperX<OpsJob>()
+                                .eq(OpsJob::getStatus, OpsJobStatus.ENABLED.getValue()));
         long executions = count();
-        long success = count(new LambdaQueryWrapperX<OpsJobLog>().eq(OpsJobLog::getStatus, 1));
-        long failed = count(new LambdaQueryWrapperX<OpsJobLog>().eq(OpsJobLog::getStatus, 2));
+        long success =
+                count(
+                        new LambdaQueryWrapperX<OpsJobLog>()
+                                .eq(OpsJobLog::getStatus, OpsJobLogStatus.SUCCESS.getValue()));
+        long failed =
+                count(
+                        new LambdaQueryWrapperX<OpsJobLog>()
+                                .eq(OpsJobLog::getStatus, OpsJobLogStatus.FAILED.getValue()));
         var response =
                 new OpsJobDashboardResp(
                         totalJobs,
@@ -210,9 +220,13 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
     private OpsJobStatsResp calculateStats(List<OpsJobLog> logs) {
         long total = logs.size();
         long success =
-                logs.stream().filter(log -> Integer.valueOf(1).equals(log.getStatus())).count();
+                logs.stream()
+                        .filter(log -> OpsJobLogStatus.SUCCESS.getValue().equals(log.getStatus()))
+                        .count();
         long failed =
-                logs.stream().filter(log -> Integer.valueOf(2).equals(log.getStatus())).count();
+                logs.stream()
+                        .filter(log -> OpsJobLogStatus.FAILED.getValue().equals(log.getStatus()))
+                        .count();
         List<Long> durations =
                 logs.stream()
                         .map(OpsJobLog::getDurationMillis)
@@ -234,7 +248,7 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
                                         (int) Math.ceil(durations.size() * 0.95) - 1));
         long consecutiveFailures = 0;
         for (int index = logs.size() - 1; index >= 0; index--) {
-            if (!Integer.valueOf(2).equals(logs.get(index).getStatus())) {
+            if (!OpsJobLogStatus.FAILED.getValue().equals(logs.get(index).getStatus())) {
                 break;
             }
             consecutiveFailures++;
@@ -257,10 +271,18 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
                     new OpsJobStatsResp.TrendPoint(
                             date,
                             daily.stream()
-                                    .filter(log -> Integer.valueOf(1).equals(log.getStatus()))
+                                    .filter(
+                                            log ->
+                                                    OpsJobLogStatus.SUCCESS
+                                                            .getValue()
+                                                            .equals(log.getStatus()))
                                     .count(),
                             daily.stream()
-                                    .filter(log -> Integer.valueOf(2).equals(log.getStatus()))
+                                    .filter(
+                                            log ->
+                                                    OpsJobLogStatus.FAILED
+                                                            .getValue()
+                                                            .equals(log.getStatus()))
                                     .count()));
         }
         return new OpsJobStatsResp(

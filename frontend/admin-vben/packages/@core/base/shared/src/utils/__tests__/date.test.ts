@@ -4,10 +4,11 @@ import utc from 'dayjs/plugin/utc.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  BACKEND_DATETIME_FORMAT,
   formatDate,
   formatDateTime,
   formatLocalDateToUtc,
-  BACKEND_DATETIME_FORMAT,
+  formatUtcDateTimesInText,
   getCurrentTimezone,
   getSystemTimezone,
   isDate,
@@ -198,6 +199,18 @@ describe('dateUtils', () => {
         dayjs.tz('2024-10-30 12:34:56', 'Asia/Shanghai'),
       );
       expect(result).toBe('2024-10-30 04:34:56');
+    });
+  });
+
+  describe('UTC datetime in text', () => {
+    it('should convert datetime values and keep date-only values unchanged', () => {
+      setCurrentTimezone('Asia/Shanghai');
+      const result = formatUtcDateTimesInText(
+        '开始日期：2024-10-30，开始时间：2024-10-30 04:34:56',
+      );
+      expect(result).toBe(
+        '开始日期：2024-10-30，开始时间：2024-10-30 12:34:56',
+      );
     });
   });
 });

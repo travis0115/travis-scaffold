@@ -4,7 +4,6 @@ import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.framework.web.core.annotation.SanitizeHtml;
 import com.travis.monolith.system.common.api.enums.IsPinned;
 import jakarta.validation.constraints.*;
-import java.time.LocalDateTime;
 import lombok.Data;
 
 @Data
@@ -17,9 +16,6 @@ public class SysNoticeUpdateReq {
     @SanitizeHtml
     @Size(max = 5000, message = "公告内容长度不能超过5000个字符")
     private String content;
-
-    @NotNull(message = "发布时间不能为空")
-    private LocalDateTime publishTime;
 
     @EnumValue(value = IsPinned.class, message = "置顶值错误")
     @NotNull(message = "置顶值不能为空")

@@ -5,6 +5,9 @@ import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.quartz.core.NonConcurrentQuartzDispatchJob;
 import com.travis.infrastructure.framework.quartz.core.QuartzDispatchJob;
 import com.travis.monolith.ops.job.api.OpsJobErrorCode;
+import com.travis.monolith.ops.job.api.enums.OpsJobConcurrentPolicy;
+import com.travis.monolith.ops.job.api.enums.OpsJobMisfirePolicy;
+import com.travis.monolith.ops.job.api.enums.OpsJobStatus;
 import com.travis.monolith.ops.job.internal.entity.OpsJob;
 import com.travis.monolith.ops.job.internal.model.OpsJobCalendarConfig;
 import java.time.LocalDateTime;
@@ -35,7 +38,7 @@ public class QuartzJobManager {
             JobDetail detail = buildJobDetail(job);
             Trigger trigger = buildTrigger(job, calendarName);
             scheduler.scheduleJob(detail, trigger);
-            if (!Integer.valueOf(1).equals(job.getStatus())) {
+            if (!OpsJobStatus.ENABLED.getValue().equals(job.getStatus())) {
                 scheduler.pauseJob(jobKey(job.getId()));
             }
         } catch (Exception exception) {
@@ -114,7 +117,7 @@ public class QuartzJobManager {
 
     private JobDetail buildJobDetail(OpsJob job) {
         Class<? extends org.quartz.Job> jobClass =
-                Integer.valueOf(1).equals(job.getConcurrent())
+                OpsJobConcurrentPolicy.ALLOW.getValue().equals(job.getConcurrent())
                         ? QuartzDispatchJob.class
                         : NonConcurrentQuartzDispatchJob.class;
         return JobBuilder.newJob(jobClass)
@@ -154,19 +157,25 @@ public class QuartzJobManager {
     }
 
     private ScheduleBuilder<?> buildSchedule(OpsJob job) {
-        int policy = job.getMisfirePolicy() == null ? 0 : job.getMisfirePolicy();
+        int policy =
+                job.getMisfirePolicy() == null
+                        ? OpsJobMisfirePolicy.SMART.getValue()
+                        : job.getMisfirePolicy();
         if ("CRON".equals(job.getScheduleType())) {
             if (job.getCronExpression() == null
                     || !org.quartz.CronExpression.isValidExpression(job.getCronExpression())) {
                 throw new BizException(OpsJobErrorCode.INVALID_SCHEDULE, "Cron 表达式不合法");
             }
             CronScheduleBuilder builder = CronScheduleBuilder.cronSchedule(job.getCronExpression());
-            return switch (policy) {
-                case 1 -> builder.withMisfireHandlingInstructionIgnoreMisfires();
-                case 2 -> builder.withMisfireHandlingInstructionFireAndProceed();
-                case 3 -> builder.withMisfireHandlingInstructionDoNothing();
-                default -> builder;
-            };
+            if (OpsJobMisfirePolicy.IGNORE.getValue().equals(policy)) {
+                return builder.withMisfireHandlingInstructionIgnoreMisfires();
+            }
+            if (OpsJobMisfirePolicy.FIRE_NOW.getValue().equals(policy)) {
+                return builder.withMisfireHandlingInstructionFireAndProceed();
+            }
+            return OpsJobMisfirePolicy.NEXT_TIME.getValue().equals(policy)
+                    ? builder.withMisfireHandlingInstructionDoNothing()
+                    : builder;
         }
         if ("INTERVAL".equals(job.getScheduleType())) {
             if (job.getIntervalMillis() == null || job.getIntervalMillis() <= 0) {
@@ -176,12 +185,15 @@ public class QuartzJobManager {
                     SimpleScheduleBuilder.simpleSchedule()
                             .withIntervalInMilliseconds(job.getIntervalMillis())
                             .repeatForever();
-            return switch (policy) {
-                case 1 -> builder.withMisfireHandlingInstructionIgnoreMisfires();
-                case 2 -> builder.withMisfireHandlingInstructionFireNow();
-                case 3 -> builder.withMisfireHandlingInstructionNextWithRemainingCount();
-                default -> builder;
-            };
+            if (OpsJobMisfirePolicy.IGNORE.getValue().equals(policy)) {
+                return builder.withMisfireHandlingInstructionIgnoreMisfires();
+            }
+            if (OpsJobMisfirePolicy.FIRE_NOW.getValue().equals(policy)) {
+                return builder.withMisfireHandlingInstructionFireNow();
+            }
+            return OpsJobMisfirePolicy.NEXT_TIME.getValue().equals(policy)
+                    ? builder.withMisfireHandlingInstructionNextWithRemainingCount()
+                    : builder;
         }
         if ("ONCE".equals(job.getScheduleType()) && job.getExecuteAt() == null) {
             throw new BizException(OpsJobErrorCode.INVALID_SCHEDULE, "单次任务必须指定执行时间");

@@ -36,6 +36,7 @@ const props = withDefaults(defineProps<AlertProps>(), {
   buttonAlign: 'end',
   centered: true,
   escapeKeyClose: true,
+  zIndex: 3000,
 });
 const emits = defineEmits(['closed', 'confirm', 'opened']);
 const { globalEscapeShortcutKey } = usePreferences();
@@ -157,6 +158,7 @@ async function handleOpenChange(val: boolean) {
       :open="open"
       :centered="centered"
       :overlay-blur="overlayBlur"
+      :z-index="zIndex"
       @opened="emits('opened')"
       @closed="onAlertClosed"
       @escape-key-down="onEscapeKeyDown($event)"

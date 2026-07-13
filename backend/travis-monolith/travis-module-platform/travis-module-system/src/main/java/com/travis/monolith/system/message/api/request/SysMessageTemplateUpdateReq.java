@@ -12,13 +12,12 @@ import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
-import tools.jackson.core.type.TypeReference;
-
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.regex.Pattern;
+import lombok.Data;
+import tools.jackson.core.type.TypeReference;
 
 /** 更新消息模板请求参数。 */
 @Data
@@ -97,7 +96,8 @@ public class SysMessageTemplateUpdateReq {
         try {
             return JsonUtil.parseObject(
                     contentSchema,
-                    new TypeReference<LinkedHashMap<String, SysMessageTemplateParamConfigReq>>() {});
+                    new TypeReference<
+                            LinkedHashMap<String, SysMessageTemplateParamConfigReq>>() {});
         } catch (RuntimeException ex) {
             return null;
         }

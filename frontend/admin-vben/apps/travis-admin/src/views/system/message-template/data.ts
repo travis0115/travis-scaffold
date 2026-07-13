@@ -45,25 +45,36 @@ const statusOptions = [
   { label: '启用', value: 1 },
 ];
 
-export const useFormSchema = (): VbenFormSchema[] => [
+export const useFormSchema = (
+  onInAppContentBlur?: () => void,
+): VbenFormSchema[] => [
   {
     component: 'Input',
     fieldName: 'templateCode',
     label: '模板编码',
-    rules: requiredString('模板编码不能为空').max(64, '模板编码长度不能超过64个字符'),
+    rules: requiredString('模板编码不能为空').max(
+      64,
+      '模板编码长度不能超过64个字符',
+    ),
   },
   {
     component: 'Input',
     fieldName: 'templateName',
     label: '模板名称',
-    rules: requiredString('模板名称不能为空').max(100, '模板名称长度不能超过100个字符'),
+    rules: requiredString('模板名称不能为空').max(
+      100,
+      '模板名称长度不能超过100个字符',
+    ),
   },
   {
     component: 'Select',
     componentProps: { options: messageChannelOptions },
     fieldName: 'channel',
     label: '推送通道',
-    rules: requiredString('推送通道不能为空').max(32, '推送通道长度不能超过32个字符'),
+    rules: requiredString('推送通道不能为空').max(
+      32,
+      '推送通道长度不能超过32个字符',
+    ),
   },
   {
     component: 'Input',
@@ -73,7 +84,10 @@ export const useFormSchema = (): VbenFormSchema[] => [
     },
     fieldName: 'platformTemplateId',
     label: '平台模板ID',
-    rules: requiredString('平台模板ID不能为空').max(128, '平台模板ID长度不能超过128个字符'),
+    rules: requiredString('平台模板ID不能为空').max(
+      128,
+      '平台模板ID长度不能超过128个字符',
+    ),
   },
   {
     component: 'Input',
@@ -93,7 +107,10 @@ export const useFormSchema = (): VbenFormSchema[] => [
     },
     fieldName: 'title',
     label: '模板标题',
-    rules: requiredString('模板标题不能为空').max(255, '模板标题长度不能超过255个字符'),
+    rules: requiredString('模板标题不能为空').max(
+      255,
+      '模板标题长度不能超过255个字符',
+    ),
   },
   {
     component: 'RichEditor',
@@ -109,9 +126,14 @@ export const useFormSchema = (): VbenFormSchema[] => [
       },
       maxHeight: 420,
       minHeight: 240,
-      placeholder: '请输入模板内容，可使用 {{name}} 格式引用模板参数，例如 {{nickname}}',
+      onBlur: onInAppContentBlur,
+      placeholder:
+        '请输入模板内容，可使用 {{name}} 格式引用模板参数，例如 {{nickname}}',
     },
-    dependencies: { show: (values) => values.channel === 'IN_APP', triggerFields: ['channel'] },
+    dependencies: {
+      show: (values) => values.channel === 'IN_APP',
+      triggerFields: ['channel'],
+    },
     fieldName: 'inAppContent',
     formFieldProps: {
       validateOnBlur: false,
@@ -134,7 +156,10 @@ export const useFormSchema = (): VbenFormSchema[] => [
     },
     fieldName: 'content',
     label: '模板内容',
-    rules: requiredString('模板内容不能为空').max(5000, '模板内容长度不能超过5000个字符'),
+    rules: requiredString('模板内容不能为空').max(
+      5000,
+      '模板内容长度不能超过5000个字符',
+    ),
   },
 ];
 
@@ -158,8 +183,9 @@ export const useGridFormSchema = (): VbenFormSchema[] => [
 export function useColumns(
   onActionClick: OnActionClickFn<SystemMessageApi.MessageTemplate>,
 ): VxeTableGridColumns<SystemMessageApi.MessageTemplate> {
-  const isBuiltin = (row: Pick<SystemMessageApi.MessageTemplate, 'isBuiltin'>) =>
-    row.isBuiltin === 1;
+  const isBuiltin = (
+    row: Pick<SystemMessageApi.MessageTemplate, 'isBuiltin'>,
+  ) => row.isBuiltin === 1;
 
   return [
     { field: 'templateCode', minWidth: 180, title: '模板编码' },
@@ -192,7 +218,12 @@ export function useColumns(
       title: '状态',
       width: 90,
     },
-    { field: 'createTime', formatter: 'formatDateTime', title: '创建时间', width: 180 },
+    {
+      field: 'createTime',
+      formatter: 'formatDateTime',
+      title: '创建时间',
+      width: 180,
+    },
     {
       cellRender: {
         attrs: {

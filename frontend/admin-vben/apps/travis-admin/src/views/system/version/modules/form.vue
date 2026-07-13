@@ -45,6 +45,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
   async onOpenChange(isOpen) {
     if (isOpen) {
       const data = drawerApi.getData<SystemVersionLogApi.VersionLog>();
+      drawerApi.setState({ confirmText: undefined });
       formApi.resetForm();
       formApi.updateSchema([
         {
@@ -58,7 +59,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
         formApi.setValues(detail);
       } else {
         formData.value = undefined;
-        formApi.setValues({ publishTime: new Date() });
       }
     }
   },

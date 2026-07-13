@@ -5,8 +5,9 @@ import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.monolith.system.message.api.request.SysUserMessagePageReq;
-import com.travis.monolith.system.message.api.response.SysUserMessageResp;
+import com.travis.monolith.system.message.api.response.SysUserMessageDetailResp;
 import com.travis.monolith.system.message.api.response.SysUserMessageRecentResp;
+import com.travis.monolith.system.message.api.response.SysUserMessageResp;
 import com.travis.monolith.system.message.internal.service.SysMessageReceiverService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -32,6 +33,11 @@ public class SysMessageReceiverController {
     @GetMapping("/page")
     public ApiResponse<PageResp<SysUserMessageResp>> page(@Valid SysUserMessagePageReq req) {
         return ApiResponse.success(messageService.page(currentUserId(), req));
+    }
+
+    @GetMapping("/{id}")
+    public ApiResponse<SysUserMessageDetailResp> get(@PathVariable Long id) {
+        return ApiResponse.success(messageService.get(currentUserId(), id));
     }
 
     @GetMapping("/unread-count")

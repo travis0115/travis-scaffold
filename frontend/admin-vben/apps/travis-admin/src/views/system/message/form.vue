@@ -1,27 +1,30 @@
 <script lang="ts" setup>
+import type { VbenFormSchema } from '#/adapter/form';
 import type { SystemMessageApi, SystemUserApi } from '#/api';
 
-import { ref } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 
-import { useVbenDrawer } from '@vben/common-ui';
-import { message } from 'antdv-next';
+import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
+import { BACKEND_DATETIME_FORMAT } from '@vben/utils';
 
-import { useVbenForm } from '#/adapter/form';
+import { Divider } from 'antdv-next';
+
+import { useVbenForm, z } from '#/adapter/form';
 import {
   createMessage,
-  getDeptTree,
-  getAppUserOptions,
   getAppUserOptionsByIds,
+  getDeptTree,
   getMessageDetail,
-  getMessageTemplatePage,
+  getMessageTemplateDetail,
   getRoleList,
-  getUserOptions,
   getUserOptionsByIds,
   updateMessage,
 } from '#/api';
 import { isDeptEnabled } from '#/features';
 
 import { useFormSchema } from './data';
+import TemplateSelectorModalComponent from './modules/template-selector-modal.vue';
+import UserSelectorModalComponent from './modules/user-selector-modal.vue';
 import {
   getMessageTemplateParamTypeLabel,
   validateMessageTemplateParamValue,
@@ -31,8 +34,42 @@ const emit = defineEmits(['success']);
 const formData = ref<SystemMessageApi.Message>();
 const templateOptions = ref<SystemMessageApi.MessageTemplate[]>([]);
 const templateParamRows = ref<TemplateParamRow[]>([]);
+const selectedTemplateId = ref<number | string>();
 const deptTreeData = ref<any[]>([]);
-const [Form, formApi] = useVbenForm({ schema: useFormSchema(), showDefaultActions: false });
+const selectedUserIds = ref<Array<number | string>>([]);
+const selectedUserOptions = ref<SystemUserApi.UserOption[]>([]);
+const paramFormOptions = {
+  handleValuesChange: () => {
+    const values = paramFormApi.form.values;
+    templateParamRows.value = templateParamRows.value.map((row) => ({
+      ...row,
+      value:
+        values[row.key] === undefined || values[row.key] === null
+          ? ''
+          : String(values[row.key]),
+    }));
+  },
+  schema: [] as VbenFormSchema[],
+  showDefaultActions: false,
+};
+const [Form, formApi] = useVbenForm({
+  schema: useFormSchema(
+    handleReceiverTypeChange,
+    handleChannelChange,
+    openTemplateSelector,
+    openUserSelector,
+  ),
+  showDefaultActions: false,
+});
+const [ParamForm, paramFormApi] = useVbenForm(paramFormOptions);
+const [TemplateSelectorModal, templateSelectorModalApi] = useVbenModal({
+  connectedComponent: TemplateSelectorModalComponent,
+  zIndex: 2200,
+});
+const [UserSelectorModal, userSelectorModalApi] = useVbenModal({
+  connectedComponent: UserSelectorModalComponent,
+  zIndex: 2200,
+});
 
 type TemplateParamRow = {
   description?: string;
@@ -48,15 +85,12 @@ const receiverScopeFieldMap: Record<number, string> = {
   3: 'deptIds',
 };
 
-function effectiveReceiverType(values: Record<string, any>) {
-  return values.receiverType;
-}
-
 function trimDeptTree(departments: any[]): any[] {
   return departments.map((item) => ({
     ...item,
     children: item.children ? trimDeptTree(item.children) : item.children,
-    deptName: typeof item.deptName === 'string' ? item.deptName.trim() : item.deptName,
+    deptName:
+      typeof item.deptName === 'string' ? item.deptName.trim() : item.deptName,
   }));
 }
 
@@ -84,113 +118,107 @@ function normalizeDeptIds(ids: number[] = []) {
   return ids.filter((id) => !descendants.has(id));
 }
 
-function formatUserOption(item: SystemUserApi.UserOption) {
+function formatUserOption(item: SystemUserApi.UserOption, receiverType: string) {
   const name = item.nickname || item.username;
-  const suffix = item.deptName || item.mobile || item.username;
-  return { label: suffix && suffix !== name ? `${name}（${suffix}）` : name, value: item.id };
-}
-
-function userSelectProps(options: SystemUserApi.UserOption[] = []) {
+  const suffix =
+    receiverType === 'app'
+      ? item.username || item.mobile
+      : item.username;
   return {
-    class: 'w-full',
-    filterOption: false,
-    mode: 'multiple',
-    onSearch: handleUserSearch,
-    options: options.map(formatUserOption),
-    placeholder: '请输入用户名/昵称/手机号搜索',
-    showSearch: true,
+    label: suffix && suffix !== name ? `${name}（${suffix}）` : name,
+    value: item.id,
   };
 }
 
-function updateUserOptions(options: SystemUserApi.UserOption[] = []) {
-  formApi.updateSchema([
-    {
-      componentProps: userSelectProps(options),
-      fieldName: 'userIds',
-    },
-  ]);
-}
-
-async function fetchUserOptionsByIds(receiverType: string, ids: number[]) {
-  if (ids.length === 0) return [];
-  return receiverType === 'app'
-    ? await getAppUserOptionsByIds(ids)
-    : await getUserOptionsByIds(ids);
-}
-
-async function handleUserSearch(keyword: string) {
-  if (!keyword?.trim()) {
-    updateUserOptions();
-    return;
-  }
+async function setSelectedUsers(
+  options: SystemUserApi.UserOption[],
+  selectedIds?: Array<number | string>,
+) {
   const values = await formApi.getValues();
-  const receiverType = effectiveReceiverType(values);
-  const options =
-    receiverType === 'app'
-      ? await getAppUserOptions({ keyword, limit: 20 })
-      : await getUserOptions({ keyword, limit: 20 });
-  updateUserOptions(options);
+  selectedUserOptions.value = options;
+  const finalIds = selectedIds ?? options.map((item) => item.id);
+  selectedUserIds.value = [...finalIds];
+  const display =
+    options.length === finalIds.length
+      ? options
+          .map((item) => formatUserOption(item, values.receiverType).label)
+          .join('、')
+      : `已选择 ${finalIds.length} 个用户`;
+  await formApi.setValues(
+    {
+      userDisplay: display,
+      userIds: finalIds,
+    },
+    true,
+    false,
+  );
+  formApi.form.setFieldError('userDisplay', undefined);
+}
+
+async function openUserSelector() {
+  const values = await formApi.getValues();
+  formApi.form.setFieldError('userDisplay', undefined);
+  userSelectorModalApi
+    .setData({
+      receiverType: values.receiverType,
+      selectedIds: selectedUserIds.value,
+      selectedOptions: selectedUserOptions.value,
+    })
+    .open();
+}
+
+async function handleReceiverTypeChange(_value: unknown) {
+  const values = await formApi.getValues();
+  selectedUserIds.value = [];
+  selectedUserOptions.value = [];
+  await formApi.setValues(
+    {
+      receiverScope: [0, 1].includes(values.receiverScope)
+        ? values.receiverScope
+        : 0,
+      userDisplay: '',
+      userIds: [],
+    },
+    true,
+    false,
+  );
+  formApi.form.setFieldError('userDisplay', undefined);
 }
 
 function buildChannelContents(values: Record<string, any>) {
-  const channel = values.channel || 'IN_APP';
-  const templateId = values.templateId;
-  const templateParams = values.templateParams;
-  const template = templateOptions.value.find((item) => item.id === templateId);
-  const contents: SystemMessageApi.MessageChannelContent[] = [];
-  if (channel === 'IN_APP') {
-    contents.push({
-      channel: 'IN_APP',
+  const templateId = selectedTemplateId.value ?? values.templateId;
+  const templateParams = templateId ? values.templateParams : undefined;
+  const template = templateOptions.value.find(
+    (item) => String(item.id) === String(templateId),
+  );
+  return [
+    {
+      channel: values.channel,
       content: values.inAppContent,
       jumpUrl: template?.redirectUrl,
       templateId,
       templateParams,
-    });
-  }
-  if (channel === 'SMS') {
-    contents.push({
-      channel: 'SMS',
-      content: values.smsContent,
-      templateId,
-      templateParams,
-      wordCount: values.smsContent?.length || 0,
-    });
-  }
-  if (channel === 'WECHAT_MP') {
-    contents.push({
-      channel: 'WECHAT_MP',
-      jumpUrl: template?.redirectUrl,
-      templateId,
-      templateParams,
-    });
-  }
-  if (channel === 'WECHAT_OA') {
-    contents.push({
-      channel: 'WECHAT_OA',
-      jumpUrl: template?.redirectUrl,
-      templateId,
-      templateParams,
-    });
-  }
-  return contents;
+    },
+  ];
 }
 
 function toFormValues(detail: SystemMessageApi.Message) {
   const channelContents = detail.channelContents || [];
-  const contentMap = new Map(channelContents.map((item) => [item.channel, item]));
-  const channel = detail.channel || channelContents[0]?.channel || 'IN_APP';
+  const contentMap = new Map(
+    channelContents.map((item) => [item.channel, item]),
+  );
+  const channel = detail.channel || 'IN_APP';
   const channelContent = contentMap.get(channel);
   return {
     ...detail,
     channel,
     templateId: channelContent?.templateId,
-    inAppContent: contentMap.get('IN_APP')?.content || detail.content,
-    templateParams:
-      contentMap.get('IN_APP')?.templateParams ||
-      contentMap.get('SMS')?.templateParams ||
-      contentMap.get('WECHAT_MP')?.templateParams ||
-      contentMap.get('WECHAT_OA')?.templateParams,
-    smsContent: contentMap.get('SMS')?.content,
+    inAppContent: channelContent?.content || detail.content,
+    publishTime:
+      typeof detail.publishTime === 'string'
+        ? detail.publishTime.slice(0, 16)
+        : detail.publishTime,
+    templateParams: channelContent?.templateParams,
   };
 }
 
@@ -199,9 +227,10 @@ function cleanFormOnlyFields(data: Record<string, any>) {
     'deptIds',
     'inAppContent',
     'roleIds',
-    'smsContent',
     'templateId',
+    'templateName',
     'templateParams',
+    'userDisplay',
     'userIds',
   ].forEach((key) => delete data[key]);
 }
@@ -210,7 +239,9 @@ function parseJsonObject(value?: string) {
   if (!value) return undefined;
   try {
     const parsed = JSON.parse(value);
-    return parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)
+    return parsed !== null &&
+      typeof parsed === 'object' &&
+      !Array.isArray(parsed)
       ? (parsed as Record<string, any>)
       : undefined;
   } catch {
@@ -218,28 +249,182 @@ function parseJsonObject(value?: string) {
   }
 }
 
-function schemaToParamRows(contentSchema?: string, values?: Record<string, any>) {
+function schemaToParamRows(
+  contentSchema?: string,
+  values?: Record<string, any>,
+) {
   const schema = parseJsonObject(contentSchema);
   if (!schema) return [];
   return Object.entries(schema).map(([key, item]) => {
-    const config = item && typeof item === 'object' && !Array.isArray(item) ? item : {};
+    const config =
+      item && typeof item === 'object' && !Array.isArray(item) ? item : {};
     return {
       description: config.description ? String(config.description) : undefined,
       key,
       label: config.label ? String(config.label) : key,
       required: config.required !== false,
       type: config.type ? String(config.type) : 'text',
-      value: values?.[key] === undefined || values?.[key] === null ? '' : String(values[key]),
+      value:
+        values?.[key] === undefined || values?.[key] === null
+          ? ''
+          : String(values[key]),
     };
   });
 }
 
-function updateTemplateParamRows(templateId?: number, params?: string) {
-  const template = templateOptions.value.find((item) => item.id === templateId);
+function updateTemplateParamRows(
+  templateId?: number | string,
+  params?: string,
+) {
+  selectedTemplateId.value = templateId;
+  const template = templateOptions.value.find(
+    (item) => String(item.id) === String(templateId),
+  );
   templateParamRows.value = template
     ? schemaToParamRows(template.contentSchema, parseJsonObject(params))
     : [];
+  updateParamFormSchema(templateParamRows.value);
 }
+
+function updateParamFormSchema(rows: TemplateParamRow[]) {
+  paramFormApi.setState({
+    schema: rows.map((row) => ({
+      component: getTemplateParamComponent(row.type),
+      componentProps: getTemplateParamComponentProps(row),
+      description: row.description,
+      fieldName: row.key,
+      label: row.label,
+      rules: createTemplateParamRule(row),
+    })),
+  });
+  void nextTick(async () => {
+    await paramFormApi.setValues(
+      Object.fromEntries(rows.map((row) => [row.key, row.value])),
+    );
+    rows
+      .filter((row) => row.type === 'date' || row.type === 'datetime')
+      .forEach((row) => {
+        const component = paramFormApi.getFieldComponentRef<any>(row.key);
+        const root =
+          component instanceof HTMLElement ? component : component?.$el;
+        const input = root?.querySelector?.('input') as
+          | HTMLInputElement
+          | undefined;
+        if (input) input.readOnly = true;
+      });
+  });
+}
+
+function getTemplateParamComponent(type: string) {
+  if (type === 'number' || type === 'amount') return 'InputNumber';
+  if (type === 'date' || type === 'datetime') return 'DatePicker';
+  return 'Input';
+}
+
+function getTemplateParamComponentProps(row: TemplateParamRow) {
+  const placeholder = `请输入${row.label}（${getMessageTemplateParamTypeLabel(row.type)}）`;
+  const preventManualDateInput = (event: Event) => event.preventDefault();
+  switch (row.type) {
+    case 'amount': {
+      return {
+        class: 'w-full',
+        placeholder,
+        precision: 2,
+        step: '0.01',
+        stringMode: true,
+      };
+    }
+    case 'number': {
+      return { class: 'w-full', placeholder, stringMode: true };
+    }
+    case 'date': {
+      return {
+        class: 'w-full',
+        inputReadOnly: true,
+        onKeyDown: preventManualDateInput,
+        onPaste: preventManualDateInput,
+        placeholder,
+        readonly: true,
+        valueFormat: 'YYYY-MM-DD',
+      };
+    }
+    case 'datetime': {
+      return {
+        class: 'w-full',
+        inputReadOnly: true,
+        onKeyDown: preventManualDateInput,
+        onPaste: preventManualDateInput,
+        placeholder,
+        readonly: true,
+        showTime: true,
+        valueFormat: BACKEND_DATETIME_FORMAT,
+      };
+    }
+    case 'email': {
+      return { placeholder, type: 'email' };
+    }
+    case 'mobile': {
+      return { inputmode: 'numeric', maxlength: 11, placeholder, type: 'tel' };
+    }
+    case 'url': {
+      return { placeholder, type: 'url' };
+    }
+    default: {
+      return { placeholder };
+    }
+  }
+}
+
+function createTemplateParamRule(row: TemplateParamRow) {
+  return z.preprocess(
+    (value) => (value === undefined || value === null ? '' : String(value)),
+    z.string().superRefine((value, context) => {
+      const paramValue =
+        value === undefined || value === null ? '' : String(value).trim();
+      if (row.required && !paramValue) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `请输入${row.label}`,
+        });
+        return;
+      }
+      const result = validateMessageTemplateParamValue(row.type, paramValue);
+      if (result !== true) {
+        context.addIssue({ code: z.ZodIssueCode.custom, message: result });
+      }
+    }),
+  );
+}
+
+function escapeHtml(value: string) {
+  return value.replace(/[&<>'"]/g, (character) => {
+    return (
+      { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[
+        character
+      ] || character
+    );
+  });
+}
+
+const templatePreviewContent = computed(() => {
+  const template = templateOptions.value.find(
+    (item) => String(item.id) === String(selectedTemplateId.value),
+  );
+  if (!template?.content) return '';
+  const params = Object.fromEntries(
+    templateParamRows.value.map((row) => [row.key, row.value]),
+  );
+  return template.content.replace(/\{\{\s*([^{}]+?)\s*}}/g, (_, key) =>
+    escapeHtml(String(params[key.trim()] ?? '')),
+  );
+});
+
+const templatePreviewTitle = computed(() => {
+  const template = templateOptions.value.find(
+    (item) => String(item.id) === String(selectedTemplateId.value),
+  );
+  return template?.title || template?.templateName || '';
+});
 
 function buildTemplateParams() {
   const params = Object.fromEntries(
@@ -248,67 +433,96 @@ function buildTemplateParams() {
   return JSON.stringify(params, null, 2);
 }
 
-function validateTemplateParams() {
-  const missingRows = templateParamRows.value.filter(
-    (row) => row.required && !String(row.value ?? '').trim(),
+async function buildTemplateParamsForSubmit() {
+  const values = await paramFormApi.getValues();
+  return JSON.stringify(
+    Object.fromEntries(
+      templateParamRows.value.map((row) => [row.key, values[row.key] ?? '']),
+    ),
+    null,
+    2,
   );
-  if (missingRows.length > 0) {
-    message.error(`请填写模板参数：${missingRows.map((row) => row.label).join('、')}`);
-    return false;
-  }
-  const invalidRow = templateParamRows.value.find((row) => {
-    const result = validateMessageTemplateParamValue(row.type, String(row.value ?? '').trim());
-    return result !== true;
-  });
-  if (!invalidRow) return true;
-  const result = validateMessageTemplateParamValue(
-    invalidRow.type,
-    String(invalidRow.value ?? '').trim(),
-  );
-  message.error(`${invalidRow.label}：${result}`);
-  return false;
 }
 
-async function loadTemplates() {
-  const page = await getMessageTemplatePage({
-    pageNum: 1,
-    pageSize: 100,
-    status: 1,
+async function validateTemplateParams() {
+  let valid = true;
+  templateParamRows.value.forEach((row) => {
+    const value = row.value.trim();
+    let error: string | undefined;
+    if (row.required && !value) {
+      error = `请输入${row.label}`;
+    } else {
+      const result = validateMessageTemplateParamValue(row.type, value);
+      if (result !== true) error = result;
+    }
+    paramFormApi.form.setFieldError(row.key, error);
+    if (error) valid = false;
   });
-  templateOptions.value = page.records;
-  formApi.updateSchema([
+  return valid;
+}
+
+async function openTemplateSelector() {
+  const values = await formApi.getValues();
+  templateSelectorModalApi
+    .setData({ channel: values.channel, selectedId: selectedTemplateId.value })
+    .open();
+}
+
+async function handleChannelChange(value: unknown) {
+  const channel = typeof value === 'string' ? value : 'IN_APP';
+  templateOptions.value = [];
+  updateTemplateParamRows();
+  await formApi.setFieldValue('templateId', undefined, false);
+  await nextTick();
+  await formApi.setValues(
     {
-      componentProps: {
-        allowClear: true,
-        filterOption: (input: string, option: any) =>
-          String(option?.label ?? '').toLowerCase().includes(input.toLowerCase()),
-        onChange: handleTemplateChange,
-        options: page.records.map((item) => ({
-          label: `${item.templateName}（${item.templateCode}）`,
-          value: item.id,
-        })),
-        placeholder: '可选择模板快速填充内容',
-        showSearch: true,
-      },
-      fieldName: 'templateId',
+      inAppContent: undefined,
+      templateId: undefined,
+      templateName: undefined,
+      templateParams: undefined,
+      title: undefined,
     },
-  ]);
+    true,
+    false,
+  );
+  formApi.form.setFieldError('inAppContent', undefined);
+  formApi.form.setFieldError('templateId', undefined);
+  formApi.form.setFieldError('title', undefined);
+  await formApi.setFieldValue('channel', channel, false);
 }
 
-async function handleTemplateChange(templateId?: number) {
-  const template = templateOptions.value.find((item) => item.id === templateId);
-  updateTemplateParamRows(templateId);
+async function handleTemplateSelected(
+  template?: SystemMessageApi.MessageTemplate,
+) {
   if (!template) {
-    await formApi.setValues({ templateParams: undefined });
+    templateOptions.value = [];
+    updateTemplateParamRows();
+    await formApi.setFieldValue('templateId', undefined, false);
+    await nextTick();
+    await formApi.setValues(
+      {
+        inAppContent: undefined,
+        templateId: undefined,
+        templateName: undefined,
+        templateParams: undefined,
+        title: undefined,
+      },
+      true,
+      false,
+    );
     return;
   }
+  templateOptions.value = [template];
+  updateTemplateParamRows(template.id);
+  await formApi.setFieldValue('templateId', template.id, false);
+  await nextTick();
   await formApi.setValues({
-    channel: template.channel,
-    inAppContent: template.channel === 'IN_APP' ? template.content : undefined,
-    smsContent: template.channel === 'SMS' ? template.content : undefined,
+    inAppContent: template.content,
+    templateId: template.id,
+    templateName: `${template.templateName}（${template.templateCode}）`,
     templateParams: buildTemplateParams(),
     title: template.title || template.templateName,
-  });
+  }, true, false);
 }
 
 const [Drawer, drawerApi] = useVbenDrawer({
@@ -316,14 +530,21 @@ const [Drawer, drawerApi] = useVbenDrawer({
     const { valid } = await formApi.validate();
     if (!valid) return;
     const values = await formApi.getValues();
-    if (values.templateId && !validateTemplateParams()) return;
-    values.templateParams = values.templateId ? buildTemplateParams() : undefined;
-    const channel = values.channel || 'IN_APP';
+    if (selectedTemplateId.value) {
+      const paramValid = await validateTemplateParams();
+      if (!paramValid) return;
+      values.templateId = selectedTemplateId.value;
+      values.templateParams = await buildTemplateParamsForSubmit();
+    } else {
+      values.templateId = undefined;
+      values.templateParams = undefined;
+    }
     const receiverType = values.receiverType;
+    const selectedReceiverScope = Number(values.receiverScope);
     const receiverScope =
-      receiverType === 'app' && ![0, 1].includes(values.receiverScope)
+      receiverType === 'app' && ![0, 1].includes(selectedReceiverScope)
         ? 0
-        : values.receiverScope;
+        : selectedReceiverScope;
     const receiverField = receiverScopeFieldMap[receiverScope];
     let receiverValues: number[] = [];
     if (receiverField === 'deptIds') {
@@ -333,25 +554,28 @@ const [Drawer, drawerApi] = useVbenDrawer({
     }
     const data: Record<string, any> = {
       ...values,
-      channel,
       channelContents: buildChannelContents(values),
-      content: values.inAppContent || values.smsContent || values.title,
-      enableInboxCopy: channel === 'IN_APP' || Boolean(values.enableInboxCopy),
+      content: values.inAppContent || values.title,
       receiverScope,
       receiverType,
       receiverValues: receiverField ? receiverValues : [],
-      sourceType: 'MANUAL',
     };
     if (values.pushType === 0) {
       delete data.publishTime;
+    } else if (typeof data.publishTime === 'string' && data.publishTime.length === 16) {
+      data.publishTime = `${data.publishTime}:00`;
     }
     cleanFormOnlyFields(data);
-    await (formData.value?.id ? updateMessage(formData.value.id, data) : createMessage(data));
+    await (formData.value?.id
+      ? updateMessage(formData.value.id, data)
+      : createMessage(data));
     emit('success');
     drawerApi.close();
   },
   async onOpenChange(open) {
     if (!open) return;
+    selectedUserIds.value = [];
+    selectedUserOptions.value = [];
     const data = drawerApi.getData<SystemMessageApi.Message>();
     formApi.resetForm();
     formData.value = data;
@@ -361,47 +585,77 @@ const [Drawer, drawerApi] = useVbenDrawer({
         hide: Boolean(data?.id),
       },
     ]);
-    updateUserOptions();
     const [roles, departments] = await Promise.all([
       getRoleList(),
       isDeptEnabled() ? getDeptTree() : Promise.resolve([]),
-      loadTemplates(),
     ]);
     deptTreeData.value = trimDeptTree(departments);
     formApi.updateSchema([
       {
-        componentProps: { options: roles.map((item) => ({ label: item.roleName, value: item.id })) },
+        componentProps: {
+          optionFilterProp: 'label',
+          options: roles.map((item) => ({
+            label: item.roleName,
+            value: item.id,
+          })),
+          showSearch: true,
+        },
         fieldName: 'roleIds',
       },
-      { componentProps: { treeData: deptTreeData.value }, fieldName: 'deptIds' },
+      {
+        componentProps: { treeData: deptTreeData.value },
+        fieldName: 'deptIds',
+      },
     ]);
     if (data?.id) {
       const detail = await getMessageDetail(data.id);
       const receiverField = receiverScopeFieldMap[detail.receiverScope];
-      if (receiverField === 'userIds' && detail.receiverValues?.length) {
-        updateUserOptions(
-          await fetchUserOptionsByIds(
-            effectiveReceiverType(detail),
-            detail.receiverValues,
-          ),
-        );
-      }
+      const channelContent = detail.channelContents?.find(
+        (item) => item.channel === detail.channel,
+      );
+      const template = channelContent?.templateId
+        ? await getMessageTemplateDetail(channelContent.templateId)
+        : undefined;
+      if (template) templateOptions.value = [template];
       await formApi.setValues({
         ...toFormValues(detail),
+        templateName: template
+          ? `${template.templateName}（${template.templateCode}）`
+          : undefined,
         ...(receiverField ? { [receiverField]: detail.receiverValues } : {}),
       });
-      const values = await formApi.getValues();
-      updateTemplateParamRows(values.templateId, values.templateParams);
+      if (receiverField === 'userIds' && detail.receiverValues?.length) {
+        const options =
+          detail.receiverType === 'app'
+            ? await getAppUserOptionsByIds(detail.receiverValues)
+            : await getUserOptionsByIds(detail.receiverValues);
+        await setSelectedUsers(options);
+      }
+      updateTemplateParamRows(
+        channelContent?.templateId,
+        channelContent?.templateParams,
+      );
+      if (template && channelContent?.templateId) {
+        await nextTick();
+        await formApi.setValues(
+          {
+            templateId: channelContent.templateId,
+            templateName: `${template.templateName}（${template.templateCode}）`,
+            templateParams: channelContent.templateParams,
+          },
+          true,
+          false,
+        );
+      }
     } else {
       formData.value = undefined;
       templateParamRows.value = [];
+      selectedTemplateId.value = undefined;
       await formApi.setValues({
         channel: 'IN_APP',
-        enableInboxCopy: true,
         pushType: 0,
         receiverScope: 0,
         receiverType: 'admin',
-        sourceType: 'MANUAL',
       });
     }
   },
@@ -409,31 +663,25 @@ const [Drawer, drawerApi] = useVbenDrawer({
 </script>
 
 <template>
-  <Drawer class="w-full max-w-220" :title="formData?.id ? '编辑消息推送' : '新增消息推送'">
+  <TemplateSelectorModal @success="handleTemplateSelected" />
+  <UserSelectorModal @success="setSelectedUsers" />
+  <Drawer
+    class="w-full max-w-220"
+    :title="formData?.id ? '编辑消息推送' : '新增消息推送'"
+  >
     <Form />
-    <div v-if="templateParamRows.length > 0" class="mt-4 rounded border p-3">
-      <div class="mb-3 text-sm font-medium">模板参数</div>
-      <div class="grid gap-3">
+    <div v-if="templateParamRows.length > 0" class="mt-2">
+      <Divider>模板参数</Divider>
+      <ParamForm />
+    </div>
+    <div v-if="selectedTemplateId" class="mt-2">
+      <Divider>消息预览</Divider>
+      <div class="px-3 py-2">
+        <p class="text-base font-semibold">{{ templatePreviewTitle }}</p>
         <div
-          v-for="row in templateParamRows"
-          :key="row.key"
-          class="grid gap-2 md:grid-cols-[160px_1fr]"
-        >
-          <div class="pt-1.5 text-sm text-gray-600">
-            <span>{{ row.label }}</span>
-            <span v-if="row.required" class="ml-1 text-red-500">*</span>
-          </div>
-          <div>
-            <input
-              v-model="row.value"
-              class="w-full rounded border px-3 py-1.5 text-sm"
-              :placeholder="`请输入${row.label}（${getMessageTemplateParamTypeLabel(row.type)}）`"
-            />
-            <div v-if="row.description" class="mt-1 text-xs text-gray-400">
-              {{ row.description }}
-            </div>
-          </div>
-        </div>
+          class="prose mt-3 max-w-none text-sm leading-6"
+          v-html="templatePreviewContent"
+        ></div>
       </div>
     </div>
   </Drawer>

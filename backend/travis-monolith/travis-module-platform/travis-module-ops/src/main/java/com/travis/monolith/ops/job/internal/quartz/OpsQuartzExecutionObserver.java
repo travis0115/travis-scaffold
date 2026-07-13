@@ -2,6 +2,7 @@ package com.travis.monolith.ops.job.internal.quartz;
 
 import com.travis.infrastructure.framework.quartz.core.QuartzDispatchJob;
 import com.travis.infrastructure.framework.quartz.core.QuartzJobExecutionObserver;
+import com.travis.monolith.ops.job.api.enums.OpsJobLogStatus;
 import com.travis.monolith.ops.job.internal.entity.OpsJob;
 import com.travis.monolith.ops.job.internal.entity.OpsJobLog;
 import com.travis.monolith.ops.job.internal.mapper.OpsJobMapper;
@@ -55,7 +56,7 @@ public class OpsQuartzExecutionObserver implements QuartzJobExecutionObserver {
                             context.getScheduledFireTime().toInstant(), ZoneId.systemDefault()));
         }
         executionLog.setStartTime(LocalDateTime.now());
-        executionLog.setStatus(0);
+        executionLog.setStatus(OpsJobLogStatus.RUNNING.getValue());
         executionLog.setAlertStatus(0);
         logService.saveExecution(executionLog);
         executingLogs.put(context.getFireInstanceId(), executionLog.getId());

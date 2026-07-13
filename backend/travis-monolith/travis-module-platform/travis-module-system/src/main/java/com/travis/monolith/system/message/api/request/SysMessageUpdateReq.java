@@ -8,6 +8,7 @@ import com.travis.monolith.system.message.api.enums.SysMessagePushType;
 import com.travis.monolith.system.message.api.enums.SysMessageReceiverScope;
 import com.travis.monolith.system.message.api.enums.SysMessageReceiverType;
 import com.travis.monolith.system.message.api.enums.SysMessageSourceType;
+import com.travis.monolith.system.message.api.enums.SysMessageType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
@@ -15,6 +16,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import lombok.Data;
 
 /** 更新消息推送请求参数。 */
@@ -28,7 +30,7 @@ public class SysMessageUpdateReq {
     @Size(max = 5000, message = "消息内容长度不能超过5000个字符")
     private String content;
 
-    @NotNull(message = "消息类型不能为空")
+    @EnumValue(value = SysMessageType.class, message = "消息类型错误")
     private Integer messageType;
 
     @NotNull(message = "推送方式不能为空")
@@ -84,7 +86,7 @@ public class SysMessageUpdateReq {
                                 item ->
                                         item == null
                                                 || item.getChannel() == null
-                                                || item.getChannel().equals(channel));
+                                                || Objects.equals(channel, item.getChannel()));
     }
 
     @AssertTrue(message = "定时推送必须设置发布时间")

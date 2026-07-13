@@ -2,12 +2,13 @@ import type { VbenFormSchema } from '#/adapter/form';
 import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { SystemVersionLogApi } from '#/api';
 
-import { BACKEND_DATETIME_FORMAT } from '@vben/utils';
-
 import { z } from '#/adapter/form';
 import { uploadVersionLogImage } from '#/api';
 import { $t } from '#/locales';
+import { getDictOptions } from '#/utils/dict';
 import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
+
+const publishStatusOptions = getDictOptions('sys_publish_status');
 
 function formatVersion(value?: null | string) {
   if (!value) return '-';
@@ -70,7 +71,10 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       componentProps: {
         imageUpload: {
-          upload: async (file: File, onProgress?: (percent: number) => void) => {
+          upload: async (
+            file: File,
+            onProgress?: (percent: number) => void,
+          ) => {
             const result = await uploadVersionLogImage(file, (event) => {
               if (!event.total) return;
               onProgress?.(Math.round((event.loaded / event.total) * 100));
@@ -83,26 +87,12 @@ export function useFormSchema(): VbenFormSchema[] {
       },
     },
     {
-      component: 'DatePicker',
-      fieldName: 'publishTime',
-      label: $t('system.version.publishTime'),
-      rules: z
-        .string({ required_error: '发布时间不能为空' })
-        .min(1, '发布时间不能为空'),
-      componentProps: {
-        showTime: true,
-        valueFormat: BACKEND_DATETIME_FORMAT,
-        style: { width: '100%' },
-      },
-    },
-    {
       component: 'RadioGroup',
       componentProps: {
         buttonStyle: 'solid',
-        options: [
-          { label: $t('system.version.statusDraft'), value: 0 },
-          { label: $t('system.version.statusPublished'), value: 1 },
-        ],
+        options: publishStatusOptions.filter(
+          (option) => Number(option.value) !== 2,
+        ),
         optionType: 'button',
       },
       defaultValue: 0,
@@ -128,10 +118,9 @@ export function useGridFormSchema(): VbenFormSchema[] {
       component: 'Select',
       componentProps: {
         allowClear: true,
-        options: [
-          { label: $t('system.version.statusDraft'), value: 0 },
-          { label: $t('system.version.statusPublished'), value: 1 },
-        ],
+        options: publishStatusOptions.filter(
+          (option) => Number(option.value) !== 2,
+        ),
       },
       fieldName: 'status',
       label: $t('system.version.status'),
@@ -141,10 +130,6 @@ export function useGridFormSchema(): VbenFormSchema[] {
 
 export function useColumns(
   onActionClick?: OnActionClickFn<SystemVersionLogApi.VersionLog>,
-  onStatusChange?: (
-    newStatus: number,
-    row: SystemVersionLogApi.VersionLog,
-  ) => Promise<boolean>,
 ): VxeTableGridColumns<SystemVersionLogApi.VersionLog> {
   return [
     {
@@ -175,14 +160,8 @@ export function useColumns(
     },
     {
       cellRender: {
-        attrs: {
-          beforeChange: onStatusChange,
-        },
-        name: onStatusChange ? 'CellSwitch' : 'CellTag',
-        options: [
-          { label: $t('system.version.statusDraft'), value: 0 },
-          { label: $t('system.version.statusPublished'), value: 1 },
-        ],
+        attrs: { dictCode: 'sys_publish_status' },
+        name: 'CellTag',
       },
       field: 'status',
       fixed: 'right',
@@ -199,10 +178,20 @@ export function useColumns(
         },
         name: 'CellOperation',
         options: filterAccessOptions(
-          [{ code: 'preview', text: '预览' }, 'edit', 'delete'],
+          [
+            { code: 'preview', text: '预览' },
+            {
+              code: 'publish',
+              show: (row: SystemVersionLogApi.VersionLog) => row.status !== 1,
+              text: '发布',
+            },
+            { code: 'edit' },
+            { code: 'delete' },
+          ],
           {
             delete: SYSTEM_PERMS.versionDelete,
             edit: SYSTEM_PERMS.versionUpdate,
+            publish: SYSTEM_PERMS.versionUpdate,
           },
         ),
       },

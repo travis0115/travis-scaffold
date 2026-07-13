@@ -2,11 +2,10 @@ package com.travis.monolith.system.version.api.request;
 
 import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.framework.web.core.annotation.SanitizeHtml;
-import com.travis.monolith.system.common.api.enums.Status;
+import com.travis.monolith.system.common.api.enums.PublishStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import java.time.LocalDateTime;
 import lombok.Data;
 
 /**
@@ -32,12 +31,8 @@ public class SysVersionCreateReq {
     @SanitizeHtml
     private String content;
 
-    /** 发布时间 */
-    @NotNull(message = "发布时间不能为空")
-    private LocalDateTime publishTime;
-
     /** 状态（0-草稿 1-已发布） */
-    @EnumValue(value = Status.class, message = "状态值错误")
+    @EnumValue(value = PublishStatus.class, message = "状态值错误")
     @NotNull(message = "状态值不能为空")
     private Integer status;
 }

@@ -43,6 +43,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
   async onOpenChange(open) {
     if (!open) return;
     const data = drawerApi.getData<SystemNoticeApi.Notice>();
+    drawerApi.setState({ confirmText: undefined });
     formApi.resetForm();
     formApi.updateSchema([
       {
@@ -56,7 +57,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
       await formApi.setValues(detail);
     } else {
       formData.value = undefined;
-      await formApi.setValues({ publishTime: new Date() });
     }
   },
 });

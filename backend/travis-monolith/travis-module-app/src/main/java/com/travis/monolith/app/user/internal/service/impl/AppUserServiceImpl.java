@@ -1,7 +1,10 @@
 package com.travis.monolith.app.user.internal.service.impl;
 
+import com.travis.infrastructure.common.mapstruct.PageConverter;
+import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
+import com.travis.monolith.app.user.api.request.AppUserPageReq;
 import com.travis.monolith.app.user.api.response.AppUserOptionResp;
 import com.travis.monolith.app.user.internal.entity.AppUser;
 import com.travis.monolith.app.user.internal.mapper.AppUserMapper;
@@ -16,43 +19,32 @@ public class AppUserServiceImpl extends ServiceImplX<AppUserMapper, AppUser>
         implements AppUserService {
 
     @Override
-    public List<AppUserOptionResp> listOptions(String keyword, int limit) {
-        var wrapper = baseOptionWrapper();
-        if (keyword != null && !keyword.isBlank()) {
-            wrapper.and(
-                    condition ->
-                            condition
-                                    .like(AppUser::getUsername, keyword)
-                                    .or()
-                                    .like(AppUser::getNickname, keyword)
-                                    .or()
-                                    .like(AppUser::getMobile, keyword));
-        }
-        wrapper.orderByDesc(AppUser::getCreateTime).last("LIMIT " + Math.clamp(limit, 1, 50));
-        return toOptions(list(wrapper));
+    public PageResp<AppUserOptionResp> page(AppUserPageReq req) {
+        var wrapper =
+                baseOptionWrapper()
+                        .likeIfPresent(AppUser::getNickname, req.getNickname())
+                        .likeIfPresent(AppUser::getMobile, req.getMobile())
+                        .orderByDesc(AppUser::getCreateTime);
+        return PageConverter.toResp(
+                page(req.getPageNum(), req.getPageSize(), wrapper).convert(this::toOption));
     }
 
     @Override
-    public List<AppUserOptionResp> listOptionsByIds(Collection<Long> userIds) {
-        if (userIds == null || userIds.isEmpty()) {
+    public List<AppUserOptionResp> listOptionsByIds(Collection<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
             return List.of();
         }
-        return toOptions(list(baseOptionWrapper().in(AppUser::getId, userIds)));
+        return list(baseOptionWrapper().in(AppUser::getId, ids)).stream()
+                .map(this::toOption)
+                .toList();
     }
 
     private LambdaQueryWrapperX<AppUser> baseOptionWrapper() {
         return new LambdaQueryWrapperX<AppUser>().eq(AppUser::getStatus, Status.ENABLED.getValue());
     }
 
-    private List<AppUserOptionResp> toOptions(List<AppUser> users) {
-        return users.stream()
-                .map(
-                        user ->
-                                new AppUserOptionResp(
-                                        user.getId(),
-                                        user.getUsername(),
-                                        user.getNickname(),
-                                        user.getMobile()))
-                .toList();
+    private AppUserOptionResp toOption(AppUser user) {
+        return new AppUserOptionResp(
+                user.getId(), user.getUsername(), user.getNickname(), user.getMobile());
     }
 }

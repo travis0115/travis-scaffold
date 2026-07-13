@@ -11,6 +11,8 @@ public class SysUserMessageResp {
     private String title;
     private String content;
     private Integer messageType;
+    private String sourceType;
+    private String sourceId;
     private Integer readStatus;
     private LocalDateTime readTime;
     private LocalDateTime publishTime;

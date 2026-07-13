@@ -9,9 +9,17 @@ import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
+import com.travis.infrastructure.framework.websocket.core.message.WebSocketMessage;
+import com.travis.infrastructure.framework.websocket.core.sender.WebSocketMessageSender;
+import com.travis.monolith.system.file.api.SysFileApi;
+import com.travis.monolith.system.message.api.SysMessageSourceContentProvider;
+import com.travis.monolith.system.message.api.enums.SysMessageReadStatus;
+import com.travis.monolith.system.message.api.enums.SysMessageReceiverScope;
+import com.travis.monolith.system.message.api.enums.SysMessageStatus;
 import com.travis.monolith.system.message.api.request.SysUserMessagePageReq;
-import com.travis.monolith.system.message.api.response.SysUserMessageResp;
+import com.travis.monolith.system.message.api.response.SysUserMessageDetailResp;
 import com.travis.monolith.system.message.api.response.SysUserMessageRecentResp;
+import com.travis.monolith.system.message.api.response.SysUserMessageResp;
 import com.travis.monolith.system.message.internal.converter.SysMessageReceiverConverter;
 import com.travis.monolith.system.message.internal.entity.SysMessage;
 import com.travis.monolith.system.message.internal.entity.SysMessageReceiver;
@@ -30,31 +38,43 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /** 消息接收记录服务实现。 */
 @Service
-@CacheConfig(cacheNames = "system:message-inbox")
+@CacheConfig(cacheNames = "system:message:inbox")
 public class SysMessageReceiverServiceImpl
         extends ServiceImplX<SysMessageReceiverMapper, SysMessageReceiver>
         implements SysMessageReceiverService {
-    private static final int READ_UNREAD = 0;
-    private static final int READ_READ = 1;
-    private static final int READ_DELETED = 2;
-
     private final SysMessageMapper messageMapper;
     private final SysMessageReceiverConverter converter;
     private final SysUserApi userApi;
     private final SysRoleApi roleApi;
+    private final WebSocketMessageSender webSocketMessageSender;
+    private final SysFileApi fileApi;
+    private final Map<String, SysMessageSourceContentProvider> sourceContentProviders;
 
     public SysMessageReceiverServiceImpl(
             SysMessageMapper messageMapper,
             SysMessageReceiverConverter converter,
             SysUserApi userApi,
-            SysRoleApi roleApi) {
+            SysRoleApi roleApi,
+            WebSocketMessageSender webSocketMessageSender,
+            SysFileApi fileApi,
+            List<SysMessageSourceContentProvider> sourceContentProviders) {
         this.messageMapper = messageMapper;
         this.converter = converter;
         this.userApi = userApi;
         this.roleApi = roleApi;
+        this.webSocketMessageSender = webSocketMessageSender;
+        this.fileApi = fileApi;
+        this.sourceContentProviders =
+                sourceContentProviders.stream()
+                        .collect(
+                                Collectors.toMap(
+                                        SysMessageSourceContentProvider::getSourceType,
+                                        Function.identity()));
     }
 
     @Override
@@ -75,7 +95,8 @@ public class SysMessageReceiverServiceImpl
                         context.roleIds(),
                         context.deptId(),
                         null,
-                        null);
+                        null,
+                        SysMessageReadStatus.UNREAD.getValue());
         return toResponses(page.getRecords(), stateMap(receiverType, userId, page.getRecords()))
                 .stream()
                 .map(item -> converter.toRecentResp(item.message(), item.receiver()))
@@ -99,6 +120,7 @@ public class SysMessageReceiverServiceImpl
                         context.roleIds(),
                         context.deptId(),
                         req.getTitle(),
+                        req.getMessageType(),
                         req.getReadStatus());
         Page<SysUserMessageResp> responsePage =
                 new Page<>(page.getCurrent(), page.getSize(), page.getTotal());
@@ -108,6 +130,29 @@ public class SysMessageReceiverServiceImpl
                         .map(item -> converter.toPageResp(item.message(), item.receiver()))
                         .toList());
         return PageConverter.toResp(responsePage);
+    }
+
+    @Override
+    public SysUserMessageDetailResp get(Long userId, Long id) {
+        return get(LoginType.ADMIN, userId, id);
+    }
+
+    @Override
+    public SysUserMessageDetailResp get(String receiverType, Long userId, Long id) {
+        ensureVisible(receiverType, userId, id);
+        var message = messageMapper.selectById(id);
+        var resp = converter.toDetailResp(message, getState(receiverType, userId, id));
+        var provider = sourceContentProviders.get(message.getSourceType());
+        if (provider == null) {
+            resp.setContent(fileApi.resolveManagedImageSources(message.getContent()));
+            return resp;
+        }
+        var sourceContent = provider.get(message.getSourceId());
+        resp.setTitle(sourceContent.getTitle());
+        resp.setContent(sourceContent.getContent());
+        resp.setPublishTime(sourceContent.getPublishTime());
+        resp.setMetadata(sourceContent.getMetadata());
+        return resp;
     }
 
     @Override
@@ -136,7 +181,7 @@ public class SysMessageReceiverServiceImpl
     @CacheEvict(key = "'unread:'+#receiverType+':' + #userId")
     public void markRead(String receiverType, Long userId, Long id) {
         ensureVisible(receiverType, userId, id);
-        upsertState(receiverType, userId, id, READ_READ);
+        upsertState(receiverType, userId, id, SysMessageReadStatus.READ.getValue());
     }
 
     @Override
@@ -153,8 +198,18 @@ public class SysMessageReceiverServiceImpl
         var context = audienceContext(receiverType, userId);
         messageMapper
                 .selectInboxMessageIds(
-                        userId, receiverType, context.roleIds(), context.deptId(), READ_UNREAD)
-                .forEach(messageId -> upsertState(receiverType, userId, messageId, READ_READ));
+                        userId,
+                        receiverType,
+                        context.roleIds(),
+                        context.deptId(),
+                        SysMessageReadStatus.UNREAD.getValue())
+                .forEach(
+                        messageId ->
+                                upsertState(
+                                        receiverType,
+                                        userId,
+                                        messageId,
+                                        SysMessageReadStatus.READ.getValue()));
     }
 
     @Override
@@ -169,7 +224,8 @@ public class SysMessageReceiverServiceImpl
     @CacheEvict(key = "'unread:'+#receiverType+':' + #userId")
     public void delete(String receiverType, Long userId, Long id) {
         ensureVisible(receiverType, userId, id);
-        upsertState(receiverType, userId, id, READ_DELETED);
+        upsertState(receiverType, userId, id, SysMessageReadStatus.DELETED.getValue());
+        notifyInboxChanged();
     }
 
     @Override
@@ -187,7 +243,13 @@ public class SysMessageReceiverServiceImpl
         messageMapper
                 .selectInboxMessageIds(
                         userId, receiverType, context.roleIds(), context.deptId(), null)
-                .forEach(messageId -> upsertState(receiverType, userId, messageId, READ_DELETED));
+                .forEach(
+                        messageId ->
+                                upsertState(
+                                        receiverType,
+                                        userId,
+                                        messageId,
+                                        SysMessageReadStatus.DELETED.getValue()));
     }
 
     private LambdaQueryWrapperX<SysMessageReceiver> baseWrapper(String receiverType, Long userId) {
@@ -219,14 +281,15 @@ public class SysMessageReceiverServiceImpl
     private void ensureVisible(String receiverType, Long userId, Long messageId) {
         var message = messageMapper.selectById(messageId);
         if (message == null
-                || !Integer.valueOf(2).equals(message.getStatus())
+                || !SysMessageStatus.SENT.getValue().equals(message.getStatus())
                 || message.getPublishTime() == null
                 || message.getPublishTime().isAfter(java.time.LocalDateTime.now())
                 || !matchesAudience(receiverType, userId, message)) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
         var state = getState(receiverType, userId, messageId);
-        if (state != null && Integer.valueOf(READ_DELETED).equals(state.getReadStatus())) {
+        if (state != null
+                && SysMessageReadStatus.DELETED.getValue().equals(state.getReadStatus())) {
             throw new BizException(CommonErrorCode.NOT_FOUND);
         }
     }
@@ -236,14 +299,20 @@ public class SysMessageReceiverServiceImpl
             return false;
         }
         var receiverValues = parseReceiverValues(message.getReceiverValues());
-        return switch (message.getReceiverScope()) {
-            case 0 -> true;
-            case 1 -> receiverValues.contains(userId);
-            case 2 ->
-                    roleApi.getRoleIdsByUserId(userId).stream().anyMatch(receiverValues::contains);
-            case 3 -> receiverValues.contains(userApi.getDeptIdByUserId(userId));
-            default -> false;
-        };
+        return SysMessageReceiverScope.findByValue(message.getReceiverScope())
+                .map(
+                        scope ->
+                                switch (scope) {
+                                    case ALL -> true;
+                                    case USER -> receiverValues.contains(userId);
+                                    case ROLE ->
+                                            roleApi.getRoleIdsByUserId(userId).stream()
+                                                    .anyMatch(receiverValues::contains);
+                                    case DEPT ->
+                                            receiverValues.contains(
+                                                    userApi.getDeptIdByUserId(userId));
+                                })
+                .orElse(false);
     }
 
     private void upsertState(String receiverType, Long userId, Long messageId, Integer readStatus) {
@@ -256,7 +325,9 @@ public class SysMessageReceiverServiceImpl
         }
         state.setReadStatus(readStatus);
         state.setReadTime(
-                Integer.valueOf(READ_READ).equals(readStatus) ? LocalDateTime.now() : null);
+                SysMessageReadStatus.READ.getValue().equals(readStatus)
+                        ? LocalDateTime.now()
+                        : null);
         saveOrUpdate(state);
     }
 
@@ -279,6 +350,25 @@ public class SysMessageReceiverServiceImpl
             return List.of();
         }
         return JsonUtil.parseArray(receiverValues, Long.class);
+    }
+
+    private void notifyInboxChanged() {
+        Runnable sender =
+                () ->
+                        webSocketMessageSender.sendToAll(
+                                WebSocketMessage.toAll(
+                                        "system", Map.of("event", "SYSTEM_MESSAGE_INBOX_CHANGED")));
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(
+                    new TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            sender.run();
+                        }
+                    });
+        } else {
+            sender.run();
+        }
     }
 
     private record AudienceContext(List<Long> roleIds, Long deptId) {}

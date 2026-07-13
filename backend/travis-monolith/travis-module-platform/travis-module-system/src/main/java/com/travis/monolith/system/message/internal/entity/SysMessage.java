@@ -1,6 +1,5 @@
 package com.travis.monolith.system.message.internal.entity;
 
-import com.baomidou.mybatisplus.annotation.TableName;
 import com.travis.infrastructure.framework.mybatis.core.BaseEntity;
 import java.time.LocalDateTime;
 import lombok.Data;

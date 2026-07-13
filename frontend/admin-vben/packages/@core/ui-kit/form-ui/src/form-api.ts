@@ -666,10 +666,14 @@ export class FormApi {
       if (value === undefined || value === null || value === '') {
         return;
       }
+      const format = this.resolveDatePickerFormat(schema);
+      if (format === 'YYYY-MM-DD') {
+        return;
+      }
       this.setValueByFieldName(
         values,
         fieldName,
-        formatDate(value, this.resolveDatePickerFormat(schema)),
+        formatDate(value, format),
       );
     });
 
@@ -689,10 +693,14 @@ export class FormApi {
       if (value === undefined || value === null || value === '') {
         return;
       }
+      const format = this.resolveDatePickerFormat(schema);
+      if (format === 'YYYY-MM-DD') {
+        return;
+      }
       this.setValueByFieldName(
         values,
         fieldName,
-        formatLocalDateToUtc(value, this.resolveDatePickerFormat(schema)),
+        formatLocalDateToUtc(value, format),
       );
     });
 

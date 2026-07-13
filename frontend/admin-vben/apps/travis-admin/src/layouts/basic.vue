@@ -4,7 +4,7 @@ import type { NotificationItem } from '@vben/layouts';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
-import { AuthenticationLoginExpiredModal } from '@vben/common-ui';
+import { AuthenticationLoginExpiredModal, useVbenModal } from '@vben/common-ui';
 import { useWatermark } from '@vben/hooks';
 import {
   BasicLayout,
@@ -14,23 +14,41 @@ import {
 } from '@vben/layouts';
 import { preferences, usePreferences } from '@vben/preferences';
 import { useAccessStore, useUserStore } from '@vben/stores';
-import { formatDateTime } from '@vben/utils';
+import { formatDateTime, formatUtcDateTimesInText } from '@vben/utils';
+
+import { Tag } from 'antdv-next';
 
 import {
-  clearMessages,
   createWebSocketTicketApi,
-  deleteInboxMessage,
+  getInboxMessageDetail,
   getRecentMessages,
   getUnreadMessageCount,
   markAllMessagesRead,
   markMessageRead,
 } from '#/api';
+import RichTextPreview from '#/components/rich-text-preview/index.vue';
 import { $t } from '#/locales';
 import { useAuthStore } from '#/store';
+import { getDictOptions } from '#/utils/dict';
 import LoginForm from '#/views/_core/authentication/login.vue';
 
-const notifications = ref<NotificationItem[]>([]);
+type MessageNotification = NotificationItem & {
+  content?: string;
+  messageId: number;
+  messageType: number;
+  metadata?: Record<string, any>;
+};
+
+const notifications = ref<MessageNotification[]>([]);
+const messageTypeOptions = getDictOptions('sys_message_type');
+const notificationPopupRef = ref<{ close: () => void }>();
+const previewNotification = ref<MessageNotification>();
 const unreadCount = ref(0);
+const versionTagStyle = {
+  backgroundColor: 'hsl(var(--primary) / 10%)',
+  borderColor: 'hsl(var(--primary) / 20%)',
+  color: 'hsl(var(--primary))',
+};
 let notificationSocket: undefined | WebSocket;
 let notificationSocketReconnectTimer: ReturnType<typeof setTimeout> | undefined;
 let notificationSocketClosedByClient = false;
@@ -43,6 +61,10 @@ const accessStore = useAccessStore();
 const { destroyWatermark, updateWatermark } = useWatermark();
 const { isDark } = usePreferences();
 const showDot = computed(() => unreadCount.value > 0);
+const [PreviewModal, previewModalApi] = useVbenModal({
+  closeOnClickModal: true,
+  footer: false,
+});
 
 const menus = computed(() => [
   {
@@ -74,6 +96,20 @@ const avatar = computed(() => {
     : preferences.app.defaultAvatar;
 });
 
+function formatNotificationMessage(content?: string) {
+  return formatUtcDateTimesInText(
+    (content || '')
+      .replaceAll('&nbsp;', ' ')
+      .replaceAll(/<[^>]*>/g, ' ')
+      .trim(),
+  );
+}
+
+function formatVersion(value?: null | string) {
+  if (!value) return '-';
+  return value.toLowerCase().startsWith('v') ? value : `v${value}`;
+}
+
 async function handleLogout() {
   await authStore.logout(false);
 }
@@ -81,6 +117,10 @@ async function handleLogout() {
 // 监听偏好设置清除缓存后的全局事件，作为组件 emit 链的兑底
 function handleClearPreferencesLogout() {
   handleLogout();
+}
+
+function refreshNotifications() {
+  void loadNotifications();
 }
 
 onMounted(async () => {
@@ -92,6 +132,7 @@ onMounted(async () => {
     'travis:close-notification-socket',
     closeNotificationSocket,
   );
+  window.addEventListener('travis:message-inbox-changed', refreshNotifications);
   await loadNotifications();
   void connectNotificationSocket();
 });
@@ -105,6 +146,10 @@ onUnmounted(() => {
     'travis:close-notification-socket',
     closeNotificationSocket,
   );
+  window.removeEventListener(
+    'travis:message-inbox-changed',
+    refreshNotifications,
+  );
   closeNotificationSocket();
 });
 
@@ -117,10 +162,13 @@ async function loadNotifications() {
     notifications.value = messages.map((item) => ({
       id: item.id,
       avatar: preferences.app.defaultAvatar,
+      content: item.content,
       date: formatDateTime(item.publishTime || item.createTime),
-      isRead: item.readStatus === 1,
+      isRead: false,
       link: '/message',
-      message: item.content,
+      message: formatNotificationMessage(item.content),
+      messageId: item.messageId,
+      messageType: item.messageType,
       title: item.title,
     }));
     unreadCount.value = unread.count;
@@ -154,7 +202,11 @@ async function connectNotificationSocket() {
   } catch {
     return;
   }
-  if (notificationSocketClosedByClient || !accessStore.accessToken || notificationSocket) {
+  if (
+    notificationSocketClosedByClient ||
+    !accessStore.accessToken ||
+    notificationSocket
+  ) {
     return;
   }
   if (!socketUrl) return;
@@ -180,7 +232,16 @@ function handleNotificationSocketMessage(event: MessageEvent) {
       notificationSocket?.send('pong');
       return;
     }
-    if (message?.content?.event === 'SYSTEM_MESSAGE_PUBLISHED') {
+    if (
+      [
+        'SYSTEM_MESSAGE_DELETED',
+        'SYSTEM_MESSAGE_INBOX_CHANGED',
+        'SYSTEM_MESSAGE_PUBLISHED',
+        'SYSTEM_MESSAGE_REPUBLISHED',
+        'SYSTEM_MESSAGE_REVOKED',
+      ].includes(message?.content?.event)
+    ) {
+      window.dispatchEvent(new CustomEvent('travis:message-inbox-changed'));
       void loadNotifications();
     }
   } catch {
@@ -192,10 +253,7 @@ function handleNotificationSocketClose(event: CloseEvent) {
   if (notificationSocket === event.currentTarget) {
     notificationSocket = undefined;
   }
-  if (
-    notificationSocketClosedByClient ||
-    !accessStore.accessToken
-  ) {
+  if (notificationSocketClosedByClient || !accessStore.accessToken) {
     return;
   }
   notificationSocketReconnectTimer = setTimeout(
@@ -222,7 +280,10 @@ function closeNotificationSocket() {
     notificationSocketReconnectTimer = undefined;
   }
   if (notificationSocket) {
-    notificationSocket.removeEventListener('open', handleNotificationSocketOpen);
+    notificationSocket.removeEventListener(
+      'open',
+      handleNotificationSocketOpen,
+    );
     notificationSocket.removeEventListener(
       'message',
       handleNotificationSocketMessage,
@@ -240,18 +301,8 @@ function closeNotificationSocket() {
   notificationSocket = undefined;
 }
 
-async function handleNoticeClear() {
-  await clearMessages();
-  await loadNotifications();
-}
-
 async function markRead(id: number | string) {
   await markMessageRead(id);
-  await loadNotifications();
-}
-
-async function remove(id: number | string) {
-  await deleteInboxMessage(id);
   await loadNotifications();
 }
 
@@ -260,32 +311,28 @@ async function handleMakeAll() {
   await loadNotifications();
 }
 
-const viewAll = () => router.push('/message');
-
-const handleClick = async (item: NotificationItem) => {
-  if (item.id && !item.isRead) await markRead(item.id);
-  if (item.link) {
-    navigateTo(item.link, item.query, item.state);
-  }
+const viewAll = () => {
+  void router.push({ name: 'Message' });
 };
 
-function navigateTo(
-  link: string,
-  query?: Record<string, any>,
-  state?: Record<string, any>,
-) {
-  if (link.startsWith('http://') || link.startsWith('https://')) {
-    // 外部链接，在新标签页打开
-    window.open(link, '_blank');
-  } else {
-    // 内部路由链接，支持 query 参数和 state
-    router.push({
-      path: link,
-      query: query || {},
-      state,
-    });
+const handleClick = async (item: NotificationItem) => {
+  notificationPopupRef.value?.close();
+  if (item.id && !item.isRead) {
+    try {
+      await markRead(item.id);
+    } catch {
+      // 通知可能已被撤回，仍允许用户进入消息列表。
+    }
   }
-}
+  const notification = item as MessageNotification;
+  const detail = await getInboxMessageDetail(notification.messageId);
+  previewNotification.value = {
+    ...notification,
+    ...detail,
+    date: formatDateTime(detail.publishTime || detail.createTime),
+  };
+  previewModalApi.open();
+};
 
 watch(
   () => ({
@@ -350,15 +397,43 @@ watch(
     </template>
     <template #notification>
       <Notification
+        ref="notificationPopupRef"
         :dot="showDot"
+        empty-text="暂无未读消息"
         :notifications="notifications"
-        @clear="handleNoticeClear"
+        :show-clear="false"
+        :show-item-dot="false"
         @read="(item) => item.id && markRead(item.id)"
-        @remove="(item) => item.id && remove(item.id)"
         @make-all="handleMakeAll"
         @on-click="handleClick"
         @view-all="viewAll"
-      />
+      >
+        <template #content="{ item }">
+          <div class="min-w-0 w-full">
+            <p class="line-clamp-2 text-sm font-normal leading-5">
+              {{ item.title }}
+            </p>
+            <div class="mt-2 flex items-center justify-between gap-3">
+              <Tag
+                :color="
+                  messageTypeOptions.find(
+                    (option) => option.value === item.messageType,
+                  )?.color
+                "
+              >
+                {{
+                  messageTypeOptions.find(
+                    (option) => option.value === item.messageType,
+                  )?.label ?? item.messageType
+                }}
+              </Tag>
+              <span class="shrink-0 text-xs text-muted-foreground">
+                {{ item.date }}
+              </span>
+            </div>
+          </div>
+        </template>
+      </Notification>
     </template>
     <template #extra>
       <AuthenticationLoginExpiredModal
@@ -372,4 +447,35 @@ watch(
       <LockScreen :avatar @to-login="handleLogout" />
     </template>
   </BasicLayout>
+  <PreviewModal
+    class="w-[860px]"
+    :fullscreen-button="false"
+    :title="previewNotification?.title || '消息预览'"
+  >
+    <template #title>
+      <div class="flex min-w-0 items-start gap-3">
+        <span class="h-5 w-1.5 shrink-0 rounded-full bg-primary"></span>
+        <div class="min-w-0 space-y-2">
+          <div class="flex min-w-0 items-center gap-3">
+            <span class="min-w-0 truncate">
+              {{ previewNotification?.title || '消息预览' }}
+            </span>
+            <Tag
+              v-if="previewNotification?.metadata?.version"
+              :style="versionTagStyle"
+            >
+              {{ formatVersion(previewNotification.metadata.version) }}
+            </Tag>
+          </div>
+          <div class="text-muted-foreground text-xs font-normal">
+            {{ previewNotification?.date }}
+          </div>
+        </div>
+      </div>
+    </template>
+    <RichTextPreview
+      :content="previewNotification?.content"
+      :min-height="320"
+    />
+  </PreviewModal>
 </template>

@@ -19,17 +19,25 @@ withDefaults(
   defineProps<{
     /** 显示圆点 */
     dot?: boolean;
+    /** 空列表提示 */
+    emptyText?: string;
     /** 消息列表 */
     notifications?: NotificationItem[];
+    /** 是否显示清空按钮 */
+    showClear?: boolean;
+    /** 是否显示每条消息的未读标记 */
+    showItemDot?: boolean;
   }>(),
   {
     dot: false,
+    emptyText: undefined,
     notifications: () => [],
+    showClear: true,
+    showItemDot: true,
   },
 );
 
 const emit = defineEmits<{
-  clear: [];
   makeAll: [];
   onClick: [NotificationItem];
   read: [NotificationItem];
@@ -43,6 +51,8 @@ const close = () => {
   open.value = false;
 };
 
+defineExpose({ close });
+
 const handleViewAll = () => {
   emit('viewAll');
   close();
@@ -52,9 +62,6 @@ const handleMakeAll = () => {
   emit('makeAll');
 };
 
-const handleClear = () => {
-  emit('clear');
-};
 </script>
 <template>
   <VbenPopover v-model:open="open" content-class="relative right-2 w-90 p-0">
@@ -90,7 +97,7 @@ const handleClear = () => {
             >
               <slot name="content" :item="item">
                 <span
-                  v-if="!item.isRead"
+                  v-if="showItemDot && !item.isRead"
                   class="absolute top-2 right-2 size-2 rounded-sm bg-primary"
                 ></span>
 
@@ -102,7 +109,7 @@ const handleClear = () => {
                     class="aspect-square size-full object-cover"
                   />
                 </span>
-                <div class="flex flex-col gap-1 leading-none">
+                <div class="min-w-0 flex-1 pr-10 flex flex-col gap-1 leading-none">
                   <p class="font-semibold">{{ item.title }}</p>
                   <p class="my-1 line-clamp-2 text-xs text-muted-foreground">
                     {{ item.message }}
@@ -147,18 +154,21 @@ const handleClear = () => {
 
       <template v-else>
         <div class="flex-center min-h-37.5 w-full text-muted-foreground">
-          {{ $t('common.noData') }}
+          {{ emptyText || $t('common.noData') }}
         </div>
       </template>
 
       <div
-        class="flex items-center justify-between border-t border-border px-4 py-3"
+        class="flex items-center border-t border-border px-4 py-3"
+        :class="[
+          showClear ? 'justify-between' : 'justify-end',
+        ]"
       >
         <VbenButton
+          v-if="showClear"
           :disabled="notifications.length <= 0"
           size="sm"
           variant="ghost"
-          @click="handleClear"
         >
           {{ $t('ui.widgets.clearNotifications') }}
         </VbenButton>
