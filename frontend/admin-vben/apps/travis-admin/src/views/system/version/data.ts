@@ -5,10 +5,8 @@ import type { SystemVersionLogApi } from '#/api';
 import { z } from '#/adapter/form';
 import { uploadVersionLogImage } from '#/api';
 import { $t } from '#/locales';
-import { getDictOptions } from '#/utils/dict';
+import { editablePublishStatusOptions } from '#/utils/business-options';
 import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
-
-const publishStatusOptions = getDictOptions('sys_publish_status');
 
 function formatVersion(value?: null | string) {
   if (!value) return '-';
@@ -90,9 +88,7 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'RadioGroup',
       componentProps: {
         buttonStyle: 'solid',
-        options: publishStatusOptions.filter(
-          (option) => Number(option.value) !== 2,
-        ),
+        options: editablePublishStatusOptions,
         optionType: 'button',
       },
       defaultValue: 0,
@@ -115,12 +111,16 @@ export function useGridFormSchema(): VbenFormSchema[] {
       label: $t('system.version.titleField'),
     },
     {
+      component: 'RangePicker',
+      componentProps: { valueFormat: 'YYYY-MM-DD' },
+      fieldName: 'publishDateRange',
+      label: '发布日期',
+    },
+    {
       component: 'Select',
       componentProps: {
         allowClear: true,
-        options: publishStatusOptions.filter(
-          (option) => Number(option.value) !== 2,
-        ),
+        options: editablePublishStatusOptions,
       },
       fieldName: 'status',
       label: $t('system.version.status'),

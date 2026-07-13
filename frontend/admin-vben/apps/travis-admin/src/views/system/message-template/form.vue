@@ -245,8 +245,9 @@ function extractTemplateParamKeys(content?: string) {
 
 async function syncTemplateParamsFromContent() {
   const values = await formApi.getValues();
-  if (values.channel !== 'IN_APP') return;
-  const keys = extractTemplateParamKeys(values.inAppContent);
+  const content =
+    values.channel === 'IN_APP' ? values.inAppContent : values.content;
+  const keys = extractTemplateParamKeys(content);
   if (!keys) return;
   const existingRows = new Map(
     variableRows.value.map((row) => [row.key.trim(), row]),

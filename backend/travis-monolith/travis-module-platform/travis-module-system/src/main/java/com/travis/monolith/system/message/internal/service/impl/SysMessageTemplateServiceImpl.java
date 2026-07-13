@@ -46,6 +46,9 @@ public class SysMessageTemplateServiceImpl
                 new LambdaQueryWrapperX<SysMessageTemplate>()
                         .likeIfPresent(SysMessageTemplate::getTemplateCode, req.getTemplateCode())
                         .likeIfPresent(SysMessageTemplate::getTemplateName, req.getTemplateName())
+                        .likeIfPresent(
+                                SysMessageTemplate::getPlatformTemplateId,
+                                req.getPlatformTemplateId())
                         .eqIfPresent(SysMessageTemplate::getChannel, req.getChannel())
                         .eqIfPresent(SysMessageTemplate::getStatus, req.getStatus())
                         .orderByAsc(SysMessageTemplate::getCreateTime);

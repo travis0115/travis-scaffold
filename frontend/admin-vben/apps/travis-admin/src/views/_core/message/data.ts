@@ -2,13 +2,19 @@ import type { VbenFormSchema } from '#/adapter/form';
 import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { SystemMessageApi } from '#/api';
 
-import { getDictOptions } from '#/utils/dict';
-
-const messageReadStatusOptions = getDictOptions('sys_message_read_status');
-const messageTypeOptions = getDictOptions('sys_message_type');
+import {
+  messageReadStatusOptions,
+  messageTypeOptions,
+} from '#/utils/business-options';
 
 export const useGridFormSchema = (): VbenFormSchema[] => [
   { component: 'Input', fieldName: 'title', label: '消息标题' },
+  {
+    component: 'RangePicker',
+    componentProps: { valueFormat: 'YYYY-MM-DD' },
+    fieldName: 'publishDateRange',
+    label: '发布日期',
+  },
   {
     component: 'Select',
     componentProps: {

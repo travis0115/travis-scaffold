@@ -4,7 +4,7 @@ import type { VxeTableGridColumns } from '#/adapter/vxe-table';
 import { BACKEND_DATETIME_FORMAT } from '@vben/utils';
 
 import { $t } from '#/locales';
-import { getDictOptions } from '#/utils/dict';
+import { operationStatusOptions } from '#/utils/business-options';
 
 export function useGridFormSchema(): VbenFormSchema[] {
   return [
@@ -22,7 +22,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
       component: 'Select',
       componentProps: {
         allowClear: true,
-        options: getDictOptions('operation_status'),
+        options: operationStatusOptions,
       },
       fieldName: 'status',
       label: $t('system.loginLog.status'),

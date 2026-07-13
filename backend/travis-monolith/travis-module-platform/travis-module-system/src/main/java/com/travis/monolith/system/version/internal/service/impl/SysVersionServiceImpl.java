@@ -64,6 +64,16 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
                         .likeIfPresent(SysVersion::getVersion, req.getVersion())
                         .likeIfPresent(SysVersion::getTitle, req.getTitle())
                         .eqIfPresent(SysVersion::getStatus, req.getStatus())
+                        .geIfPresent(
+                                SysVersion::getPublishTime,
+                                req.getPublishStartDate() == null
+                                        ? null
+                                        : req.getPublishStartDate().atStartOfDay())
+                        .ltIfPresent(
+                                SysVersion::getPublishTime,
+                                req.getPublishEndDate() == null
+                                        ? null
+                                        : req.getPublishEndDate().plusDays(1).atStartOfDay())
                         .orderByAllowed(
                                 req.getOrderBy(),
                                 req.getAsc(),
@@ -100,7 +110,7 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
                         : null);
         save(entity);
         if (PublishStatus.PUBLISHED.getValue().equals(entity.getStatus())) {
-            messageApi.publishSourceMessage(toMessageRequest(entity, false));
+            messageApi.publishSourceMessage(toMessageRequest(entity));
         }
     }
 
@@ -122,7 +132,7 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
         entity.setContent(normalizedContent);
         updateById(entity);
         if (PublishStatus.PUBLISHED.getValue().equals(entity.getStatus())) {
-            messageApi.publishSourceMessage(toMessageRequest(entity, false));
+            messageApi.publishSourceMessage(toMessageRequest(entity));
         }
     }
 
@@ -135,11 +145,10 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
             return;
         }
         if (PublishStatus.PUBLISHED.getValue().equals(status)) {
-            boolean republish = PublishStatus.REVOKED.getValue().equals(entity.getStatus());
             entity.setStatus(status);
             entity.setPublishTime(LocalDateTime.now());
             updateById(entity);
-            messageApi.publishSourceMessage(toMessageRequest(entity, republish));
+            messageApi.publishSourceMessage(toMessageRequest(entity));
         } else {
             throw new BizException(CommonErrorCode.BAD_REQUEST, "版本发布状态流转不合法");
         }
@@ -166,7 +175,7 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
         removeById(id);
     }
 
-    private SysSourceMessagePublishReq toMessageRequest(SysVersion version, boolean republish) {
+    private SysSourceMessagePublishReq toMessageRequest(SysVersion version) {
         var req = new SysSourceMessagePublishReq();
         req.setMessageType(SysMessageType.VERSION_UPDATE.getValue());
         req.setSourceType(SysMessageSourceType.VERSION.getValue());
@@ -175,7 +184,6 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
         req.setReceiverType(LoginType.ADMIN);
         req.setReceiverScope(SysMessageReceiverScope.ALL.getValue());
         req.setPublishTime(version.getPublishTime());
-        req.setRepublish(republish);
         return req;
     }
 

@@ -7,7 +7,7 @@ import type { SystemRoleApi } from '#/api';
 
 import { z } from '#/adapter/form';
 import { $t } from '#/locales';
-import { getDictOptions } from '#/utils/dict';
+import { enableStatusOptions } from '#/utils/business-options';
 import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
 
 export function useFormSchema(): VbenFormSchema[] {
@@ -45,7 +45,7 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'RadioGroup',
       componentProps: {
         buttonStyle: 'solid',
-        options: getDictOptions('enable_status'),
+        options: enableStatusOptions,
         optionType: 'button',
       },
       defaultValue: 1,
@@ -78,7 +78,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
       component: 'Select',
       componentProps: {
         allowClear: true,
-        options: getDictOptions('enable_status'),
+        options: enableStatusOptions,
       },
       fieldName: 'status',
       label: $t('system.role.status'),

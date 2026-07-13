@@ -3,6 +3,7 @@ package com.travis.monolith.system.message.internal.mapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.travis.infrastructure.framework.mybatis.core.BaseMapperX;
 import com.travis.monolith.system.message.internal.entity.SysMessage;
+import java.time.LocalDate;
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -25,7 +26,7 @@ public interface SysMessageMapper extends BaseMapperX<SysMessage> {
             WHERE m.is_deleted = 0
               AND m.status = 1
               AND m.receiver_type = #{receiverType}
-              AND (m.channel = 'IN_APP' OR m.enable_inbox_copy = 1)
+              AND m.channel = 'IN_APP'
               AND m.publish_time &lt;= NOW()
               AND (r.id IS NULL OR r.read_status != 2)
               <if test="readStatus != null">
@@ -43,6 +44,12 @@ public interface SysMessageMapper extends BaseMapperX<SysMessage> {
               </if>
               <if test="messageType != null">
                 AND m.message_type = #{messageType}
+              </if>
+              <if test="publishStartDate != null">
+                AND m.publish_time &gt;= #{publishStartDate}
+              </if>
+              <if test="publishEndDate != null">
+                AND m.publish_time &lt; DATE_ADD(#{publishEndDate}, INTERVAL 1 DAY)
               </if>
               AND (
                 m.receiver_scope = 0
@@ -81,6 +88,8 @@ public interface SysMessageMapper extends BaseMapperX<SysMessage> {
             @Param("deptId") Long deptId,
             @Param("title") String title,
             @Param("messageType") Integer messageType,
+            @Param("publishStartDate") LocalDate publishStartDate,
+            @Param("publishEndDate") LocalDate publishEndDate,
             @Param("readStatus") Integer readStatus);
 
     @Select(
@@ -96,7 +105,7 @@ public interface SysMessageMapper extends BaseMapperX<SysMessage> {
             WHERE m.is_deleted = 0
               AND m.status = 1
               AND m.receiver_type = #{receiverType}
-              AND (m.channel = 'IN_APP' OR m.enable_inbox_copy = 1)
+              AND m.channel = 'IN_APP'
               AND m.publish_time &lt;= NOW()
               AND (r.id IS NULL OR r.read_status = 0)
               AND (
@@ -146,7 +155,7 @@ public interface SysMessageMapper extends BaseMapperX<SysMessage> {
             WHERE m.is_deleted = 0
               AND m.status = 1
               AND m.receiver_type = #{receiverType}
-              AND (m.channel = 'IN_APP' OR m.enable_inbox_copy = 1)
+              AND m.channel = 'IN_APP'
               AND m.publish_time &lt;= NOW()
               AND (r.id IS NULL OR r.read_status != 2)
               <if test="readStatus != null">

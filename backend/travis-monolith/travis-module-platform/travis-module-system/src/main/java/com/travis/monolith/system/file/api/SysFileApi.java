@@ -1,6 +1,8 @@
 package com.travis.monolith.system.file.api;
 
 import com.travis.monolith.system.file.api.response.FileUploadResp;
+import jakarta.validation.constraints.NotNull;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -8,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
  *
  * @author travis
  */
+@Validated
 public interface SysFileApi {
 
     /**
@@ -20,7 +23,10 @@ public interface SysFileApi {
      * @return 文件上传结果
      */
     FileUploadResp upload(
-            MultipartFile file, Long folderId, String uploaderType, String uploaderName);
+            @NotNull(message = "上传文件不能为空") MultipartFile file,
+            Long folderId,
+            String uploaderType,
+            String uploaderName);
 
     /**
      * 根据文件ID拼接完整访问URL

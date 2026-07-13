@@ -4,10 +4,11 @@ import type { SystemNoticeApi } from '#/api';
 
 import { z } from '#/adapter/form';
 import { uploadNoticeImage } from '#/api';
-import { getDictOptions } from '#/utils/dict';
+import {
+  editablePublishStatusOptions,
+  publishStatusOptions,
+} from '#/utils/business-options';
 import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
-
-const publishStatusOptions = getDictOptions('sys_publish_status');
 
 function hasRichTextContent(value?: string) {
   if (!value) return false;
@@ -84,9 +85,7 @@ export const useFormSchema = (): VbenFormSchema[] => [
     componentProps: {
       buttonStyle: 'solid',
       optionType: 'button',
-      options: publishStatusOptions.filter(
-        (option) => Number(option.value) !== 2,
-      ),
+      options: editablePublishStatusOptions,
     },
     defaultValue: 0,
     fieldName: 'status',
@@ -106,6 +105,12 @@ export const useFormSchema = (): VbenFormSchema[] => [
 
 export const useGridFormSchema = (): VbenFormSchema[] => [
   { component: 'Input', fieldName: 'title', label: '公告标题' },
+  {
+    component: 'RangePicker',
+    componentProps: { valueFormat: 'YYYY-MM-DD' },
+    fieldName: 'publishDateRange',
+    label: '发布日期',
+  },
   {
     component: 'Select',
     componentProps: {

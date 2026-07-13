@@ -32,8 +32,6 @@ public enum SysMessageChannel {
     }
 
     public static boolean isExternal(String value) {
-        return SMS.value.equals(value)
-                || WECHAT_MP.value.equals(value)
-                || WECHAT_OA.value.equals(value);
+        return !IN_APP.value.equals(value);
     }
 }

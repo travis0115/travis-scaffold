@@ -9,7 +9,11 @@ import { Button } from 'antdv-next';
 import { z } from '#/adapter/form';
 import { uploadMessageImage } from '#/api';
 import { isDeptEnabled } from '#/features';
-import { getDictOptions } from '#/utils/dict';
+import {
+  manualMessagePushTypeOptions,
+  messageChannelOptions,
+  messageStatusOptions,
+} from '#/utils/business-options';
 import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
 
 const requiredNumber = (message: string) =>
@@ -25,6 +29,21 @@ const requiredIdList = (message: string) =>
     })
     .min(1, message);
 
+const externalChannels = new Set(['SMS', 'WECHAT_MP', 'WECHAT_OA']);
+const redirectChannels = new Set(['WECHAT_MP', 'WECHAT_OA']);
+
+function isExternalChannel(channel?: string) {
+  return channel ? externalChannels.has(channel) : false;
+}
+
+function needsTitle(channel?: string) {
+  return channel !== 'SMS';
+}
+
+function needsRedirect(channel?: string) {
+  return channel ? redirectChannels.has(channel) : false;
+}
+
 function hasRichTextContent(value?: string) {
   if (!value) return false;
   return (
@@ -35,15 +54,6 @@ function hasRichTextContent(value?: string) {
       .trim().length > 0
   );
 }
-
-export const messageStatusOptions = getDictOptions('sys_message_status');
-
-export const messagePushTypeOptions = getDictOptions('sys_message_push_type');
-const manualPushTypeOptions = messagePushTypeOptions.filter(
-  (option) => Number(option.value) !== 2,
-);
-
-export const messageChannelOptions = getDictOptions('sys_message_channel');
 
 export const messageReceiverTypeOptions = [
   { label: '后台账号', value: 'admin' },
@@ -219,7 +229,7 @@ export const useFormSchema = (
     componentProps: {
       buttonStyle: 'solid',
       optionType: 'button',
-      options: manualPushTypeOptions,
+      options: manualMessagePushTypeOptions,
     },
     defaultValue: 0,
     fieldName: 'pushType',
@@ -247,8 +257,10 @@ export const useFormSchema = (
   {
     component: 'Input',
     dependencies: {
-      disabled: (values) => Boolean(values.templateId),
-      triggerFields: ['templateId'],
+      disabled: (values) =>
+        values.channel !== 'IN_APP' || Boolean(values.templateId),
+      show: (values) => needsTitle(values.channel),
+      triggerFields: ['channel', 'templateId'],
     },
     fieldName: 'title',
     label: '消息标题',
@@ -256,6 +268,21 @@ export const useFormSchema = (
       .string({ required_error: '消息标题不能为空' })
       .min(1, '消息标题不能为空')
       .max(255, '消息标题长度不能超过255个字符'),
+  },
+  {
+    component: 'Input',
+    dependencies: {
+      disabled: () => true,
+      show: (values) => needsRedirect(values.channel),
+      triggerFields: ['channel', 'templateId'],
+    },
+    fieldName: 'jumpUrl',
+    label: '跳转地址',
+    rules: z
+      .string()
+      .max(500, '跳转地址长度不能超过500个字符')
+      .optional()
+      .or(z.literal('')),
   },
   {
     component: 'RichEditor',
@@ -273,8 +300,9 @@ export const useFormSchema = (
       minHeight: 240,
     },
     dependencies: {
+      show: (values) => values.channel === 'IN_APP',
       componentProps: (values) => ({ editable: !values.templateId }),
-      triggerFields: ['templateId'],
+      triggerFields: ['channel', 'templateId'],
     },
     fieldName: 'inAppContent',
     formFieldProps: {
@@ -289,14 +317,37 @@ export const useFormSchema = (
       .max(5000, '站内信内容长度不能超过5000个字符')
       .refine(hasRichTextContent, '站内信内容不能为空'),
   },
+  {
+    component: 'Textarea',
+    componentProps: { disabled: true, rows: 6 },
+    dependencies: {
+      show: (values) => isExternalChannel(values.channel),
+      triggerFields: ['channel', 'templateId'],
+    },
+    fieldName: 'plainContent',
+    label: '消息内容',
+    rules: z
+      .string({ required_error: '消息内容不能为空' })
+      .min(1, '消息内容不能为空')
+      .max(5000, '消息内容长度不能超过5000个字符'),
+  },
   { component: 'Textarea', fieldName: 'remark', label: '备注' },
 ];
 
 export const useGridFormSchema = (): VbenFormSchema[] => [
   { component: 'Input', fieldName: 'title', label: '消息标题' },
   {
+    component: 'RangePicker',
+    componentProps: { valueFormat: 'YYYY-MM-DD' },
+    fieldName: 'publishDateRange',
+    label: '推送日期',
+  },
+  {
     component: 'Select',
-    componentProps: { allowClear: true, options: manualPushTypeOptions },
+    componentProps: {
+      allowClear: true,
+      options: manualMessagePushTypeOptions,
+    },
     fieldName: 'pushType',
     label: '推送方式',
   },
@@ -320,6 +371,15 @@ export function useColumns<T>(
       },
       field: 'messageType',
       title: '消息类型',
+      width: 110,
+    },
+    {
+      cellRender: {
+        attrs: { dictCode: 'sys_message_channel' },
+        name: 'CellTag',
+      },
+      field: 'channel',
+      title: '推送渠道',
       width: 110,
     },
     {
@@ -396,7 +456,9 @@ export function useColumns<T>(
               code: 'revoke',
               danger: true,
               show: (row: SystemMessageApi.Message) =>
-                row.sourceType === 'MANUAL' && row.status === 1,
+                row.sourceType === 'MANUAL' &&
+                row.channel === 'IN_APP' &&
+                row.status === 1,
               text: '撤回',
             },
             {

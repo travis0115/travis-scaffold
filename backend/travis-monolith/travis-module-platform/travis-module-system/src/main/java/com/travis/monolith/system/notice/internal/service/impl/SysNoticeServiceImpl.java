@@ -48,6 +48,16 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
                 new LambdaQueryWrapperX<SysNotice>()
                         .likeIfPresent(SysNotice::getTitle, req.getTitle())
                         .eqIfPresent(SysNotice::getStatus, req.getStatus())
+                        .geIfPresent(
+                                SysNotice::getPublishTime,
+                                req.getPublishStartDate() == null
+                                        ? null
+                                        : req.getPublishStartDate().atStartOfDay())
+                        .ltIfPresent(
+                                SysNotice::getPublishTime,
+                                req.getPublishEndDate() == null
+                                        ? null
+                                        : req.getPublishEndDate().plusDays(1).atStartOfDay())
                         .orderByDesc(SysNotice::getIsPinned)
                         .orderByAsc(SysNotice::getSort)
                         .orderByDesc(SysNotice::getPublishTime)
@@ -60,6 +70,16 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
     public PageResp<SysNoticeResp> pagePublished(SysNoticePageReq req) {
         var wrapper = new LambdaQueryWrapperX<SysNotice>();
         wrapper.likeIfPresent(SysNotice::getTitle, req.getTitle())
+                .geIfPresent(
+                        SysNotice::getPublishTime,
+                        req.getPublishStartDate() == null
+                                ? null
+                                : req.getPublishStartDate().atStartOfDay())
+                .ltIfPresent(
+                        SysNotice::getPublishTime,
+                        req.getPublishEndDate() == null
+                                ? null
+                                : req.getPublishEndDate().plusDays(1).atStartOfDay())
                 .eq(SysNotice::getStatus, PublishStatus.PUBLISHED.getValue())
                 .le(SysNotice::getPublishTime, LocalDateTime.now())
                 .orderByDesc(SysNotice::getIsPinned)
@@ -89,7 +109,7 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
                         : null);
         save(entity);
         if (PublishStatus.PUBLISHED.getValue().equals(entity.getStatus())) {
-            messageApi.publishSourceMessage(toMessageRequest(entity, false));
+            messageApi.publishSourceMessage(toMessageRequest(entity));
         }
     }
 
@@ -116,11 +136,10 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
             return;
         }
         if (PublishStatus.PUBLISHED.getValue().equals(status)) {
-            boolean republish = PublishStatus.REVOKED.getValue().equals(entity.getStatus());
             entity.setStatus(status);
             entity.setPublishTime(LocalDateTime.now());
             updateById(entity);
-            messageApi.publishSourceMessage(toMessageRequest(entity, republish));
+            messageApi.publishSourceMessage(toMessageRequest(entity));
         } else if (PublishStatus.REVOKED.getValue().equals(status)
                 && PublishStatus.PUBLISHED.getValue().equals(entity.getStatus())) {
             entity.setStatus(status);
@@ -153,7 +172,7 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
         removeById(id);
     }
 
-    private SysSourceMessagePublishReq toMessageRequest(SysNotice notice, boolean republish) {
+    private SysSourceMessagePublishReq toMessageRequest(SysNotice notice) {
         var req = new SysSourceMessagePublishReq();
         req.setMessageType(SysMessageType.NOTICE.getValue());
         req.setSourceType(SysMessageSourceType.NOTICE.getValue());
@@ -162,7 +181,6 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
         req.setReceiverType(LoginType.ADMIN);
         req.setReceiverScope(SysMessageReceiverScope.ALL.getValue());
         req.setPublishTime(notice.getPublishTime());
-        req.setRepublish(republish);
         return req;
     }
 

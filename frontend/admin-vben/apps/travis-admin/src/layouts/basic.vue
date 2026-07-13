@@ -29,7 +29,7 @@ import {
 import RichTextPreview from '#/components/rich-text-preview/index.vue';
 import { $t } from '#/locales';
 import { useAuthStore } from '#/store';
-import { getDictOptions } from '#/utils/dict';
+import { messageTypeOptions } from '#/utils/business-options';
 import LoginForm from '#/views/_core/authentication/login.vue';
 
 type MessageNotification = NotificationItem & {
@@ -40,7 +40,6 @@ type MessageNotification = NotificationItem & {
 };
 
 const notifications = ref<MessageNotification[]>([]);
-const messageTypeOptions = getDictOptions('sys_message_type');
 const notificationPopupRef = ref<{ close: () => void }>();
 const previewNotification = ref<MessageNotification>();
 const unreadCount = ref(0);

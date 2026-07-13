@@ -96,6 +96,8 @@ public class SysMessageReceiverServiceImpl
                         context.deptId(),
                         null,
                         null,
+                        null,
+                        null,
                         SysMessageReadStatus.UNREAD.getValue());
         return toResponses(page.getRecords(), stateMap(receiverType, userId, page.getRecords()))
                 .stream()
@@ -121,6 +123,8 @@ public class SysMessageReceiverServiceImpl
                         context.deptId(),
                         req.getTitle(),
                         req.getMessageType(),
+                        req.getPublishStartDate(),
+                        req.getPublishEndDate(),
                         req.getReadStatus());
         Page<SysUserMessageResp> responsePage =
                 new Page<>(page.getCurrent(), page.getSize(), page.getTotal());

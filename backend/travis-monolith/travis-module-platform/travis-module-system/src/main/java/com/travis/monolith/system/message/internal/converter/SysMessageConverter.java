@@ -2,13 +2,10 @@ package com.travis.monolith.system.message.internal.converter;
 
 import com.travis.infrastructure.common.mapstruct.BaseMapperConfig;
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
-import com.travis.monolith.system.message.api.request.SysMessageChannelContentReq;
 import com.travis.monolith.system.message.api.request.SysMessageCreateReq;
 import com.travis.monolith.system.message.api.request.SysMessageUpdateReq;
-import com.travis.monolith.system.message.api.response.SysMessageChannelContentResp;
 import com.travis.monolith.system.message.api.response.SysMessageResp;
 import com.travis.monolith.system.message.internal.entity.SysMessage;
-import com.travis.monolith.system.message.internal.entity.SysMessageChannelContent;
 import java.util.Collection;
 import java.util.List;
 import org.mapstruct.Mapper;
@@ -31,10 +28,6 @@ public interface SysMessageConverter {
 
     @Mapping(target = "receiverValues", qualifiedByName = "parseReceiverValues")
     SysMessageResp toDetailResp(SysMessage message);
-
-    SysMessageChannelContent toChannelContentEntity(SysMessageChannelContentReq req);
-
-    SysMessageChannelContentResp toChannelContentResp(SysMessageChannelContent entity);
 
     @Named("serializeReceiverValues")
     default String serializeReceiverValues(Collection<Long> receiverValues) {

@@ -185,40 +185,17 @@ async function handleReceiverTypeChange(_value: unknown) {
   formApi.form.setFieldError('userDisplay', undefined);
 }
 
-function buildChannelContents(values: Record<string, any>) {
-  const templateId = selectedTemplateId.value ?? values.templateId;
-  const templateParams = templateId ? values.templateParams : undefined;
-  const template = templateOptions.value.find(
-    (item) => String(item.id) === String(templateId),
-  );
-  return [
-    {
-      channel: values.channel,
-      content: values.inAppContent,
-      jumpUrl: template?.redirectUrl,
-      templateId,
-      templateParams,
-    },
-  ];
-}
-
 function toFormValues(detail: SystemMessageApi.Message) {
-  const channelContents = detail.channelContents || [];
-  const contentMap = new Map(
-    channelContents.map((item) => [item.channel, item]),
-  );
   const channel = detail.channel || 'IN_APP';
-  const channelContent = contentMap.get(channel);
   return {
     ...detail,
     channel,
-    templateId: channelContent?.templateId,
-    inAppContent: channelContent?.content || detail.content,
+    inAppContent: channel === 'IN_APP' ? detail.content : undefined,
+    plainContent: channel === 'IN_APP' ? undefined : detail.content,
     publishTime:
       typeof detail.publishTime === 'string'
         ? detail.publishTime.slice(0, 16)
         : detail.publishTime,
-    templateParams: channelContent?.templateParams,
   };
 }
 
@@ -226,10 +203,9 @@ function cleanFormOnlyFields(data: Record<string, any>) {
   [
     'deptIds',
     'inAppContent',
+    'plainContent',
     'roleIds',
-    'templateId',
     'templateName',
-    'templateParams',
     'userDisplay',
     'userIds',
   ].forEach((key) => delete data[key]);
@@ -477,8 +453,10 @@ async function handleChannelChange(value: unknown) {
   await formApi.setValues(
     {
       inAppContent: undefined,
+      jumpUrl: undefined,
+      plainContent: undefined,
       templateId: undefined,
-      templateName: undefined,
+      templateName: '',
       templateParams: undefined,
       title: undefined,
     },
@@ -486,7 +464,9 @@ async function handleChannelChange(value: unknown) {
     false,
   );
   formApi.form.setFieldError('inAppContent', undefined);
+  formApi.form.setFieldError('plainContent', undefined);
   formApi.form.setFieldError('templateId', undefined);
+  formApi.form.setFieldError('templateName', undefined);
   formApi.form.setFieldError('title', undefined);
   await formApi.setFieldValue('channel', channel, false);
 }
@@ -502,6 +482,8 @@ async function handleTemplateSelected(
     await formApi.setValues(
       {
         inAppContent: undefined,
+        jumpUrl: undefined,
+        plainContent: undefined,
         templateId: undefined,
         templateName: undefined,
         templateParams: undefined,
@@ -516,13 +498,21 @@ async function handleTemplateSelected(
   updateTemplateParamRows(template.id);
   await formApi.setFieldValue('templateId', template.id, false);
   await nextTick();
-  await formApi.setValues({
-    inAppContent: template.content,
-    templateId: template.id,
-    templateName: `${template.templateName}（${template.templateCode}）`,
-    templateParams: buildTemplateParams(),
-    title: template.title || template.templateName,
-  }, true, false);
+  await formApi.setValues(
+    {
+      inAppContent:
+        template.channel === 'IN_APP' ? template.content : undefined,
+      jumpUrl: template.redirectUrl,
+      plainContent:
+        template.channel === 'IN_APP' ? undefined : template.content,
+      templateId: template.id,
+      templateName: `${template.templateName}（${template.templateCode}）`,
+      templateParams: buildTemplateParams(),
+      title: template.title || template.templateName,
+    },
+    true,
+    false,
+  );
 }
 
 const [Drawer, drawerApi] = useVbenDrawer({
@@ -530,6 +520,14 @@ const [Drawer, drawerApi] = useVbenDrawer({
     const { valid } = await formApi.validate();
     if (!valid) return;
     const values = await formApi.getValues();
+    if (values.channel !== 'IN_APP' && !selectedTemplateId.value) {
+      formApi.form.setFieldError(
+        'templateName',
+        '短信和微信通道必须选择消息模板',
+      );
+      return;
+    }
+    formApi.form.setFieldError('templateName', undefined);
     if (selectedTemplateId.value) {
       const paramValid = await validateTemplateParams();
       if (!paramValid) return;
@@ -554,8 +552,10 @@ const [Drawer, drawerApi] = useVbenDrawer({
     }
     const data: Record<string, any> = {
       ...values,
-      channelContents: buildChannelContents(values),
-      content: values.inAppContent || values.title,
+      content:
+        values.channel === 'IN_APP'
+          ? values.inAppContent
+          : values.plainContent,
       receiverScope,
       receiverType,
       receiverValues: receiverField ? receiverValues : [],
@@ -610,11 +610,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
     if (data?.id) {
       const detail = await getMessageDetail(data.id);
       const receiverField = receiverScopeFieldMap[detail.receiverScope];
-      const channelContent = detail.channelContents?.find(
-        (item) => item.channel === detail.channel,
-      );
-      const template = channelContent?.templateId
-        ? await getMessageTemplateDetail(channelContent.templateId)
+      const template = detail.templateId
+        ? await getMessageTemplateDetail(detail.templateId)
         : undefined;
       if (template) templateOptions.value = [template];
       await formApi.setValues({
@@ -631,17 +628,14 @@ const [Drawer, drawerApi] = useVbenDrawer({
             : await getUserOptionsByIds(detail.receiverValues);
         await setSelectedUsers(options);
       }
-      updateTemplateParamRows(
-        channelContent?.templateId,
-        channelContent?.templateParams,
-      );
-      if (template && channelContent?.templateId) {
+      updateTemplateParamRows(detail.templateId, detail.templateParams);
+      if (template && detail.templateId) {
         await nextTick();
         await formApi.setValues(
           {
-            templateId: channelContent.templateId,
+            templateId: detail.templateId,
             templateName: `${template.templateName}（${template.templateCode}）`,
-            templateParams: channelContent.templateParams,
+            templateParams: detail.templateParams,
           },
           true,
           false,

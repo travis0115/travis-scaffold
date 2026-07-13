@@ -11,25 +11,13 @@ import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.websocket.core.message.WebSocketMessage;
 import com.travis.infrastructure.framework.websocket.core.sender.WebSocketMessageSender;
+import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.file.api.SysFileApi;
-import com.travis.monolith.system.message.api.enums.SysMessageChannel;
-import com.travis.monolith.system.message.api.enums.SysMessagePushType;
-import com.travis.monolith.system.message.api.enums.SysMessageReceiverScope;
-import com.travis.monolith.system.message.api.enums.SysMessageSourceType;
-import com.travis.monolith.system.message.api.enums.SysMessageStatus;
-import com.travis.monolith.system.message.api.enums.SysMessageTemplateParamType;
-import com.travis.monolith.system.message.api.enums.SysMessageType;
-import com.travis.monolith.system.message.api.request.SysMessageCreateReq;
-import com.travis.monolith.system.message.api.request.SysMessagePageReq;
-import com.travis.monolith.system.message.api.request.SysMessageTemplateParamConfigReq;
-import com.travis.monolith.system.message.api.request.SysMessageUpdateReq;
-import com.travis.monolith.system.message.api.request.SysSourceMessagePublishReq;
-import com.travis.monolith.system.message.api.response.SysMessageChannelContentResp;
+import com.travis.monolith.system.message.api.enums.*;
+import com.travis.monolith.system.message.api.request.*;
 import com.travis.monolith.system.message.api.response.SysMessageResp;
 import com.travis.monolith.system.message.internal.converter.SysMessageConverter;
 import com.travis.monolith.system.message.internal.entity.SysMessage;
-import com.travis.monolith.system.message.internal.entity.SysMessageChannelContent;
-import com.travis.monolith.system.message.internal.mapper.SysMessageChannelContentMapper;
 import com.travis.monolith.system.message.internal.mapper.SysMessageMapper;
 import com.travis.monolith.system.message.internal.mapper.SysMessageReceiverMapper;
 import com.travis.monolith.system.message.internal.mapper.SysMessageTemplateMapper;
@@ -38,8 +26,6 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.springframework.cache.annotation.CacheConfig;
@@ -60,7 +46,6 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
             Pattern.compile("\\{\\{\\s*([A-Za-z0-9_.-]+)\\s*}}");
 
     private final SysMessageReceiverMapper messageReceiverMapper;
-    private final SysMessageChannelContentMapper channelContentMapper;
     private final SysMessageTemplateMapper messageTemplateMapper;
     private final SysMessageConverter converter;
     private final WebSocketMessageSender webSocketMessageSender;
@@ -68,13 +53,11 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
 
     public SysMessageServiceImpl(
             SysMessageReceiverMapper messageReceiverMapper,
-            SysMessageChannelContentMapper channelContentMapper,
             SysMessageTemplateMapper messageTemplateMapper,
             SysMessageConverter converter,
             WebSocketMessageSender webSocketMessageSender,
             SysFileApi fileApi) {
         this.messageReceiverMapper = messageReceiverMapper;
-        this.channelContentMapper = channelContentMapper;
         this.messageTemplateMapper = messageTemplateMapper;
         this.converter = converter;
         this.webSocketMessageSender = webSocketMessageSender;
@@ -90,15 +73,9 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         wrapper.eq(SysMessage::getSourceType, SysMessageSourceType.MANUAL.getValue())
                 .ne(SysMessage::getPushType, SysMessagePushType.AUTO.getValue())
                 .orderByDesc(SysMessage::getCreateTime);
-        if (req.getHasTemplate() != null) {
-            wrapper.apply(
-                    Boolean.TRUE.equals(req.getHasTemplate())
-                            ? "EXISTS (SELECT 1 FROM sys_message_channel_content WHERE message_id = sys_message.id AND template_id IS NOT NULL AND is_deleted = 0)"
-                            : "NOT EXISTS (SELECT 1 FROM sys_message_channel_content WHERE message_id = sys_message.id AND template_id IS NOT NULL AND is_deleted = 0)");
-        }
         Page<SysMessage> page = page(req.getPageNum(), req.getPageSize(), wrapper);
         var resp = PageConverter.toResp(page.convert(converter::toPageResp));
-        populateTemplateUsage(resp);
+        resp.getRecords().forEach(item -> item.setHasTemplate(item.getTemplateId() != null));
         return resp;
     }
 
@@ -106,9 +83,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     public SysMessageResp get(Long id) {
         var resp = converter.toDetailResp(getByIdOrThrow(id));
         resp.setContent(fileApi.resolveManagedImageSources(resp.getContent()));
-        resp.setChannelContents(listChannelContents(id));
-        resp.setHasTemplate(
-                resp.getChannelContents().stream().anyMatch(item -> item.getTemplateId() != null));
+        resp.setHasTemplate(resp.getTemplateId() != null);
         return resp;
     }
 
@@ -117,25 +92,19 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     @CacheEvict(cacheNames = "system:message:inbox", allEntries = true)
     public Long create(SysMessageCreateReq req) {
         validateReceiver(req.getReceiverType(), req.getReceiverScope(), req.getReceiverValues());
-        validateChannel(req.getChannel(), req.getChannelContents());
+        validateChannel(req.getChannel());
         validatePush(req.getPushType(), req.getPublishTime());
-        var channelContents = renderChannelContents(req.getChannelContents());
         var entity = converter.toEntity(req);
         entity.setMessageType(SysMessageType.SYSTEM.getValue());
         entity.setChannel(req.getChannel());
         entity.setSourceType(SysMessageSourceType.MANUAL.getValue());
-        entity.setEnableInboxCopy(true);
         entity.setStatus(initialStatus());
         if (SysMessagePushType.MANUAL.getValue().equals(req.getPushType())) {
             entity.setPublishTime(null);
         }
-        entity.setContent(
-                fileApi.stripManagedImageSources(
-                        resolveChannelContent(
-                                channelContents, req.getChannel(), req.getContent())));
-        entity.setTitle(resolveChannelTitle(channelContents, req.getChannel(), req.getTitle()));
+        renderTemplate(entity);
+        entity.setContent(fileApi.stripManagedImageSources(entity.getContent()));
         save(entity);
-        syncChannelContents(entity.getId(), channelContents);
         return entity.getId();
     }
 
@@ -167,9 +136,8 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
             })
     public void update(Long id, SysMessageUpdateReq req) {
         validateReceiver(req.getReceiverType(), req.getReceiverScope(), req.getReceiverValues());
-        validateChannel(req.getChannel(), req.getChannelContents());
+        validateChannel(req.getChannel());
         validatePush(req.getPushType(), req.getPublishTime());
-        var channelContents = renderChannelContents(req.getChannelContents());
         var entity = getByIdOrThrow(id);
         ensureManualMessage(entity);
         if (SysMessageStatus.SENT.getValue().equals(entity.getStatus())) {
@@ -179,20 +147,15 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         entity.setMessageType(SysMessageType.SYSTEM.getValue());
         entity.setChannel(req.getChannel());
         entity.setSourceType(SysMessageSourceType.MANUAL.getValue());
-        entity.setEnableInboxCopy(true);
         if (!SysMessageStatus.REVOKED.getValue().equals(entity.getStatus())) {
             entity.setStatus(initialStatus());
         }
         if (SysMessagePushType.MANUAL.getValue().equals(req.getPushType())) {
             entity.setPublishTime(null);
         }
-        entity.setContent(
-                fileApi.stripManagedImageSources(
-                        resolveChannelContent(
-                                channelContents, req.getChannel(), req.getContent())));
-        entity.setTitle(resolveChannelTitle(channelContents, req.getChannel(), req.getTitle()));
+        renderTemplate(entity);
+        entity.setContent(fileApi.stripManagedImageSources(entity.getContent()));
         updateById(entity);
-        syncChannelContents(id, channelContents);
     }
 
     @Override
@@ -249,6 +212,9 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     public void revoke(Long id) {
         var entity = getByIdOrThrow(id);
         ensureManualMessage(entity);
+        if (!SysMessageChannel.IN_APP.getValue().equals(entity.getChannel())) {
+            throw new BizException(SystemErrorCode.MESSAGE_CHANNEL_REVOKE_NOT_SUPPORTED);
+        }
         if (!SysMessageStatus.SENT.getValue().equals(entity.getStatus())) {
             throw new BizException(CommonErrorCode.BAD_REQUEST);
         }
@@ -276,12 +242,12 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                 findSourceMessage(req.getSourceType(), req.getSourceId(), req.getReceiverType());
         boolean created = entity == null;
         Integer previousStatus = created ? null : entity.getStatus();
+        boolean republished = SysMessageStatus.REVOKED.getValue().equals(previousStatus);
         if (created) {
             entity = new SysMessage();
             entity.setSourceType(req.getSourceType());
             entity.setSourceId(req.getSourceId());
             entity.setChannel(SysMessageChannel.IN_APP.getValue());
-            entity.setEnableInboxCopy(true);
             entity.setContent(null);
         }
 
@@ -300,9 +266,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
             entity.setPushType(SysMessagePushType.SCHEDULED.getValue());
             entity.setStatus(SysMessageStatus.PENDING.getValue());
             saveOrUpdate(entity);
-            if (!created
-                    && (req.isRepublish()
-                            || SysMessageStatus.REVOKED.getValue().equals(previousStatus))) {
+            if (republished) {
                 messageReceiverMapper.resetReadStatusByMessageId(
                         entity.getId(),
                         com.travis.monolith.system.message.api.enums.SysMessageReadStatus.UNREAD
@@ -317,19 +281,15 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         entity.setPushType(SysMessagePushType.AUTO.getValue());
         entity.setStatus(SysMessageStatus.SENT.getValue());
         saveOrUpdate(entity);
-        if (!created
-                && (req.isRepublish()
-                        || SysMessageStatus.REVOKED.getValue().equals(previousStatus))) {
+        if (republished) {
             messageReceiverMapper.resetReadStatusByMessageId(
                     entity.getId(),
                     com.travis.monolith.system.message.api.enums.SysMessageReadStatus.UNREAD
                             .getValue());
         }
-        if (created
-                || req.isRepublish()
-                || !SysMessageStatus.SENT.getValue().equals(previousStatus)) {
+        if (created || republished || !SysMessageStatus.SENT.getValue().equals(previousStatus)) {
             notifyInboxChanged(
-                    req.isRepublish() ? "SYSTEM_MESSAGE_REPUBLISHED" : "SYSTEM_MESSAGE_PUBLISHED",
+                    republished ? "SYSTEM_MESSAGE_REPUBLISHED" : "SYSTEM_MESSAGE_PUBLISHED",
                     entity);
         } else {
             notifyInboxChanged("SYSTEM_MESSAGE_INBOX_CHANGED", entity);
@@ -361,7 +321,6 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
             return;
         }
         messageReceiverMapper.deleteByMessageId(entity.getId());
-        channelContentMapper.deleteByMessageId(entity.getId());
         removeById(entity.getId());
         notifyInboxChanged("SYSTEM_MESSAGE_DELETED", entity);
     }
@@ -395,63 +354,12 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         var entity = getByIdOrThrow(id);
         ensureManualMessage(entity);
         messageReceiverMapper.deleteByMessageId(id);
-        channelContentMapper.deleteByMessageId(id);
         removeById(id);
         notifyInboxChanged("SYSTEM_MESSAGE_DELETED", entity);
     }
 
-    private List<SysMessageChannelContentResp> listChannelContents(Long messageId) {
-        return channelContentMapper
-                .selectList(
-                        new LambdaQueryWrapperX<SysMessageChannelContent>()
-                                .eq(SysMessageChannelContent::getMessageId, messageId)
-                                .orderByAsc(SysMessageChannelContent::getId))
-                .stream()
-                .map(
-                        entity -> {
-                            var resp = converter.toChannelContentResp(entity);
-                            resp.setContent(fileApi.resolveManagedImageSources(resp.getContent()));
-                            return resp;
-                        })
-                .toList();
-    }
-
-    private void populateTemplateUsage(PageResp<SysMessageResp> resp) {
-        if (resp.getRecords().isEmpty()) {
-            return;
-        }
-        var messageIds = resp.getRecords().stream().map(SysMessageResp::getId).toList();
-        Set<Long> templateMessageIds =
-                channelContentMapper
-                        .selectList(
-                                new LambdaQueryWrapperX<SysMessageChannelContent>()
-                                        .in(SysMessageChannelContent::getMessageId, messageIds)
-                                        .isNotNull(SysMessageChannelContent::getTemplateId))
-                        .stream()
-                        .map(SysMessageChannelContent::getMessageId)
-                        .collect(java.util.stream.Collectors.toSet());
-        resp.getRecords()
-                .forEach(item -> item.setHasTemplate(templateMessageIds.contains(item.getId())));
-    }
-
-    private void syncChannelContents(
-            Long messageId,
-            List<com.travis.monolith.system.message.api.request.SysMessageChannelContentReq>
-                    contents) {
-        channelContentMapper.deleteByMessageId(messageId);
-        if (contents == null || contents.isEmpty()) {
-            return;
-        }
-        contents.forEach(
-                item -> {
-                    var entity = converter.toChannelContentEntity(item);
-                    entity.setMessageId(messageId);
-                    entity.setContent(fileApi.stripManagedImageSources(entity.getContent()));
-                    channelContentMapper.insert(entity);
-                });
-    }
-
     private void publish(SysMessage message) {
+        validateChannel(message.getChannel());
         message.setStatus(SysMessageStatus.SENT.getValue());
         message.setPublishTime(LocalDateTime.now());
         updateById(message);
@@ -524,26 +432,12 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
     }
 
-    private void validateChannel(
-            String channel,
-            List<com.travis.monolith.system.message.api.request.SysMessageChannelContentReq>
-                    contents) {
+    private void validateChannel(String channel) {
         if (!SysMessageChannel.contains(channel)) {
             throw new BizException(CommonErrorCode.BAD_REQUEST);
         }
-        if (contents == null) {
-            return;
-        }
-        boolean hasUnsupportedContentChannel =
-                contents.stream()
-                        .map(
-                                com.travis.monolith.system.message.api.request
-                                                .SysMessageChannelContentReq
-                                        ::getChannel)
-                        .filter(Objects::nonNull)
-                        .anyMatch(contentChannel -> !channel.equals(contentChannel));
-        if (hasUnsupportedContentChannel) {
-            throw new BizException(CommonErrorCode.VALIDATE_FAILED, "渠道内容与推送通道不一致");
+        if (!SysMessageChannel.IN_APP.getValue().equals(channel)) {
+            throw new BizException(SystemErrorCode.MESSAGE_CHANNEL_UNAVAILABLE);
         }
     }
 
@@ -563,78 +457,22 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     }
 
     private boolean isInboxVisible(SysMessage message) {
-        return SysMessageChannel.IN_APP.getValue().equals(message.getChannel())
-                || Boolean.TRUE.equals(message.getEnableInboxCopy());
+        return SysMessageChannel.IN_APP.getValue().equals(message.getChannel());
     }
 
-    private String resolveChannelContent(
-            List<com.travis.monolith.system.message.api.request.SysMessageChannelContentReq>
-                    contents,
-            String channel,
-            String fallback) {
-        if (contents == null) {
-            return fallback;
+    private void renderTemplate(SysMessage message) {
+        if (message.getTemplateId() == null) {
+            return;
         }
-        return contents.stream()
-                .filter(item -> channel.equals(item.getChannel()))
-                .map(
-                        com.travis.monolith.system.message.api.request.SysMessageChannelContentReq
-                                ::getContent)
-                .filter(content -> content != null && !content.isBlank())
-                .findFirst()
-                .orElseGet(
-                        () ->
-                                contents.stream()
-                                        .map(
-                                                com.travis.monolith.system.message.api.request
-                                                                .SysMessageChannelContentReq
-                                                        ::getContent)
-                                        .filter(content -> content != null && !content.isBlank())
-                                        .findFirst()
-                                        .orElse(fallback));
-    }
-
-    private String resolveChannelTitle(
-            List<com.travis.monolith.system.message.api.request.SysMessageChannelContentReq>
-                    contents,
-            String channel,
-            String fallback) {
-        if (contents == null) {
-            return fallback;
+        var template = messageTemplateMapper.selectById(message.getTemplateId());
+        if (template == null || !message.getChannel().equals(template.getChannel())) {
+            throw new BizException(CommonErrorCode.VALIDATE_FAILED, "消息模板不存在或通道不匹配");
         }
-        return contents.stream()
-                .filter(item -> channel.equals(item.getChannel()))
-                .map(
-                        com.travis.monolith.system.message.api.request.SysMessageChannelContentReq
-                                ::getTitle)
-                .filter(title -> title != null && !title.isBlank())
-                .findFirst()
-                .orElse(fallback);
-    }
-
-    private List<com.travis.monolith.system.message.api.request.SysMessageChannelContentReq>
-            renderChannelContents(
-                    List<com.travis.monolith.system.message.api.request.SysMessageChannelContentReq>
-                            contents) {
-        if (contents == null || contents.isEmpty()) {
-            return contents;
-        }
-        contents.forEach(
-                item -> {
-                    if (item.getTemplateId() == null) {
-                        return;
-                    }
-                    var template = messageTemplateMapper.selectById(item.getTemplateId());
-                    if (template == null || !item.getChannel().equals(template.getChannel())) {
-                        throw new BizException(CommonErrorCode.VALIDATE_FAILED, "消息模板不存在或通道不匹配");
-                    }
-                    var params = parseTemplateParams(item.getTemplateParams());
-                    validateTemplateParams(template.getContentSchema(), params);
-                    item.setContent(renderTemplate(template.getContent(), params));
-                    item.setTitle(template.getTitle());
-                    item.setJumpUrl(template.getRedirectUrl());
-                });
-        return contents;
+        var params = parseTemplateParams(message.getTemplateParams());
+        validateTemplateParams(template.getContentSchema(), params);
+        message.setContent(renderTemplate(template.getContent(), params));
+        message.setTitle(template.getTitle());
+        message.setJumpUrl(template.getRedirectUrl());
     }
 
     private Map<String, Object> parseTemplateParams(String templateParams) {

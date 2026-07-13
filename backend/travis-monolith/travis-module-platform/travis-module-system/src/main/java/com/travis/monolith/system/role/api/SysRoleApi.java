@@ -1,12 +1,15 @@
 package com.travis.monolith.system.role.api;
 
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
+import org.springframework.validation.annotation.Validated;
 
 /**
  * 角色模块对外 API，供跨模块调用，只暴露 DTO，不暴露 entity
  *
  * @author travis
  */
+@Validated
 public interface SysRoleApi {
 
     /**
@@ -15,7 +18,7 @@ public interface SysRoleApi {
      * @param userId 用户ID
      * @return 角色ID列表
      */
-    List<Long> getRoleIdsByUserId(Long userId);
+    List<Long> getRoleIdsByUserId(@NotNull(message = "用户ID不能为空") Long userId);
 
     /**
      * 根据用户ID查询角色编码列表
@@ -23,7 +26,7 @@ public interface SysRoleApi {
      * @param userId 用户ID
      * @return 角色编码列表
      */
-    List<String> getRoleCodesByUserId(Long userId);
+    List<String> getRoleCodesByUserId(@NotNull(message = "用户ID不能为空") Long userId);
 
     /**
      * 根据用户ID查询角色名称列表
@@ -31,7 +34,7 @@ public interface SysRoleApi {
      * @param userId 用户ID
      * @return 角色名称列表
      */
-    List<String> getRoleNamesByUserId(Long userId);
+    List<String> getRoleNamesByUserId(@NotNull(message = "用户ID不能为空") Long userId);
 
     /**
      * 根据角色ID列表获取角色编码列表
@@ -39,7 +42,7 @@ public interface SysRoleApi {
      * @param roleIds 角色ID列表
      * @return 角色编码列表
      */
-    List<String> getRoleCodesByRoleIds(List<Long> roleIds);
+    List<String> getRoleCodesByRoleIds(List<@NotNull(message = "角色ID不能为空") Long> roleIds);
 
     /**
      * 根据角色ID列表获取角色名称列表
@@ -47,7 +50,7 @@ public interface SysRoleApi {
      * @param roleIds 角色ID列表
      * @return 角色名称列表
      */
-    List<String> getRoleNamesByRoleIds(List<Long> roleIds);
+    List<String> getRoleNamesByRoleIds(List<@NotNull(message = "角色ID不能为空") Long> roleIds);
 
     /**
      * 根据角色ID列表获取关联的菜单ID列表
@@ -55,14 +58,14 @@ public interface SysRoleApi {
      * @param roleIds 角色ID列表
      * @return 菜单ID列表（去重）
      */
-    List<Long> getMenuIdsByRoleIds(List<Long> roleIds);
+    List<Long> getMenuIdsByRoleIds(List<@NotNull(message = "角色ID不能为空") Long> roleIds);
 
     /**
      * 删除指定用户的所有角色关联
      *
      * @param userId 用户ID
      */
-    void deleteUserRolesByUserId(Long userId);
+    void deleteUserRolesByUserId(@NotNull(message = "用户ID不能为空") Long userId);
 
     /**
      * 为指定用户分配角色
@@ -70,22 +73,24 @@ public interface SysRoleApi {
      * @param userId 用户ID
      * @param roleIds 角色ID列表
      */
-    void assignUserRoles(Long userId, List<Long> roleIds);
+    void assignUserRoles(
+            @NotNull(message = "用户ID不能为空") Long userId,
+            List<@NotNull(message = "角色ID不能为空") Long> roleIds);
 
     /**
      * 将指定菜单自动分配给所有 admin 角色
      *
      * @param menuId 菜单ID
      */
-    void assignMenuToAdminRoles(Long menuId);
+    void assignMenuToAdminRoles(@NotNull(message = "菜单ID不能为空") Long menuId);
 
     /**
      * 删除指定菜单的所有角色关联
      *
      * @param menuIds 菜单ID列表
      */
-    void removeMenuRelations(List<Long> menuIds);
+    void removeMenuRelations(List<@NotNull(message = "菜单ID不能为空") Long> menuIds);
 
     /** 根据角色ID查询关联用户ID。 */
-    List<Long> getUserIdsByRoleIds(List<Long> roleIds);
+    List<Long> getUserIdsByRoleIds(List<@NotNull(message = "角色ID不能为空") Long> roleIds);
 }

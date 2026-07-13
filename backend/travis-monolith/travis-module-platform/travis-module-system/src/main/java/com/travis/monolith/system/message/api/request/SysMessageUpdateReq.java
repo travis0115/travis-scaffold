@@ -1,28 +1,22 @@
 package com.travis.monolith.system.message.api.request;
 
 import com.travis.infrastructure.common.validation.annotation.EnumValue;
+import com.travis.infrastructure.common.validation.annotation.JsonValue;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.framework.web.core.annotation.SanitizeHtml;
-import com.travis.monolith.system.message.api.enums.SysMessageChannel;
-import com.travis.monolith.system.message.api.enums.SysMessagePushType;
-import com.travis.monolith.system.message.api.enums.SysMessageReceiverScope;
-import com.travis.monolith.system.message.api.enums.SysMessageReceiverType;
-import com.travis.monolith.system.message.api.enums.SysMessageSourceType;
-import com.travis.monolith.system.message.api.enums.SysMessageType;
-import jakarta.validation.Valid;
+import com.travis.monolith.system.message.api.enums.*;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 import lombok.Data;
 
 /** 更新消息推送请求参数。 */
 @Data
 public class SysMessageUpdateReq {
-    @NotBlank(message = "消息标题不能为空")
+    @Size(max = 255, message = "消息标题长度不能超过255个字符")
     private String title;
 
     @NotBlank(message = "消息内容不能为空")
@@ -46,7 +40,14 @@ public class SysMessageUpdateReq {
     @EnumValue(value = SysMessageChannel.class, message = "推送通道错误")
     private String channel;
 
-    private Boolean enableInboxCopy;
+    @Size(max = 500, message = "跳转链接长度不能超过500个字符")
+    private String jumpUrl;
+
+    private Long templateId;
+
+    @Size(max = 4000, message = "模板参数长度不能超过4000个字符")
+    @JsonValue(message = "模板参数必须是合法JSON对象")
+    private String templateParams;
 
     /** 接收端登录体系，与 LoginType 常量取值保持一致：admin/app */
     @NotBlank(message = "接收端不能为空")
@@ -60,9 +61,9 @@ public class SysMessageUpdateReq {
 
     private List<Long> receiverValues;
 
-    @Valid private List<SysMessageChannelContentReq> channelContents;
-
     private LocalDateTime publishTime;
+
+    @Size(max = 255, message = "备注长度不能超过255个字符")
     private String remark;
 
     @AssertTrue(message = "客户端用户不支持按角色或部门接收")
@@ -78,15 +79,15 @@ public class SysMessageUpdateReq {
                 || (receiverValues != null && !receiverValues.isEmpty());
     }
 
-    @AssertTrue(message = "渠道内容与推送通道不一致")
-    public boolean isChannelContentsValid() {
-        return channelContents == null
-                || channelContents.stream()
-                        .allMatch(
-                                item ->
-                                        item == null
-                                                || item.getChannel() == null
-                                                || Objects.equals(channel, item.getChannel()));
+    @AssertTrue(message = "消息标题不能为空")
+    public boolean isTitleValid() {
+        return SysMessageChannel.SMS.getValue().equals(channel)
+                || (title != null && !title.isBlank());
+    }
+
+    @AssertTrue(message = "非站内信通道必须选择消息模板")
+    public boolean isExternalChannelTemplateValid() {
+        return !SysMessageChannel.isExternal(channel) || templateId != null;
     }
 
     @AssertTrue(message = "定时推送必须设置发布时间")

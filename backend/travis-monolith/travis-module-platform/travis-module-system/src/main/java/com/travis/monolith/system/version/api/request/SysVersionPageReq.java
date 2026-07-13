@@ -4,6 +4,7 @@ import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.common.web.model.PageRequest;
 import com.travis.monolith.system.common.api.enums.PublishStatus;
 import jakarta.validation.constraints.Size;
+import java.time.LocalDate;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -24,4 +25,7 @@ public class SysVersionPageReq extends PageRequest {
 
     @EnumValue(value = PublishStatus.class, message = "状态值错误")
     private Integer status;
+
+    private LocalDate publishStartDate;
+    private LocalDate publishEndDate;
 }

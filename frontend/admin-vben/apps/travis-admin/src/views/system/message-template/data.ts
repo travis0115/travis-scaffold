@@ -4,8 +4,8 @@ import type { SystemMessageApi } from '#/api';
 
 import { z } from '#/adapter/form';
 import { uploadMessageImage } from '#/api';
+import { messageChannelOptions } from '#/utils/business-options';
 import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
-import { messageChannelOptions } from '#/views/system/message/data';
 
 const requiredString = (message: string) =>
   z.string({ required_error: message }).min(1, message);
@@ -46,7 +46,7 @@ const statusOptions = [
 ];
 
 export const useFormSchema = (
-  onInAppContentBlur?: () => void,
+  onContentBlur?: () => void,
 ): VbenFormSchema[] => [
   {
     component: 'Input',
@@ -126,7 +126,7 @@ export const useFormSchema = (
       },
       maxHeight: 420,
       minHeight: 240,
-      onBlur: onInAppContentBlur,
+      onBlur: onContentBlur,
       placeholder:
         '请输入模板内容，可使用 {{name}} 格式引用模板参数，例如 {{nickname}}',
     },
@@ -149,7 +149,12 @@ export const useFormSchema = (
   },
   {
     component: 'Textarea',
-    componentProps: { rows: 5 },
+    componentProps: {
+      onBlur: onContentBlur,
+      placeholder:
+        '请输入模板内容，可使用 {{name}} 格式引用模板参数，例如 {{nickname}}',
+      rows: 5,
+    },
     dependencies: {
       show: (values) => isExternalChannel(values.channel),
       triggerFields: ['channel'],
@@ -166,6 +171,11 @@ export const useFormSchema = (
 export const useGridFormSchema = (): VbenFormSchema[] => [
   { component: 'Input', fieldName: 'templateCode', label: '模板编码' },
   { component: 'Input', fieldName: 'templateName', label: '模板名称' },
+  {
+    component: 'Input',
+    fieldName: 'platformTemplateId',
+    label: '平台模板ID',
+  },
   {
     component: 'Select',
     componentProps: { allowClear: true, options: messageChannelOptions },

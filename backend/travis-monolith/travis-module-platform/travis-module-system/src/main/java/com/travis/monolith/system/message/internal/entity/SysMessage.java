@@ -16,7 +16,9 @@ public class SysMessage extends BaseEntity {
     private String sourceType;
     private String sourceId;
     private String channel;
-    private Boolean enableInboxCopy;
+    private String jumpUrl;
+    private Long templateId;
+    private String templateParams;
     private Integer status;
     private String receiverType;
     private Integer receiverScope;

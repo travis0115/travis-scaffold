@@ -5,7 +5,7 @@ import type { OpsJobApi } from '#/api';
 import { BACKEND_DATETIME_FORMAT } from '@vben/utils';
 
 import { z } from '#/adapter/form';
-import { getDictOptions } from '#/utils/dict';
+import { enableStatusOptions } from '#/utils/business-options';
 import { filterAccessOptions, OPS_PERMS } from '#/utils/permissions';
 
 export const scheduleTypeOptions = [
@@ -188,7 +188,7 @@ export const useJobGridFormSchema = (): VbenFormSchema[] => [
     component: 'Select',
     componentProps: {
       allowClear: true,
-      options: getDictOptions('enable_status'),
+      options: enableStatusOptions,
     },
     fieldName: 'status',
     label: '状态',

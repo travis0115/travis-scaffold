@@ -1,6 +1,6 @@
 import type { SystemDictApi } from '#/api';
 
-import { reactive } from 'vue';
+import { reactive, watchEffect } from 'vue';
 
 import { getDictTree } from '#/api';
 
@@ -81,6 +81,31 @@ export function getDictOptions(dictCode: string) {
     loadDictTree();
   }
 
+  return options;
+}
+
+export function getTranslatedOptions(
+  dictCode: string,
+  sourceOptions: DictOption[],
+) {
+  const dictOptions = getDictOptions(dictCode);
+  const options = reactive<DictOption[]>([]);
+  watchEffect(() => {
+    options.splice(
+      0,
+      options.length,
+      ...sourceOptions.map((source) => {
+        const translation = dictOptions.find(
+          (item) => item.value === source.value,
+        );
+        return {
+          ...source,
+          color: translation?.color ?? source.color,
+          label: translation?.label ?? source.label,
+        };
+      }),
+    );
+  });
   return options;
 }
 

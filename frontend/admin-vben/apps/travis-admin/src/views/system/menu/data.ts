@@ -7,11 +7,11 @@ import type {
 import type { SystemMenuApi } from '#/api';
 
 import { $t } from '#/locales';
-import { getDictOptions } from '#/utils/dict';
+import { menuTypeOptions } from '#/utils/business-options';
 import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
 
 export function getMenuTypeOptions() {
-  return getDictOptions('sys_menu_type');
+  return menuTypeOptions;
 }
 
 function flattenTree(nodes: SystemMenuApi.SysMenu[]): SystemMenuApi.SysMenu[] {

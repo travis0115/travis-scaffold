@@ -872,11 +872,13 @@ CREATE TABLE `sys_message` (
   `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '消息标题',
   `content` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '消息正文；引用型消息为空，预览时读取来源业务数据',
   `message_type` tinyint NOT NULL DEFAULT '1' COMMENT '消息类型：1-系统消息 2-业务消息 3-系统公告 4-版本更新',
-  `push_type` tinyint NOT NULL DEFAULT '0' COMMENT '推送方式：0-手动推送 1-定时推送',
+  `push_type` tinyint NOT NULL DEFAULT '0' COMMENT '推送方式：0-手动推送 1-定时推送 2-自动推送',
   `source_type` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'MANUAL' COMMENT '来源类型：MANUAL-后台人工推送',
   `source_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '来源ID',
-  `channel` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'IN_APP' COMMENT '主推送通道：IN_APP/SMS/WECHAT_OA/WECHAT_MP',
-  `enable_inbox_copy` tinyint NOT NULL DEFAULT '0' COMMENT '是否同步生成站内信副本：0-否 1-是',
+  `channel` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'IN_APP' COMMENT '推送通道：IN_APP/SMS/WECHAT_OA/WECHAT_MP',
+  `jump_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '跳转链接',
+  `template_id` bigint DEFAULT NULL COMMENT '消息模板ID',
+  `template_params` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT '模板参数JSON',
   `status` tinyint NOT NULL DEFAULT '0' COMMENT '状态：0-待推送 1-已推送 2-已撤回',
   `receiver_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'admin' COMMENT '接收端登录体系，与 LoginType 常量取值保持一致：admin/app',
   `receiver_scope` tinyint NOT NULL COMMENT '接收范围：0-全部用户 1-指定用户 2-指定角色 3-指定部门',
@@ -893,45 +895,13 @@ CREATE TABLE `sys_message` (
   KEY `idx_sys_message_push_type` (`push_type`,`status`,`is_deleted`),
   KEY `idx_sys_message_receiver` (`receiver_type`,`receiver_scope`,`status`,`is_deleted`),
   KEY `idx_sys_message_channel` (`channel`,`status`,`is_deleted`),
+  KEY `idx_sys_message_template` (`template_id`,`is_deleted`),
   UNIQUE KEY `uk_sys_message_source` (`source_type`,`source_id`,`receiver_type`),
   KEY `idx_sys_message_title` (`title`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='消息推送主体';
 
 -- ----------------------------
 -- Records of sys_message
--- ----------------------------
-BEGIN;
-COMMIT;
-
--- ----------------------------
--- Table structure for sys_message_channel_content
--- ----------------------------
-DROP TABLE IF EXISTS `sys_message_channel_content`;
-CREATE TABLE `sys_message_channel_content` (
-  `id` bigint NOT NULL COMMENT '主键ID',
-  `message_id` bigint NOT NULL COMMENT '消息ID',
-  `channel` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '推送通道：IN_APP/SMS/WECHAT_OA/WECHAT_MP',
-  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '渠道标题',
-  `subtitle` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '渠道副标题',
-  `content` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT '渠道内容',
-  `image_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '大图URL',
-  `jump_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '跳转链接',
-  `template_id` bigint DEFAULT NULL COMMENT '消息模板ID',
-  `template_params` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT '模板参数JSON',
-  `word_count` int DEFAULT NULL COMMENT '字数',
-  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
-  `create_by` bigint DEFAULT NULL COMMENT '创建人ID',
-  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
-  `update_by` bigint DEFAULT NULL COMMENT '更新人ID',
-  `is_deleted` tinyint NOT NULL DEFAULT '0' COMMENT '逻辑删除：0-未删除 1-已删除',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_sys_message_channel` (`message_id`,`channel`),
-  KEY `idx_sys_message_channel_message` (`message_id`,`is_deleted`),
-  KEY `idx_sys_message_channel_template` (`template_id`,`is_deleted`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='消息渠道内容';
-
--- ----------------------------
--- Records of sys_message_channel_content
 -- ----------------------------
 BEGIN;
 COMMIT;

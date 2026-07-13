@@ -49,6 +49,13 @@ function formatVersion(value?: null | string) {
 
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
+    fieldMappingTime: [
+      [
+        'publishDateRange',
+        ['publishStartDate', 'publishEndDate'],
+        null,
+      ],
+    ],
     schema: useGridFormSchema(),
     submitOnChange: false,
   },

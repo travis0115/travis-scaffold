@@ -4,7 +4,11 @@ import type { SystemOperationLogApi } from '#/api';
 
 import { BACKEND_DATETIME_FORMAT } from '@vben/utils';
 
-import { getDictOptions } from '#/utils/dict';
+import {
+  httpMethodOptions,
+  operationBusinessTypeOptions,
+  operationStatusOptions,
+} from '#/utils/business-options';
 
 export function useGridFormSchema(): VbenFormSchema[] {
   return [
@@ -14,7 +18,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
       component: 'Select',
       componentProps: {
         allowClear: true,
-        options: getDictOptions('operation_business_type'),
+        options: operationBusinessTypeOptions,
       },
       fieldName: 'businessType',
       label: '业务类型',
@@ -23,7 +27,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
       component: 'Select',
       componentProps: {
         allowClear: true,
-        options: getDictOptions('http_method'),
+        options: httpMethodOptions,
       },
       fieldName: 'requestMethod',
       label: '请求方式',
@@ -35,7 +39,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
       component: 'Select',
       componentProps: {
         allowClear: true,
-        options: getDictOptions('operation_status'),
+        options: operationStatusOptions,
       },
       fieldName: 'status',
       label: '操作状态',

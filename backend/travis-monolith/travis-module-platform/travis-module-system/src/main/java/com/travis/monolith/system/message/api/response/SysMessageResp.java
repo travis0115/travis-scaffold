@@ -16,12 +16,13 @@ public class SysMessageResp {
     private String sourceType;
     private String sourceId;
     private String channel;
-    private Boolean enableInboxCopy;
+    private String jumpUrl;
+    private Long templateId;
+    private String templateParams;
     private Integer status;
     private String receiverType;
     private Integer receiverScope;
     private List<Long> receiverValues;
-    private List<SysMessageChannelContentResp> channelContents;
     private LocalDateTime publishTime;
     private String remark;
     private LocalDateTime createTime;

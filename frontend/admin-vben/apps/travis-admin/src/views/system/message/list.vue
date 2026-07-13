@@ -45,7 +45,16 @@ const [PreviewModal, previewModalApi] = useVbenModal({
   footer: false,
 });
 const [Grid, gridApi] = useVbenVxeGrid({
-  formOptions: { schema: useGridFormSchema() },
+  formOptions: {
+    fieldMappingTime: [
+      [
+        'publishDateRange',
+        ['publishStartDate', 'publishEndDate'],
+        null,
+      ],
+    ],
+    schema: useGridFormSchema(),
+  },
   gridOptions: {
     columns: useColumns(onActionClick),
     height: 'auto',

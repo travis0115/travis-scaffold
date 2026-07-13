@@ -13,7 +13,7 @@ import {useVbenForm, z} from '#/adapter/form';
 import {createMenu, getMenuDetail, getMenuTree, updateMenu} from '#/api';
 import {$t} from '#/locales';
 import {componentKeys} from '#/router/routes';
-import {getDictOptions} from '#/utils/dict';
+import {enableStatusOptions} from '#/utils/business-options';
 import {disableTreeNodeAndDescendants} from '#/utils/tree';
 
 import {getMenuTypeOptions} from '../data';
@@ -370,7 +370,7 @@ const schema: VbenFormSchema[] = [
     component: 'RadioGroup',
     componentProps: {
       buttonStyle: 'solid',
-      options: getDictOptions('enable_status'),
+      options: enableStatusOptions,
       optionType: 'button',
     },
     defaultValue: 1,

@@ -7,7 +7,7 @@ import type { SystemDeptApi } from '#/api';
 
 import { z } from '#/adapter/form';
 import { $t } from '#/locales';
-import { getDictOptions } from '#/utils/dict';
+import { enableStatusOptions } from '#/utils/business-options';
 import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
 
 export function useSchema(
@@ -73,7 +73,7 @@ export function useSchema(
       component: 'RadioGroup',
       componentProps: {
         buttonStyle: 'solid',
-        options: getDictOptions('enable_status'),
+        options: enableStatusOptions,
         optionType: 'button',
       },
       defaultValue: 1,

@@ -11,11 +11,10 @@ export namespace SystemMessageApi {
   export interface Message {
     [key: string]: any;
     channel?: string;
-    channelContents?: MessageChannelContent[];
     content: string;
-    enableInboxCopy?: boolean;
     id: number;
     hasTemplate: boolean;
+    jumpUrl?: string;
     messageType: number;
     pushType: number;
     publishTime?: string;
@@ -26,20 +25,9 @@ export namespace SystemMessageApi {
     sourceId?: string;
     sourceType?: string;
     status: number;
-    title: string;
-  }
-
-  export interface MessageChannelContent {
-    channel: string;
-    content?: string;
-    id?: number;
-    imageUrl?: string;
-    jumpUrl?: string;
-    subtitle?: string;
     templateId?: number;
     templateParams?: string;
-    title?: string;
-    wordCount?: number;
+    title: string;
   }
 
   export interface MessageTemplate {

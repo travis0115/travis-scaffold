@@ -4,6 +4,7 @@ import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.common.web.model.PageRequest;
 import com.travis.monolith.system.message.api.enums.SysMessageReadStatus;
 import com.travis.monolith.system.message.api.enums.SysMessageType;
+import java.time.LocalDate;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -18,4 +19,6 @@ public class SysUserMessagePageReq extends PageRequest {
     private Integer readStatus;
 
     private String title;
+    private LocalDate publishStartDate;
+    private LocalDate publishEndDate;
 }
