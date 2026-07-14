@@ -42,7 +42,7 @@ public interface SysRoleApi {
      * @param roleIds 角色ID列表
      * @return 角色编码列表
      */
-    List<String> getRoleCodesByRoleIds(List<@NotNull(message = "角色ID不能为空") Long> roleIds);
+    List<String> getRoleCodesByRoleIds(List<Long> roleIds);
 
     /**
      * 根据角色ID列表获取角色名称列表
@@ -50,7 +50,7 @@ public interface SysRoleApi {
      * @param roleIds 角色ID列表
      * @return 角色名称列表
      */
-    List<String> getRoleNamesByRoleIds(List<@NotNull(message = "角色ID不能为空") Long> roleIds);
+    List<String> getRoleNamesByRoleIds(List<Long> roleIds);
 
     /**
      * 根据角色ID列表获取关联的菜单ID列表
@@ -58,7 +58,7 @@ public interface SysRoleApi {
      * @param roleIds 角色ID列表
      * @return 菜单ID列表（去重）
      */
-    List<Long> getMenuIdsByRoleIds(List<@NotNull(message = "角色ID不能为空") Long> roleIds);
+    List<Long> getMenuIdsByRoleIds(List<Long> roleIds);
 
     /**
      * 删除指定用户的所有角色关联
@@ -73,9 +73,7 @@ public interface SysRoleApi {
      * @param userId 用户ID
      * @param roleIds 角色ID列表
      */
-    void assignUserRoles(
-            @NotNull(message = "用户ID不能为空") Long userId,
-            List<@NotNull(message = "角色ID不能为空") Long> roleIds);
+    void assignUserRoles(@NotNull(message = "用户ID不能为空") Long userId, List<Long> roleIds);
 
     /**
      * 将指定菜单自动分配给所有 admin 角色
@@ -89,8 +87,8 @@ public interface SysRoleApi {
      *
      * @param menuIds 菜单ID列表
      */
-    void removeMenuRelations(List<@NotNull(message = "菜单ID不能为空") Long> menuIds);
+    void removeMenuRelations(List<Long> menuIds);
 
     /** 根据角色ID查询关联用户ID。 */
-    List<Long> getUserIdsByRoleIds(List<@NotNull(message = "角色ID不能为空") Long> roleIds);
+    List<Long> getUserIdsByRoleIds(List<Long> roleIds);
 }

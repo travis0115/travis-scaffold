@@ -6,13 +6,12 @@ import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.monolith.system.message.api.SysMessageInboxApi;
 import com.travis.monolith.system.message.api.request.SysUserMessagePageReq;
-import com.travis.monolith.system.message.api.response.SysUserMessageRecentResp;
-import com.travis.monolith.system.message.api.response.SysUserMessageDetailResp;
 import com.travis.monolith.system.message.api.response.SysUserMessageResp;
-import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/message/inbox")
@@ -22,7 +21,7 @@ public class AppMessageInboxController {
     private final SysMessageInboxApi messageInboxApi;
 
     @GetMapping("/recent")
-    public ApiResponse<List<SysUserMessageRecentResp>> recent(
+    public ApiResponse<List<SysUserMessageResp>> recent(
             @RequestParam(defaultValue = "10") Integer limit) {
         return ApiResponse.success(
                 messageInboxApi.listRecent(LoginType.APP, currentUserId(), limit));
@@ -34,7 +33,7 @@ public class AppMessageInboxController {
     }
 
     @GetMapping("/{id}")
-    public ApiResponse<SysUserMessageDetailResp> get(@PathVariable Long id) {
+    public ApiResponse<SysUserMessageResp> get(@PathVariable Long id) {
         return ApiResponse.success(messageInboxApi.get(LoginType.APP, currentUserId(), id));
     }
 

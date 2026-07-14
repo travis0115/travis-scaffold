@@ -895,6 +895,7 @@ CREATE TABLE `sys_message` (
   KEY `idx_sys_message_push_type` (`push_type`,`status`,`is_deleted`),
   KEY `idx_sys_message_receiver` (`receiver_type`,`receiver_scope`,`status`,`is_deleted`),
   KEY `idx_sys_message_channel` (`channel`,`status`,`is_deleted`),
+  KEY `idx_sys_message_inbox` (`receiver_type`,`channel`,`status`,`is_deleted`,`publish_time`,`id`),
   KEY `idx_sys_message_template` (`template_id`,`is_deleted`),
   UNIQUE KEY `uk_sys_message_source` (`source_type`,`source_id`,`receiver_type`),
   KEY `idx_sys_message_title` (`title`)

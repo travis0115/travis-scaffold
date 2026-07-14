@@ -13,6 +13,11 @@ import org.apache.ibatis.annotations.Select;
 @Mapper
 public interface SysMessageMapper extends BaseMapperX<SysMessage> {
 
+    /**
+     * 分页查询指定用户可见的站内消息。
+     *
+     * <p>根据接收端、用户角色和部门匹配消息接收范围，并关联用户接收状态排除已删除消息；阅读状态和查询条件均为可选过滤项。
+     */
     @Select(
             """
             <script>
@@ -77,7 +82,7 @@ public interface SysMessageMapper extends BaseMapperX<SysMessage> {
                   )
                 </if>
               )
-            ORDER BY COALESCE(m.publish_time, m.create_time) DESC, m.id DESC
+            ORDER BY m.publish_time DESC, m.id DESC
             </script>
             """)
     Page<SysMessage> selectInboxPage(
@@ -92,6 +97,11 @@ public interface SysMessageMapper extends BaseMapperX<SysMessage> {
             @Param("publishEndDate") LocalDate publishEndDate,
             @Param("readStatus") Integer readStatus);
 
+    /**
+     * 统计指定用户的未读站内消息数。
+     *
+     * <p>没有接收状态记录的消息按未读处理，同时根据用户、角色和部门匹配消息接收范围。
+     */
     @Select(
             """
             <script>
@@ -142,6 +152,11 @@ public interface SysMessageMapper extends BaseMapperX<SysMessage> {
             @Param("roleIds") List<Long> roleIds,
             @Param("deptId") Long deptId);
 
+    /**
+     * 查询指定用户可见的站内消息ID。
+     *
+     * <p>用于批量标记已读或清空收件箱；{@code readStatus} 为空时查询全部未删除消息，否则按指定阅读状态过滤。
+     */
     @Select(
             """
             <script>

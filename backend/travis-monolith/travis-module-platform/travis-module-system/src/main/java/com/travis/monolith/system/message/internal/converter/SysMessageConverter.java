@@ -6,12 +6,13 @@ import com.travis.monolith.system.message.api.request.SysMessageCreateReq;
 import com.travis.monolith.system.message.api.request.SysMessageUpdateReq;
 import com.travis.monolith.system.message.api.response.SysMessageResp;
 import com.travis.monolith.system.message.internal.entity.SysMessage;
-import java.util.Collection;
-import java.util.List;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
+
+import java.util.Collection;
+import java.util.List;
 
 /** 消息推送对象转换器。 */
 @Mapper(config = BaseMapperConfig.class)
@@ -24,10 +25,8 @@ public interface SysMessageConverter {
     void update(SysMessageUpdateReq req, @MappingTarget SysMessage message);
 
     @Mapping(target = "receiverValues", qualifiedByName = "parseReceiverValues")
-    SysMessageResp toPageResp(SysMessage message);
+    SysMessageResp toResp(SysMessage message);
 
-    @Mapping(target = "receiverValues", qualifiedByName = "parseReceiverValues")
-    SysMessageResp toDetailResp(SysMessage message);
 
     @Named("serializeReceiverValues")
     default String serializeReceiverValues(Collection<Long> receiverValues) {

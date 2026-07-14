@@ -5,16 +5,15 @@ import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.monolith.system.message.api.request.SysUserMessagePageReq;
-import com.travis.monolith.system.message.api.response.SysUserMessageDetailResp;
-import com.travis.monolith.system.message.api.response.SysUserMessageRecentResp;
 import com.travis.monolith.system.message.api.response.SysUserMessageResp;
 import com.travis.monolith.system.message.internal.service.SysMessageReceiverService;
 import jakarta.validation.Valid;
-import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
 
 /** 管理后台消息收件箱控制器。 */
 @RestController
@@ -25,7 +24,7 @@ public class SysMessageReceiverController {
     private final SysMessageReceiverService messageService;
 
     @GetMapping("/recent")
-    public ApiResponse<List<SysUserMessageRecentResp>> recent(
+    public ApiResponse<List<SysUserMessageResp>> recent(
             @RequestParam(defaultValue = "10") Integer limit) {
         return ApiResponse.success(messageService.listRecent(currentUserId(), limit));
     }
@@ -36,7 +35,7 @@ public class SysMessageReceiverController {
     }
 
     @GetMapping("/{id}")
-    public ApiResponse<SysUserMessageDetailResp> get(@PathVariable Long id) {
+    public ApiResponse<SysUserMessageResp> get(@PathVariable Long id) {
         return ApiResponse.success(messageService.get(currentUserId(), id));
     }
 

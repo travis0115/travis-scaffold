@@ -27,5 +27,5 @@ public interface SysMenuApi {
      * @param menuIds 菜单ID列表
      * @return 权限标识列表（去重）
      */
-    List<String> getPermissionsByMenuIds(List<@NotNull(message = "菜单ID不能为空") Long> menuIds);
+    List<String> getPermissionsByMenuIds(List<Long> menuIds);
 }

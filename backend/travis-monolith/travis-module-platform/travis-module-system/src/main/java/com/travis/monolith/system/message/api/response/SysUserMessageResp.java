@@ -1,9 +1,11 @@
 package com.travis.monolith.system.message.api.response;
 
-import java.time.LocalDateTime;
 import lombok.Data;
 
-/** 用户收件箱分页响应对象。 */
+import java.time.LocalDateTime;
+import java.util.Map;
+
+/** 用户收件箱消息详情响应。 */
 @Data
 public class SysUserMessageResp {
     private Long id;
@@ -17,4 +19,5 @@ public class SysUserMessageResp {
     private LocalDateTime readTime;
     private LocalDateTime publishTime;
     private LocalDateTime createTime;
+    private Map<String, Object> metadata;
 }

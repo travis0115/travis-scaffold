@@ -17,8 +17,6 @@ import com.travis.monolith.system.message.api.enums.SysMessageReadStatus;
 import com.travis.monolith.system.message.api.enums.SysMessageReceiverScope;
 import com.travis.monolith.system.message.api.enums.SysMessageStatus;
 import com.travis.monolith.system.message.api.request.SysUserMessagePageReq;
-import com.travis.monolith.system.message.api.response.SysUserMessageDetailResp;
-import com.travis.monolith.system.message.api.response.SysUserMessageRecentResp;
 import com.travis.monolith.system.message.api.response.SysUserMessageResp;
 import com.travis.monolith.system.message.internal.converter.SysMessageReceiverConverter;
 import com.travis.monolith.system.message.internal.entity.SysMessage;
@@ -29,6 +27,7 @@ import com.travis.monolith.system.message.internal.service.SysMessageReceiverSer
 import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.api.SysUserApi;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -47,6 +46,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 public class SysMessageReceiverServiceImpl
         extends ServiceImplX<SysMessageReceiverMapper, SysMessageReceiver>
         implements SysMessageReceiverService {
+    private static final int STATE_BATCH_SIZE = 500;
+
     private final SysMessageMapper messageMapper;
     private final SysMessageReceiverConverter converter;
     private final SysUserApi userApi;
@@ -78,18 +79,17 @@ public class SysMessageReceiverServiceImpl
     }
 
     @Override
-    public List<SysUserMessageRecentResp> listRecent(Long userId, Integer limit) {
+    public List<SysUserMessageResp> listRecent(Long userId, Integer limit) {
         return listRecent(LoginType.ADMIN, userId, limit);
     }
 
     @Override
-    public List<SysUserMessageRecentResp> listRecent(
-            String receiverType, Long userId, Integer limit) {
+    public List<SysUserMessageResp> listRecent(String receiverType, Long userId, Integer limit) {
         int actualLimit = limit == null || limit <= 0 ? 10 : Math.min(limit, 50);
         var context = audienceContext(receiverType, userId);
         Page<SysMessage> page =
                 messageMapper.selectInboxPage(
-                        new Page<>(1, actualLimit),
+                        new Page<>(1, actualLimit, false),
                         userId,
                         receiverType,
                         context.roleIds(),
@@ -101,7 +101,7 @@ public class SysMessageReceiverServiceImpl
                         SysMessageReadStatus.UNREAD.getValue());
         return toResponses(page.getRecords(), stateMap(receiverType, userId, page.getRecords()))
                 .stream()
-                .map(item -> converter.toRecentResp(item.message(), item.receiver()))
+                .map(item -> converter.toResp(item.message(), item.receiver()))
                 .toList();
     }
 
@@ -131,21 +131,21 @@ public class SysMessageReceiverServiceImpl
         var stateMap = stateMap(receiverType, userId, page.getRecords());
         responsePage.setRecords(
                 toResponses(page.getRecords(), stateMap).stream()
-                        .map(item -> converter.toPageResp(item.message(), item.receiver()))
+                        .map(item -> converter.toResp(item.message(), item.receiver()))
                         .toList());
         return PageConverter.toResp(responsePage);
     }
 
     @Override
-    public SysUserMessageDetailResp get(Long userId, Long id) {
+    public SysUserMessageResp get(Long userId, Long id) {
         return get(LoginType.ADMIN, userId, id);
     }
 
     @Override
-    public SysUserMessageDetailResp get(String receiverType, Long userId, Long id) {
+    public SysUserMessageResp get(String receiverType, Long userId, Long id) {
         ensureVisible(receiverType, userId, id);
         var message = messageMapper.selectById(id);
-        var resp = converter.toDetailResp(message, getState(receiverType, userId, id));
+        var resp = converter.toResp(message, getState(receiverType, userId, id));
         var provider = sourceContentProviders.get(message.getSourceType());
         if (provider == null) {
             resp.setContent(fileApi.resolveManagedImageSources(message.getContent()));
@@ -200,20 +200,14 @@ public class SysMessageReceiverServiceImpl
     @CacheEvict(key = "'unread:'+#receiverType+':' + #userId")
     public void markAllRead(String receiverType, Long userId) {
         var context = audienceContext(receiverType, userId);
-        messageMapper
-                .selectInboxMessageIds(
+        var messageIds =
+                messageMapper.selectInboxMessageIds(
                         userId,
                         receiverType,
                         context.roleIds(),
                         context.deptId(),
-                        SysMessageReadStatus.UNREAD.getValue())
-                .forEach(
-                        messageId ->
-                                upsertState(
-                                        receiverType,
-                                        userId,
-                                        messageId,
-                                        SysMessageReadStatus.READ.getValue()));
+                        SysMessageReadStatus.UNREAD.getValue());
+        batchUpsertStates(receiverType, userId, messageIds, SysMessageReadStatus.READ.getValue());
     }
 
     @Override
@@ -244,16 +238,11 @@ public class SysMessageReceiverServiceImpl
     @CacheEvict(key = "'unread:'+#receiverType+':' + #userId")
     public void clear(String receiverType, Long userId) {
         var context = audienceContext(receiverType, userId);
-        messageMapper
-                .selectInboxMessageIds(
-                        userId, receiverType, context.roleIds(), context.deptId(), null)
-                .forEach(
-                        messageId ->
-                                upsertState(
-                                        receiverType,
-                                        userId,
-                                        messageId,
-                                        SysMessageReadStatus.DELETED.getValue()));
+        var messageIds =
+                messageMapper.selectInboxMessageIds(
+                        userId, receiverType, context.roleIds(), context.deptId(), null);
+        batchUpsertStates(
+                receiverType, userId, messageIds, SysMessageReadStatus.DELETED.getValue());
     }
 
     private LambdaQueryWrapperX<SysMessageReceiver> baseWrapper(String receiverType, Long userId) {
@@ -333,6 +322,47 @@ public class SysMessageReceiverServiceImpl
                         ? LocalDateTime.now()
                         : null);
         saveOrUpdate(state);
+    }
+
+    private void batchUpsertStates(
+            String receiverType, Long userId, List<Long> messageIds, Integer readStatus) {
+        for (int fromIndex = 0; fromIndex < messageIds.size(); fromIndex += STATE_BATCH_SIZE) {
+            var batch =
+                    messageIds.subList(
+                            fromIndex, Math.min(fromIndex + STATE_BATCH_SIZE, messageIds.size()));
+            var existingStates =
+                    list(
+                            baseWrapper(receiverType, userId)
+                                    .in(SysMessageReceiver::getMessageId, batch));
+            var existingStateMap =
+                    existingStates.stream()
+                            .collect(
+                                    Collectors.toMap(
+                                            SysMessageReceiver::getMessageId, Function.identity()));
+            var newStates = new ArrayList<SysMessageReceiver>();
+            var readTime =
+                    SysMessageReadStatus.READ.getValue().equals(readStatus)
+                            ? LocalDateTime.now()
+                            : null;
+            for (Long messageId : batch) {
+                var state = existingStateMap.get(messageId);
+                if (state == null) {
+                    state = new SysMessageReceiver();
+                    state.setMessageId(messageId);
+                    state.setReceiverType(receiverType);
+                    state.setReceiverId(userId);
+                    newStates.add(state);
+                }
+                state.setReadStatus(readStatus);
+                state.setReadTime(readTime);
+            }
+            if (!existingStates.isEmpty()) {
+                updateBatchById(existingStates);
+            }
+            if (!newStates.isEmpty()) {
+                saveBatch(newStates);
+            }
+        }
     }
 
     private SysMessageReceiver getState(String receiverType, Long userId, Long messageId) {

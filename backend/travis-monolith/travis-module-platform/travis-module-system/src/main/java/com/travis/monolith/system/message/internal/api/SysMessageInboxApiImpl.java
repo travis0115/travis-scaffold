@@ -3,8 +3,6 @@ package com.travis.monolith.system.message.internal.api;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.message.api.SysMessageInboxApi;
 import com.travis.monolith.system.message.api.request.SysUserMessagePageReq;
-import com.travis.monolith.system.message.api.response.SysUserMessageDetailResp;
-import com.travis.monolith.system.message.api.response.SysUserMessageRecentResp;
 import com.travis.monolith.system.message.api.response.SysUserMessageResp;
 import com.travis.monolith.system.message.internal.service.SysMessageReceiverService;
 import java.util.List;
@@ -19,7 +17,7 @@ public class SysMessageInboxApiImpl implements SysMessageInboxApi {
     private final SysMessageReceiverService messageReceiverService;
 
     @Override
-    public List<SysUserMessageRecentResp> listRecent(
+    public List<SysUserMessageResp> listRecent(
             String receiverType, Long userId, Integer limit) {
         return messageReceiverService.listRecent(receiverType, userId, limit);
     }
@@ -31,7 +29,7 @@ public class SysMessageInboxApiImpl implements SysMessageInboxApi {
     }
 
     @Override
-    public SysUserMessageDetailResp get(String receiverType, Long userId, Long id) {
+    public SysUserMessageResp get(String receiverType, Long userId, Long id) {
         return messageReceiverService.get(receiverType, userId, id);
     }
 

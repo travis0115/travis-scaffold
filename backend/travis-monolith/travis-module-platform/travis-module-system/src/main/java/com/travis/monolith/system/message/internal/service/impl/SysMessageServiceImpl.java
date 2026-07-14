@@ -1,5 +1,6 @@
 package com.travis.monolith.system.message.internal.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.constant.LoginType;
@@ -18,6 +19,7 @@ import com.travis.monolith.system.message.api.request.*;
 import com.travis.monolith.system.message.api.response.SysMessageResp;
 import com.travis.monolith.system.message.internal.converter.SysMessageConverter;
 import com.travis.monolith.system.message.internal.entity.SysMessage;
+import com.travis.monolith.system.message.internal.entity.SysMessageReceiver;
 import com.travis.monolith.system.message.internal.mapper.SysMessageMapper;
 import com.travis.monolith.system.message.internal.mapper.SysMessageReceiverMapper;
 import com.travis.monolith.system.message.internal.mapper.SysMessageTemplateMapper;
@@ -74,14 +76,14 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                 .ne(SysMessage::getPushType, SysMessagePushType.AUTO.getValue())
                 .orderByDesc(SysMessage::getCreateTime);
         Page<SysMessage> page = page(req.getPageNum(), req.getPageSize(), wrapper);
-        var resp = PageConverter.toResp(page.convert(converter::toPageResp));
+        var resp = PageConverter.toResp(page.convert(converter::toResp));
         resp.getRecords().forEach(item -> item.setHasTemplate(item.getTemplateId() != null));
         return resp;
     }
 
     @Override
     public SysMessageResp get(Long id) {
-        var resp = converter.toDetailResp(getByIdOrThrow(id));
+        var resp = converter.toResp(getByIdOrThrow(id));
         resp.setContent(fileApi.resolveManagedImageSources(resp.getContent()));
         resp.setHasTemplate(resp.getTemplateId() != null);
         return resp;
@@ -175,14 +177,12 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                 && !SysMessageStatus.REVOKED.getValue().equals(entity.getStatus())) {
             throw new BizException(CommonErrorCode.BAD_REQUEST);
         }
-        if (SysMessageStatus.REVOKED.getValue().equals(entity.getStatus())) {
-            messageReceiverMapper.resetReadStatusByMessageId(
-                    entity.getId(),
-                    com.travis.monolith.system.message.api.enums.SysMessageReadStatus.UNREAD
-                            .getValue());
-        }
+        boolean republished = SysMessageStatus.REVOKED.getValue().equals(entity.getStatus());
         entity.setPushType(SysMessagePushType.MANUAL.getValue());
         publish(entity);
+        if (republished) {
+            resetReceiverReadStatus(entity.getId());
+        }
     }
 
     @Override
@@ -267,10 +267,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
             entity.setStatus(SysMessageStatus.PENDING.getValue());
             saveOrUpdate(entity);
             if (republished) {
-                messageReceiverMapper.resetReadStatusByMessageId(
-                        entity.getId(),
-                        com.travis.monolith.system.message.api.enums.SysMessageReadStatus.UNREAD
-                                .getValue());
+                resetReceiverReadStatus(entity.getId());
             }
             if (SysMessageStatus.SENT.getValue().equals(previousStatus)) {
                 notifyInboxChanged("SYSTEM_MESSAGE_REVOKED", entity);
@@ -282,10 +279,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         entity.setStatus(SysMessageStatus.SENT.getValue());
         saveOrUpdate(entity);
         if (republished) {
-            messageReceiverMapper.resetReadStatusByMessageId(
-                    entity.getId(),
-                    com.travis.monolith.system.message.api.enums.SysMessageReadStatus.UNREAD
-                            .getValue());
+            resetReceiverReadStatus(entity.getId());
         }
         if (created || republished || !SysMessageStatus.SENT.getValue().equals(previousStatus)) {
             notifyInboxChanged(
@@ -364,6 +358,16 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         message.setPublishTime(LocalDateTime.now());
         updateById(message);
         notifyInboxChanged("SYSTEM_MESSAGE_PUBLISHED", message);
+    }
+
+    private void resetReceiverReadStatus(Long messageId) {
+        Integer unreadStatus = SysMessageReadStatus.UNREAD.getValue();
+        messageReceiverMapper.update(
+                new LambdaUpdateWrapper<SysMessageReceiver>()
+                        .eq(SysMessageReceiver::getMessageId, messageId)
+                        .ne(SysMessageReceiver::getReadStatus, unreadStatus)
+                        .set(SysMessageReceiver::getReadStatus, unreadStatus)
+                        .set(SysMessageReceiver::getReadTime, null));
     }
 
     private void notifyInboxChanged(String event, SysMessage message) {
