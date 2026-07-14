@@ -65,7 +65,7 @@ public class SysDeptController {
     @GetMapping("/{id}")
     @SaCheckPermission(value = SystemPermission.DEPT_QUERY, type = LoginType.ADMIN)
     public ApiResponse<SysDeptResp> get(@PathVariable Long id) {
-        return ApiResponse.success(deptService.getById(id));
+        return ApiResponse.success(deptService.getDetailByIdOrThrow(id));
     }
 
     /**

@@ -9,6 +9,7 @@ import com.travis.monolith.ops.job.api.request.OpsJobUpdateReq;
 import com.travis.monolith.ops.job.api.response.OpsJobDetailResp;
 import com.travis.monolith.ops.job.api.response.OpsJobExportResp;
 import com.travis.monolith.ops.job.api.response.OpsJobPageResp;
+import com.travis.monolith.ops.job.internal.entity.OpsJob;
 import com.travis.monolith.system.user.api.response.SysUserOptionResp;
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -17,7 +18,13 @@ import java.util.List;
 public interface OpsJobService {
     PageResp<OpsJobPageResp> page(OpsJobPageReq req);
 
-    OpsJobDetailResp get(Long id);
+    OpsJobDetailResp getOrThrow(Long id);
+
+    OpsJobDetailResp find(Long id);
+
+    List<OpsJob> listAll();
+
+    long countJobs(Integer status);
 
     void create(OpsJobCreateReq req);
 

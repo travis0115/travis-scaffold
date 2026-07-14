@@ -43,14 +43,14 @@ public class SysConfigController {
     @GetMapping("/{id}")
     @SaCheckPermission(value = SystemPermission.CONFIG_QUERY, type = LoginType.ADMIN)
     public ApiResponse<SysConfigResp> getById(@PathVariable Long id) {
-        return ApiResponse.success(sysConfigService.getById(id));
+        return ApiResponse.success(sysConfigService.getDetailByIdOrThrow(id));
     }
 
     /** 根据配置键获取配置值 */
     @GetMapping("/key/{configKey}/value")
     @SaCheckPermission(value = SystemPermission.CONFIG_QUERY, type = LoginType.ADMIN)
     public ApiResponse<String> getValue(@PathVariable String configKey) {
-        var config = sysConfigService.getByKey(configKey);
+        var config = sysConfigService.getByKeyOrThrow(configKey);
         return ApiResponse.success(config.getConfigValue());
     }
 

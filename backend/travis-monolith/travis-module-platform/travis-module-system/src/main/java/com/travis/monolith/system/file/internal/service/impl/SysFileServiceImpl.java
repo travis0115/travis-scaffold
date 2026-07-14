@@ -46,7 +46,7 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
     @Override
     public FileUploadResp upload(
             MultipartFile file, Long folderId, String uploaderType, String uploaderName) {
-        var config = sysFileStorageConfigService.getDefault();
+        var config = sysFileStorageConfigService.getDefaultOrThrow();
         var strategy =
                 storageStrategies.stream()
                         .filter(
@@ -121,8 +121,8 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
         if (file == null) return null;
         var config =
                 file.getStorageConfigId() == null
-                        ? sysFileStorageConfigService.getDefault()
-                        : sysFileStorageConfigService.get(file.getStorageConfigId());
+                        ? sysFileStorageConfigService.getDefaultOrThrow()
+                        : sysFileStorageConfigService.getOrThrow(file.getStorageConfigId());
         return buildUrl(config, file.getPath());
     }
 

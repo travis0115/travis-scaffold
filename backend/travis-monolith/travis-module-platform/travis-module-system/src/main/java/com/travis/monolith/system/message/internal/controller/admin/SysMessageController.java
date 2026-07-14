@@ -45,7 +45,7 @@ public class SysMessageController {
     @GetMapping("/{id}")
     @SaCheckPermission(value = SystemPermission.MESSAGE_QUERY, type = LoginType.ADMIN)
     public ApiResponse<SysMessageResp> getById(@PathVariable Long id) {
-        return ApiResponse.success(messageService.get(id));
+        return ApiResponse.success(messageService.getOrThrow(id));
     }
 
     @OperationLog(action = "新增消息")

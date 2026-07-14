@@ -65,7 +65,7 @@ public class SysDeptServiceImpl extends ServiceImplX<SysDeptMapper, SysDept>
     /** 获取部门详情 */
     @Override
     @Cacheable(key = "'detail:'+#id")
-    public SysDeptResp getById(Long id) {
+    public SysDeptResp getDetailByIdOrThrow(Long id) {
         var dept = getByIdOrThrow(id);
         return converter.toResp(dept);
     }
@@ -73,7 +73,7 @@ public class SysDeptServiceImpl extends ServiceImplX<SysDeptMapper, SysDept>
     /** 根据部门ID查询部门名称 */
     @Override
     @Cacheable(key = "'name:'+#deptId")
-    public String getDeptNameById(Long deptId) {
+    public String getDeptNameByIdOrThrow(Long deptId) {
         if (deptId == null || deptId == 0) {
             return null;
         }

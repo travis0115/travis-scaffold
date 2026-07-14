@@ -35,7 +35,7 @@ public interface SysDeptService extends IService<SysDept> {
      * @param id 部门ID
      * @return 部门详情视图
      */
-    SysDeptResp getById(Long id);
+    SysDeptResp getDetailByIdOrThrow(Long id);
 
     /**
      * 新增部门
@@ -67,7 +67,7 @@ public interface SysDeptService extends IService<SysDept> {
      * @param deptId 部门ID
      * @return 部门名称，不存在返回 null
      */
-    String getDeptNameById(Long deptId);
+    String getDeptNameByIdOrThrow(Long deptId);
 
     /**
      * 判断指定部门中是否仍有任意一个存在

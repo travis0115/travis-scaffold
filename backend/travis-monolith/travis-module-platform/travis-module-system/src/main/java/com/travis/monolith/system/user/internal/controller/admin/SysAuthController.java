@@ -64,7 +64,7 @@ public class SysAuthController {
      */
     @GetMapping("/user-info")
     public ApiResponse<SysUserInfoResp> getUserInfo() {
-        return ApiResponse.success(sysAuthService.getUserInfo());
+        return ApiResponse.success(sysAuthService.getUserInfoOrThrow());
     }
 
     /**

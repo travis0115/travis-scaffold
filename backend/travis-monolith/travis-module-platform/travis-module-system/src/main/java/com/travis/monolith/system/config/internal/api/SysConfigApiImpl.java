@@ -18,7 +18,7 @@ public class SysConfigApiImpl implements SysConfigApi {
     public String getValue(String configKey) {
         SysConfigResp config;
         try {
-            config = configService.getByKey(configKey);
+            config = configService.getByKeyOrThrow(configKey);
         } catch (Exception e) {
             log.warn("SysConfig is not found, configKey={}", configKey, e);
             return "";

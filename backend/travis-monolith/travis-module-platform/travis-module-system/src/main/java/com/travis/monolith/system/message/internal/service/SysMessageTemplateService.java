@@ -12,6 +12,8 @@ import com.travis.monolith.system.message.internal.entity.SysMessageTemplate;
 public interface SysMessageTemplateService extends IService<SysMessageTemplate> {
     PageResp<SysMessageTemplateResp> page(SysMessageTemplatePageReq req);
 
+    SysMessageTemplateResp getOrThrow(Long id);
+
     SysMessageTemplateResp get(Long id);
 
     void create(SysMessageTemplateCreateReq req);

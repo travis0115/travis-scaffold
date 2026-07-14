@@ -115,7 +115,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     /** 获取用户详情，同时关联查询角色ID和角色名称 */
     @Override
     @Cacheable(key = "'detail:'+#id")
-    public SysUserResp getById(Long id) {
+    public SysUserResp getDetailByIdOrThrow(Long id) {
         var user = getByIdOrThrow(id);
         var resp = this.toResp(user);
         var roleIds = roleApi.getRoleIdsByUserId(id);

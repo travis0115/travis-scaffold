@@ -57,7 +57,7 @@ public class SysMenuServiceImpl extends ServiceImplX<SysMenuMapper, SysMenu>
     /** 获取菜单详情 */
     @Override
     @Cacheable(key = "'detail:'+#id")
-    public SysMenuResp getById(Long id) {
+    public SysMenuResp getDetailByIdOrThrow(Long id) {
         var menu = getByIdOrThrow(id);
         return converter.toResp(menu);
     }

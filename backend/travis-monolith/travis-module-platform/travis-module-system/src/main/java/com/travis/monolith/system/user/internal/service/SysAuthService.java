@@ -31,7 +31,7 @@ public interface SysAuthService {
      *
      * @return 用户信息视图
      */
-    SysUserInfoResp getUserInfo();
+    SysUserInfoResp getUserInfoOrThrow();
 
     /**
      * 获取当前用户的菜单树（用于前端路由渲染）

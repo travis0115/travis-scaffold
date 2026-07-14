@@ -1,5 +1,6 @@
 package com.travis.monolith.system.message.internal.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.constant.LoginType;
@@ -21,7 +22,6 @@ import com.travis.monolith.system.message.api.response.SysUserMessageResp;
 import com.travis.monolith.system.message.internal.converter.SysMessageReceiverConverter;
 import com.travis.monolith.system.message.internal.entity.SysMessage;
 import com.travis.monolith.system.message.internal.entity.SysMessageReceiver;
-import com.travis.monolith.system.message.internal.mapper.SysMessageMapper;
 import com.travis.monolith.system.message.internal.mapper.SysMessageReceiverMapper;
 import com.travis.monolith.system.message.internal.service.SysMessageReceiverService;
 import com.travis.monolith.system.role.api.SysRoleApi;
@@ -48,7 +48,6 @@ public class SysMessageReceiverServiceImpl
         implements SysMessageReceiverService {
     private static final int STATE_BATCH_SIZE = 500;
 
-    private final SysMessageMapper messageMapper;
     private final SysMessageReceiverConverter converter;
     private final SysUserApi userApi;
     private final SysRoleApi roleApi;
@@ -57,14 +56,12 @@ public class SysMessageReceiverServiceImpl
     private final Map<String, SysMessageSourceContentProvider> sourceContentProviders;
 
     public SysMessageReceiverServiceImpl(
-            SysMessageMapper messageMapper,
             SysMessageReceiverConverter converter,
             SysUserApi userApi,
             SysRoleApi roleApi,
             WebSocketMessageSender webSocketMessageSender,
             SysFileApi fileApi,
             List<SysMessageSourceContentProvider> sourceContentProviders) {
-        this.messageMapper = messageMapper;
         this.converter = converter;
         this.userApi = userApi;
         this.roleApi = roleApi;
@@ -88,7 +85,7 @@ public class SysMessageReceiverServiceImpl
         int actualLimit = limit == null || limit <= 0 ? 10 : Math.min(limit, 50);
         var context = audienceContext(receiverType, userId);
         Page<SysMessage> page =
-                messageMapper.selectInboxPage(
+                baseMapper.selectInboxPage(
                         new Page<>(1, actualLimit, false),
                         userId,
                         receiverType,
@@ -115,7 +112,7 @@ public class SysMessageReceiverServiceImpl
             String receiverType, Long userId, SysUserMessagePageReq req) {
         var context = audienceContext(receiverType, userId);
         Page<SysMessage> page =
-                messageMapper.selectInboxPage(
+                baseMapper.selectInboxPage(
                         new Page<>(req.getPageNum(), req.getPageSize()),
                         userId,
                         receiverType,
@@ -137,14 +134,14 @@ public class SysMessageReceiverServiceImpl
     }
 
     @Override
-    public SysUserMessageResp get(Long userId, Long id) {
-        return get(LoginType.ADMIN, userId, id);
+    public SysUserMessageResp getOrThrow(Long userId, Long id) {
+        return getOrThrow(LoginType.ADMIN, userId, id);
     }
 
     @Override
-    public SysUserMessageResp get(String receiverType, Long userId, Long id) {
+    public SysUserMessageResp getOrThrow(String receiverType, Long userId, Long id) {
         ensureVisible(receiverType, userId, id);
-        var message = messageMapper.selectById(id);
+        var message = baseMapper.selectMessageById(id);
         var resp = converter.toResp(message, getState(receiverType, userId, id));
         var provider = sourceContentProviders.get(message.getSourceType());
         if (provider == null) {
@@ -169,7 +166,7 @@ public class SysMessageReceiverServiceImpl
     @Cacheable(key = "'unread:'+#receiverType+':' + #userId")
     public Long countUnread(String receiverType, Long userId) {
         var context = audienceContext(receiverType, userId);
-        return messageMapper.countUnreadInbox(
+        return baseMapper.countUnreadInbox(
                 userId, receiverType, context.roleIds(), context.deptId());
     }
 
@@ -201,7 +198,7 @@ public class SysMessageReceiverServiceImpl
     public void markAllRead(String receiverType, Long userId) {
         var context = audienceContext(receiverType, userId);
         var messageIds =
-                messageMapper.selectInboxMessageIds(
+                baseMapper.selectInboxMessageIds(
                         userId,
                         receiverType,
                         context.roleIds(),
@@ -239,10 +236,30 @@ public class SysMessageReceiverServiceImpl
     public void clear(String receiverType, Long userId) {
         var context = audienceContext(receiverType, userId);
         var messageIds =
-                messageMapper.selectInboxMessageIds(
+                baseMapper.selectInboxMessageIds(
                         userId, receiverType, context.roleIds(), context.deptId(), null);
         batchUpsertStates(
                 receiverType, userId, messageIds, SysMessageReadStatus.DELETED.getValue());
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(allEntries = true)
+    public void deleteByMessageId(Long messageId) {
+        baseMapper.deleteByMessageId(messageId);
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(allEntries = true)
+    public void resetReadStatus(Long messageId) {
+        Integer unreadStatus = SysMessageReadStatus.UNREAD.getValue();
+        update(
+                new LambdaUpdateWrapper<SysMessageReceiver>()
+                        .eq(SysMessageReceiver::getMessageId, messageId)
+                        .ne(SysMessageReceiver::getReadStatus, unreadStatus)
+                        .set(SysMessageReceiver::getReadStatus, unreadStatus)
+                        .set(SysMessageReceiver::getReadTime, null));
     }
 
     private LambdaQueryWrapperX<SysMessageReceiver> baseWrapper(String receiverType, Long userId) {
@@ -272,7 +289,7 @@ public class SysMessageReceiverServiceImpl
     }
 
     private void ensureVisible(String receiverType, Long userId, Long messageId) {
-        var message = messageMapper.selectById(messageId);
+        var message = baseMapper.selectMessageById(messageId);
         if (message == null
                 || !SysMessageStatus.SENT.getValue().equals(message.getStatus())
                 || message.getPublishTime() == null

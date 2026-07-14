@@ -85,7 +85,7 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
     }
 
     @Override
-    public SysVersionResp getById(Long id) {
+    public SysVersionResp getDetailByIdOrThrow(Long id) {
         return toResp(getByIdOrThrow(id));
     }
 

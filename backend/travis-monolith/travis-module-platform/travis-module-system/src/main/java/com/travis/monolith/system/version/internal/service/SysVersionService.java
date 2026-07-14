@@ -29,7 +29,7 @@ public interface SysVersionService extends IService<SysVersion> {
      * @param id 日志ID
      * @return 版本日志详情
      */
-    SysVersionResp getById(Long id);
+    SysVersionResp getDetailByIdOrThrow(Long id);
 
     /**
      * 新增版本日志

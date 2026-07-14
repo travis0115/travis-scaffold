@@ -43,7 +43,7 @@ public class SysUserApiImpl implements SysUserApi {
         }
         SysUserResp user;
         try {
-            user = userService.getById(userId);
+            user = userService.getDetailByIdOrThrow(userId);
         } catch (Exception e) {
             return null;
         }
@@ -100,7 +100,7 @@ public class SysUserApiImpl implements SysUserApi {
 
     private LambdaQueryWrapperX<SysUser> currentUserScopeWrapper() {
         var currentUserId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
-        var currentUser = userService.getById(currentUserId);
+        var currentUser = userService.getDetailByIdOrThrow(currentUserId);
         var wrapper =
                 new LambdaQueryWrapperX<SysUser>()
                         .eq(SysUser::getStatus, Status.ENABLED.getValue());

@@ -95,7 +95,7 @@ public class SysDictServiceImpl extends ServiceImplX<SysDictMapper, SysDict>
     /** 获取字典类型详情 */
     @Override
     @Cacheable(key = "'detail:'+#id")
-    public SysDictResp getById(Long id) {
+    public SysDictResp getDetailByIdOrThrow(Long id) {
         return converter.toResp(getByIdOrThrow(id));
     }
 

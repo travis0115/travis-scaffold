@@ -59,7 +59,7 @@ public class SysFileStorageConfigController {
     @GetMapping("/{id:\\d+}")
     @SaCheckPermission(value = SystemPermission.FILE_QUERY, type = LoginType.ADMIN)
     public ApiResponse<SysFileStorageConfigResp> get(@PathVariable Long id) {
-        return ApiResponse.success(storageConfigService.get(id));
+        return ApiResponse.success(storageConfigService.getOrThrow(id));
     }
 
     @PostMapping

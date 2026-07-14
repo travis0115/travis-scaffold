@@ -13,7 +13,7 @@ public interface SysNoticeService extends IService<SysNotice> {
 
     PageResp<SysNoticeResp> pagePublished(SysNoticePageReq req);
 
-    SysNoticeResp get(Long id);
+    SysNoticeResp getOrThrow(Long id);
 
     void create(SysNoticeCreateReq req);
 

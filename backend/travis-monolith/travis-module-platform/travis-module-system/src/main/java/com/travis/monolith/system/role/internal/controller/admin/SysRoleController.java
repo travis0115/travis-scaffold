@@ -53,7 +53,7 @@ public class SysRoleController {
     @GetMapping("/{id}")
     @SaCheckPermission(value = SystemPermission.ROLE_QUERY, type = LoginType.ADMIN)
     public ApiResponse<SysRoleResp> get(@PathVariable Long id) {
-        return ApiResponse.success(roleService.getById(id));
+        return ApiResponse.success(roleService.getDetailByIdOrThrow(id));
     }
 
     /**

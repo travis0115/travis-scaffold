@@ -31,7 +31,7 @@ public interface SysRoleService extends IService<SysRole> {
      * @param id 角色ID
      * @return 角色详情视图
      */
-    SysRoleResp getById(Long id);
+    SysRoleResp getDetailByIdOrThrow(Long id);
 
     /**
      * 新增角色

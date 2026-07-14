@@ -24,7 +24,7 @@ public class SysNoticeMessageSourceContentProvider implements SysMessageSourceCo
 
     @Override
     public SysMessageSourceContentResp get(String sourceId) {
-        var notice = noticeService.get(parseId(sourceId));
+        var notice = noticeService.getOrThrow(parseId(sourceId));
         if (!PublishStatus.PUBLISHED.getValue().equals(notice.getStatus())
                 || notice.getPublishTime() == null
                 || notice.getPublishTime().isAfter(LocalDateTime.now())) {

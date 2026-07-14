@@ -82,7 +82,7 @@ public class SysUserController {
     @GetMapping("/{id}")
     @SaCheckPermission(value = SystemPermission.USER_QUERY, type = LoginType.ADMIN)
     public ApiResponse<SysUserResp> get(@PathVariable Long id) {
-        return ApiResponse.success(userService.getById(id));
+        return ApiResponse.success(userService.getDetailByIdOrThrow(id));
     }
 
     /**

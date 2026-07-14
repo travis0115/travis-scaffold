@@ -54,7 +54,7 @@ public class SysMenuController {
     @GetMapping("/{id}")
     @SaCheckPermission(value = SystemPermission.MENU_QUERY, type = LoginType.ADMIN)
     public ApiResponse<SysMenuResp> get(@PathVariable Long id) {
-        return ApiResponse.success(menuService.getById(id));
+        return ApiResponse.success(menuService.getDetailByIdOrThrow(id));
     }
 
     /**

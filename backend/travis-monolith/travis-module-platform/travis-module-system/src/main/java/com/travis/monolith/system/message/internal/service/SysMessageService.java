@@ -13,7 +13,7 @@ import com.travis.monolith.system.message.internal.entity.SysMessage;
 public interface SysMessageService extends IService<SysMessage> {
     PageResp<SysMessageResp> page(SysMessagePageReq req);
 
-    SysMessageResp get(Long id);
+    SysMessageResp getOrThrow(Long id);
 
     Long create(SysMessageCreateReq req);
 

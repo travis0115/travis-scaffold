@@ -19,10 +19,10 @@ public interface SysConfigService extends IService<SysConfig> {
     PageResp<SysConfigResp> page(SysConfigPageReq req);
 
     /** 获取配置详情 */
-    SysConfigResp getById(Long id);
+    SysConfigResp getDetailByIdOrThrow(Long id);
 
     /** 根据配置键获取配置值 */
-    SysConfigResp getByKey(String configKey);
+    SysConfigResp getByKeyOrThrow(String configKey);
 
     /** 新增配置 */
     void create(SysConfigCreateReq req);

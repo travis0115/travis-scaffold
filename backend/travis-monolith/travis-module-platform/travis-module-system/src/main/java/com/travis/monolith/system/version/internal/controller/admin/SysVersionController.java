@@ -52,7 +52,7 @@ public class SysVersionController {
     @GetMapping("/{id}")
     @SaCheckPermission(value = SystemPermission.VERSION_QUERY, type = LoginType.ADMIN)
     public ApiResponse<SysVersionResp> get(@PathVariable Long id) {
-        return ApiResponse.success(versionService.getById(id));
+        return ApiResponse.success(versionService.getDetailByIdOrThrow(id));
     }
 
     /** 新增版本日志 */

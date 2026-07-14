@@ -1,6 +1,5 @@
 package com.travis.monolith.system.message.internal.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.constant.LoginType;
@@ -19,17 +18,10 @@ import com.travis.monolith.system.message.api.request.*;
 import com.travis.monolith.system.message.api.response.SysMessageResp;
 import com.travis.monolith.system.message.internal.converter.SysMessageConverter;
 import com.travis.monolith.system.message.internal.entity.SysMessage;
-import com.travis.monolith.system.message.internal.entity.SysMessageReceiver;
 import com.travis.monolith.system.message.internal.mapper.SysMessageMapper;
-import com.travis.monolith.system.message.internal.mapper.SysMessageReceiverMapper;
-import com.travis.monolith.system.message.internal.mapper.SysMessageTemplateMapper;
+import com.travis.monolith.system.message.internal.service.SysMessageReceiverService;
 import com.travis.monolith.system.message.internal.service.SysMessageService;
-import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.travis.monolith.system.message.internal.service.SysMessageTemplateService;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
@@ -39,6 +31,13 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import tools.jackson.core.type.TypeReference;
 
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /** 消息推送服务实现。 */
 @Service
 @CacheConfig(cacheNames = "system:message")
@@ -47,20 +46,20 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     private static final Pattern TEMPLATE_VARIABLE_PATTERN =
             Pattern.compile("\\{\\{\\s*([A-Za-z0-9_.-]+)\\s*}}");
 
-    private final SysMessageReceiverMapper messageReceiverMapper;
-    private final SysMessageTemplateMapper messageTemplateMapper;
+    private final SysMessageReceiverService messageReceiverService;
+    private final SysMessageTemplateService messageTemplateService;
     private final SysMessageConverter converter;
     private final WebSocketMessageSender webSocketMessageSender;
     private final SysFileApi fileApi;
 
     public SysMessageServiceImpl(
-            SysMessageReceiverMapper messageReceiverMapper,
-            SysMessageTemplateMapper messageTemplateMapper,
+            SysMessageReceiverService messageReceiverService,
+            SysMessageTemplateService messageTemplateService,
             SysMessageConverter converter,
             WebSocketMessageSender webSocketMessageSender,
             SysFileApi fileApi) {
-        this.messageReceiverMapper = messageReceiverMapper;
-        this.messageTemplateMapper = messageTemplateMapper;
+        this.messageReceiverService = messageReceiverService;
+        this.messageTemplateService = messageTemplateService;
         this.converter = converter;
         this.webSocketMessageSender = webSocketMessageSender;
         this.fileApi = fileApi;
@@ -82,7 +81,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     }
 
     @Override
-    public SysMessageResp get(Long id) {
+    public SysMessageResp getOrThrow(Long id) {
         var resp = converter.toResp(getByIdOrThrow(id));
         resp.setContent(fileApi.resolveManagedImageSources(resp.getContent()));
         resp.setHasTemplate(resp.getTemplateId() != null);
@@ -314,7 +313,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         if (entity == null) {
             return;
         }
-        messageReceiverMapper.deleteByMessageId(entity.getId());
+        messageReceiverService.deleteByMessageId(entity.getId());
         removeById(entity.getId());
         notifyInboxChanged("SYSTEM_MESSAGE_DELETED", entity);
     }
@@ -347,7 +346,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     public void delete(Long id) {
         var entity = getByIdOrThrow(id);
         ensureManualMessage(entity);
-        messageReceiverMapper.deleteByMessageId(id);
+        messageReceiverService.deleteByMessageId(id);
         removeById(id);
         notifyInboxChanged("SYSTEM_MESSAGE_DELETED", entity);
     }
@@ -361,13 +360,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     }
 
     private void resetReceiverReadStatus(Long messageId) {
-        Integer unreadStatus = SysMessageReadStatus.UNREAD.getValue();
-        messageReceiverMapper.update(
-                new LambdaUpdateWrapper<SysMessageReceiver>()
-                        .eq(SysMessageReceiver::getMessageId, messageId)
-                        .ne(SysMessageReceiver::getReadStatus, unreadStatus)
-                        .set(SysMessageReceiver::getReadStatus, unreadStatus)
-                        .set(SysMessageReceiver::getReadTime, null));
+        messageReceiverService.resetReadStatus(messageId);
     }
 
     private void notifyInboxChanged(String event, SysMessage message) {
@@ -468,7 +461,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         if (message.getTemplateId() == null) {
             return;
         }
-        var template = messageTemplateMapper.selectById(message.getTemplateId());
+        var template = messageTemplateService.get(message.getTemplateId());
         if (template == null || !message.getChannel().equals(template.getChannel())) {
             throw new BizException(CommonErrorCode.VALIDATE_FAILED, "消息模板不存在或通道不匹配");
         }

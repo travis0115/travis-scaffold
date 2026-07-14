@@ -30,7 +30,7 @@ public class SysMessageInboxApiImpl implements SysMessageInboxApi {
 
     @Override
     public SysUserMessageResp get(String receiverType, Long userId, Long id) {
-        return messageReceiverService.get(receiverType, userId, id);
+        return messageReceiverService.getOrThrow(receiverType, userId, id);
     }
 
     @Override

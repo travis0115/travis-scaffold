@@ -28,7 +28,7 @@ public interface SysMenuService extends IService<SysMenu> {
      * @param id 菜单ID
      * @return 菜单详情视图
      */
-    SysMenuResp getById(Long id);
+    SysMenuResp getDetailByIdOrThrow(Long id);
 
     /**
      * 新增菜单

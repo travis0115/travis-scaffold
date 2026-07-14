@@ -21,7 +21,7 @@ public class AdminWebSocketSubjectValidator implements SaTokenWebSocketSubjectVa
 
     @Override
     public boolean isValid(String loginType, String loginId) {
-        var user = userService.getById(Long.valueOf(loginId));
+        var user = userService.getDetailByIdOrThrow(Long.valueOf(loginId));
         return user != null && !Status.DISABLED.getValue().equals(user.getStatus());
     }
 }

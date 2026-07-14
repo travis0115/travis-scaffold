@@ -25,7 +25,7 @@ public class SysVersionMessageSourceContentProvider implements SysMessageSourceC
 
     @Override
     public SysMessageSourceContentResp get(String sourceId) {
-        var version = versionService.getById(parseId(sourceId));
+        var version = versionService.getDetailByIdOrThrow(parseId(sourceId));
         if (!PublishStatus.PUBLISHED.getValue().equals(version.getStatus())
                 || version.getPublishTime() == null
                 || version.getPublishTime().isAfter(LocalDateTime.now())) {

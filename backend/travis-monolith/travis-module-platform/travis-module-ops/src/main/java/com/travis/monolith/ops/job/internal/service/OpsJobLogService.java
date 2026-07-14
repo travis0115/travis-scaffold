@@ -13,7 +13,7 @@ import java.util.List;
 public interface OpsJobLogService {
     PageResp<OpsJobLogPageResp> page(OpsJobLogPageReq req);
 
-    OpsJobLogDetailResp get(Long id);
+    OpsJobLogDetailResp getOrThrow(Long id);
 
     List<OpsJobLogExportResp> exportLogs(OpsJobLogPageReq req);
 

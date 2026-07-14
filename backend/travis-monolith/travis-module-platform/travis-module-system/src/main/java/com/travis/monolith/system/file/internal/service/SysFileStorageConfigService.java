@@ -14,9 +14,9 @@ public interface SysFileStorageConfigService extends IService<SysFileStorageConf
 
     List<SysFileStorageConfigResp> listAll();
 
-    SysFileStorageConfigResp get(Long id);
+    SysFileStorageConfigResp getOrThrow(Long id);
 
-    SysFileStorageConfigResp getDefault();
+    SysFileStorageConfigResp getDefaultOrThrow();
 
     List<SysFileStorageConfig> listEnabledLocalConfigs();
 

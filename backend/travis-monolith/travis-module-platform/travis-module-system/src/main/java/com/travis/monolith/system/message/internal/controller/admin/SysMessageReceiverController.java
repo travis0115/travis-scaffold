@@ -36,7 +36,7 @@ public class SysMessageReceiverController {
 
     @GetMapping("/{id}")
     public ApiResponse<SysUserMessageResp> get(@PathVariable Long id) {
-        return ApiResponse.success(messageService.get(currentUserId(), id));
+        return ApiResponse.success(messageService.getOrThrow(currentUserId(), id));
     }
 
     @GetMapping("/unread-count")

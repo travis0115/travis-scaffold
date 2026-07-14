@@ -84,10 +84,32 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
 
     @Override
     @Cacheable(key = "'detail:'+#id")
-    public OpsJobDetailResp get(Long id) {
+    public OpsJobDetailResp getOrThrow(Long id) {
         OpsJob job = getRequired(id);
         return enrichResponse(
                 converter.toDetailResp(job), job, userApi.getUsernameById(job.getOwnerUserId()));
+    }
+
+    @Override
+    @Cacheable(key = "'detail:'+#id", unless = "#result == null")
+    public OpsJobDetailResp find(Long id) {
+        OpsJob job = super.getById(id);
+        return job == null
+                ? null
+                : enrichResponse(
+                        converter.toDetailResp(job),
+                        job,
+                        userApi.getUsernameById(job.getOwnerUserId()));
+    }
+
+    @Override
+    public List<OpsJob> listAll() {
+        return list();
+    }
+
+    @Override
+    public long countJobs(Integer status) {
+        return count(new LambdaQueryWrapperX<OpsJob>().eqIfPresent(OpsJob::getStatus, status));
     }
 
     @Override

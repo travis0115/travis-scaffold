@@ -32,7 +32,7 @@ public interface SysDictService extends IService<SysDict> {
      * @param id 字典ID
      * @return 字典实体
      */
-    SysDictResp getById(Long id);
+    SysDictResp getDetailByIdOrThrow(Long id);
 
     /**
      * 新增字典类型

@@ -18,8 +18,8 @@ import com.travis.monolith.ops.job.internal.converter.OpsJobConverter;
 import com.travis.monolith.ops.job.internal.entity.OpsJob;
 import com.travis.monolith.ops.job.internal.entity.OpsJobLog;
 import com.travis.monolith.ops.job.internal.mapper.OpsJobLogMapper;
-import com.travis.monolith.ops.job.internal.mapper.OpsJobMapper;
 import com.travis.monolith.ops.job.internal.service.OpsJobLogService;
+import com.travis.monolith.ops.job.internal.service.OpsJobService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -54,7 +54,7 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
                     "startTime", OpsJobLog::getStartTime,
                     "createTime", OpsJobLog::getCreateTime);
 
-    private final OpsJobMapper jobMapper;
+    private final OpsJobService jobService;
     private final OpsJobConverter converter;
 
     @Override
@@ -74,7 +74,7 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
 
     @Override
     @Cacheable(key = "'detail:'+#id")
-    public OpsJobLogDetailResp get(Long id) {
+    public OpsJobLogDetailResp getOrThrow(Long id) {
         OpsJobLog log = getById(id);
         if (log == null) {
             throw new BizException(OpsJobErrorCode.LOG_NOT_FOUND);
@@ -105,7 +105,7 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
     @Transactional
     @CacheEvict(allEntries = true)
     public void cleanExpired() {
-        List<OpsJob> jobs = jobMapper.listAll();
+        List<OpsJob> jobs = jobService.listAll();
         for (OpsJob job : jobs) {
             int retentionDays = job.getLogRetentionDays() == null ? 30 : job.getLogRetentionDays();
             baseMapper.deleteExpiredPhysically(
@@ -137,11 +137,8 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
         if (cached instanceof String value) {
             return JsonUtil.parseObject(value, OpsJobDashboardResp.class);
         }
-        long totalJobs = jobMapper.countAll();
-        long enabledJobs =
-                jobMapper.selectCount(
-                        new LambdaQueryWrapperX<OpsJob>()
-                                .eq(OpsJob::getStatus, OpsJobStatus.ENABLED.getValue()));
+        long totalJobs = jobService.countJobs(null);
+        long enabledJobs = jobService.countJobs(OpsJobStatus.ENABLED.getValue());
         long executions = count();
         long success =
                 count(

@@ -62,7 +62,7 @@ public class SysDictController {
     @GetMapping("/{id}")
     @SaCheckPermission(value = SystemPermission.DICT_QUERY, type = LoginType.ADMIN)
     public ApiResponse<SysDictResp> get(@PathVariable Long id) {
-        return ApiResponse.success(dictService.getById(id));
+        return ApiResponse.success(dictService.getDetailByIdOrThrow(id));
     }
 
     /**

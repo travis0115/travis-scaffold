@@ -72,7 +72,7 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
     /** 获取角色详情，同时查询角色关联的菜单ID列表 */
     @Override
     @Cacheable(key = "'detail:'+#id")
-    public SysRoleResp getById(Long id) {
+    public SysRoleResp getDetailByIdOrThrow(Long id) {
         var role = getByIdOrThrow(id);
         var roleResp = converter.toResp(role);
         List<Long> menuIds =

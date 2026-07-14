@@ -91,7 +91,7 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
     }
 
     @Override
-    public SysNoticeResp get(Long id) {
+    public SysNoticeResp getOrThrow(Long id) {
         return toResp(getByIdOrThrow(id));
     }
 

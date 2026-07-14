@@ -1,6 +1,5 @@
 package com.travis.monolith.system.file.internal.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.model.PageResp;
@@ -15,9 +14,7 @@ import com.travis.monolith.system.file.api.request.SysFileStorageConfigPageReq;
 import com.travis.monolith.system.file.api.request.SysFileStorageConfigUpdateReq;
 import com.travis.monolith.system.file.api.response.SysFileStorageConfigResp;
 import com.travis.monolith.system.file.internal.converter.SysFileStorageConfigConverter;
-import com.travis.monolith.system.file.internal.entity.SysFile;
 import com.travis.monolith.system.file.internal.entity.SysFileStorageConfig;
-import com.travis.monolith.system.file.internal.mapper.SysFileMapper;
 import com.travis.monolith.system.file.internal.mapper.SysFileStorageConfigMapper;
 import com.travis.monolith.system.file.internal.service.SysFileStorageConfigService;
 import java.util.List;
@@ -37,7 +34,6 @@ public class SysFileStorageConfigServiceImpl
         implements SysFileStorageConfigService {
 
     private final SysFileStorageConfigConverter converter;
-    private final SysFileMapper sysFileMapper;
 
     @Override
     public PageResp<SysFileStorageConfigResp> page(SysFileStorageConfigPageReq req) {
@@ -61,13 +57,13 @@ public class SysFileStorageConfigServiceImpl
 
     @Override
     @Cacheable(key = "'detail:' + #id")
-    public SysFileStorageConfigResp get(Long id) {
+    public SysFileStorageConfigResp getOrThrow(Long id) {
         return converter.toResp(getByIdOrThrow(id));
     }
 
     @Override
     @Cacheable(key = "'detail:default'")
-    public SysFileStorageConfigResp getDefault() {
+    public SysFileStorageConfigResp getDefaultOrThrow() {
         return converter.toResp(
                 getOneOrThrow(
                         new LambdaQueryWrapperX<SysFileStorageConfig>()
@@ -162,10 +158,7 @@ public class SysFileStorageConfigServiceImpl
         if (IsDefault.YES.getValue().equals(entity.getIsDefault())) {
             throw new BizException(SystemErrorCode.FILE_STORAGE_DEFAULT_NOT_DELETABLE);
         }
-        var fileExists =
-                sysFileMapper.exists(
-                        new LambdaQueryWrapper<SysFile>().eq(SysFile::getStorageConfigId, id));
-        if (fileExists) {
+        if (baseMapper.existsFile(id)) {
             throw new BizException(SystemErrorCode.FILE_STORAGE_IN_USE);
         }
         removeById(id);

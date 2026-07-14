@@ -29,7 +29,7 @@ public interface SysUserService extends IService<SysUser> {
      * @param id 用户ID
      * @return 用户详情视图
      */
-    SysUserResp getById(Long id);
+    SysUserResp getDetailByIdOrThrow(Long id);
 
     /** 获取所有启用用户列表（不分页） */
     List<Long> listUserIds();

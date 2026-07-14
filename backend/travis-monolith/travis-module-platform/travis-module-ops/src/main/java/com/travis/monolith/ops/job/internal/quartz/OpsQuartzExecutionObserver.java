@@ -3,17 +3,15 @@ package com.travis.monolith.ops.job.internal.quartz;
 import com.travis.infrastructure.framework.quartz.core.QuartzDispatchJob;
 import com.travis.infrastructure.framework.quartz.core.QuartzJobExecutionObserver;
 import com.travis.monolith.ops.job.api.enums.OpsJobLogStatus;
-import com.travis.monolith.ops.job.internal.entity.OpsJob;
 import com.travis.monolith.ops.job.internal.entity.OpsJobLog;
-import com.travis.monolith.ops.job.internal.mapper.OpsJobMapper;
+import com.travis.monolith.ops.job.api.response.OpsJobDetailResp;
 import com.travis.monolith.ops.job.internal.service.OpsJobLogService;
+import com.travis.monolith.ops.job.internal.service.OpsJobService;
 import com.travis.monolith.system.message.api.SysMessageApi;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +24,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class OpsQuartzExecutionObserver implements QuartzJobExecutionObserver {
 
-    private final OpsJobMapper jobMapper;
+    private final OpsJobService jobService;
     private final OpsJobLogService logService;
     private final SysMessageApi messageApi;
     private final Map<String, Long> executingLogs = new ConcurrentHashMap<>();
@@ -34,7 +32,7 @@ public class OpsQuartzExecutionObserver implements QuartzJobExecutionObserver {
     @Override
     public void beforeExecution(JobExecutionContext context) {
         Long jobId = context.getMergedJobDataMap().getLong(QuartzDispatchJob.DATA_JOB_ID);
-        OpsJob job = jobMapper.selectById(jobId);
+        OpsJobDetailResp job = jobService.find(jobId);
         if (job == null) {
             return;
         }
@@ -97,13 +95,11 @@ public class OpsQuartzExecutionObserver implements QuartzJobExecutionObserver {
     }
 
     private void publishFailure(Long jobId, Long logId, Throwable throwable) {
-        OpsJob job = jobMapper.selectById(jobId);
-        if (job == null || job.getAlertUserIds() == null || job.getAlertUserIds().isBlank()) {
+        OpsJobDetailResp job = jobService.find(jobId);
+        if (job == null || job.getAlertUserIds() == null || job.getAlertUserIds().isEmpty()) {
             return;
         }
         try {
-            List<Long> recipients =
-                    Arrays.stream(job.getAlertUserIds().split(",")).map(Long::valueOf).toList();
             messageApi.publishToUsers(
                     "任务执行失败：" + job.getJobName(),
                     "任务处理器："
@@ -112,7 +108,7 @@ public class OpsQuartzExecutionObserver implements QuartzJobExecutionObserver {
                             + logId
                             + "\n异常："
                             + throwable.getMessage(),
-                    recipients,
+                    job.getAlertUserIds(),
                     "OPS_JOB",
                     String.valueOf(logId));
             var update = new OpsJobLog();

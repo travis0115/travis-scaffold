@@ -37,7 +37,7 @@ public class SysMessageTemplateController {
     @GetMapping("/{id}")
     @SaCheckPermission(value = SystemPermission.MESSAGE_TEMPLATE_QUERY, type = LoginType.ADMIN)
     public ApiResponse<SysMessageTemplateResp> get(@PathVariable Long id) {
-        return ApiResponse.success(templateService.get(id));
+        return ApiResponse.success(templateService.getOrThrow(id));
     }
 
     @OperationLog(action = "新增消息模板")

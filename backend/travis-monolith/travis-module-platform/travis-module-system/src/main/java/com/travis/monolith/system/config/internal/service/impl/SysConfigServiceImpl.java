@@ -58,13 +58,13 @@ public class SysConfigServiceImpl extends ServiceImplX<SysConfigMapper, SysConfi
 
     @Override
     @Cacheable(key = "'detail:id:'+#id")
-    public SysConfigResp getById(Long id) {
+    public SysConfigResp getDetailByIdOrThrow(Long id) {
         return converter.toResp(getByIdOrThrow(id));
     }
 
     @Override
     @Cacheable(key = "'detail:key:'+#configKey")
-    public SysConfigResp getByKey(String configKey) {
+    public SysConfigResp getByKeyOrThrow(String configKey) {
         var config =
                 getOneOrThrow(
                         new LambdaQueryWrapperX<SysConfig>()

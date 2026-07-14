@@ -159,9 +159,9 @@ public class SysAuthServiceImpl implements SysAuthService {
 
     /** 获取当前登录用户信息，包含角色编码和权限列表 */
     @Override
-    public SysUserInfoResp getUserInfo() {
+    public SysUserInfoResp getUserInfoOrThrow() {
         var userId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
-        var user = userService.getById(userId);
+        var user = userService.getDetailByIdOrThrow(userId);
 
         var roleCodes = roleApi.getRoleCodesByUserId(userId);
         var permissions = getPermissionsByUserId(userId);

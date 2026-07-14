@@ -52,7 +52,7 @@ public class SysNoticeController {
     @GetMapping("/{id}")
     @SaCheckPermission(value = SystemPermission.NOTICE_QUERY, type = LoginType.ADMIN)
     public ApiResponse<SysNoticeResp> getById(@PathVariable Long id) {
-        return ApiResponse.success(noticeService.get(id));
+        return ApiResponse.success(noticeService.getOrThrow(id));
     }
 
     @OperationLog(action = "新增公告")

@@ -17,9 +17,9 @@ public interface SysMessageReceiverService extends IService<SysMessageReceiver> 
 
     PageResp<SysUserMessageResp> page(String receiverType, Long userId, SysUserMessagePageReq req);
 
-    SysUserMessageResp get(Long userId, Long id);
+    SysUserMessageResp getOrThrow(Long userId, Long id);
 
-    SysUserMessageResp get(String receiverType, Long userId, Long id);
+    SysUserMessageResp getOrThrow(String receiverType, Long userId, Long id);
 
     Long countUnread(Long userId);
 
@@ -40,4 +40,8 @@ public interface SysMessageReceiverService extends IService<SysMessageReceiver> 
     void clear(Long userId);
 
     void clear(String receiverType, Long userId);
+
+    void deleteByMessageId(Long messageId);
+
+    void resetReadStatus(Long messageId);
 }

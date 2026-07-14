@@ -38,7 +38,7 @@ public class SysDeptApiImpl implements SysDeptApi {
         }
         Map<Long, String> result = new LinkedHashMap<>();
         for (Long id : ids) {
-            var deptName = deptService.getDeptNameById(id);
+            var deptName = deptService.getDeptNameByIdOrThrow(id);
             if (deptName != null) {
                 result.put(id, deptName);
             }
@@ -48,7 +48,7 @@ public class SysDeptApiImpl implements SysDeptApi {
 
     @Override
     public String getDeptNameById(Long deptId) {
-        return deptService.getDeptNameById(deptId);
+        return deptService.getDeptNameByIdOrThrow(deptId);
     }
 
     @Override
