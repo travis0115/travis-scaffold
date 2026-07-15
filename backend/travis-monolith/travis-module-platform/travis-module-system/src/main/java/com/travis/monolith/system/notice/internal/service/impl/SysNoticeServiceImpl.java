@@ -30,6 +30,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/** 系统公告服务实现，负责公告查询维护、发布状态及置顶状态管理。 */
 @Service
 @RequiredArgsConstructor
 @CacheConfig(cacheNames = "system:notice")

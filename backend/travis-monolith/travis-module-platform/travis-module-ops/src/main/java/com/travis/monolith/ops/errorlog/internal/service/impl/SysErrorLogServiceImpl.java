@@ -10,6 +10,7 @@ import com.travis.monolith.ops.errorlog.internal.mapper.SysErrorLogMapper;
 import com.travis.monolith.ops.errorlog.internal.service.SysErrorLogService;
 import org.springframework.stereotype.Service;
 
+/** 系统异常日志服务实现，负责按请求条件分页查询异常日志。 */
 @Service
 public class SysErrorLogServiceImpl extends ServiceImplX<SysErrorLogMapper, SysErrorLog>
         implements SysErrorLogService {

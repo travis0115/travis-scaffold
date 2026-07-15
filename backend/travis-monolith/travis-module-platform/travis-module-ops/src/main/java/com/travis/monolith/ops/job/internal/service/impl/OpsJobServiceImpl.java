@@ -33,6 +33,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/** 定时任务管理服务实现，负责任务配置维护、运行控制，并同步 Quartz 调度状态。 */
 @Service
 @RequiredArgsConstructor
 @CacheConfig(cacheNames = "ops:job")

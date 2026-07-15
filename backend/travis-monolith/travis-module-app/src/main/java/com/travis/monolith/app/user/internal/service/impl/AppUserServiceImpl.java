@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
+/** App 用户服务实现，负责用户分页查询及用户选项数据组装。 */
 @Service
 public class AppUserServiceImpl extends ServiceImplX<AppUserMapper, AppUser>
         implements AppUserService {

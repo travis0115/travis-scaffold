@@ -21,6 +21,7 @@ import com.travis.monolith.system.common.api.enums.Status;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+/** App 端认证服务实现，负责用户登录、退出、WebSocket 凭证签发及当前用户信息查询。 */
 @Service
 @RequiredArgsConstructor
 public class AppAuthServiceImpl implements AppAuthService {

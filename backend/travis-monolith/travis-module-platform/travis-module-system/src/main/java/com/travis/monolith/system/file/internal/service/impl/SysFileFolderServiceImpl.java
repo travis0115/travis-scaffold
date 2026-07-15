@@ -24,6 +24,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/** 文件夹管理服务实现，负责文件夹查询、创建、更新及删除校验。 */
 @Service
 @RequiredArgsConstructor
 @CacheConfig(cacheNames = "system:file:folder")

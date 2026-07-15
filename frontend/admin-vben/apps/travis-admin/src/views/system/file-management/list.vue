@@ -1210,7 +1210,7 @@ onBeforeUnmount(() => {
         >
           <span class="folder-row-spacer"></span>
           <IconifyIcon icon="lucide:folder" class="folder-icon" />
-          <EllipsisText :tooltip="false" class="folder-name">
+          <EllipsisText :tooltip="false" class="folder-name cursor-pointer!">
             全部
           </EllipsisText>
         </div>
@@ -1227,7 +1227,7 @@ onBeforeUnmount(() => {
         >
           <span class="folder-row-spacer"></span>
           <IconifyIcon icon="lucide:folder" class="folder-icon" />
-          <EllipsisText :tooltip="false" class="folder-name">
+          <EllipsisText :tooltip="false" class="folder-name cursor-pointer!">
             未分类
           </EllipsisText>
         </div>
@@ -1252,7 +1252,10 @@ onBeforeUnmount(() => {
           <template #node="{ value: folder }">
             <div class="folder-node group">
               <IconifyIcon icon="lucide:folder" class="folder-icon" />
-              <EllipsisText :tooltip="false" class="folder-name">
+              <EllipsisText
+                :tooltip="false"
+                class="folder-name cursor-pointer!"
+              >
                 {{ folder.folderName }}
               </EllipsisText>
               <div class="folder-actions" @click.stop>

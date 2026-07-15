@@ -36,6 +36,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/** 定时任务执行日志服务实现，负责日志查询、导出、清理、统计及执行结果持久化。 */
 @Service
 @RequiredArgsConstructor
 @Slf4j

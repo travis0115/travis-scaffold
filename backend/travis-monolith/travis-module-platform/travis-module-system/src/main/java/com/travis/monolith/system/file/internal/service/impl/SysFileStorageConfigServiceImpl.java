@@ -26,6 +26,7 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/** 文件存储配置服务实现，负责配置查询维护、启停控制及默认配置切换。 */
 @Service
 @RequiredArgsConstructor
 @CacheConfig(cacheNames = "system:file:storage-config")

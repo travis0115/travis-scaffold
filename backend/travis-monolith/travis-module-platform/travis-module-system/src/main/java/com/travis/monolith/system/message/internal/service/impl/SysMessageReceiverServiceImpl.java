@@ -26,6 +26,12 @@ import com.travis.monolith.system.message.internal.mapper.SysMessageReceiverMapp
 import com.travis.monolith.system.message.internal.service.SysMessageReceiverService;
 import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.api.SysUserApi;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,11 +39,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /** 消息接收记录服务实现。 */
 @Service
@@ -70,11 +71,6 @@ public class SysMessageReceiverServiceImpl
     }
 
     @Override
-    public List<SysUserMessageResp> listRecent(Long userId, Integer limit) {
-        return listRecent(LoginType.ADMIN, userId, limit);
-    }
-
-    @Override
     public List<SysUserMessageResp> listRecent(String receiverType, Long userId, Integer limit) {
         int actualLimit = limit == null || limit <= 0 ? 10 : Math.min(limit, 50);
         var context = audienceContext(receiverType, userId);
@@ -94,11 +90,6 @@ public class SysMessageReceiverServiceImpl
                 .stream()
                 .map(item -> converter.toResp(item.message(), item.receiver()))
                 .toList();
-    }
-
-    @Override
-    public PageResp<SysUserMessageResp> page(Long userId, SysUserMessagePageReq req) {
-        return page(LoginType.ADMIN, userId, req);
     }
 
     @Override
@@ -125,11 +116,6 @@ public class SysMessageReceiverServiceImpl
                         .map(item -> converter.toResp(item.message(), item.receiver()))
                         .toList());
         return PageConverter.toResp(responsePage);
-    }
-
-    @Override
-    public SysUserMessageResp getOrThrow(Long userId, Long id) {
-        return getOrThrow(LoginType.ADMIN, userId, id);
     }
 
     @Override
@@ -166,21 +152,9 @@ public class SysMessageReceiverServiceImpl
 
     @Override
     @Transactional
-    public void markRead(Long userId, Long id) {
-        markRead(LoginType.ADMIN, userId, id);
-    }
-
-    @Override
-    @Transactional
     public void markRead(String receiverType, Long userId, Long id) {
         ensureVisible(receiverType, userId, id);
         upsertState(receiverType, userId, id, SysMessageReadStatus.READ.getValue());
-    }
-
-    @Override
-    @Transactional
-    public void markAllRead(Long userId) {
-        markAllRead(LoginType.ADMIN, userId);
     }
 
     @Override
@@ -199,22 +173,10 @@ public class SysMessageReceiverServiceImpl
 
     @Override
     @Transactional
-    public void delete(Long userId, Long id) {
-        delete(LoginType.ADMIN, userId, id);
-    }
-
-    @Override
-    @Transactional
     public void delete(String receiverType, Long userId, Long id) {
         ensureVisible(receiverType, userId, id);
         upsertState(receiverType, userId, id, SysMessageReadStatus.DELETED.getValue());
         notifyInboxChanged();
-    }
-
-    @Override
-    @Transactional
-    public void clear(Long userId) {
-        clear(LoginType.ADMIN, userId);
     }
 
     @Override

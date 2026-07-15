@@ -9,20 +9,11 @@ import java.util.List;
 
 /** 消息接收记录服务。 */
 public interface SysMessageReceiverService extends IService<SysMessageReceiver> {
-    /** 查询当前后台用户的最近消息。 */
-    List<SysUserMessageResp> listRecent(Long userId, Integer limit);
-
     /** 查询指定登录体系用户的最近消息。 */
     List<SysUserMessageResp> listRecent(String receiverType, Long userId, Integer limit);
 
-    /** 分页查询当前后台用户的收件箱消息。 */
-    PageResp<SysUserMessageResp> page(Long userId, SysUserMessagePageReq req);
-
     /** 分页查询指定登录体系用户的收件箱消息。 */
     PageResp<SysUserMessageResp> page(String receiverType, Long userId, SysUserMessagePageReq req);
-
-    /** 查询当前后台用户的消息详情，不存在时抛出业务异常。 */
-    SysUserMessageResp getOrThrow(Long userId, Long id);
 
     /** 查询指定登录体系用户的消息详情，不存在时抛出业务异常。 */
     SysUserMessageResp getOrThrow(String receiverType, Long userId, Long id);
@@ -30,26 +21,14 @@ public interface SysMessageReceiverService extends IService<SysMessageReceiver> 
     /** 统计指定登录体系用户的未读消息数。 */
     Long countUnread(String receiverType, Long userId);
 
-    /** 将当前后台用户的一条消息标记为已读。 */
-    void markRead(Long userId, Long id);
-
     /** 将指定登录体系用户的一条消息标记为已读。 */
     void markRead(String receiverType, Long userId, Long id);
-
-    /** 将当前后台用户的全部消息标记为已读。 */
-    void markAllRead(Long userId);
 
     /** 将指定登录体系用户的全部消息标记为已读。 */
     void markAllRead(String receiverType, Long userId);
 
-    /** 删除当前后台用户的一条收件箱消息。 */
-    void delete(Long userId, Long id);
-
     /** 删除指定登录体系用户的一条收件箱消息。 */
     void delete(String receiverType, Long userId, Long id);
-
-    /** 清空当前后台用户的收件箱消息。 */
-    void clear(Long userId);
 
     /** 清空指定登录体系用户的收件箱消息。 */
     void clear(String receiverType, Long userId);
