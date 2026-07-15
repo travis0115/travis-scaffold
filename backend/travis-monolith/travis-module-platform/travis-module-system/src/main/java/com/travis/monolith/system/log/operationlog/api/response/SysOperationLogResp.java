@@ -11,6 +11,7 @@ import lombok.Data;
 @Data
 public class SysOperationLogResp {
 
+    /** 操作日志 ID。 */
     private Long id;
 
     /** 操作用户ID */

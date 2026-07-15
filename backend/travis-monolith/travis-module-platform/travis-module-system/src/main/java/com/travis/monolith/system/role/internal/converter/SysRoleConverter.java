@@ -20,9 +20,12 @@ public interface SysRoleConverter {
     /** SysRole → SysRoleResp（基础字段映射） menuIds 需在Service层手动设置 */
     SysRoleResp toResp(SysRole role);
 
+    /** 批量将角色实体转换为响应。 */
     List<SysRoleResp> toRespList(List<SysRole> roles);
 
+    /** 将创建参数转换为角色实体。 */
     SysRole toEntity(SysRoleCreateReq req);
 
+    /** 将更新参数写入已有角色实体。 */
     void update(SysRoleUpdateReq req, @MappingTarget SysRole role);
 }

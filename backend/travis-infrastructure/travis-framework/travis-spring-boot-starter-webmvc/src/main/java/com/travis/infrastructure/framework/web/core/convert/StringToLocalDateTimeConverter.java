@@ -1,14 +1,13 @@
 package com.travis.infrastructure.framework.web.core.convert;
 
-import org.jspecify.annotations.NonNull;
-import org.springframework.core.convert.converter.Converter;
-import org.springframework.util.StringUtils;
-
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.regex.Pattern;
+import org.jspecify.annotations.NonNull;
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.util.StringUtils;
 
 /**
  * Query/Form 参数中的 LocalDateTime 转换器。
@@ -24,6 +23,7 @@ public class StringToLocalDateTimeConverter implements Converter<String, LocalDa
     private static final Pattern ISO_LOCAL_PATTERN =
             Pattern.compile("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,9})?$");
 
+    /** 未携带时区的日期时间默认格式。 */
     private static final String DEFAULT_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
     private final DateTimeFormatter defaultFormatter;
@@ -63,9 +63,7 @@ public class StringToLocalDateTimeConverter implements Converter<String, LocalDa
         }
         int offsetStart = Math.max(value.lastIndexOf('+'), value.lastIndexOf('-'));
         if (offsetStart > 0 && value.length() - offsetStart == 5) {
-            return value.substring(0, offsetStart + 3)
-                    + ":"
-                    + value.substring(offsetStart + 3);
+            return value.substring(0, offsetStart + 3) + ":" + value.substring(offsetStart + 3);
         }
         return value;
     }
@@ -80,11 +78,12 @@ public class StringToLocalDateTimeConverter implements Converter<String, LocalDa
                 end++;
             }
             int count = end - index;
-            regex.append(switch (ch) {
-                case 'y', 'M', 'd', 'H', 'm', 's' -> "\\d{" + count + "}";
-                case 'S' -> "\\d{1," + count + "}";
-                default -> Pattern.quote(dateFormat.substring(index, end));
-            });
+            regex.append(
+                    switch (ch) {
+                        case 'y', 'M', 'd', 'H', 'm', 's' -> "\\d{" + count + "}";
+                        case 'S' -> "\\d{1," + count + "}";
+                        default -> Pattern.quote(dateFormat.substring(index, end));
+                    });
             index = end;
         }
         return regex.toString();

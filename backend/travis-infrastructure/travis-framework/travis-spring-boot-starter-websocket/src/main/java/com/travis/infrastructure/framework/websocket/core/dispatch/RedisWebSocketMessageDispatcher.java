@@ -4,22 +4,21 @@ import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.redis.core.key.RedisKeyPrefixResolver;
 import com.travis.infrastructure.framework.redis.core.pubsub.RedisPubSubClient;
 import com.travis.infrastructure.framework.websocket.config.properties.WebSocketProperties;
-import com.travis.infrastructure.framework.websocket.core.session.LocalWebSocketSessionManager;
 import com.travis.infrastructure.framework.websocket.core.message.WebSocketMessage;
 import com.travis.infrastructure.framework.websocket.core.message.WebSocketMessageType;
+import com.travis.infrastructure.framework.websocket.core.session.LocalWebSocketSessionManager;
 import com.travis.infrastructure.framework.websocket.core.session.WebSocketNamespace;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
-
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 
 /**
  * 基于 Redis Pub/Sub 的 WebSocket 消息分发器，实现多实例集群广播。
@@ -44,19 +43,16 @@ public class RedisWebSocketMessageDispatcher {
     private final RedisTemplate<String, Object> redisTemplate;
     private final RedisKeyPrefixResolver redisKeyPrefixResolver;
     private final WebSocketProperties properties;
-    /**
-     * -- GETTER --
-     * 获取当前实例 ID
-     */
+
+    /** -- GETTER -- 获取当前实例 ID */
     @Getter
     private final String instanceId = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
 
-    /** 通过 setter 注入，避免与 LocalWebSocketSessionManager 的循环依赖
-     * -- SETTER --
-     * 注入 LocalWebSocketSessionManager（由 AutoConfiguration 调用）
+    /**
+     * 通过 setter 注入，避免与 LocalWebSocketSessionManager 的循环依赖 -- SETTER -- 注入
+     * LocalWebSocketSessionManager（由 AutoConfiguration 调用）
      */
-    @Setter
-    private LocalWebSocketSessionManager sessionManager;
+    @Setter private LocalWebSocketSessionManager sessionManager;
 
     /** 标记 Redis 是否可用，不可用时降级为单实例模式 */
     private volatile boolean redisAvailable = true;

@@ -16,6 +16,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+/** 定时任务执行日志管理接口。 */
 @RestController
 @RequestMapping("/ops/job-log")
 @RequiredArgsConstructor
@@ -24,24 +25,28 @@ public class OpsJobLogController {
 
     private final OpsJobLogService logService;
 
+    /** 分页查询任务执行日志。 */
     @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_LOG_QUERY, type = LoginType.ADMIN)
     @GetMapping("/page")
     public ApiResponse<PageResp<OpsJobLogPageResp>> page(OpsJobLogPageReq req) {
         return ApiResponse.success(logService.page(req));
     }
 
+    /** 查询任务执行日志详情。 */
     @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_LOG_QUERY, type = LoginType.ADMIN)
     @GetMapping("/{id}")
     public ApiResponse<OpsJobLogDetailResp> detail(@PathVariable Long id) {
         return ApiResponse.success(logService.getOrThrow(id));
     }
 
+    /** 按查询条件导出任务执行日志。 */
     @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_LOG_QUERY, type = LoginType.ADMIN)
     @GetMapping("/export")
     public ApiResponse<List<OpsJobLogExportResp>> export(OpsJobLogPageReq req) {
         return ApiResponse.success(logService.exportLogs(req));
     }
 
+    /** 清理指定任务或全部任务的执行日志。 */
     @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_OPERATION, type = LoginType.ADMIN)
     @OperationLog(action = "清理任务日志")
     @DeleteMapping("/clean")

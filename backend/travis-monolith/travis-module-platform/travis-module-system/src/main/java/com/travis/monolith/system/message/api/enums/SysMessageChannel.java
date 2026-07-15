@@ -25,6 +25,7 @@ public enum SysMessageChannel {
     private static final Set<String> VALUES =
             Arrays.stream(values()).map(SysMessageChannel::getValue).collect(Collectors.toSet());
 
+    /** 推送通道值。 */
     private final String value;
 
     public static boolean contains(String value) {

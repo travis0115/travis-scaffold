@@ -10,24 +10,35 @@ import com.travis.monolith.ops.job.api.response.OpsJobStatsResp;
 import com.travis.monolith.ops.job.internal.entity.OpsJobLog;
 import java.util.List;
 
+/** 定时任务执行日志服务。 */
 public interface OpsJobLogService {
+    /** 分页查询任务执行日志。 */
     PageResp<OpsJobLogPageResp> page(OpsJobLogPageReq req);
 
+    /** 查询执行日志详情，日志不存在时抛出业务异常。 */
     OpsJobLogDetailResp getOrThrow(Long id);
 
+    /** 按条件查询用于导出的执行日志。 */
     List<OpsJobLogExportResp> exportLogs(OpsJobLogPageReq req);
 
+    /** 清理指定任务或全部任务的执行日志。 */
     void clean(Long jobId);
 
+    /** 按各任务的保留期限清理过期执行日志。 */
     void cleanExpired();
 
+    /** 统计指定任务的执行情况。 */
     OpsJobStatsResp stats(Long jobId);
 
+    /** 汇总任务调度看板数据。 */
     OpsJobDashboardResp dashboard();
 
+    /** 新增任务执行日志。 */
     void saveExecution(OpsJobLog log);
 
+    /** 更新任务执行结果。 */
     void updateExecution(OpsJobLog log);
 
+    /** 使指定任务的执行统计缓存失效。 */
     void invalidateStats(Long jobId);
 }

@@ -17,8 +17,7 @@ public class SysMessageInboxApiImpl implements SysMessageInboxApi {
     private final SysMessageReceiverService messageReceiverService;
 
     @Override
-    public List<SysUserMessageResp> listRecent(
-            String receiverType, Long userId, Integer limit) {
+    public List<SysUserMessageResp> listRecent(String receiverType, Long userId, Integer limit) {
         return messageReceiverService.listRecent(receiverType, userId, limit);
     }
 

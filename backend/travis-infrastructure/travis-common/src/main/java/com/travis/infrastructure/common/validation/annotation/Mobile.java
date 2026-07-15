@@ -5,6 +5,7 @@ import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 import java.lang.annotation.*;
 
+/** 校验字符串是否为合法的中国大陆手机号。 */
 @Target({
     ElementType.METHOD,
     ElementType.FIELD,

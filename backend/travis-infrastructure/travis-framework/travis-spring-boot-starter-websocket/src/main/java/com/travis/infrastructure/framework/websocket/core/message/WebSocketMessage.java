@@ -94,7 +94,8 @@ public class WebSocketMessage {
     }
 
     /** 创建关闭指定连接主体下匹配属性连接的内部消息 */
-    public static WebSocketMessage close(String principal, String attributeName, Object attributeValue) {
+    public static WebSocketMessage close(
+            String principal, String attributeName, Object attributeValue) {
         return WebSocketMessage.builder()
                 .type(WebSocketMessageType.CLOSE)
                 .to(principal)

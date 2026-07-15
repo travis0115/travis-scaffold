@@ -6,8 +6,8 @@ import java.util.regex.Pattern;
 /**
  * 正则脱敏规则
  *
- * @param pattern
- * @param replacer
+ * @param pattern 匹配敏感内容的正则表达式
+ * @param replacer 替换内容
  */
 public record RegexDesensitizeRule(Pattern pattern, String replacer) implements DesensitizeRule {
 

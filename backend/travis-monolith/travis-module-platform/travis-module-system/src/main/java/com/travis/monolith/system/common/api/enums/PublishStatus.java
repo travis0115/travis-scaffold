@@ -16,5 +16,6 @@ public enum PublishStatus {
     /** 已撤回。 */
     REVOKED(2);
 
+    /** 发布状态值。 */
     private final Integer value;
 }

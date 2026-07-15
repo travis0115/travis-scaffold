@@ -3,9 +3,9 @@ package com.travis.infrastructure.framework.desensitize.core.rule;
 /**
  * 滑动脱敏规则
  *
- * @param prefix
- * @param suffix
- * @param mask
+ * @param prefix 保留的前缀字符数
+ * @param suffix 保留的后缀字符数
+ * @param mask 中间内容使用的掩码字符
  */
 public record SliderDesensitizeRule(int prefix, int suffix, char mask) implements DesensitizeRule {
 

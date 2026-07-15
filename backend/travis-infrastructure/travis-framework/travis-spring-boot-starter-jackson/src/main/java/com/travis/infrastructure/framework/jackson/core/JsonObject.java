@@ -42,41 +42,48 @@ public final class JsonObject {
         return new JsonObject();
     }
 
+    /** 获取字符串值，字段不存在或为 null 时返回 {@code null}。 */
     public String getString(String key) {
         var v = node.path(key);
         return v.isMissingNode() || v.isNull() ? null : v.asString();
     }
 
+    /** 获取整数值，字段不存在或为 null 时返回 {@code null}。 */
     public Integer getInteger(String key) {
         var v = node.path(key);
         if (v.isMissingNode() || v.isNull()) return null;
         return v.isInt() ? v.intValue() : v.asInt();
     }
 
+    /** 获取长整数值，字段不存在或为 null 时返回 {@code null}。 */
     public Long getLong(String key) {
         var v = node.path(key);
         if (v.isMissingNode() || v.isNull()) return null;
         return v.isLong() ? v.longValue() : v.asLong();
     }
 
+    /** 获取布尔值，字段不存在或为 null 时返回 {@code null}。 */
     public Boolean getBoolean(String key) {
         var v = node.path(key);
         if (v.isMissingNode() || v.isNull()) return null;
         return v.asBoolean();
     }
 
+    /** 获取双精度数值，字段不存在或为 null 时返回 {@code null}。 */
     public Double getDouble(String key) {
         var v = node.path(key);
         if (v.isMissingNode() || v.isNull()) return null;
         return v.asDouble();
     }
 
+    /** 获取高精度小数值，字段不存在或为 null 时返回 {@code null}。 */
     public BigDecimal getBigDecimal(String key) {
         var v = node.path(key);
         if (v.isMissingNode() || v.isNull()) return null;
         return v.decimalValue();
     }
 
+    /** 获取高精度整数值，字段不存在或为 null 时返回 {@code null}。 */
     public BigInteger getBigInteger(String key) {
         var v = node.path(key);
         if (v.isMissingNode() || v.isNull()) return null;
@@ -119,15 +126,18 @@ public final class JsonObject {
         return this;
     }
 
+    /** 判断对象是否包含指定字段。 */
     public boolean has(String key) {
         return node.has(key);
     }
 
+    /** 删除指定字段并返回当前对象，便于链式调用。 */
     public JsonObject remove(String key) {
         node.remove(key);
         return this;
     }
 
+    /** 将当前对象序列化为 JSON 字符串。 */
     public String toJsonString() {
         try {
             return mapper.writeValueAsString(node);

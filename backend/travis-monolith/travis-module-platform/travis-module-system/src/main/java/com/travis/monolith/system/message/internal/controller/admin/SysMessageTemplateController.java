@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 public class SysMessageTemplateController {
     private final SysMessageTemplateService templateService;
 
+    /** 分页查询消息模板。 */
     @GetMapping("/page")
     @SaCheckPermission(value = SystemPermission.MESSAGE_TEMPLATE_QUERY, type = LoginType.ADMIN)
     public ApiResponse<PageResp<SysMessageTemplateResp>> page(
@@ -34,12 +35,14 @@ public class SysMessageTemplateController {
         return ApiResponse.success(templateService.page(req));
     }
 
+    /** 查询消息模板详情。 */
     @GetMapping("/{id}")
     @SaCheckPermission(value = SystemPermission.MESSAGE_TEMPLATE_QUERY, type = LoginType.ADMIN)
     public ApiResponse<SysMessageTemplateResp> get(@PathVariable Long id) {
         return ApiResponse.success(templateService.getOrThrow(id));
     }
 
+    /** 创建消息模板。 */
     @OperationLog(action = "新增消息模板")
     @NoRepeatSubmit
     @PostMapping
@@ -49,6 +52,7 @@ public class SysMessageTemplateController {
         return ApiResponse.success();
     }
 
+    /** 更新消息模板。 */
     @OperationLog(action = "更新消息模板")
     @NoRepeatSubmit
     @PutMapping("/{id}")
@@ -59,6 +63,7 @@ public class SysMessageTemplateController {
         return ApiResponse.success();
     }
 
+    /** 删除消息模板。 */
     @OperationLog(action = "删除消息模板")
     @NoRepeatSubmit
     @DeleteMapping("/{id}")

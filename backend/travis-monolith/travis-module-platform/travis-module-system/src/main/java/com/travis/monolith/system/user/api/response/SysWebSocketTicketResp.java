@@ -10,7 +10,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class SysWebSocketTicketResp {
 
+    /** 单次使用的 WebSocket 握手凭证。 */
     private String ticket;
 
+    /** 凭证有效期，单位秒。 */
     private long expiresIn;
 }

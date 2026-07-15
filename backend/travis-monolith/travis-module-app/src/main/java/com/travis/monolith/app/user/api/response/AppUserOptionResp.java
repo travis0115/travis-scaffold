@@ -9,8 +9,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AppUserOptionResp {
+    /** 用户 ID。 */
     private Long id;
+
+    /** 用户名。 */
     private String username;
+
+    /** 昵称。 */
     private String nickname;
+
+    /** 手机号。 */
     private String mobile;
 }

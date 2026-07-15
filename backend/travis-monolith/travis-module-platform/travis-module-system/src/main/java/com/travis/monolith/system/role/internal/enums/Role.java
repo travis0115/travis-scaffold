@@ -11,7 +11,9 @@ public enum Role {
     ADMIN("admin", "管理员"),
     ;
 
+    /** 角色编码。 */
     private final String value;
 
+    /** 角色展示名称。 */
     private final String label;
 }

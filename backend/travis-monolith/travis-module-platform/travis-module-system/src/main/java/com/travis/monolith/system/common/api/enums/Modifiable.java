@@ -13,7 +13,9 @@ public enum Modifiable {
     /** 允许修改 */
     YES(1, "允许修改");
 
+    /** 是否可修改的状态值。 */
     private final Integer value;
 
+    /** 状态展示名称。 */
     private final String label;
 }

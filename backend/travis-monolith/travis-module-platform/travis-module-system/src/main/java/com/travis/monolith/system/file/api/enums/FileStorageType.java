@@ -32,7 +32,9 @@ public enum FileStorageType {
 //    GOOGLE_CLOUD_STORAGE("GOOGLE_CLOUD_STORAGE", "Google Cloud Storage"),
 ;
 
+    /** 存储类型值。 */
     private final String value;
 
+    /** 存储类型展示名称。 */
     private final String label;
 }

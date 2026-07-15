@@ -18,9 +18,16 @@ import org.springframework.core.env.ConfigurableEnvironment;
  */
 public class RocketMQLogPathEnvironmentPostProcessor implements EnvironmentPostProcessor {
 
+    /** Travis 配置中的 RocketMQ 客户端日志目录属性。 */
     private static final String PROPERTY_KEY = "travis.rocketmq.client.log-path";
+
+    /** 可覆盖日志目录的环境变量。 */
     private static final String ENV_OVERRIDE = "ROCKETMQ_LOG_ROOT";
+
+    /** RocketMQ 客户端识别的日志根目录系统属性。 */
     private static final String SYSTEM_PROPERTY = "rocketmq.log.root";
+
+    /** 未配置时使用的默认日志目录。 */
     private static final String DEFAULT_PATH = "${user.home}/data/logs/rocketmq";
 
     @Override

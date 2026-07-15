@@ -12,18 +12,23 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class SysMessageTemplatePageReq extends PageRequest {
+    /** 模板编码，支持模糊匹配。 */
     @Size(max = 64, message = "模板编码长度不能超过64个字符")
     private String templateCode;
 
+    /** 模板名称，支持模糊匹配。 */
     @Size(max = 100, message = "模板名称长度不能超过100个字符")
     private String templateName;
 
+    /** 外部平台模板 ID。 */
     @Size(max = 128, message = "平台模板ID长度不能超过128个字符")
     private String platformTemplateId;
 
+    /** 推送通道。 */
     @EnumValue(value = SysMessageChannel.class, message = "推送通道错误")
     private String channel;
 
+    /** 模板状态。 */
     @EnumValue(value = Status.class, message = "状态值错误")
     private Integer status;
 }

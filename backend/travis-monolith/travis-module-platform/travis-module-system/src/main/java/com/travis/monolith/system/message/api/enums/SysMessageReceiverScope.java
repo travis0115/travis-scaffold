@@ -20,6 +20,7 @@ public enum SysMessageReceiverScope {
     /** 指定部门。 */
     DEPT(3);
 
+    /** 接收范围值。 */
     private final Integer value;
 
     public static Optional<SysMessageReceiverScope> findByValue(Integer value) {

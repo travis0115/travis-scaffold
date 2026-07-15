@@ -37,6 +37,7 @@ import org.springframework.core.io.Resource;
 @EnableConfigurationProperties({RedissonProperties.class, DataRedisProperties.class})
 public class RedissonAutoConfiguration {
 
+    /** 用于表示未配置节点地址的共享空数组。 */
     public static final String[] EMPTY = {};
 
     private final List<RedissonAutoConfigurationCustomizer> redissonAutoConfigurationCustomizers;

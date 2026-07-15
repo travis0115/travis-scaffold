@@ -39,16 +39,28 @@ public enum SysMessageTemplateParamType {
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    /** 金额参数格式，最多保留两位小数。 */
     private static final String AMOUNT_PATTERN = "^-?\\d+(\\.\\d{1,2})?$";
+
+    /** 邮箱参数格式。 */
     private static final String EMAIL_PATTERN = "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$";
+
+    /** 中国大陆手机号参数格式。 */
     private static final String MOBILE_PATTERN = "^1[3-9]\\d{9}$";
+
+    /** 普通数字参数格式。 */
     private static final String NUMBER_PATTERN = "^-?\\d+(\\.\\d+)?$";
+
+    /** HTTP 或 HTTPS 地址参数格式。 */
     private static final String URL_PATTERN = "^https?://\\S+$";
+
     private static final Set<String> VALUES =
             Arrays.stream(values())
                     .map(SysMessageTemplateParamType::getValue)
                     .collect(Collectors.toSet());
 
+    /** 参数类型值。 */
     private final String value;
 
     public static boolean contains(String value) {

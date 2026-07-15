@@ -16,6 +16,7 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 public interface SysMessageApi {
 
+    /** 向指定后台用户发布站内消息。 */
     void publishToUsers(
             @NotBlank(message = "消息标题不能为空") @Size(max = 255, message = "消息标题长度不能超过255个字符")
                     String title,
@@ -23,6 +24,7 @@ public interface SysMessageApi {
                     String content,
             @NotEmpty(message = "非全部接收时必须选择接收对象") Collection<Long> userIds);
 
+    /** 向指定后台用户发布带业务来源的站内消息。 */
     void publishToUsers(
             @NotBlank(message = "消息标题不能为空") @Size(max = 255, message = "消息标题长度不能超过255个字符")
                     String title,
@@ -32,6 +34,7 @@ public interface SysMessageApi {
             @EnumValue(value = SysMessageSourceType.class, message = "来源类型错误") String sourceType,
             String sourceId);
 
+    /** 向指定登录体系的用户发布带业务来源的站内消息。 */
     void publishToUsers(
             @NotBlank(message = "接收端不能为空")
                     @EnumValue(value = SysMessageReceiverType.class, message = "接收端错误")
@@ -44,9 +47,11 @@ public interface SysMessageApi {
             @EnumValue(value = SysMessageSourceType.class, message = "来源类型错误") String sourceType,
             String sourceId);
 
+    /** 按业务来源发布或更新一条消息。 */
     void publishSourceMessage(
             @NotNull(message = "来源消息发布请求不能为空") @Valid SysSourceMessagePublishReq req);
 
+    /** 撤回指定业务来源的消息。 */
     void revokeSourceMessage(
             @NotBlank(message = "来源类型不能为空")
                     @EnumValue(value = SysMessageSourceType.class, message = "来源类型错误")
@@ -57,6 +62,7 @@ public interface SysMessageApi {
                     @EnumValue(value = SysMessageReceiverType.class, message = "接收端错误")
                     String receiverType);
 
+    /** 删除指定业务来源的消息。 */
     void deleteSourceMessage(
             @NotBlank(message = "来源类型不能为空")
                     @EnumValue(value = SysMessageSourceType.class, message = "来源类型错误")

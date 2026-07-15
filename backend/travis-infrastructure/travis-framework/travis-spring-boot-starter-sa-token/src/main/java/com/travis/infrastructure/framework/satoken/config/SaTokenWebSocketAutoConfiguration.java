@@ -3,24 +3,23 @@ package com.travis.infrastructure.framework.satoken.config;
 import cn.dev33.satoken.dao.SaTokenDao;
 import cn.hutool.core.util.StrUtil;
 import com.travis.infrastructure.framework.satoken.config.properties.SaTokenProperties;
-import com.travis.infrastructure.framework.satoken.core.websocket.ticket.DefaultSaTokenWebSocketTicketStore;
 import com.travis.infrastructure.framework.satoken.core.websocket.SaTokenWebSocketAuthService;
 import com.travis.infrastructure.framework.satoken.core.websocket.SaTokenWebSocketSubjectValidator;
+import com.travis.infrastructure.framework.satoken.core.websocket.ticket.DefaultSaTokenWebSocketTicketStore;
 import com.travis.infrastructure.framework.satoken.core.websocket.ticket.SaTokenWebSocketTicketStore;
 import com.travis.infrastructure.framework.websocket.config.WebSocketAutoConfiguration;
 import com.travis.infrastructure.framework.websocket.core.auth.WebSocketAuthService;
 import com.travis.infrastructure.framework.websocket.core.endpoint.WebSocketEndpoint;
 import com.travis.infrastructure.framework.websocket.core.endpoint.WebSocketEndpointProvider;
 import com.travis.infrastructure.framework.websocket.core.session.WebSocketNamespace;
+import java.util.List;
+import java.util.Map;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
-
-import java.util.List;
-import java.util.Map;
 
 /** Sa-Token 对 WebSocket starter 的认证适配。 */
 @AutoConfiguration(after = {SaTokenAutoConfiguration.class, WebSocketAutoConfiguration.class})

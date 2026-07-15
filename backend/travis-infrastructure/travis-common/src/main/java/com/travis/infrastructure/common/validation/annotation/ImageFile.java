@@ -5,6 +5,7 @@ import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 import java.lang.annotation.*;
 
+/** 校验上传文件是否为受支持的图片。 */
 @Target({ElementType.PARAMETER, ElementType.FIELD, ElementType.TYPE_USE})
 @Retention(RetentionPolicy.RUNTIME)
 @Constraint(validatedBy = ImageFileValidator.class)

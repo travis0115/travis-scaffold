@@ -17,15 +17,34 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SysDictResp {
+    /** 字典 ID。 */
     private Long id;
+
+    /** 字典名称。 */
     private String dictName;
+
+    /** 字典编码。 */
     private String dictCode;
+
+    /** 字典状态。 */
     private Integer status;
+
+    /** 备注。 */
     private String remark;
+
+    /** 排序号。 */
     private Integer sort;
+
+    /** 创建时间。 */
     private LocalDateTime createTime;
+
+    /** 创建人 ID。 */
     private Long createBy;
+
+    /** 更新时间。 */
     private LocalDateTime updateTime;
+
+    /** 更新人 ID。 */
     private Long updateBy;
 
     /** 子节点（字典数据项列表），仅用于树形接口返回 */

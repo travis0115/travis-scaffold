@@ -30,6 +30,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -85,6 +86,7 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
     }
 
     @Override
+    @Cacheable(key = "'detail:'+#id")
     public SysVersionResp getDetailByIdOrThrow(Long id) {
         return toResp(getByIdOrThrow(id));
     }

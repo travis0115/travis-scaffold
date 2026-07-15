@@ -11,6 +11,7 @@ public class TransactionalApplicationEventPublisher {
     private final ApplicationEventPublisher eventPublisher;
     private final TransactionTemplate transactionTemplate;
 
+    /** 在事务提交后发布事件；无事务时立即发布。 */
     public void publishEvent(Object event) {
         transactionTemplate.executeWithoutResult(status -> eventPublisher.publishEvent(event));
     }

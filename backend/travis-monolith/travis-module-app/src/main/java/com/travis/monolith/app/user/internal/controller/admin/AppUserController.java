@@ -25,12 +25,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class AppUserController {
     private final AppUserService userService;
 
+    /** 分页查询客户端用户。 */
     @GetMapping("/page")
     @SaCheckPermission(value = SystemPermission.USER_QUERY, type = LoginType.ADMIN)
     public ApiResponse<PageResp<AppUserOptionResp>> page(@Valid AppUserPageReq req) {
         return ApiResponse.success(userService.page(req));
     }
 
+    /** 根据用户 ID 集合查询选择项。 */
     @GetMapping("/options/by-ids")
     @SaCheckPermission(value = SystemPermission.USER_QUERY, type = LoginType.ADMIN)
     public ApiResponse<List<AppUserOptionResp>> listOptionsByIds(@RequestParam List<Long> ids) {

@@ -16,7 +16,9 @@ public enum MenuType {
     /** 按钮 */
     BUTTON(2, "按钮");
 
+    /** 菜单类型值。 */
     private final Integer value;
 
+    /** 菜单类型展示名称。 */
     private final String label;
 }

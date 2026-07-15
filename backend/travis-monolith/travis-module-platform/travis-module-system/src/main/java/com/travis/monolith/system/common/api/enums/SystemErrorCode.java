@@ -56,8 +56,10 @@ public enum SystemErrorCode implements ErrorCode {
     CONFIG_KEY_EXISTS("SYS_1101", "配置键已存在"),
     ;
 
+    /** 错误码。 */
     private final String code;
 
+    /** 错误消息模板。 */
     private final String msg;
 
     @Override

@@ -21,16 +21,20 @@ import org.quartz.impl.calendar.HolidayCalendar;
 import org.quartz.impl.calendar.WeeklyCalendar;
 import org.springframework.stereotype.Component;
 
+/** 负责将业务任务配置同步到 Quartz 调度器。 */
 @Component
 public class QuartzJobManager {
 
+    /** 业务任务在 Quartz 中使用的统一分组。 */
     private static final String GROUP = "ops-job";
+
     private final Scheduler scheduler;
 
     public QuartzJobManager(Scheduler scheduler) {
         this.scheduler = scheduler;
     }
 
+    /** 新增或覆盖注册任务的 Quartz 调度配置。 */
     public void schedule(OpsJob job) {
         try {
             delete(job.getId());
@@ -46,6 +50,7 @@ public class QuartzJobManager {
         }
     }
 
+    /** 删除任务及其关联日历。 */
     public void delete(Long jobId) {
         try {
             scheduler.deleteJob(jobKey(jobId));
@@ -58,6 +63,7 @@ public class QuartzJobManager {
         }
     }
 
+    /** 暂停任务调度。 */
     public void pause(Long jobId) {
         try {
             scheduler.pauseJob(jobKey(jobId));
@@ -66,6 +72,7 @@ public class QuartzJobManager {
         }
     }
 
+    /** 恢复任务调度。 */
     public void resume(Long jobId) {
         try {
             scheduler.resumeJob(jobKey(jobId));
@@ -74,6 +81,7 @@ public class QuartzJobManager {
         }
     }
 
+    /** 使用指定参数立即触发一次任务；参数为空时使用任务默认参数。 */
     public void runNow(OpsJob job, String params) {
         try {
             var data = new org.quartz.JobDataMap();
@@ -84,6 +92,7 @@ public class QuartzJobManager {
         }
     }
 
+    /** 查询任务下一次计划触发时间。 */
     public LocalDateTime nextFireTime(Long jobId) {
         try {
             Trigger trigger = scheduler.getTrigger(triggerKey(jobId));
@@ -95,6 +104,7 @@ public class QuartzJobManager {
         }
     }
 
+    /** 在不注册任务的情况下预览后续计划触发时间。 */
     public List<LocalDateTime> preview(OpsJob job, int count) {
         try {
             Calendar calendar = buildCalendar(job);

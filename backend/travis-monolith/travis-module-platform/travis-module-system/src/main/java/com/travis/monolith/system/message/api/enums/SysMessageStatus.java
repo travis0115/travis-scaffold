@@ -16,5 +16,6 @@ public enum SysMessageStatus {
     /** 已撤回。 */
     REVOKED(2);
 
+    /** 消息状态值。 */
     private final Integer value;
 }

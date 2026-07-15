@@ -10,5 +10,6 @@ public enum OpsJobStatus {
     DISABLED(0),
     ENABLED(1);
 
+    /** 状态值。 */
     private final Integer value;
 }

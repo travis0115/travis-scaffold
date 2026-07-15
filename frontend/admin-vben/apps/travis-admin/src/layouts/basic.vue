@@ -14,7 +14,7 @@ import {
 } from '@vben/layouts';
 import { preferences, usePreferences } from '@vben/preferences';
 import { useAccessStore, useUserStore } from '@vben/stores';
-import { formatDateTime, formatUtcDateTimesInText } from '@vben/utils';
+import { formatDateTime } from '@vben/utils';
 
 import { Tag } from 'antdv-next';
 
@@ -22,7 +22,6 @@ import {
   createWebSocketTicketApi,
   getInboxMessageDetail,
   getRecentMessages,
-  getUnreadMessageCount,
   markAllMessagesRead,
   markMessageRead,
 } from '#/api';
@@ -42,7 +41,6 @@ type MessageNotification = NotificationItem & {
 const notifications = ref<MessageNotification[]>([]);
 const notificationPopupRef = ref<{ close: () => void }>();
 const previewNotification = ref<MessageNotification>();
-const unreadCount = ref(0);
 const versionTagStyle = {
   backgroundColor: 'hsl(var(--primary) / 10%)',
   borderColor: 'hsl(var(--primary) / 20%)',
@@ -59,7 +57,7 @@ const authStore = useAuthStore();
 const accessStore = useAccessStore();
 const { destroyWatermark, updateWatermark } = useWatermark();
 const { isDark } = usePreferences();
-const showDot = computed(() => unreadCount.value > 0);
+const showDot = computed(() => notifications.value.length > 0);
 const [PreviewModal, previewModalApi] = useVbenModal({
   closeOnClickModal: true,
   footer: false,
@@ -95,15 +93,6 @@ const avatar = computed(() => {
     : preferences.app.defaultAvatar;
 });
 
-function formatNotificationMessage(content?: string) {
-  return formatUtcDateTimesInText(
-    (content || '')
-      .replaceAll('&nbsp;', ' ')
-      .replaceAll(/<[^>]*>/g, ' ')
-      .trim(),
-  );
-}
-
 function formatVersion(value?: null | string) {
   if (!value) return '-';
   return value.toLowerCase().startsWith('v') ? value : `v${value}`;
@@ -122,6 +111,17 @@ function refreshNotifications() {
   void loadNotifications();
 }
 
+function handleMessageRead(event: Event) {
+  const { messageId } = (event as CustomEvent<{ messageId: number }>).detail;
+  notifications.value = notifications.value.filter(
+    (item) => item.messageId !== messageId,
+  );
+}
+
+function handleAllMessagesRead() {
+  notifications.value = [];
+}
+
 onMounted(async () => {
   window.addEventListener(
     'vben:clear-preferences-and-logout',
@@ -132,6 +132,8 @@ onMounted(async () => {
     closeNotificationSocket,
   );
   window.addEventListener('travis:message-inbox-changed', refreshNotifications);
+  window.addEventListener('travis:message-read', handleMessageRead);
+  window.addEventListener('travis:message-all-read', handleAllMessagesRead);
   await loadNotifications();
   void connectNotificationSocket();
 });
@@ -149,31 +151,27 @@ onUnmounted(() => {
     'travis:message-inbox-changed',
     refreshNotifications,
   );
+  window.removeEventListener('travis:message-read', handleMessageRead);
+  window.removeEventListener('travis:message-all-read', handleAllMessagesRead);
   closeNotificationSocket();
 });
 
 async function loadNotifications() {
   try {
-    const [messages, unread] = await Promise.all([
-      getRecentMessages(),
-      getUnreadMessageCount(),
-    ]);
+    const messages = await getRecentMessages();
     notifications.value = messages.map((item) => ({
       id: item.id,
       avatar: preferences.app.defaultAvatar,
-      content: item.content,
       date: formatDateTime(item.publishTime || item.createTime),
       isRead: false,
       link: '/message',
-      message: formatNotificationMessage(item.content),
+      message: '',
       messageId: item.messageId,
       messageType: item.messageType,
       title: item.title,
     }));
-    unreadCount.value = unread.count;
   } catch {
     notifications.value = [];
-    unreadCount.value = 0;
   }
 }
 
@@ -241,7 +239,6 @@ function handleNotificationSocketMessage(event: MessageEvent) {
       ].includes(message?.content?.event)
     ) {
       window.dispatchEvent(new CustomEvent('travis:message-inbox-changed'));
-      void loadNotifications();
     }
   } catch {
     // 忽略非 JSON WebSocket 消息。
@@ -302,12 +299,19 @@ function closeNotificationSocket() {
 
 async function markRead(id: number | string) {
   await markMessageRead(id);
-  await loadNotifications();
+  const notification = notifications.value.find((item) => item.id === id);
+  if (notification) {
+    window.dispatchEvent(
+      new CustomEvent('travis:message-read', {
+        detail: { messageId: notification.messageId },
+      }),
+    );
+  }
 }
 
 async function handleMakeAll() {
   await markAllMessagesRead();
-  await loadNotifications();
+  window.dispatchEvent(new CustomEvent('travis:message-all-read'));
 }
 
 const viewAll = () => {
@@ -316,15 +320,13 @@ const viewAll = () => {
 
 const handleClick = async (item: NotificationItem) => {
   notificationPopupRef.value?.close();
-  if (item.id && !item.isRead) {
-    try {
-      await markRead(item.id);
-    } catch {
-      // 通知可能已被撤回，仍允许用户进入消息列表。
-    }
-  }
   const notification = item as MessageNotification;
   const detail = await getInboxMessageDetail(notification.messageId);
+  window.dispatchEvent(
+    new CustomEvent('travis:message-read', {
+      detail: { messageId: notification.messageId },
+    }),
+  );
   previewNotification.value = {
     ...notification,
     ...detail,

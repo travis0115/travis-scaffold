@@ -3,6 +3,7 @@ package com.travis.monolith.ops.job.api;
 import com.travis.infrastructure.common.web.exception.ErrorCode;
 import lombok.AllArgsConstructor;
 
+/** 任务调度模块错误码。 */
 @AllArgsConstructor
 public enum OpsJobErrorCode implements ErrorCode {
     JOB_NOT_FOUND("OPS_JOB_001", "调度任务不存在"),
@@ -13,7 +14,10 @@ public enum OpsJobErrorCode implements ErrorCode {
     LOG_NOT_FOUND("OPS_JOB_006", "任务执行日志不存在"),
     USER_OUT_OF_SCOPE("OPS_JOB_007", "负责人或告警接收人不在当前用户可选范围内");
 
+    /** 错误码。 */
     private final String code;
+
+    /** 错误消息模板。 */
     private final String msg;
 
     @Override

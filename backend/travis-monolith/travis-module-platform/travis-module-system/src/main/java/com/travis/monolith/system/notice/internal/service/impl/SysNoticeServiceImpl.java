@@ -26,6 +26,7 @@ import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -91,6 +92,7 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
     }
 
     @Override
+    @Cacheable(key = "'detail:'+#id")
     public SysNoticeResp getOrThrow(Long id) {
         return toResp(getByIdOrThrow(id));
     }

@@ -5,6 +5,7 @@ import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 import java.lang.annotation.*;
 
+/** 校验值是否属于指定枚举支持的取值范围。 */
 @Target({
     ElementType.METHOD,
     ElementType.FIELD,
@@ -24,5 +25,6 @@ public @interface EnumValue {
 
     Class<? extends Payload>[] payload() default {};
 
+    /** 用于确定合法取值范围的枚举类型。 */
     Class<? extends Enum<?>> value();
 }

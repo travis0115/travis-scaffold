@@ -14,5 +14,6 @@ public enum SysMessageReceiverType {
     /** 客户端用户。 */
     APP(LoginType.APP);
 
+    /** 接收端登录体系值。 */
     private final String value;
 }

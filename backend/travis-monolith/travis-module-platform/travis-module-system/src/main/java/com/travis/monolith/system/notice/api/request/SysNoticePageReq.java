@@ -8,16 +8,22 @@ import java.time.LocalDate;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+/** 公告分页查询参数。 */
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class SysNoticePageReq extends PageRequest {
 
+    /** 公告标题，支持模糊匹配。 */
     @Size(max = 255, message = "公告标题长度不能超过255个字符")
     private String title;
 
+    /** 发布状态。 */
     @EnumValue(value = PublishStatus.class, message = "状态值错误")
     private Integer status;
 
+    /** 发布日期范围起点。 */
     private LocalDate publishStartDate;
+
+    /** 发布日期范围终点。 */
     private LocalDate publishEndDate;
 }

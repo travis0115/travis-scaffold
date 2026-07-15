@@ -30,11 +30,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -42,10 +41,10 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 /** 消息接收记录服务实现。 */
 @Service
-@CacheConfig(cacheNames = "system:message:inbox")
 public class SysMessageReceiverServiceImpl
         extends ServiceImplX<SysMessageReceiverMapper, SysMessageReceiver>
         implements SysMessageReceiverService {
+    /** 批量更新接收记录状态时的单批数量。 */
     private static final int STATE_BATCH_SIZE = 500;
 
     private final SysMessageReceiverConverter converter;
@@ -53,7 +52,7 @@ public class SysMessageReceiverServiceImpl
     private final SysRoleApi roleApi;
     private final WebSocketMessageSender webSocketMessageSender;
     private final SysFileApi fileApi;
-    private final Map<String, SysMessageSourceContentProvider> sourceContentProviders;
+    private final ObjectProvider<SysMessageSourceContentProvider> sourceContentProviders;
 
     public SysMessageReceiverServiceImpl(
             SysMessageReceiverConverter converter,
@@ -61,18 +60,13 @@ public class SysMessageReceiverServiceImpl
             SysRoleApi roleApi,
             WebSocketMessageSender webSocketMessageSender,
             SysFileApi fileApi,
-            List<SysMessageSourceContentProvider> sourceContentProviders) {
+            ObjectProvider<SysMessageSourceContentProvider> sourceContentProviders) {
         this.converter = converter;
         this.userApi = userApi;
         this.roleApi = roleApi;
         this.webSocketMessageSender = webSocketMessageSender;
         this.fileApi = fileApi;
-        this.sourceContentProviders =
-                sourceContentProviders.stream()
-                        .collect(
-                                Collectors.toMap(
-                                        SysMessageSourceContentProvider::getSourceType,
-                                        Function.identity()));
+        this.sourceContentProviders = sourceContentProviders;
     }
 
     @Override
@@ -143,7 +137,14 @@ public class SysMessageReceiverServiceImpl
         ensureVisible(receiverType, userId, id);
         var message = baseMapper.selectMessageById(id);
         var resp = converter.toResp(message, getState(receiverType, userId, id));
-        var provider = sourceContentProviders.get(message.getSourceType());
+        var provider =
+                sourceContentProviders.stream()
+                        .filter(
+                                candidate ->
+                                        Objects.equals(
+                                                candidate.getSourceType(), message.getSourceType()))
+                        .findFirst()
+                        .orElse(null);
         if (provider == null) {
             resp.setContent(fileApi.resolveManagedImageSources(message.getContent()));
             return resp;
@@ -157,13 +158,6 @@ public class SysMessageReceiverServiceImpl
     }
 
     @Override
-    @Cacheable(key = "'unread:'+#userId")
-    public Long countUnread(Long userId) {
-        return countUnread(LoginType.ADMIN, userId);
-    }
-
-    @Override
-    @Cacheable(key = "'unread:'+#receiverType+':' + #userId")
     public Long countUnread(String receiverType, Long userId) {
         var context = audienceContext(receiverType, userId);
         return baseMapper.countUnreadInbox(
@@ -172,14 +166,12 @@ public class SysMessageReceiverServiceImpl
 
     @Override
     @Transactional
-    @CacheEvict(key = "'unread:'+#userId")
     public void markRead(Long userId, Long id) {
         markRead(LoginType.ADMIN, userId, id);
     }
 
     @Override
     @Transactional
-    @CacheEvict(key = "'unread:'+#receiverType+':' + #userId")
     public void markRead(String receiverType, Long userId, Long id) {
         ensureVisible(receiverType, userId, id);
         upsertState(receiverType, userId, id, SysMessageReadStatus.READ.getValue());
@@ -187,14 +179,12 @@ public class SysMessageReceiverServiceImpl
 
     @Override
     @Transactional
-    @CacheEvict(key = "'unread:'+#userId")
     public void markAllRead(Long userId) {
         markAllRead(LoginType.ADMIN, userId);
     }
 
     @Override
     @Transactional
-    @CacheEvict(key = "'unread:'+#receiverType+':' + #userId")
     public void markAllRead(String receiverType, Long userId) {
         var context = audienceContext(receiverType, userId);
         var messageIds =
@@ -209,14 +199,12 @@ public class SysMessageReceiverServiceImpl
 
     @Override
     @Transactional
-    @CacheEvict(key = "'unread:'+#userId")
     public void delete(Long userId, Long id) {
         delete(LoginType.ADMIN, userId, id);
     }
 
     @Override
     @Transactional
-    @CacheEvict(key = "'unread:'+#receiverType+':' + #userId")
     public void delete(String receiverType, Long userId, Long id) {
         ensureVisible(receiverType, userId, id);
         upsertState(receiverType, userId, id, SysMessageReadStatus.DELETED.getValue());
@@ -225,14 +213,12 @@ public class SysMessageReceiverServiceImpl
 
     @Override
     @Transactional
-    @CacheEvict(key = "'unread:'+#userId")
     public void clear(Long userId) {
         clear(LoginType.ADMIN, userId);
     }
 
     @Override
     @Transactional
-    @CacheEvict(key = "'unread:'+#receiverType+':' + #userId")
     public void clear(String receiverType, Long userId) {
         var context = audienceContext(receiverType, userId);
         var messageIds =
@@ -244,14 +230,12 @@ public class SysMessageReceiverServiceImpl
 
     @Override
     @Transactional
-    @CacheEvict(allEntries = true)
     public void deleteByMessageId(Long messageId) {
         baseMapper.deleteByMessageId(messageId);
     }
 
     @Override
     @Transactional
-    @CacheEvict(allEntries = true)
     public void resetReadStatus(Long messageId) {
         Integer unreadStatus = SysMessageReadStatus.UNREAD.getValue();
         update(

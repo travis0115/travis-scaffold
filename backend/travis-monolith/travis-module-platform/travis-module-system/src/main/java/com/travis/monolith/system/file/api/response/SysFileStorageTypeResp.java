@@ -9,6 +9,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SysFileStorageTypeResp {
+    /** 存储类型展示名称。 */
     private String label;
+
+    /** 存储类型值。 */
     private String value;
 }

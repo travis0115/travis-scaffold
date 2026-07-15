@@ -8,8 +8,10 @@ import lombok.Data;
 @Data
 public class SysDeptUpdateReq {
 
+    /** 父部门 ID。 */
     private Long parentId;
 
+    /** 部门名称。 */
     @NotBlank(message = "部门名称不能为空")
     @Size(min = 2, max = 20, message = "部门名称长度为2-20个字符")
     private String deptName;

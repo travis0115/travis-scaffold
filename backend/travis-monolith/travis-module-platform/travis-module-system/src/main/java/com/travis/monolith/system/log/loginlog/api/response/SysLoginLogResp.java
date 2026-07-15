@@ -11,6 +11,7 @@ import lombok.Data;
 @Data
 public class SysLoginLogResp {
 
+    /** 登录日志 ID。 */
     private Long id;
 
     /** 登录用户名 */

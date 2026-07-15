@@ -24,6 +24,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+/** 文件存储配置管理接口。 */
 @RestController
 @RequestMapping("/system/file/storage")
 @RequiredArgsConstructor
@@ -32,6 +33,7 @@ public class SysFileStorageConfigController {
     private final SysFileStorageConfigService storageConfigService;
     private final List<FileStorageStrategy> storageStrategies;
 
+    /** 分页查询存储配置。 */
     @GetMapping("/page")
     @SaCheckPermission(value = SystemPermission.FILE_QUERY, type = LoginType.ADMIN)
     public ApiResponse<PageResp<SysFileStorageConfigResp>> page(
@@ -39,12 +41,14 @@ public class SysFileStorageConfigController {
         return ApiResponse.success(storageConfigService.page(req));
     }
 
+    /** 查询全部存储配置。 */
     @GetMapping("/list")
     @SaCheckPermission(value = SystemPermission.FILE_QUERY, type = LoginType.ADMIN)
     public ApiResponse<List<SysFileStorageConfigResp>> listAll() {
         return ApiResponse.success(storageConfigService.listAll());
     }
 
+    /** 查询当前已注册的存储类型。 */
     @GetMapping("/types")
     @SaCheckPermission(value = SystemPermission.FILE_QUERY, type = LoginType.ADMIN)
     public ApiResponse<List<SysFileStorageTypeResp>> listStorageTypes() {
@@ -56,12 +60,14 @@ public class SysFileStorageConfigController {
                         .toList());
     }
 
+    /** 查询存储配置详情。 */
     @GetMapping("/{id:\\d+}")
     @SaCheckPermission(value = SystemPermission.FILE_QUERY, type = LoginType.ADMIN)
     public ApiResponse<SysFileStorageConfigResp> get(@PathVariable Long id) {
         return ApiResponse.success(storageConfigService.getOrThrow(id));
     }
 
+    /** 创建存储配置。 */
     @PostMapping
     @SaCheckPermission(value = SystemPermission.FILE_UPLOAD, type = LoginType.ADMIN)
     @NoRepeatSubmit
@@ -71,6 +77,7 @@ public class SysFileStorageConfigController {
         return ApiResponse.success();
     }
 
+    /** 更新存储配置。 */
     @PutMapping("/{id:\\d+}")
     @SaCheckPermission(value = SystemPermission.FILE_UPLOAD, type = LoginType.ADMIN)
     @NoRepeatSubmit
@@ -81,6 +88,7 @@ public class SysFileStorageConfigController {
         return ApiResponse.success();
     }
 
+    /** 更新存储配置状态。 */
     @PutMapping("/{id:\\d+}/status")
     @SaCheckPermission(value = SystemPermission.FILE_UPLOAD, type = LoginType.ADMIN)
     @NoRepeatSubmit
@@ -92,6 +100,7 @@ public class SysFileStorageConfigController {
         return ApiResponse.success();
     }
 
+    /** 将指定配置设为默认存储配置。 */
     @PutMapping("/{id:\\d+}/default")
     @SaCheckPermission(value = SystemPermission.FILE_UPLOAD, type = LoginType.ADMIN)
     @NoRepeatSubmit
@@ -101,6 +110,7 @@ public class SysFileStorageConfigController {
         return ApiResponse.success();
     }
 
+    /** 删除存储配置。 */
     @DeleteMapping("/{id:\\d+}")
     @SaCheckPermission(value = SystemPermission.FILE_DELETE, type = LoginType.ADMIN)
     @NoRepeatSubmit

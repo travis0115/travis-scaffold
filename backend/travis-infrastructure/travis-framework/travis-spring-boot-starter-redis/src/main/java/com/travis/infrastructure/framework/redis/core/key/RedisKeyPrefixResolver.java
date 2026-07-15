@@ -12,6 +12,7 @@ public class RedisKeyPrefixResolver {
         this.keyPrefix = normalize(properties.getKeyPrefix());
     }
 
+    /** 为原始 Redis 键添加项目级前缀。 */
     public String apply(String key) {
         if (!StringUtils.hasText(keyPrefix) || !StringUtils.hasText(key)) {
             return key;
@@ -22,6 +23,7 @@ public class RedisKeyPrefixResolver {
         return keyPrefix + key;
     }
 
+    /** 从 Redis 键中移除项目级前缀。 */
     public String remove(String key) {
         if (!StringUtils.hasText(keyPrefix) || key == null || !key.startsWith(keyPrefix)) {
             return key;
@@ -29,6 +31,7 @@ public class RedisKeyPrefixResolver {
         return key.substring(keyPrefix.length());
     }
 
+    /** 获取规范化后的项目级 Redis 键前缀。 */
     public String getKeyPrefix() {
         return keyPrefix;
     }

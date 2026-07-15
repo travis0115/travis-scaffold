@@ -5,7 +5,10 @@ import java.util.Map;
 /** WebSocket 连接命名空间。 */
 public final class WebSocketNamespace {
 
+    /** WebSocket Session 中保存命名空间的属性名。 */
     public static final String ATTR_NAMESPACE = "webSocketNamespace";
+
+    /** 未显式指定时使用的默认命名空间。 */
     public static final String DEFAULT_NAMESPACE = "default";
 
     private WebSocketNamespace() {}

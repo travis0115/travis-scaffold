@@ -39,6 +39,7 @@ public class AppUserServiceImpl extends ServiceImplX<AppUserMapper, AppUser>
                 .toList();
     }
 
+    /** 构造仅包含启用用户的基础查询条件。 */
     private LambdaQueryWrapperX<AppUser> baseOptionWrapper() {
         return new LambdaQueryWrapperX<AppUser>().eq(AppUser::getStatus, Status.ENABLED.getValue());
     }

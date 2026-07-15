@@ -13,7 +13,9 @@ public enum Status {
     /** 启用 */
     ENABLED(1, "启用");
 
+    /** 通用状态值。 */
     private final Integer value;
 
+    /** 状态展示名称。 */
     private final String label;
 }

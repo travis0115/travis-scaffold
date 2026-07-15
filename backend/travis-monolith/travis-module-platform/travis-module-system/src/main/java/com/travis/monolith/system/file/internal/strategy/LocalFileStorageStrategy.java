@@ -28,7 +28,9 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class LocalFileStorageStrategy implements FileStorageStrategy {
 
+    /** 本地文件按日期分目录存储时使用的路径格式。 */
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy/MM/dd");
+
     private final Environment environment;
     private final FileUploadProperties fileUploadProperties;
 

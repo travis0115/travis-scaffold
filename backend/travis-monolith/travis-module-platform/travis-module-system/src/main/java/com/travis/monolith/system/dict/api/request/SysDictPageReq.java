@@ -16,9 +16,11 @@ import lombok.EqualsAndHashCode;
 @Data
 public class SysDictPageReq extends PageRequest {
 
+    /** 字典名称，支持模糊匹配。 */
     @Size(max = 20, message = "字典名称长度不能超过20个字符")
     private String dictName;
 
+    /** 字典编码，支持模糊匹配。 */
     @Size(max = 100, message = "字典编码长度不能超过100个字符")
     private String dictCode;
 

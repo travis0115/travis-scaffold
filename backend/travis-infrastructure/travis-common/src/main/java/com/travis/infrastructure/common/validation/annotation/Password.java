@@ -5,6 +5,7 @@ import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 import java.lang.annotation.*;
 
+/** 校验密码是否符合系统复杂度要求。 */
 @Target({
     ElementType.METHOD,
     ElementType.FIELD,

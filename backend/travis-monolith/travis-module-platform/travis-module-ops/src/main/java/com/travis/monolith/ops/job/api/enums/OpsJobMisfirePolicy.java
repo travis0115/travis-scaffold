@@ -12,5 +12,6 @@ public enum OpsJobMisfirePolicy {
     FIRE_NOW(2),
     NEXT_TIME(3);
 
+    /** 策略值。 */
     private final Integer value;
 }

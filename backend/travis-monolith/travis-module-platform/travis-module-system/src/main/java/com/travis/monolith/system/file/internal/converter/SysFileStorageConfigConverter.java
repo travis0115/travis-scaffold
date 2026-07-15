@@ -9,17 +9,23 @@ import java.util.List;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
 
+/** 文件存储配置对象转换器。 */
 @Mapper(config = BaseMapperConfig.class)
 public interface SysFileStorageConfigConverter {
 
+    /** 将存储配置实体转换为响应。 */
     SysFileStorageConfigResp toResp(SysFileStorageConfig entity);
 
+    /** 批量将存储配置实体转换为响应。 */
     List<SysFileStorageConfigResp> toRespList(List<SysFileStorageConfig> entities);
 
+    /** 将创建参数转换为存储配置实体。 */
     SysFileStorageConfig toEntity(SysFileStorageConfigCreateReq req);
 
+    /** 将更新参数转换为存储配置实体。 */
     SysFileStorageConfig toEntity(SysFileStorageConfigUpdateReq req);
 
+    /** 将更新参数写入已有存储配置实体。 */
     SysFileStorageConfig update(
             SysFileStorageConfigUpdateReq req, @MappingTarget SysFileStorageConfig config);
 }

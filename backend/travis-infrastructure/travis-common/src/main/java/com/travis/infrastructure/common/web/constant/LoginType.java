@@ -1,10 +1,9 @@
 package com.travis.infrastructure.common.web.constant;
 
 import cn.hutool.core.util.StrUtil;
-import lombok.extern.slf4j.Slf4j;
-
 import java.util.Locale;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 
 /** 登录用户类型常量 */
 @Slf4j
@@ -16,6 +15,7 @@ public final class LoginType {
     /** 客户端 */
     public static final String APP = "app";
 
+    /** 当前系统支持的全部登录体系。 */
     private static final Set<String> SUPPORTED_LOGIN_TYPES = Set.of(ADMIN, APP);
 
     private LoginType() {}

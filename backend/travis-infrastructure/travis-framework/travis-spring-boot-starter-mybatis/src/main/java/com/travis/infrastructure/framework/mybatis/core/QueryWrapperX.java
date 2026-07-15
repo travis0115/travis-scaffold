@@ -15,6 +15,7 @@ import org.springframework.util.StringUtils;
  */
 public class QueryWrapperX<T> extends QueryWrapper<T> {
 
+    /** 当字符串非空时添加模糊匹配条件。 */
     public QueryWrapperX<T> likeIfPresent(String column, String val) {
         if (StringUtils.hasText(val)) {
             return (QueryWrapperX<T>) super.like(column, val);
@@ -22,6 +23,7 @@ public class QueryWrapperX<T> extends QueryWrapper<T> {
         return this;
     }
 
+    /** 当集合非空时添加 IN 条件。 */
     public QueryWrapperX<T> inIfPresent(String column, Collection<?> values) {
         if (!CollectionUtils.isEmpty(values)) {
             return (QueryWrapperX<T>) super.in(column, values);
@@ -29,6 +31,7 @@ public class QueryWrapperX<T> extends QueryWrapper<T> {
         return this;
     }
 
+    /** 当数组非空时添加 IN 条件。 */
     public QueryWrapperX<T> inIfPresent(String column, Object... values) {
         if (!ArrayUtils.isEmpty(values)) {
             return (QueryWrapperX<T>) super.in(column, values);
@@ -36,6 +39,7 @@ public class QueryWrapperX<T> extends QueryWrapper<T> {
         return this;
     }
 
+    /** 当值存在时添加等于条件。 */
     public QueryWrapperX<T> eqIfPresent(String column, Object val) {
         if (val != null) {
             return (QueryWrapperX<T>) super.eq(column, val);
@@ -43,6 +47,7 @@ public class QueryWrapperX<T> extends QueryWrapper<T> {
         return this;
     }
 
+    /** 当值存在时添加不等于条件。 */
     public QueryWrapperX<T> neIfPresent(String column, Object val) {
         if (val != null) {
             return (QueryWrapperX<T>) super.ne(column, val);
@@ -50,6 +55,7 @@ public class QueryWrapperX<T> extends QueryWrapper<T> {
         return this;
     }
 
+    /** 当值存在时添加大于条件。 */
     public QueryWrapperX<T> gtIfPresent(String column, Object val) {
         if (val != null) {
             return (QueryWrapperX<T>) super.gt(column, val);
@@ -57,6 +63,7 @@ public class QueryWrapperX<T> extends QueryWrapper<T> {
         return this;
     }
 
+    /** 当值存在时添加大于等于条件。 */
     public QueryWrapperX<T> geIfPresent(String column, Object val) {
         if (val != null) {
             return (QueryWrapperX<T>) super.ge(column, val);
@@ -64,6 +71,7 @@ public class QueryWrapperX<T> extends QueryWrapper<T> {
         return this;
     }
 
+    /** 当值存在时添加小于条件。 */
     public QueryWrapperX<T> ltIfPresent(String column, Object val) {
         if (val != null) {
             return (QueryWrapperX<T>) super.lt(column, val);
@@ -71,6 +79,7 @@ public class QueryWrapperX<T> extends QueryWrapper<T> {
         return this;
     }
 
+    /** 当值存在时添加小于等于条件。 */
     public QueryWrapperX<T> leIfPresent(String column, Object val) {
         if (val != null) {
             return (QueryWrapperX<T>) super.le(column, val);
@@ -78,6 +87,7 @@ public class QueryWrapperX<T> extends QueryWrapper<T> {
         return this;
     }
 
+    /** 两个边界都存在时添加 BETWEEN 条件，仅存在一个边界时退化为单边条件。 */
     public QueryWrapperX<T> betweenIfPresent(String column, Object val1, Object val2) {
         if (val1 != null && val2 != null) {
             return (QueryWrapperX<T>) super.between(column, val1, val2);
@@ -91,6 +101,7 @@ public class QueryWrapperX<T> extends QueryWrapper<T> {
         return this;
     }
 
+    /** 根据最多两个数组元素添加范围条件。 */
     public QueryWrapperX<T> betweenIfPresent(String column, Object[] values) {
         if (values != null && values.length != 0 && values[0] != null && values[1] != null) {
             return (QueryWrapperX<T>) super.between(column, values[0], values[1]);

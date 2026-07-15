@@ -1,5 +1,7 @@
 package com.travis.infrastructure.framework.web.core.filter;
 
+import static net.logstash.logback.argument.StructuredArguments.kv;
+
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONObject;
@@ -19,6 +21,10 @@ import com.travis.infrastructure.framework.web.core.util.UserAgentUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import net.logstash.logback.argument.StructuredArgument;
 import org.jspecify.annotations.NonNull;
@@ -35,13 +41,6 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.springframework.web.util.ContentCachingResponseWrapper;
-
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.Map;
-
-import static net.logstash.logback.argument.StructuredArguments.kv;
 
 /** 访问日志过滤器 */
 @Slf4j
@@ -99,8 +98,7 @@ public class AccessLogFilter extends OncePerRequestFilter {
             var userId = MDC.get(MdcKey.USER_ID);
             var clientIp = MDC.get(MdcKey.CLIENT_IP);
             var clientType =
-                    ClientType.from(request.getHeader(HttpHeader.CLIENT_TYPE))
-                            .getDisplayName();
+                    ClientType.from(request.getHeader(HttpHeader.CLIENT_TYPE)).getDisplayName();
             var userAgent = UserAgentUtil.getCurrentUserAgentInfo(request);
             var platfromType = userAgent.getOs();
             var browser = userAgent.getBrowser();

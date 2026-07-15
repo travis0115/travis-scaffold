@@ -12,6 +12,7 @@ public final class OpsJobParamValidator {
 
     private OpsJobParamValidator() {}
 
+    /** 校验任务参数是否为合法 JSON，并按配置的 JSON Schema 子集校验内容。 */
     public static void validate(String params, String schema) {
         JsonNode paramsNode = parseJson(params, "参数必须是合法 JSON");
         if (schema == null || schema.isBlank()) {

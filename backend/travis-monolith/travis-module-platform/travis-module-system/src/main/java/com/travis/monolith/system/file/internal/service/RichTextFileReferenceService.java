@@ -10,23 +10,31 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class RichTextFileReferenceService {
 
+    /** 匹配富文本中的图片标签。 */
     private static final Pattern IMG_TAG_PATTERN =
             Pattern.compile("<img\\b[^>]*>", Pattern.CASE_INSENSITIVE);
+
+    /** 匹配系统文件图片标签中的文件 ID 属性。 */
     private static final Pattern DATA_FILE_ID_PATTERN =
             Pattern.compile("\\sdata-file-id\\s*=\\s*([\"'])(\\d+)\\1", Pattern.CASE_INSENSITIVE);
+
+    /** 匹配图片标签中的 src 属性。 */
     private static final Pattern SRC_PATTERN =
             Pattern.compile("\\ssrc\\s*=\\s*([\"']).*?\\1", Pattern.CASE_INSENSITIVE);
 
     private final SysFileService fileService;
 
+    /** 移除系统文件图片的临时访问地址，仅保留文件 ID 引用。 */
     public String stripManagedImageSources(String html) {
         return replaceManagedImageTags(html, this::stripSource);
     }
 
+    /** 根据文件 ID 将系统文件图片补充为当前可访问地址。 */
     public String resolveManagedImageSources(String html) {
         return replaceManagedImageTags(html, this::resolveSource);
     }
 
+    /** 遍历包含系统文件 ID 的图片标签并执行替换。 */
     private String replaceManagedImageTags(String html, ImageTagReplacer replacer) {
         if (html == null || html.isBlank()) {
             return html;
@@ -44,6 +52,7 @@ public class RichTextFileReferenceService {
         return result.toString();
     }
 
+    /** 从图片标签中解析系统文件 ID。 */
     private Long parseFileId(String tag) {
         var matcher = DATA_FILE_ID_PATTERN.matcher(tag);
         if (!matcher.find()) {
@@ -52,10 +61,12 @@ public class RichTextFileReferenceService {
         return Long.valueOf(matcher.group(2));
     }
 
+    /** 移除图片标签中的 src 属性。 */
     private String stripSource(String tag, Long fileId) {
         return SRC_PATTERN.matcher(tag).replaceFirst("");
     }
 
+    /** 将图片标签中的 src 属性替换为文件当前访问地址。 */
     private String resolveSource(String tag, Long fileId) {
         var url = fileService.getFileUrlById(fileId);
         if (url == null || url.isBlank()) {

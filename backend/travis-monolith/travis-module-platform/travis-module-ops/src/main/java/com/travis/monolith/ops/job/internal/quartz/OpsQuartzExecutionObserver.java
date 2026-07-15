@@ -3,8 +3,8 @@ package com.travis.monolith.ops.job.internal.quartz;
 import com.travis.infrastructure.framework.quartz.core.QuartzDispatchJob;
 import com.travis.infrastructure.framework.quartz.core.QuartzJobExecutionObserver;
 import com.travis.monolith.ops.job.api.enums.OpsJobLogStatus;
-import com.travis.monolith.ops.job.internal.entity.OpsJobLog;
 import com.travis.monolith.ops.job.api.response.OpsJobDetailResp;
+import com.travis.monolith.ops.job.internal.entity.OpsJobLog;
 import com.travis.monolith.ops.job.internal.service.OpsJobLogService;
 import com.travis.monolith.ops.job.internal.service.OpsJobService;
 import com.travis.monolith.system.message.api.SysMessageApi;
@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.quartz.JobExecutionContext;
 import org.springframework.stereotype.Component;
 
+/** 记录业务任务执行过程，并在执行失败时发送站内告警。 */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -27,6 +28,8 @@ public class OpsQuartzExecutionObserver implements QuartzJobExecutionObserver {
     private final OpsJobService jobService;
     private final OpsJobLogService logService;
     private final SysMessageApi messageApi;
+
+    /** Quartz 触发实例 ID 与持久化执行日志 ID 的临时映射。 */
     private final Map<String, Long> executingLogs = new ConcurrentHashMap<>();
 
     @Override
@@ -71,6 +74,7 @@ public class OpsQuartzExecutionObserver implements QuartzJobExecutionObserver {
         finish(context, durationMillis, throwable);
     }
 
+    /** 根据执行结果完成日志记录，并在失败时触发告警。 */
     private void finish(JobExecutionContext context, long durationMillis, Throwable throwable) {
         Long logId = executingLogs.remove(context.getFireInstanceId());
         if (logId == null) {
@@ -94,6 +98,7 @@ public class OpsQuartzExecutionObserver implements QuartzJobExecutionObserver {
         }
     }
 
+    /** 向任务配置的告警接收人发布失败通知。 */
     private void publishFailure(Long jobId, Long logId, Throwable throwable) {
         OpsJobDetailResp job = jobService.find(jobId);
         if (job == null || job.getAlertUserIds() == null || job.getAlertUserIds().isEmpty()) {

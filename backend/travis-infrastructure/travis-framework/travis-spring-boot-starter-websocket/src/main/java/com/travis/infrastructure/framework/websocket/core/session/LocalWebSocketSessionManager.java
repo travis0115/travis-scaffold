@@ -7,6 +7,12 @@ import com.travis.infrastructure.framework.websocket.core.auth.WebSocketAuthCont
 import com.travis.infrastructure.framework.websocket.core.auth.WebSocketAuthService;
 import com.travis.infrastructure.framework.websocket.core.dispatch.RedisWebSocketMessageDispatcher;
 import com.travis.infrastructure.framework.websocket.core.message.WebSocketMessage;
+import java.io.IOException;
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ScheduledFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -15,13 +21,6 @@ import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
-
-import java.io.IOException;
-import java.time.Duration;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ScheduledFuture;
 
 /**
  * 本地 WebSocket Session 管理器，维护本实例上所有活跃连接。
@@ -47,6 +46,7 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
     /** 本地 Session 存储：principal → sessions */
     private final ConcurrentMap<String, Set<WebSocketSession>> localSessions =
             new ConcurrentHashMap<>();
+
     private final ConcurrentMap<String, String> principalNamespaces = new ConcurrentHashMap<>();
 
     private final WebSocketProperties properties;
@@ -147,7 +147,8 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
     }
 
     @Override
-    public void afterConnectionClosed(@NonNull WebSocketSession session, @NonNull CloseStatus status) {
+    public void afterConnectionClosed(
+            @NonNull WebSocketSession session, @NonNull CloseStatus status) {
         String principal = extractPrincipal(session);
         if (principal == null) {
             return;
@@ -169,7 +170,8 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
     }
 
     @Override
-    public void handleTransportError(@NonNull WebSocketSession session, @NonNull Throwable exception) {
+    public void handleTransportError(
+            @NonNull WebSocketSession session, @NonNull Throwable exception) {
         log.warn(
                 "[WebSocket] 传输错误: principal={}, sessionId={}",
                 extractPrincipal(session),
@@ -262,7 +264,8 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
                 .keySet()
                 .forEach(
                         principal -> {
-                            if (Objects.equals(normalizeNamespace(namespace), getNamespace(principal))) {
+                            if (Objects.equals(
+                                    normalizeNamespace(namespace), getNamespace(principal))) {
                                 principals.add(principal);
                             }
                         });
@@ -324,6 +327,7 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
         localSessions.forEach((principal, _) -> deliverToLocal(principal, message));
     }
 
+    /** 仅关闭当前应用实例中指定主体的全部连接。 */
     public void closeLocal(String principal) {
         Set<WebSocketSession> sessions = localSessions.get(principal);
         if (sessions == null || sessions.isEmpty()) {
@@ -332,6 +336,7 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
         closeSessions(principal, sessions);
     }
 
+    /** 仅关闭当前应用实例中指定主体且属性匹配的连接。 */
     public void closeLocal(String principal, String attributeName, Object attributeValue) {
         Set<WebSocketSession> sessions = localSessions.get(principal);
         if (sessions == null || sessions.isEmpty()) {
@@ -340,6 +345,7 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
         closeSessions(principal, filterSessions(sessions, attributeName, attributeValue));
     }
 
+    /** 立即关闭当前应用实例中指定主体的连接，不等待离线宽限期。 */
     public void closeLocalImmediately(String principal) {
         boolean hadPendingDisconnect = cancelPendingDisconnect(principal);
         Set<WebSocketSession> sessions = localSessions.remove(principal);
@@ -349,7 +355,8 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
         }
         if (dispatcher != null) {
             if (hadLocalSessions || hadPendingDisconnect) {
-                dispatcher.unregisterPrincipalInstance(getNamespace(principal), principal, instanceId);
+                dispatcher.unregisterPrincipalInstance(
+                        getNamespace(principal), principal, instanceId);
             }
             if (dispatcher.isPrincipalConnected(principal)) {
                 return;

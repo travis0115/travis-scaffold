@@ -24,18 +24,23 @@ public class SysOperationLogPageReq extends PageRequest {
     @Size(max = 50, message = "模块长度不能超过50个字符")
     private String module;
 
+    /** 业务类型。 */
     @Size(max = 50, message = "业务类型长度不能超过50个字符")
     private String businessType;
 
+    /** HTTP 请求方法。 */
     @Size(max = 10, message = "请求方式长度不能超过10个字符")
     private String requestMethod;
 
+    /** 请求地址，支持模糊匹配。 */
     @Size(max = 500, message = "请求地址长度不能超过500个字符")
     private String requestUrl;
 
+    /** 请求 ID。 */
     @Size(max = 100, message = "请求ID长度不能超过100个字符")
     private String requestId;
 
+    /** 操作 IP。 */
     @Size(max = 45, message = "IP地址长度不能超过45个字符")
     private String ip;
 

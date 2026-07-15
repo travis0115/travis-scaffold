@@ -12,13 +12,18 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/** 运维模块内部维护任务的 Quartz 配置。 */
 @Configuration(proxyBeanMethods = false)
 public class OpsQuartzInternalJobConfiguration {
 
+    /** 过期日志清理任务的固定标识。 */
     private static final JobKey JOB_KEY = JobKey.jobKey("log-cleanup", "ops-internal");
+
+    /** 过期日志清理触发器的固定标识。 */
     private static final TriggerKey TRIGGER_KEY =
             TriggerKey.triggerKey("log-cleanup-trigger", "ops-internal");
 
+    /** 应用启动后注册每天凌晨三点执行的过期日志清理任务。 */
     @Bean
     public ApplicationRunner opsJobLogCleanupScheduler(Scheduler scheduler) {
         return new ApplicationRunner() {

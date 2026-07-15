@@ -13,6 +13,7 @@ public class SysWebSocketTicketService {
 
     private final SaTokenWebSocketTicketStore ticketStore;
 
+    /** 为指定后台用户和登录令牌创建一次性 WebSocket 握手凭证。 */
     public SysWebSocketTicketResp createAdminTicket(Long userId, String token) {
         var ticket = ticketStore.create(LoginType.ADMIN, userId, token);
         return new SysWebSocketTicketResp(ticket, ticketStore.getTimeoutSeconds());

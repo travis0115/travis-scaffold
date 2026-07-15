@@ -141,10 +141,6 @@ const getInboxMessageDetail = (id: number | string) =>
   requestClient.get<SystemMessageApi.UserMessageDetail>(
     `/system/message/inbox/${id}`,
   );
-const getUnreadMessageCount = () =>
-  requestClient.get<{ count: number }>('/system/message/inbox/unread-count', {
-    errorMessageType: false,
-  });
 const markMessageRead = (id: number | string) =>
   requestClient.put(`/system/message/inbox/${id}/read`);
 const markAllMessagesRead = () =>
@@ -167,7 +163,6 @@ export {
   getMessageTemplateDetail,
   getMessageTemplatePage,
   getRecentMessages,
-  getUnreadMessageCount,
   markAllMessagesRead,
   markMessageRead,
   pushMessage,

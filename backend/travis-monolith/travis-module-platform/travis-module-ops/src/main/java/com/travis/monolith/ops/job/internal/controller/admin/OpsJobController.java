@@ -21,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+/** 定时任务管理接口。 */
 @RestController
 @RequestMapping("/ops/job")
 @RequiredArgsConstructor
@@ -31,18 +32,21 @@ public class OpsJobController {
     private final OpsJobService jobService;
     private final OpsJobLogService logService;
 
+    /** 分页查询定时任务。 */
     @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_QUERY, type = LoginType.ADMIN)
     @GetMapping("/page")
     public ApiResponse<PageResp<OpsJobPageResp>> page(OpsJobPageReq req) {
         return ApiResponse.success(jobService.page(req));
     }
 
+    /** 查询定时任务详情。 */
     @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_QUERY, type = LoginType.ADMIN)
     @GetMapping("/{id:\\d+}")
     public ApiResponse<OpsJobDetailResp> get(@PathVariable Long id) {
         return ApiResponse.success(jobService.getOrThrow(id));
     }
 
+    /** 创建定时任务。 */
     @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_UPDATE, type = LoginType.ADMIN)
     @OperationLog(action = "新增任务")
     @NoRepeatSubmit
@@ -52,6 +56,7 @@ public class OpsJobController {
         return ApiResponse.success();
     }
 
+    /** 更新定时任务。 */
     @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_UPDATE, type = LoginType.ADMIN)
     @OperationLog(action = "修改任务")
     @NoRepeatSubmit
@@ -62,6 +67,7 @@ public class OpsJobController {
         return ApiResponse.success();
     }
 
+    /** 删除定时任务。 */
     @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_UPDATE, type = LoginType.ADMIN)
     @OperationLog(action = "删除任务")
     @NoRepeatSubmit
@@ -71,6 +77,7 @@ public class OpsJobController {
         return ApiResponse.success();
     }
 
+    /** 启用或停用定时任务。 */
     @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_OPERATION, type = LoginType.ADMIN)
     @OperationLog(action = "启停任务")
     @NoRepeatSubmit
@@ -80,6 +87,7 @@ public class OpsJobController {
         return ApiResponse.success();
     }
 
+    /** 立即触发一次任务执行。 */
     @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_OPERATION, type = LoginType.ADMIN)
     @OperationLog(action = "立即执行任务")
     @NoRepeatSubmit
@@ -90,6 +98,7 @@ public class OpsJobController {
         return ApiResponse.success();
     }
 
+    /** 复制定时任务。 */
     @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_UPDATE, type = LoginType.ADMIN)
     @OperationLog(action = "复制任务")
     @NoRepeatSubmit
@@ -99,6 +108,7 @@ public class OpsJobController {
         return ApiResponse.success();
     }
 
+    /** 预览任务后续计划执行时间。 */
     @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_QUERY, type = LoginType.ADMIN)
     @PostMapping("/preview")
     public ApiResponse<List<LocalDateTime>> preview(
@@ -107,12 +117,14 @@ public class OpsJobController {
         return ApiResponse.success(jobService.preview(req, count));
     }
 
+    /** 查询已注册的任务处理器。 */
     @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_QUERY, type = LoginType.ADMIN)
     @GetMapping("/handlers")
     public ApiResponse<Collection<String>> handlers() {
         return ApiResponse.success(jobService.listHandlers());
     }
 
+    /** 查询任务负责人及告警接收人的用户选项。 */
     @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_QUERY, type = LoginType.ADMIN)
     @GetMapping("/user-options")
     public ApiResponse<List<SysUserOptionResp>> userOptions(
@@ -121,12 +133,14 @@ public class OpsJobController {
         return ApiResponse.success(jobService.listUserOptions(keyword, userIds));
     }
 
+    /** 导出全部定时任务。 */
     @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_QUERY, type = LoginType.ADMIN)
     @GetMapping("/export")
     public ApiResponse<List<OpsJobExportResp>> exportJobs() {
         return ApiResponse.success(jobService.exportJobs());
     }
 
+    /** 批量导入定时任务。 */
     @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_UPDATE, type = LoginType.ADMIN)
     @OperationLog(action = "导入任务")
     @NoRepeatSubmit
@@ -136,12 +150,14 @@ public class OpsJobController {
         return ApiResponse.success();
     }
 
+    /** 查询指定任务的执行统计。 */
     @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_QUERY, type = LoginType.ADMIN)
     @GetMapping("/{id}/stats")
     public ApiResponse<OpsJobStatsResp> stats(@PathVariable Long id) {
         return ApiResponse.success(logService.stats(id));
     }
 
+    /** 查询任务调度看板汇总数据。 */
     @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_QUERY, type = LoginType.ADMIN)
     @GetMapping("/dashboard")
     public ApiResponse<OpsJobDashboardResp> dashboard() {

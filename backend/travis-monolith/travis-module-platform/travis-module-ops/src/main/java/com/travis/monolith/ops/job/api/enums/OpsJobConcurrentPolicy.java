@@ -10,5 +10,6 @@ public enum OpsJobConcurrentPolicy {
     FORBID(0),
     ALLOW(1);
 
+    /** 策略值。 */
     private final Integer value;
 }

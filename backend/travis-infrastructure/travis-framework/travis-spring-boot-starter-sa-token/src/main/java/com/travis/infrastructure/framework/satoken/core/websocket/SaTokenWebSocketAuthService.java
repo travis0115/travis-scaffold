@@ -11,8 +11,13 @@ import java.util.Map;
 /** 基于 Sa-Token 的 WebSocket 认证适配实现。 */
 public class SaTokenWebSocketAuthService implements WebSocketAuthService {
 
+    /** WebSocket Session 中保存 Sa-Token 登录体系的属性名。 */
     public static final String ATTR_LOGIN_TYPE = "saTokenLoginType";
+
+    /** WebSocket Session 中保存 Sa-Token 登录 ID 的属性名。 */
     public static final String ATTR_LOGIN_ID = "saTokenLoginId";
+
+    /** WebSocket Session 中保存 Sa-Token 令牌的属性名。 */
     public static final String ATTR_TOKEN = "saTokenToken";
 
     private final SaTokenWebSocketTicketStore ticketStore;

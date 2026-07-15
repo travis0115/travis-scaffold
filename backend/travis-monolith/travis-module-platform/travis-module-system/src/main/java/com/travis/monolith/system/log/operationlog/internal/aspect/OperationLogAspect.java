@@ -36,6 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 public class OperationLogAspect {
 
+    /** 单个请求或响应日志内容允许记录的最大字符数。 */
     private static final int MAX_CONTENT_LENGTH = 16000;
 
     private final TransactionalApplicationEventPublisher eventPublisher;

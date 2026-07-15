@@ -6,6 +6,7 @@ import com.travis.infrastructure.common.web.constant.ExceptionHandlerOrder;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
+import java.util.stream.Collectors;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
@@ -18,8 +19,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import tools.jackson.databind.exc.InvalidFormatException;
-
-import java.util.stream.Collectors;
 
 /**
  * 参数校验异常处理器

@@ -14,7 +14,9 @@ import org.mapstruct.Mapper;
 @Mapper(config = BaseMapperConfig.class)
 public interface SysLoginLogConverter {
 
+    /** 将登录日志实体转换为响应。 */
     SysLoginLogResp toResp(SysLoginLog notice);
 
+    /** 批量将登录日志实体转换为响应。 */
     List<SysLoginLogResp> toRespList(List<SysLoginLog> notices);
 }

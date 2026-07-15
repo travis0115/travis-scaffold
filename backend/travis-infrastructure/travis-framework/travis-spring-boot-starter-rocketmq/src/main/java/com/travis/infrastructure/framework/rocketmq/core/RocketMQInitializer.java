@@ -40,7 +40,10 @@ import org.springframework.context.SmartLifecycle;
 @Slf4j
 public class RocketMQInitializer implements SmartLifecycle {
 
+    /** 自动创建主题时默认的读队列数量。 */
     private static final int DEFAULT_READ_QUEUE_NUM = 8;
+
+    /** 自动创建主题时默认的写队列数量。 */
     private static final int DEFAULT_WRITE_QUEUE_NUM = 8;
 
     private final ApplicationContext applicationContext;

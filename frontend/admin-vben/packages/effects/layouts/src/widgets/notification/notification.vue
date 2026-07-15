@@ -61,7 +61,6 @@ const handleViewAll = () => {
 const handleMakeAll = () => {
   emit('makeAll');
 };
-
 </script>
 <template>
   <VbenPopover v-model:open="open" content-class="relative right-2 w-90 p-0">
@@ -79,7 +78,9 @@ const handleMakeAll = () => {
 
     <div class="relative">
       <div class="flex items-center justify-between p-4 py-3">
-        <div class="text-foreground">{{ $t('ui.widgets.notifications') }}</div>
+        <div class="text-sm font-medium leading-5 text-foreground">
+          {{ $t('ui.widgets.notifications') }}
+        </div>
         <VbenIconButton
           :disabled="notifications.length <= 0"
           :tooltip="$t('ui.widgets.markAllAsRead')"
@@ -109,7 +110,9 @@ const handleMakeAll = () => {
                     class="aspect-square size-full object-cover"
                   />
                 </span>
-                <div class="min-w-0 flex-1 pr-10 flex flex-col gap-1 leading-none">
+                <div
+                  class="min-w-0 flex-1 pr-10 flex flex-col gap-1 leading-none"
+                >
                   <p class="font-semibold">{{ item.title }}</p>
                   <p class="my-1 line-clamp-2 text-xs text-muted-foreground">
                     {{ item.message }}
@@ -160,9 +163,7 @@ const handleMakeAll = () => {
 
       <div
         class="flex items-center border-t border-border px-4 py-3"
-        :class="[
-          showClear ? 'justify-between' : 'justify-end',
-        ]"
+        :class="[showClear ? 'justify-between' : 'justify-end']"
       >
         <VbenButton
           v-if="showClear"

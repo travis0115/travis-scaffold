@@ -17,11 +17,15 @@ import org.mapstruct.MappingTarget;
 @Mapper(config = BaseMapperConfig.class)
 public interface SysConfigConverter {
 
+    /** 将系统配置实体转换为响应。 */
     SysConfigResp toResp(SysConfig config);
 
+    /** 批量将系统配置实体转换为响应。 */
     List<SysConfigResp> toRespList(List<SysConfig> configs);
 
+    /** 将创建参数转换为系统配置实体。 */
     SysConfig toEntity(SysConfigCreateReq req);
 
+    /** 将更新参数写入已有系统配置实体。 */
     void update(SysConfigUpdateReq req, @MappingTarget SysConfig config);
 }

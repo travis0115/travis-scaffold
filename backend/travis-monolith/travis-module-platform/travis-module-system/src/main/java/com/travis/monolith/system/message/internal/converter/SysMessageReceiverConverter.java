@@ -10,6 +10,7 @@ import org.mapstruct.Mapping;
 /** 消息接收对象转换器。 */
 @Mapper(config = BaseMapperConfig.class)
 public interface SysMessageReceiverConverter {
+    /** 合并消息与接收记录，生成用户收件箱响应。 */
     @Mapping(target = "id", source = "message.id")
     @Mapping(target = "messageId", source = "message.id")
     @Mapping(

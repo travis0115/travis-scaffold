@@ -16,5 +16,6 @@ public enum SysMessageSourceType {
     /** 版本更新。 */
     VERSION("VERSION");
 
+    /** 业务来源类型值。 */
     private final String value;
 }

@@ -13,7 +13,9 @@ public enum IsDefault {
     /** 默认 */
     YES(1, "默认");
 
+    /** 是否默认的状态值。 */
     private final Integer value;
 
+    /** 状态展示名称。 */
     private final String label;
 }

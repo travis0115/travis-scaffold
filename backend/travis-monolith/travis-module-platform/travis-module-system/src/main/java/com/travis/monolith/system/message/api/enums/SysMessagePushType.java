@@ -16,5 +16,6 @@ public enum SysMessagePushType {
     /** 自动推送。 */
     AUTO(2);
 
+    /** 推送方式值。 */
     private final Integer value;
 }

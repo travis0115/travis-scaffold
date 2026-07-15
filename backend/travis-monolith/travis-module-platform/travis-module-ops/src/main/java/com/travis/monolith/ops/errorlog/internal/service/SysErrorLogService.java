@@ -5,6 +5,8 @@ import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.ops.errorlog.api.request.SysErrorLogPageReq;
 import com.travis.monolith.ops.errorlog.internal.entity.SysErrorLog;
 
+/** 系统异常日志查询服务。 */
 public interface SysErrorLogService extends IService<SysErrorLog> {
+    /** 分页查询系统异常日志。 */
     PageResp<SysErrorLog> page(SysErrorLogPageReq req);
 }

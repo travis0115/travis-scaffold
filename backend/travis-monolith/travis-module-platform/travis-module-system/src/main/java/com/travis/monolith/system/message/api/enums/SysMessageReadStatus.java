@@ -16,5 +16,6 @@ public enum SysMessageReadStatus {
     /** 已删除。 */
     DELETED(2);
 
+    /** 阅读状态值。 */
     private final Integer value;
 }

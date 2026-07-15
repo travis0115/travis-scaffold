@@ -43,9 +43,15 @@ import org.springframework.transaction.annotation.Transactional;
 public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLog>
         implements OpsJobLogService {
 
+    /** 单个任务执行统计的 Redis 键前缀。 */
     private static final String STATS_KEY_PREFIX = "ops:job:stats:";
+
+    /** 任务调度看板的 Redis 键。 */
     private static final String DASHBOARD_KEY = "ops:job:dashboard";
+
+    /** 执行统计缓存有效期，默认十分钟。 */
     private static final long CACHE_MILLIS = TimeUnit.MINUTES.toMillis(10);
+
     private static final Map<String, SFunction<OpsJobLog, ?>> SORT_COLUMNS =
             Map.of(
                     "jobName", OpsJobLog::getJobName,

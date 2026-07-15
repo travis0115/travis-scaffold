@@ -20,7 +20,13 @@ public interface SysMessageReceiverMapper extends BaseMapperX<SysMessageReceiver
     @Select(
             """
             <script>
-            SELECT m.*
+            SELECT m.id,
+                   m.title,
+                   m.message_type,
+                   m.source_type,
+                   m.source_id,
+                   m.publish_time,
+                   m.create_time
             FROM sys_message m
             LEFT JOIN sys_message_receiver r
               ON r.message_id = m.id

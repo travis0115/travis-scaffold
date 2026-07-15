@@ -19,5 +19,6 @@ public enum SysMessageType {
     /** 版本更新。 */
     VERSION_UPDATE(4);
 
+    /** 消息类型值。 */
     private final Integer value;
 }

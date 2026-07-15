@@ -17,11 +17,15 @@ import org.mapstruct.MappingTarget;
 @Mapper(config = BaseMapperConfig.class)
 public interface SysNoticeConverter {
 
+    /** 将创建参数转换为公告实体。 */
     SysNotice toEntity(SysNoticeCreateReq req);
 
+    /** 将更新参数写入已有公告实体。 */
     void update(SysNoticeUpdateReq req, @MappingTarget SysNotice notice);
 
+    /** 将公告实体转换为响应。 */
     SysNoticeResp toResp(SysNotice notice);
 
+    /** 批量将公告实体转换为响应。 */
     List<SysNoticeResp> toRespList(List<SysNotice> notices);
 }

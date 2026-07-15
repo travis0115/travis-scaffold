@@ -13,12 +13,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/** 系统异常日志管理接口。 */
 @RestController
 @RequestMapping("/ops/error-log")
 @RequiredArgsConstructor
 public class SysErrorLogController {
     private final SysErrorLogService errorLogService;
 
+    /** 分页查询系统异常日志。 */
     @GetMapping("/page")
     @SaCheckPermission(value = OpsPermsConstant.OPS_ERROR_LOG_QUERY, type = LoginType.ADMIN)
     public ApiResponse<PageResp<SysErrorLog>> page(SysErrorLogPageReq req) {

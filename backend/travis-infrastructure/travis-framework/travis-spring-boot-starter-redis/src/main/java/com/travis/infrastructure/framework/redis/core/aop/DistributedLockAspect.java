@@ -27,9 +27,13 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 public class DistributedLockAspect {
 
+    /** 分布式锁键的统一业务前缀。 */
     private static final String KEY_PREFIX = "lock:";
+
     private static final DefaultParameterNameDiscoverer PARAMETER_NAME_DISCOVERER =
             new DefaultParameterNameDiscoverer();
+
+    /** 解析锁键 SpEL 表达式的共享解析器。 */
     private static final SpelExpressionParser EXPRESSION_PARSER = new SpelExpressionParser();
 
     private final RedissonClient redissonClient;

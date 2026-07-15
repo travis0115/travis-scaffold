@@ -43,11 +43,7 @@ function formatVersion(value?: null | string) {
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
     fieldMappingTime: [
-      [
-        'publishDateRange',
-        ['publishStartDate', 'publishEndDate'],
-        null,
-      ],
+      ['publishDateRange', ['publishStartDate', 'publishEndDate'], null],
     ],
     schema: useGridFormSchema(),
   },
@@ -73,29 +69,64 @@ async function onActionClick({
   code,
   row,
 }: OnActionClickParams<SystemMessageApi.UserMessage>) {
-  if (code === 'preview') await onPreview(row);
-  if (code === 'read') await markMessageRead(row.id);
-  if (code === 'delete') await deleteInboxMessage(row.id);
-  if (code === 'read' || code === 'delete') {
+  if (code === 'preview') {
+    await onPreview(row);
+    return;
+  }
+  if (code === 'read') {
+    await markMessageRead(row.id);
+    markReadLocally(row);
+    return;
+  }
+  if (code === 'delete') {
+    await deleteInboxMessage(row.id);
     window.dispatchEvent(new CustomEvent('travis:message-inbox-changed'));
   }
-  await gridApi.query();
 }
 
 async function onPreview(row: SystemMessageApi.UserMessage) {
-  if (row.readStatus === 0) {
-    await markMessageRead(row.id);
-    window.dispatchEvent(new CustomEvent('travis:message-inbox-changed'));
-    row.readStatus = 1;
-  }
-  previewRow.value = await getInboxMessageDetail(row.messageId);
+  const detail = await getInboxMessageDetail(row.messageId);
+  previewRow.value = detail;
+  row.readStatus = detail.readStatus;
+  row.readTime = detail.readTime;
+  notifyMessageRead(row.messageId);
   previewModalApi.open();
+}
+
+function markReadLocally(row: SystemMessageApi.UserMessage) {
+  row.readStatus = 1;
+  row.readTime = new Date().toISOString();
+  notifyMessageRead(row.messageId);
+}
+
+function handleMessageRead(event: Event) {
+  const { messageId } = (event as CustomEvent<{ messageId: number }>).detail;
+  const row = gridApi.grid
+    .getData()
+    .find((item) => item.messageId === messageId);
+  if (row) {
+    row.readStatus = 1;
+    row.readTime = new Date().toISOString();
+  }
+}
+
+function handleAllMessagesRead() {
+  gridApi.grid.getData().forEach((row) => {
+    row.readStatus = 1;
+    row.readTime = new Date().toISOString();
+  });
+}
+
+function notifyMessageRead(messageId: number) {
+  window.dispatchEvent(
+    new CustomEvent('travis:message-read', { detail: { messageId } }),
+  );
 }
 
 async function markAllRead() {
   await markAllMessagesRead();
-  window.dispatchEvent(new CustomEvent('travis:message-inbox-changed'));
-  await gridApi.query();
+  handleAllMessagesRead();
+  window.dispatchEvent(new CustomEvent('travis:message-all-read'));
 }
 
 function refreshInbox() {
@@ -104,10 +135,14 @@ function refreshInbox() {
 
 onMounted(() => {
   window.addEventListener('travis:message-inbox-changed', refreshInbox);
+  window.addEventListener('travis:message-read', handleMessageRead);
+  window.addEventListener('travis:message-all-read', handleAllMessagesRead);
 });
 
 onUnmounted(() => {
   window.removeEventListener('travis:message-inbox-changed', refreshInbox);
+  window.removeEventListener('travis:message-read', handleMessageRead);
+  window.removeEventListener('travis:message-all-read', handleAllMessagesRead);
 });
 </script>
 

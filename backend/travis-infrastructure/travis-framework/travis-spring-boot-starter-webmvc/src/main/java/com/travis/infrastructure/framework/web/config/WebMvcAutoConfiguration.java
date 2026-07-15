@@ -132,8 +132,7 @@ public class WebMvcAutoConfiguration implements WebMvcConfigurer {
     @ConditionalOnMissingBean
     public TransactionalApplicationEventPublisher transactionalApplicationEventPublisher(
             ApplicationEventPublisher eventPublisher, TransactionTemplate transactionTemplate) {
-        return new TransactionalApplicationEventPublisher(
-                eventPublisher, transactionTemplate);
+        return new TransactionalApplicationEventPublisher(eventPublisher, transactionTemplate);
     }
 
     /** 配置请求上下文过滤器 */

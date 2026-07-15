@@ -20,6 +20,8 @@ import com.travis.monolith.system.message.internal.converter.SysMessageTemplateC
 import com.travis.monolith.system.message.internal.entity.SysMessageTemplate;
 import com.travis.monolith.system.message.internal.mapper.SysMessageTemplateMapper;
 import com.travis.monolith.system.message.internal.service.SysMessageTemplateService;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -27,9 +29,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.core.type.TypeReference;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 /** 消息模板服务实现。 */
 @Service

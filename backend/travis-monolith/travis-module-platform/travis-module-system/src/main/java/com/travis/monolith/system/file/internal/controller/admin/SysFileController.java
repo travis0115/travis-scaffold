@@ -74,12 +74,14 @@ public class SysFileController {
                         username));
     }
 
+    /** 分页查询文件。 */
     @GetMapping("/page")
     @SaCheckPermission(value = SystemPermission.FILE_QUERY, type = LoginType.ADMIN)
     public ApiResponse<PageResp<SysFileResp>> page(SysFilePageReq req) {
         return ApiResponse.success(fileService.page(req));
     }
 
+    /** 删除指定文件及其存储内容。 */
     @DeleteMapping("/{id}")
     @SaCheckPermission(value = SystemPermission.FILE_DELETE, type = LoginType.ADMIN)
     @NoRepeatSubmit

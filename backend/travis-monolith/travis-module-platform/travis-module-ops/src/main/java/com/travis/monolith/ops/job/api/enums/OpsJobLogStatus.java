@@ -11,5 +11,6 @@ public enum OpsJobLogStatus {
     SUCCESS(1),
     FAILED(2);
 
+    /** 状态值。 */
     private final Integer value;
 }

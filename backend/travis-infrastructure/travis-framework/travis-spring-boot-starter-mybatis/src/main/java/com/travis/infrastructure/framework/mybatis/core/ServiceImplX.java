@@ -20,6 +20,7 @@ public abstract class ServiceImplX<M extends BaseMapperX<T>, T> extends ServiceI
         return baseMapper;
     }
 
+    /** 根据 ID 查询实体，不存在时抛出通用未找到异常。 */
     protected T getByIdOrThrow(Serializable id) {
         T entity = super.getById(id);
         if (entity == null) {
@@ -28,6 +29,7 @@ public abstract class ServiceImplX<M extends BaseMapperX<T>, T> extends ServiceI
         return entity;
     }
 
+    /** 根据条件查询单个实体，不存在时抛出通用未找到异常。 */
     protected T getOneOrThrow(LambdaQueryWrapperX<T> wrapper) {
         T entity = getOne(wrapper);
         if (entity == null) {
@@ -36,10 +38,12 @@ public abstract class ServiceImplX<M extends BaseMapperX<T>, T> extends ServiceI
         return entity;
     }
 
+    /** 根据条件查询单个实体，忽略多结果检查。 */
     protected T getOne(LambdaQueryWrapperX<T> wrapper) {
         return getOne((Wrapper<T>) wrapper);
     }
 
+    /** 判断是否存在满足条件的实体。 */
     protected boolean exists(LambdaQueryWrapperX<T> wrapper) {
         return baseMapper.exists(wrapper);
     }
@@ -58,10 +62,12 @@ public abstract class ServiceImplX<M extends BaseMapperX<T>, T> extends ServiceI
         return super.getOne(queryWrapper, throwEx);
     }
 
+    /** 根据页码、每页数量和查询条件执行分页查询。 */
     protected Page<T> page(int pageNum, int pageSize, LambdaQueryWrapperX<T> wrapper) {
         return baseMapper.page(pageNum, pageSize, wrapper);
     }
 
+    /** 根据页码和每页数量执行无附加条件的分页查询。 */
     protected Page<T> page(int pageNum, int pageSize) {
         return baseMapper.page(pageNum, pageSize);
     }

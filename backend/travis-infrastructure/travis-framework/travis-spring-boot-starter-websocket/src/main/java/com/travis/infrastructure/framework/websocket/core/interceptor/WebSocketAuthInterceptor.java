@@ -5,6 +5,7 @@ import com.travis.infrastructure.framework.websocket.core.auth.WebSocketAuthRequ
 import com.travis.infrastructure.framework.websocket.core.auth.WebSocketAuthService;
 import com.travis.infrastructure.framework.websocket.core.endpoint.WebSocketEndpoint;
 import com.travis.infrastructure.framework.websocket.core.session.WebSocketPrincipal;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.http.server.ServerHttpRequest;
@@ -12,8 +13,6 @@ import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
-
-import java.util.Map;
 
 /**
  * WebSocket 握手拦截器，负责认证并将连接主体写入 Session attributes。

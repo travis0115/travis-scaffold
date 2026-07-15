@@ -60,6 +60,7 @@ public class SysUserController {
         return ApiResponse.success(userService.page(req));
     }
 
+    /** 根据用户 ID 集合查询选择项。 */
     @GetMapping("/options/by-ids")
     @SaCheckPermission(value = SystemPermission.USER_QUERY, type = LoginType.ADMIN)
     public ApiResponse<List<SysUserOptionResp>> listOptionsByIds(@RequestParam List<Long> ids) {
@@ -182,6 +183,7 @@ public class SysUserController {
         return ApiResponse.success();
     }
 
+    /** 上传当前用户头像。 */
     @OperationLog(action = "上传头像")
     @NoRepeatSubmit
     @PostMapping("/avatar/upload")

@@ -36,18 +36,21 @@ public class SysMessageController {
     private final SysMessageService messageService;
     private final SysFileApi fileApi;
 
+    /** 分页查询消息推送记录。 */
     @GetMapping("/page")
     @SaCheckPermission(value = SystemPermission.MESSAGE_QUERY, type = LoginType.ADMIN)
     public ApiResponse<PageResp<SysMessageResp>> page(@Valid SysMessagePageReq req) {
         return ApiResponse.success(messageService.page(req));
     }
 
+    /** 查询消息详情。 */
     @GetMapping("/{id}")
     @SaCheckPermission(value = SystemPermission.MESSAGE_QUERY, type = LoginType.ADMIN)
     public ApiResponse<SysMessageResp> getById(@PathVariable Long id) {
         return ApiResponse.success(messageService.getOrThrow(id));
     }
 
+    /** 创建消息推送。 */
     @OperationLog(action = "新增消息")
     @NoRepeatSubmit
     @PostMapping
@@ -57,6 +60,7 @@ public class SysMessageController {
         return ApiResponse.success();
     }
 
+    /** 更新未发布消息。 */
     @OperationLog(action = "更新消息")
     @NoRepeatSubmit
     @PutMapping("/{id}")
@@ -67,6 +71,7 @@ public class SysMessageController {
         return ApiResponse.success();
     }
 
+    /** 上传消息正文图片。 */
     @OperationLog(action = "上传消息图片")
     @NoRepeatSubmit
     @PostMapping("/image/upload")
@@ -82,6 +87,7 @@ public class SysMessageController {
                 fileApi.upload(file, FileFolderId.MESSAGE, LoginType.ADMIN, username));
     }
 
+    /** 立即推送指定消息。 */
     @OperationLog(action = "推送消息")
     @NoRepeatSubmit
     @PutMapping("/{id}/push")
@@ -91,6 +97,7 @@ public class SysMessageController {
         return ApiResponse.success();
     }
 
+    /** 撤回已发布消息。 */
     @OperationLog(action = "撤回消息")
     @NoRepeatSubmit
     @PutMapping("/{id}/revoke")
@@ -100,6 +107,7 @@ public class SysMessageController {
         return ApiResponse.success();
     }
 
+    /** 删除消息及其接收记录。 */
     @OperationLog(action = "删除消息")
     @NoRepeatSubmit
     @DeleteMapping("/{id}")

@@ -78,11 +78,12 @@ public enum CommonErrorCode implements ErrorCode {
     /** 授权 */
     AUTH_LOGIN_BAD_CREDENTIALS("2300", "用户名或密码错误"),
     AUTH_LOGIN_USER_DISABLED("2301", "账号已被禁用"),
-
     ;
 
+    /** 错误码。 */
     private final String code;
 
+    /** 错误消息模板。 */
     private final String msg;
 
     @Override

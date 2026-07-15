@@ -30,6 +30,7 @@ public class ApiResponse<T> {
         return success(null);
     }
 
+    /** 创建携带响应数据的成功结果。 */
     public static <T> ApiResponse<T> success(T data) {
         var result = new ApiResponse<T>();
         result.setCode(CommonErrorCode.SUCCESS.getCode());
@@ -38,6 +39,7 @@ public class ApiResponse<T> {
         return result;
     }
 
+    /** 根据统一错误码及消息参数创建失败结果。 */
     public static <T> ApiResponse<T> error(ErrorCode errorCode, Object... args) {
         Assert.notEquals(CommonErrorCode.SUCCESS.getCode(), errorCode.getCode(), "Code 不能与成功时相同");
         var result = new ApiResponse<T>();

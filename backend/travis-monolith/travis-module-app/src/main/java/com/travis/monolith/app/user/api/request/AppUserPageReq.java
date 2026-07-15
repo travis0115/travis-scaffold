@@ -9,9 +9,11 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class AppUserPageReq extends PageRequest {
+    /** 昵称，支持模糊匹配。 */
     @Size(max = 20, message = "昵称长度不能超过20个字符")
     private String nickname;
 
+    /** 手机号，支持模糊匹配。 */
     @Size(max = 11, message = "手机号长度不能超过11个字符")
     private String mobile;
 }

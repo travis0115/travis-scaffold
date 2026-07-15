@@ -24,6 +24,7 @@ public class QuartzJobHandlerRegistry {
         this.handlers = Map.copyOf(registry);
     }
 
+    /** 根据名称获取任务处理器，不存在时抛出异常。 */
     public QuartzJobHandler getRequired(String name) {
         QuartzJobHandler handler = handlers.get(name);
         if (handler == null) {
@@ -32,10 +33,12 @@ public class QuartzJobHandlerRegistry {
         return handler;
     }
 
+    /** 判断是否已注册指定名称的任务处理器。 */
     public boolean contains(String name) {
         return handlers.containsKey(name);
     }
 
+    /** 获取全部已注册任务处理器名称。 */
     public Collection<String> names() {
         return handlers.keySet();
     }

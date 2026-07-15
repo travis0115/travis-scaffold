@@ -10,11 +10,22 @@ import com.travis.infrastructure.common.web.enums.ClientType;
 public final class HttpHeader {
 
     /* ==================== IP ==================== */
+    /** 标准代理转发客户端地址请求头。 */
     public static final String X_FORWARDED_FOR = "X-Forwarded-For";
+
+    /** 反向代理传递真实客户端地址请求头。 */
     public static final String X_REAL_IP = "X-Real-IP";
+
+    /** 部分代理服务器传递客户端地址请求头。 */
     public static final String PROXY_CLIENT_IP = "Proxy-Client-IP";
+
+    /** WebLogic 代理传递客户端地址请求头。 */
     public static final String WL_PROXY_CLIENT_IP = "WL-Proxy-Client-IP";
+
+    /** 部分网关传递客户端地址请求头。 */
     public static final String HTTP_CLIENT_IP = "HTTP_CLIENT_IP";
+
+    /** 部分网关传递代理链地址请求头。 */
     public static final String HTTP_X_FORWARDED_FOR = "HTTP_X_FORWARDED_FOR";
 
     /* ==================== Trace / Request ==================== */
@@ -23,7 +34,6 @@ public final class HttpHeader {
 
     /** 分布式追踪 traceparent */
     public static final String TRACEPARENT = "traceparent";
-
 
     /* ==================== Client ==================== */
 

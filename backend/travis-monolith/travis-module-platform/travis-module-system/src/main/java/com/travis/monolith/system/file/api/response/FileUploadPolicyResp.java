@@ -8,6 +8,9 @@ import lombok.Data;
 @Data
 @Builder
 public class FileUploadPolicyResp {
+    /** 允许上传的文件扩展名。 */
     private List<String> allowedExtensions;
+
+    /** 单个文件允许的最大字节数。 */
     private Long maxFileSizeBytes;
 }

@@ -13,6 +13,7 @@ public class MutableHttpServletRequest extends HttpServletRequestWrapper {
         super(request);
     }
 
+    /** 添加或覆盖当前请求包装中的请求头。 */
     public void putHeader(String name, String value) {
         customHeaders.put(name, value);
     }

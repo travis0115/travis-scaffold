@@ -16,6 +16,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+/** 文件夹管理接口。 */
 @RestController
 @RequestMapping("/system/file/folder")
 @RequiredArgsConstructor
@@ -23,12 +24,14 @@ import org.springframework.web.bind.annotation.*;
 public class SysFileFolderController {
     private final SysFileFolderService folderService;
 
+    /** 查询全部文件夹。 */
     @GetMapping("/list")
     @SaCheckPermission(value = SystemPermission.FILE_QUERY, type = LoginType.ADMIN)
     public ApiResponse<List<SysFileFolder>> listAll() {
         return ApiResponse.success(folderService.listAll());
     }
 
+    /** 创建文件夹。 */
     @PostMapping
     @SaCheckPermission(value = SystemPermission.FILE_UPLOAD, type = LoginType.ADMIN)
     @NoRepeatSubmit
@@ -38,6 +41,7 @@ public class SysFileFolderController {
         return ApiResponse.success();
     }
 
+    /** 更新文件夹。 */
     @PutMapping("/{id}")
     @SaCheckPermission(value = SystemPermission.FILE_UPLOAD, type = LoginType.ADMIN)
     @NoRepeatSubmit
@@ -48,6 +52,7 @@ public class SysFileFolderController {
         return ApiResponse.success();
     }
 
+    /** 删除文件夹及其子文件夹。 */
     @DeleteMapping("/{id}")
     @SaCheckPermission(value = SystemPermission.FILE_DELETE, type = LoginType.ADMIN)
     @NoRepeatSubmit

@@ -29,6 +29,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+/** 公告管理接口。 */
 @RestController
 @RequestMapping("/system/notice")
 @RequiredArgsConstructor
@@ -38,23 +39,27 @@ public class SysNoticeController {
     private final SysNoticeService noticeService;
     private final SysFileApi fileApi;
 
+    /** 分页查询全部公告。 */
     @GetMapping("/page")
     @SaCheckPermission(value = SystemPermission.NOTICE_QUERY, type = LoginType.ADMIN)
     public ApiResponse<PageResp<SysNoticeResp>> page(SysNoticePageReq req) {
         return ApiResponse.success(noticeService.page(req));
     }
 
+    /** 分页查询当前已发布公告。 */
     @GetMapping("/published")
     public ApiResponse<PageResp<SysNoticeResp>> pagePublished(SysNoticePageReq req) {
         return ApiResponse.success(noticeService.pagePublished(req));
     }
 
+    /** 查询公告详情。 */
     @GetMapping("/{id}")
     @SaCheckPermission(value = SystemPermission.NOTICE_QUERY, type = LoginType.ADMIN)
     public ApiResponse<SysNoticeResp> getById(@PathVariable Long id) {
         return ApiResponse.success(noticeService.getOrThrow(id));
     }
 
+    /** 创建公告。 */
     @OperationLog(action = "新增公告")
     @NoRepeatSubmit
     @PostMapping
@@ -64,6 +69,7 @@ public class SysNoticeController {
         return ApiResponse.success();
     }
 
+    /** 更新公告。 */
     @OperationLog(action = "更新公告")
     @NoRepeatSubmit
     @PutMapping("/{id}")
@@ -74,6 +80,7 @@ public class SysNoticeController {
         return ApiResponse.success();
     }
 
+    /** 上传公告正文图片。 */
     @OperationLog(action = "上传公告图片")
     @NoRepeatSubmit
     @PostMapping("/image/upload")
@@ -89,6 +96,7 @@ public class SysNoticeController {
                 fileApi.upload(file, FileFolderId.NOTICE, LoginType.ADMIN, username));
     }
 
+    /** 更新公告发布状态。 */
     @OperationLog(action = "修改公告状态")
     @NoRepeatSubmit
     @PutMapping("/{id}/status")
@@ -101,6 +109,7 @@ public class SysNoticeController {
         return ApiResponse.success();
     }
 
+    /** 更新公告置顶状态。 */
     @OperationLog(action = "修改公告置顶状态")
     @NoRepeatSubmit
     @PutMapping("/{id}/pinned")
@@ -112,6 +121,7 @@ public class SysNoticeController {
         return ApiResponse.success();
     }
 
+    /** 删除公告。 */
     @OperationLog(action = "删除公告")
     @NoRepeatSubmit
     @DeleteMapping("/{id}")

@@ -9,7 +9,10 @@ import jakarta.servlet.http.HttpServletRequest;
 /** IP相关工具类封装 */
 public class IpUtil {
 
+    /** IPv4 回环地址。 */
     private static final String LOCALHOST_IPV4 = "127.0.0.1";
+
+    /** 完整形式的 IPv6 回环地址。 */
     private static final String LOCALHOST_IPV6 = "0:0:0:0:0:0:0:1";
 
     /**
@@ -48,6 +51,7 @@ public class IpUtil {
         return getClientIpByHeader(request, headers);
     }
 
+    /** 按标准代理请求头及额外请求头解析当前请求的客户端 IP。 */
     public static String getClientIp(String... otherHeaderNames) {
         return getClientIp(ServletUtil.getRequest(), otherHeaderNames);
     }

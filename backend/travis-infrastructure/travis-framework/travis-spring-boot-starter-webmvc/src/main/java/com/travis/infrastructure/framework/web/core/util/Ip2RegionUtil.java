@@ -22,8 +22,13 @@ public class Ip2RegionUtil {
 
     private static DatabaseReader databaseReader;
 
+    /** IP 地理信息按优先级尝试的语言列表。 */
     private static final String[] LOCALES = {"zh-CN", "en", "es", "de", "fr", "pt-BR", "ja", "ru"};
+
+    /** 内网地址的统一展示文本。 */
     private static final String INTERNAL = "内网";
+
+    /** 无法解析地址时的统一展示文本。 */
     private static final String UNKNOWN = "未知";
 
     static {

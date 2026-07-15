@@ -26,11 +26,13 @@ public class I18nService {
         return getMessage(code, null, defaultMsg);
     }
 
+    /** 根据当前区域、消息编码和参数获取国际化文本。 */
     public String getMessage(String code, Object[] args, String defaultMsg) {
         var locale = LocaleContextHolder.getLocale();
         return messageSource.getMessage(code, args, defaultMsg, locale);
     }
 
+    /** 根据统一错误码获取当前区域的国际化文本。 */
     public String getMessage(ErrorCode errorCode) {
         return getMessage(errorCode.getCode(), errorCode.getMsg());
     }

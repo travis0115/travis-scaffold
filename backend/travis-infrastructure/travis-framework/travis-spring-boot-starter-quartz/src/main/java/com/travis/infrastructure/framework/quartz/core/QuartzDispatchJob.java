@@ -9,8 +9,13 @@ import org.quartz.JobExecutionException;
 @RequiredArgsConstructor
 public class QuartzDispatchJob implements Job {
 
+    /** Quartz 数据中的业务任务 ID 键。 */
     public static final String DATA_JOB_ID = "jobId";
+
+    /** Quartz 数据中的任务处理器名称键。 */
     public static final String DATA_HANDLER_NAME = "handlerName";
+
+    /** Quartz 数据中的任务执行参数键。 */
     public static final String DATA_PARAMS = "params";
 
     private final QuartzJobHandlerRegistry registry;

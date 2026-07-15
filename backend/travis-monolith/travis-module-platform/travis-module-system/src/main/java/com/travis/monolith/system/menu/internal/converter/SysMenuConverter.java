@@ -18,12 +18,16 @@ import org.mapstruct.MappingTarget;
 @Mapper(config = BaseMapperConfig.class)
 public interface SysMenuConverter {
 
+    /** 将菜单实体转换为包含空子节点列表的响应。 */
     @Mapping(target = "children", expression = "java(new java.util.ArrayList<>())")
     SysMenuResp toResp(SysMenu menu);
 
+    /** 批量将菜单实体转换为响应。 */
     List<SysMenuResp> toRespList(List<SysMenu> menus);
 
+    /** 将创建参数转换为菜单实体。 */
     SysMenu toEntity(SysMenuCreateReq req);
 
+    /** 将更新参数写入已有菜单实体。 */
     void update(SysMenuUpdateReq req, @MappingTarget SysMenu menu);
 }

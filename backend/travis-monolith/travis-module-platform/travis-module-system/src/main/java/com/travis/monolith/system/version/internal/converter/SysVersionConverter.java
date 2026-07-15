@@ -17,11 +17,15 @@ import org.mapstruct.MappingTarget;
 @Mapper(config = BaseMapperConfig.class)
 public interface SysVersionConverter {
 
+    /** 将版本实体转换为响应。 */
     SysVersionResp toResp(SysVersion versionLog);
 
+    /** 批量将版本实体转换为响应。 */
     List<SysVersionResp> toRespList(List<SysVersion> versionLogs);
 
+    /** 将创建参数转换为版本实体。 */
     SysVersion toEntity(SysVersionCreateReq req);
 
+    /** 将更新参数写入已有版本实体。 */
     void update(SysVersionUpdateReq req, @MappingTarget SysVersion versionLog);
 }

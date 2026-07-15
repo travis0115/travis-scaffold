@@ -8,11 +8,12 @@ import com.travis.infrastructure.framework.websocket.core.auth.WebSocketAuthServ
 import com.travis.infrastructure.framework.websocket.core.dispatch.RedisWebSocketMessageDispatcher;
 import com.travis.infrastructure.framework.websocket.core.endpoint.WebSocketEndpoint;
 import com.travis.infrastructure.framework.websocket.core.endpoint.WebSocketEndpointProvider;
+import com.travis.infrastructure.framework.websocket.core.interceptor.WebSocketAuthInterceptor;
 import com.travis.infrastructure.framework.websocket.core.sender.WebSocketMessageSender;
 import com.travis.infrastructure.framework.websocket.core.session.LocalWebSocketSessionManager;
 import com.travis.infrastructure.framework.websocket.core.session.WebSocketSessionListener;
 import com.travis.infrastructure.framework.websocket.core.session.WebSocketSessionManager;
-import com.travis.infrastructure.framework.websocket.core.interceptor.WebSocketAuthInterceptor;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.ObjectProvider;
@@ -28,8 +29,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
-
-import java.util.stream.Stream;
 
 /**
  * WebSocket 自动配置类，注册 Bean 和 WebSocket 端点。

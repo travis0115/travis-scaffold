@@ -20,7 +20,8 @@ import tools.jackson.databind.ser.std.ToStringSerializer;
  *
  * @author travis
  */
-@AutoConfiguration(after = org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration.class)
+@AutoConfiguration(
+        after = org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration.class)
 @EnableConfigurationProperties({JacksonProperties.class})
 @Import(JsonUtil.class)
 public class JacksonAutoConfiguration {

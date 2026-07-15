@@ -24,6 +24,7 @@ public interface SysFileService extends IService<SysFile> {
     FileUploadResp upload(
             MultipartFile file, Long folderId, String uploaderType, String uploaderName);
 
+    /** 分页查询文件。 */
     PageResp<SysFileResp> page(SysFilePageReq req);
 
     /**

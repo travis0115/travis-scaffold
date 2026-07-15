@@ -13,7 +13,9 @@ public enum IsBuiltin {
     /** 系统内置 */
     YES(1, "系统内置");
 
+    /** 是否内置的状态值。 */
     private final Integer value;
 
+    /** 状态展示名称。 */
     private final String label;
 }
