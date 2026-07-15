@@ -391,6 +391,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         return newPassword;
     }
 
+    /** 将系统用户实体转换并补充为响应对象。 */
     private SysUserResp toResp(SysUser user) {
         var resp = converter.toResp(user);
         resp.setAvatar(fileApi.getFileUrlById(user.getAvatarFileId()));
@@ -402,6 +403,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         return resp;
     }
 
+    /** 查询当前已建立 WebSocket 连接的后台用户 ID。 */
     private Set<Long> getConnectedAdminUserIds() {
         var webSocketSessionManager = webSocketSessionManagerProvider.getIfAvailable();
         if (webSocketSessionManager == null) {
@@ -425,6 +427,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         return userIds;
     }
 
+    /** 批量填充用户在线状态。 */
     private void fillOnlineStatus(List<SysUserResp> records, Set<Long> connectedAdminUserIds) {
         if (records == null || records.isEmpty()) {
             return;
@@ -438,6 +441,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         }
     }
 
+    /** 判断指定后台用户是否已建立 WebSocket 连接。 */
     private boolean isAdminUserConnected(Long userId) {
         var webSocketSessionManager = webSocketSessionManagerProvider.getIfAvailable();
         return webSocketSessionManager != null
@@ -445,6 +449,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
                         SaTokenWebSocketPrincipal.build(LoginType.ADMIN, userId));
     }
 
+    /** 同步当前登录会话中的用户名。 */
     private void syncCurrentSessionUsername(Long userId, String username) {
         try {
             var logic = StpKit.of(LoginType.ADMIN);

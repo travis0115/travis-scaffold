@@ -35,6 +35,7 @@ public class SysFileFolderServiceImpl extends ServiceImplX<SysFileFolderMapper, 
     private final SysFileService sysFileService;
     private final BuiltinResourceGuard builtinResourceGuard;
 
+    /** 查询全部文件夹。 */
     @Override
     @Cacheable(key = "'list:all'")
     public List<SysFileFolder> listAll() {
@@ -45,12 +46,14 @@ public class SysFileFolderServiceImpl extends ServiceImplX<SysFileFolderMapper, 
                         .orderByAsc(SysFileFolder::getCreateTime));
     }
 
+    /** 创建文件夹。 */
     @Override
     @CacheEvict(key = "'list:all'")
     public void create(SysFileFolderCreateReq req) {
         save(converter.toEntity(req));
     }
 
+    /** 更新指定文件夹。 */
     @Override
     @CacheEvict(key = "'list:all'")
     public void update(Long id, SysFileFolderUpdateReq req) {
@@ -60,6 +63,7 @@ public class SysFileFolderServiceImpl extends ServiceImplX<SysFileFolderMapper, 
         updateById(folder);
     }
 
+    /** 根据 ID 删除指定文件夹。 */
     @Override
     @Transactional
     @CacheEvict(key = "'list:all'")
@@ -82,6 +86,7 @@ public class SysFileFolderServiceImpl extends ServiceImplX<SysFileFolderMapper, 
         removeBatchByIds(folderIds);
     }
 
+    /** 收集指定文件夹及其全部下级文件夹 ID。 */
     private List<Long> collectFolderIds(List<SysFileFolder> folders, Long rootId) {
         var ids = new ArrayList<Long>();
         ids.add(rootId);

@@ -313,6 +313,7 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
                 .collect(Collectors.toList());
     }
 
+    /** 查询指定角色下的用户 ID。 */
     @Override
     @Cacheable(value = "system:user-role", key = "'user-ids:'+#roleId")
     public List<Long> getUserIdsByRoleId(Long roleId) {
@@ -369,12 +370,14 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
         }
     }
 
+    /** 校验角色是否允许修改。 */
     private void checkModifiable(SysRole role) {
         if (Modifiable.NO.getValue().equals(role.getModifiable())) {
             throw new BizException(SystemErrorCode.ROLE_NOT_MODIFIABLE);
         }
     }
 
+    /** 校验角色是否允许删除。 */
     private void checkDeletable(SysRole role) {
         checkModifiable(role);
         if (IsBuiltin.YES.getValue().equals(role.getIsBuiltin())) {

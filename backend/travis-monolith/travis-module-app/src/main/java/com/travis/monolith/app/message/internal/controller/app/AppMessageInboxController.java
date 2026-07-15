@@ -8,12 +8,11 @@ import com.travis.monolith.system.message.api.SysMessageInboxApi;
 import com.travis.monolith.system.message.api.enums.SysMessageReadStatus;
 import com.travis.monolith.system.message.api.request.SysUserMessagePageReq;
 import com.travis.monolith.system.message.api.response.SysUserMessageResp;
-import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
 
 /** 客户端用户消息收件箱接口。 */
 @RestController

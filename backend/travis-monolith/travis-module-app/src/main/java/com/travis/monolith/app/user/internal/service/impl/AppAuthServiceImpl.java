@@ -31,6 +31,7 @@ public class AppAuthServiceImpl implements AppAuthService {
     private final SaTokenWebSocketTicketStore ticketStore;
     private final WebSocketSessionManager webSocketSessionManager;
 
+    /** 执行App 端认证登录。 */
     @Override
     public void login(AppUserLoginReq req) {
         var user =
@@ -55,6 +56,7 @@ public class AppAuthServiceImpl implements AppAuthService {
         stpLogic.getSession().set(LoginSubjectSessionKey.USERNAME, user.getUsername());
     }
 
+    /** 执行App 端认证退出。 */
     @Override
     public void logout() {
         var stpLogic = StpKit.of(LoginType.APP);
@@ -69,6 +71,7 @@ public class AppAuthServiceImpl implements AppAuthService {
         }
     }
 
+    /** 为当前用户签发 WebSocket 一次性连接凭证。 */
     @Override
     public AppWebSocketTicketResp createWebSocketTicket() {
         var stpLogic = StpKit.of(LoginType.APP);
@@ -78,6 +81,7 @@ public class AppAuthServiceImpl implements AppAuthService {
         return new AppWebSocketTicketResp(ticket, ticketStore.getTimeoutSeconds());
     }
 
+    /** 查询当前登录用户信息。 */
     @Override
     public AppUserInfoResp getUserInfo() {
         return converter.toInfoResp(

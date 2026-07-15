@@ -149,6 +149,7 @@ public class SysAuthServiceImpl implements SysAuthService {
         }
     }
 
+    /** 为当前用户签发 WebSocket 一次性连接凭证。 */
     @Override
     public SysWebSocketTicketResp createWebSocketTicket() {
         var stpLogic = StpKit.of(LoginType.ADMIN);
@@ -192,6 +193,7 @@ public class SysAuthServiceImpl implements SysAuthService {
         return getPermissionsByUserId(userId);
     }
 
+    /** 判断用户是否仍存在其他有效登录令牌。 */
     private boolean hasRemainingValidToken(Long userId) {
         var stpLogic = StpKit.of(LoginType.ADMIN);
         return stpLogic.getTokenValueListByLoginId(userId).stream()

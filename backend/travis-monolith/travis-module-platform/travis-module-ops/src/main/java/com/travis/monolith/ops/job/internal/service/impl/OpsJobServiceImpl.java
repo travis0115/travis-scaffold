@@ -52,6 +52,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
     private final SysUserApi userApi;
     private final OpsJobConverter converter;
 
+    /** 分页查询定时任务。 */
     @Override
     public PageResp<OpsJobPageResp> page(OpsJobPageReq req) {
         var wrapper =
@@ -83,6 +84,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
                                         ownerNames.get(job.getOwnerUserId()))));
     }
 
+    /** 查询指定定时任务，不存在时抛出业务异常。 */
     @Override
     @Cacheable(key = "'detail:'+#id")
     public OpsJobDetailResp getOrThrow(Long id) {
@@ -91,6 +93,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
                 converter.toDetailResp(job), job, userApi.getUsernameById(job.getOwnerUserId()));
     }
 
+    /** 查询指定定时任务，不存在时返回空结果。 */
     @Override
     @Cacheable(key = "'detail:'+#id", unless = "#result == null")
     public OpsJobDetailResp find(Long id) {
@@ -103,16 +106,19 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
                         userApi.getUsernameById(job.getOwnerUserId()));
     }
 
+    /** 查询全部定时任务。 */
     @Override
     public List<OpsJob> listAll() {
         return list();
     }
 
+    /** 统计指定状态的定时任务数量。 */
     @Override
     public long countJobs(Integer status) {
         return count(new LambdaQueryWrapperX<OpsJob>().eqIfPresent(OpsJob::getStatus, status));
     }
 
+    /** 创建定时任务。 */
     @Override
     @Transactional
     @CacheEvict(allEntries = true)
@@ -120,6 +126,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         createJob(req);
     }
 
+    /** 创建定时任务并同步注册 Quartz 调度。 */
     private void createJob(OpsJobWriteReq req) {
         validateUserScope(req);
         OpsJob job = buildEntity(req);
@@ -128,6 +135,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         quartzJobManager.schedule(job);
     }
 
+    /** 更新指定定时任务。 */
     @Override
     @Transactional
     @CacheEvict(key = "'detail:'+#id")
@@ -139,6 +147,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         quartzJobManager.schedule(job);
     }
 
+    /** 删除指定定时任务。 */
     @Override
     @Transactional
     @CacheEvict(key = "'detail:'+#id")
@@ -148,6 +157,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         removeById(id);
     }
 
+    /** 变更指定定时任务的状态。 */
     @Override
     @Transactional
     @CacheEvict(key = "'detail:'+#id")
@@ -164,6 +174,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         updateById(job);
     }
 
+    /** 立即运行指定定时任务。 */
     @Override
     public void runNow(Long id, String params) {
         OpsJob job = getRequired(id);
@@ -173,6 +184,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         quartzJobManager.runNow(job, params);
     }
 
+    /** 复制指定定时任务。 */
     @Override
     @Transactional
     @CacheEvict(allEntries = true)
@@ -185,16 +197,19 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         quartzJobManager.schedule(copy);
     }
 
+    /** 预览定时任务后续执行时间。 */
     @Override
     public List<LocalDateTime> preview(OpsJobPreviewReq req, Integer count) {
         return quartzJobManager.preview(buildEntity(req), count == null ? 5 : count);
     }
 
+    /** 查询已注册的定时任务处理器。 */
     @Override
     public Collection<String> listHandlers() {
         return handlerRegistry.names();
     }
 
+    /** 查询定时任务通知用户选项。 */
     @Override
     public List<SysUserOptionResp> listUserOptions(String keyword, Collection<Long> userIds) {
         if (userIds != null && !userIds.isEmpty()) {
@@ -203,6 +218,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         return userApi.listCurrentUserScopedOptions(keyword, 20);
     }
 
+    /** 导出全部定时任务。 */
     @Override
     public List<OpsJobExportResp> exportJobs() {
         return list(new LambdaQueryWrapperX<OpsJob>().orderByAsc(OpsJob::getJobName)).stream()
@@ -215,6 +231,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
                 .toList();
     }
 
+    /** 批量导入定时任务。 */
     @Override
     @Transactional
     @CacheEvict(allEntries = true)
@@ -225,11 +242,13 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         jobs.forEach(this::createJob);
     }
 
+    /** 根据写入参数构建定时任务实体。 */
     private OpsJob buildEntity(OpsJobWriteReq req) {
         validate(req);
         return converter.toEntity(req);
     }
 
+    /** 校验定时任务写入参数。 */
     private void validate(OpsJobWriteReq req) {
         OpsJobParamValidator.validate(req.getParams(), req.getParamSchema());
         if ((req.getDailyStartTime() == null) != (req.getDailyEndTime() == null)) {
@@ -241,6 +260,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         }
     }
 
+    /** 校验定时任务通知用户范围。 */
     private void validateUserScope(OpsJobWriteReq req) {
         Set<Long> userIds =
                 java.util.stream.Stream.concat(
@@ -262,12 +282,14 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         }
     }
 
+    /** 校验定时任务处理器是否已注册。 */
     private void ensureHandlerExists(String handlerName) {
         if (!handlerRegistry.contains(handlerName)) {
             throw new BizException(OpsJobErrorCode.HANDLER_NOT_FOUND, handlerName);
         }
     }
 
+    /** 查询指定定时任务实体，确保记录存在。 */
     private OpsJob getRequired(Long id) {
         OpsJob job = getById(id);
         if (job == null) {
@@ -276,6 +298,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         return job;
     }
 
+    /** 补充定时任务响应中的展示信息。 */
     private <T extends OpsJobBaseResp> T enrichResponse(
             T response, OpsJob job, String ownerUsername) {
         response.setOwnerUsername(ownerUsername);

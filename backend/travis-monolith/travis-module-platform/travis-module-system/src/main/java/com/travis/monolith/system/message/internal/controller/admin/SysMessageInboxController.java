@@ -9,12 +9,11 @@ import com.travis.monolith.system.message.api.request.SysUserMessagePageReq;
 import com.travis.monolith.system.message.api.response.SysUserMessageResp;
 import com.travis.monolith.system.message.internal.service.SysMessageReceiverService;
 import jakarta.validation.Valid;
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 /** 管理后台消息收件箱控制器。 */
 @RestController
@@ -30,9 +29,7 @@ public class SysMessageInboxController {
             @RequestParam(defaultValue = "10") Integer limit) {
         return ApiResponse.success(
                 messageService.listRecent(
-                        LoginType.ADMIN,
-                        StpKit.of(LoginType.ADMIN).getLoginIdAsLong(),
-                        limit));
+                        LoginType.ADMIN, StpKit.of(LoginType.ADMIN).getLoginIdAsLong(), limit));
     }
 
     /** 分页查询当前后台用户的收件箱消息。 */
@@ -59,24 +56,21 @@ public class SysMessageInboxController {
     /** 将指定消息标记为已读。 */
     @PutMapping("/{id}/read")
     public ApiResponse<Void> markRead(@PathVariable Long id) {
-        messageService.markRead(
-                LoginType.ADMIN, StpKit.of(LoginType.ADMIN).getLoginIdAsLong(), id);
+        messageService.markRead(LoginType.ADMIN, StpKit.of(LoginType.ADMIN).getLoginIdAsLong(), id);
         return ApiResponse.success();
     }
 
     /** 将当前后台用户的全部消息标记为已读。 */
     @PutMapping("/read-all")
     public ApiResponse<Void> markAllRead() {
-        messageService.markAllRead(
-                LoginType.ADMIN, StpKit.of(LoginType.ADMIN).getLoginIdAsLong());
+        messageService.markAllRead(LoginType.ADMIN, StpKit.of(LoginType.ADMIN).getLoginIdAsLong());
         return ApiResponse.success();
     }
 
     /** 删除当前后台用户的一条收件箱消息。 */
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
-        messageService.delete(
-                LoginType.ADMIN, StpKit.of(LoginType.ADMIN).getLoginIdAsLong(), id);
+        messageService.delete(LoginType.ADMIN, StpKit.of(LoginType.ADMIN).getLoginIdAsLong(), id);
         return ApiResponse.success();
     }
 

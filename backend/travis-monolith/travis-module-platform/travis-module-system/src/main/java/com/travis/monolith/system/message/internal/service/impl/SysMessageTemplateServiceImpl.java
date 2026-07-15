@@ -40,6 +40,7 @@ public class SysMessageTemplateServiceImpl
     private final SysMessageTemplateConverter converter;
     private final BuiltinResourceGuard builtinResourceGuard;
 
+    /** 分页查询消息模板。 */
     @Override
     public PageResp<SysMessageTemplateResp> page(SysMessageTemplatePageReq req) {
         var wrapper =
@@ -56,18 +57,21 @@ public class SysMessageTemplateServiceImpl
                 page(req.getPageNum(), req.getPageSize(), wrapper).convert(converter::toResp));
     }
 
+    /** 查询指定消息模板，不存在时抛出业务异常。 */
     @Override
     @Cacheable(key = "'detail:'+#id")
     public SysMessageTemplateResp getOrThrow(Long id) {
         return converter.toResp(getByIdOrThrow(id));
     }
 
+    /** 查询指定消息模板。 */
     @Override
     @Cacheable(key = "'detail:'+#id", unless = "#result == null")
     public SysMessageTemplateResp get(Long id) {
         return converter.toResp(super.getById(id));
     }
 
+    /** 创建消息模板。 */
     @Override
     @Transactional
     public void create(SysMessageTemplateCreateReq req) {
@@ -76,6 +80,7 @@ public class SysMessageTemplateServiceImpl
         save(converter.toEntity(req));
     }
 
+    /** 更新指定消息模板。 */
     @Override
     @Transactional
     @CacheEvict(key = "'detail:'+#id")
@@ -88,6 +93,7 @@ public class SysMessageTemplateServiceImpl
         updateById(entity);
     }
 
+    /** 删除指定消息模板。 */
     @Override
     @Transactional
     @CacheEvict(key = "'detail:'+#id")
@@ -99,6 +105,7 @@ public class SysMessageTemplateServiceImpl
         removeById(id);
     }
 
+    /** 校验消息模板唯一性。 */
     private void validateUnique(String templateCode, String channel, Long excludeId) {
         var wrapper =
                 new LambdaQueryWrapperX<SysMessageTemplate>()
@@ -110,6 +117,7 @@ public class SysMessageTemplateServiceImpl
         }
     }
 
+    /** 按消息通道规范化模板内容。 */
     private void normalizeContent(SysMessageTemplateCreateReq req) {
         if (SysMessageChannel.IN_APP.getValue().equals(req.getChannel())) {
             req.setPlatformTemplateId(null);
@@ -119,6 +127,7 @@ public class SysMessageTemplateServiceImpl
         req.setContentSchema(normalizeContentSchema(req.getContentSchema()));
     }
 
+    /** 按消息通道规范化模板内容。 */
     private void normalizeContent(SysMessageTemplateUpdateReq req) {
         if (SysMessageChannel.IN_APP.getValue().equals(req.getChannel())) {
             req.setPlatformTemplateId(null);
@@ -128,6 +137,7 @@ public class SysMessageTemplateServiceImpl
         req.setContentSchema(normalizeContentSchema(req.getContentSchema()));
     }
 
+    /** 校验并规范化模板参数结构。 */
     private String normalizeContentSchema(String contentSchema) {
         if (contentSchema == null || contentSchema.isBlank()) {
             return null;

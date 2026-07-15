@@ -22,12 +22,6 @@ import com.travis.monolith.system.message.internal.mapper.SysMessageMapper;
 import com.travis.monolith.system.message.internal.service.SysMessageReceiverService;
 import com.travis.monolith.system.message.internal.service.SysMessageService;
 import com.travis.monolith.system.message.internal.service.SysMessageTemplateService;
-import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
@@ -36,6 +30,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import tools.jackson.core.type.TypeReference;
+
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /** 消息推送服务实现。 */
 @Service
@@ -64,6 +65,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         this.fileApi = fileApi;
     }
 
+    /** 分页查询消息。 */
     @Override
     public PageResp<SysMessageResp> page(SysMessagePageReq req) {
         var wrapper = new LambdaQueryWrapperX<SysMessage>();
@@ -79,6 +81,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         return resp;
     }
 
+    /** 查询指定消息，不存在时抛出业务异常。 */
     @Override
     public SysMessageResp getOrThrow(Long id) {
         var resp = converter.toResp(getByIdOrThrow(id));
@@ -87,6 +90,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         return resp;
     }
 
+    /** 创建消息。 */
     @Override
     @Transactional
     @CacheEvict(cacheNames = "system:message:inbox", allEntries = true)
@@ -108,6 +112,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         return entity.getId();
     }
 
+    /** 更新指定消息的状态。 */
     @Override
     @Transactional
     @Caching(
@@ -127,6 +132,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         throw new BizException(CommonErrorCode.BAD_REQUEST);
     }
 
+    /** 更新指定消息。 */
     @Override
     @Transactional
     @Caching(
@@ -158,6 +164,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         updateById(entity);
     }
 
+    /** 手动推送指定消息。 */
     @Override
     @Transactional
     @Caching(
@@ -183,6 +190,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
     }
 
+    /** 自动推送指定待发送消息。 */
     @Override
     @Transactional
     @Caching(
@@ -200,6 +208,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         publish(entity);
     }
 
+    /** 撤回指定站内消息。 */
     @Override
     @Transactional
     @Caching(
@@ -221,6 +230,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         notifyInboxChanged("SYSTEM_MESSAGE_REVOKED", entity);
     }
 
+    /** 创建或更新业务来源消息，并按发布时间决定是否立即发布。 */
     @Override
     @Transactional
     @CacheEvict(cacheNames = "system:message:inbox", allEntries = true)
@@ -288,6 +298,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
     }
 
+    /** 撤回指定业务来源消息。 */
     @Override
     @Transactional
     @CacheEvict(cacheNames = "system:message:inbox", allEntries = true)
@@ -304,6 +315,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
     }
 
+    /** 删除指定业务来源消息及其收件状态。 */
     @Override
     @Transactional
     @CacheEvict(cacheNames = "system:message:inbox", allEntries = true)
@@ -317,6 +329,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         notifyInboxChanged("SYSTEM_MESSAGE_DELETED", entity);
     }
 
+    /** 发布所有已到发送时间的定时消息。 */
     @Override
     @Transactional
     @CacheEvict(cacheNames = "system:message:inbox", allEntries = true)
@@ -335,6 +348,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         return messages.size();
     }
 
+    /** 删除指定消息。 */
     @Override
     @Transactional
     @Caching(
@@ -350,6 +364,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         notifyInboxChanged("SYSTEM_MESSAGE_DELETED", entity);
     }
 
+    /** 发布消息并更新发布时间与发送状态。 */
     private void publish(SysMessage message) {
         validateChannel(message.getChannel());
         message.setStatus(SysMessageStatus.SENT.getValue());
@@ -358,10 +373,12 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         notifyInboxChanged("SYSTEM_MESSAGE_PUBLISHED", message);
     }
 
+    /** 重置消息接收人的已读状态。 */
     private void resetReceiverReadStatus(Long messageId) {
         messageReceiverService.resetReadStatus(messageId);
     }
 
+    /** 在事务提交后通过 WebSocket 通知收件箱发生变化。 */
     private void notifyInboxChanged(String event, SysMessage message) {
         if (!isInboxVisible(message)) {
             return;
@@ -388,6 +405,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
     }
 
+    /** 根据来源信息查询对应业务消息。 */
     private SysMessage findSourceMessage(String sourceType, String sourceId, String receiverType) {
         return getOne(
                 new LambdaQueryWrapperX<SysMessage>()
@@ -396,12 +414,14 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                         .eq(SysMessage::getReceiverType, receiverType));
     }
 
+    /** 校验消息是否允许在消息管理中操作。 */
     private void ensureManualMessage(SysMessage message) {
         if (!SysMessageSourceType.MANUAL.getValue().equals(message.getSourceType())) {
             throw new BizException(CommonErrorCode.BAD_REQUEST, "来源消息请在对应业务中操作");
         }
     }
 
+    /** 判断消息类型与业务来源类型是否匹配。 */
     private boolean isSourceTypeMatched(Integer messageType, String sourceType) {
         return (SysMessageSourceType.NOTICE.getValue().equals(sourceType)
                         && SysMessageType.NOTICE.getValue().equals(messageType))
@@ -409,6 +429,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                         && SysMessageType.VERSION_UPDATE.getValue().equals(messageType));
     }
 
+    /** 校验消息接收端、接收范围及接收对象。 */
     private void validateReceiver(
             String receiverType, Integer receiverScope, List<Long> receiverValues) {
         if (!LoginType.ADMIN.equals(receiverType) && !LoginType.APP.equals(receiverType)) {
@@ -428,6 +449,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
     }
 
+    /** 校验消息通道是否受支持。 */
     private void validateChannel(String channel) {
         if (!SysMessageChannel.contains(channel)) {
             throw new BizException(CommonErrorCode.BAD_REQUEST);
@@ -437,6 +459,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
     }
 
+    /** 校验消息推送方式和定时发布时间。 */
     private void validatePush(Integer pushType, LocalDateTime publishTime) {
         if (pushType == null
                 || (!SysMessagePushType.MANUAL.getValue().equals(pushType)
@@ -448,14 +471,17 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
     }
 
+    /** 返回新建消息的初始状态。 */
     private int initialStatus() {
         return SysMessageStatus.PENDING.getValue();
     }
 
+    /** 判断消息是否应出现在站内收件箱。 */
     private boolean isInboxVisible(SysMessage message) {
         return SysMessageChannel.IN_APP.getValue().equals(message.getChannel());
     }
 
+    /** 使用模板参数渲染消息标题、内容及跳转地址。 */
     private void renderTemplate(SysMessage message) {
         if (message.getTemplateId() == null) {
             return;
@@ -471,6 +497,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         message.setJumpUrl(template.getRedirectUrl());
     }
 
+    /** 解析并规范化消息模板参数。 */
     private Map<String, Object> parseTemplateParams(String templateParams) {
         if (templateParams == null || templateParams.isBlank()) {
             return Map.of();
@@ -493,6 +520,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                                 LinkedHashMap::new));
     }
 
+    /** 解析消息模板参数结构。 */
     private Map<String, SysMessageTemplateParamConfigReq> parseContentSchema(String contentSchema) {
         if (contentSchema == null || contentSchema.isBlank()) {
             return Map.of();
@@ -507,6 +535,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
     }
 
+    /** 根据模板参数结构校验消息模板参数。 */
     private void validateTemplateParams(String contentSchema, Map<String, Object> params) {
         var schema = parseContentSchema(contentSchema);
         schema.forEach(
@@ -534,6 +563,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                 });
     }
 
+    /** 使用模板参数渲染消息标题、内容及跳转地址。 */
     private String renderTemplate(String templateContent, Map<String, Object> params) {
         if (templateContent == null || templateContent.isBlank()) {
             return templateContent;

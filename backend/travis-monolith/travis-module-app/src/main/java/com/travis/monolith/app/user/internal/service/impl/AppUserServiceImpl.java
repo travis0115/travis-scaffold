@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 public class AppUserServiceImpl extends ServiceImplX<AppUserMapper, AppUser>
         implements AppUserService {
 
+    /** 分页查询App 用户。 */
     @Override
     public PageResp<AppUserOptionResp> page(AppUserPageReq req) {
         var wrapper =
@@ -30,6 +31,7 @@ public class AppUserServiceImpl extends ServiceImplX<AppUserMapper, AppUser>
                 page(req.getPageNum(), req.getPageSize(), wrapper).convert(this::toOption));
     }
 
+    /** 根据 ID 集合查询App 用户选项。 */
     @Override
     public List<AppUserOptionResp> listOptionsByIds(Collection<Long> ids) {
         if (ids == null || ids.isEmpty()) {
@@ -45,6 +47,7 @@ public class AppUserServiceImpl extends ServiceImplX<AppUserMapper, AppUser>
         return new LambdaQueryWrapperX<AppUser>().eq(AppUser::getStatus, Status.ENABLED.getValue());
     }
 
+    /** 将 App 用户实体转换为选项响应。 */
     private AppUserOptionResp toOption(AppUser user) {
         return new AppUserOptionResp(
                 user.getId(), user.getUsername(), user.getNickname(), user.getMobile());

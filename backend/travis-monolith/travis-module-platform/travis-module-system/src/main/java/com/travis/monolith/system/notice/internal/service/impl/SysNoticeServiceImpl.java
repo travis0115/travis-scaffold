@@ -44,6 +44,7 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
 
     private final SysMessageApi messageApi;
 
+    /** 分页查询系统公告。 */
     @Override
     public PageResp<SysNoticeResp> page(SysNoticePageReq req) {
         var wrapper =
@@ -68,6 +69,7 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
         return PageConverter.toResp(page.convert(this::toResp));
     }
 
+    /** 分页查询已发布的系统公告。 */
     @Override
     public PageResp<SysNoticeResp> pagePublished(SysNoticePageReq req) {
         var wrapper = new LambdaQueryWrapperX<SysNotice>();
@@ -92,12 +94,14 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
         return PageConverter.toResp(page.convert(this::toResp));
     }
 
+    /** 查询指定系统公告，不存在时抛出业务异常。 */
     @Override
     @Cacheable(key = "'detail:'+#id")
     public SysNoticeResp getOrThrow(Long id) {
         return toResp(getByIdOrThrow(id));
     }
 
+    /** 创建系统公告。 */
     @Override
     @Transactional
     public void create(SysNoticeCreateReq req) {
@@ -116,6 +120,7 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
         }
     }
 
+    /** 更新指定系统公告。 */
     @Override
     @Transactional
     @CacheEvict(key = "'detail:'+#id")
@@ -130,6 +135,7 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
         updateById(entity);
     }
 
+    /** 更新指定系统公告的状态。 */
     @Override
     @Transactional
     @CacheEvict(key = "'detail:'+#id")
@@ -154,6 +160,7 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
         }
     }
 
+    /** 更新系统公告的置顶状态。 */
     @Override
     @CacheEvict(key = "'detail:'+#id")
     public void updatePinned(Long id, Integer isPinned) {
@@ -162,6 +169,7 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
         updateById(entity);
     }
 
+    /** 删除指定系统公告。 */
     @Override
     @Transactional
     @CacheEvict(key = "'detail:'+#id")
@@ -175,6 +183,7 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
         removeById(id);
     }
 
+    /** 将系统公告转换为消息发布请求。 */
     private SysSourceMessagePublishReq toMessageRequest(SysNotice notice) {
         var req = new SysSourceMessagePublishReq();
         req.setMessageType(SysMessageType.NOTICE.getValue());
@@ -187,6 +196,7 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
         return req;
     }
 
+    /** 将系统公告实体转换并补充为响应对象。 */
     private SysNoticeResp toResp(SysNotice entity) {
         var resp = converter.toResp(entity);
         resp.setContent(fileApi.resolveManagedImageSources(resp.getContent()));

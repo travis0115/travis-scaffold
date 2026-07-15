@@ -61,10 +61,12 @@ public class SysOperationLogServiceImpl extends ServiceImplX<SysOperationLogMapp
         return PageConverter.toResp(page.convert(converter::toResp));
     }
 
+    /** 规范化 HTTP 请求方法。 */
     private String normalizeRequestMethod(String requestMethod) {
         return requestMethod == null ? null : requestMethod.trim().toUpperCase(Locale.ROOT);
     }
 
+    /** 创建操作日志。 */
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void create(SysOperationLog operationLog) {

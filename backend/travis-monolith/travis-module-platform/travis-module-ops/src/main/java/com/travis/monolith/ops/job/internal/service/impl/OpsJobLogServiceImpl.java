@@ -64,6 +64,7 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
     private final OpsJobService jobService;
     private final OpsJobConverter converter;
 
+    /** 分页查询定时任务执行日志。 */
     @Override
     public PageResp<OpsJobLogPageResp> page(OpsJobLogPageReq req) {
         Page<OpsJobLog> page =
@@ -79,6 +80,7 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
         return PageConverter.toResp(page.convert(converter::toLogPageResp));
     }
 
+    /** 查询指定定时任务执行日志，不存在时抛出业务异常。 */
     @Override
     @Cacheable(key = "'detail:'+#id")
     public OpsJobLogDetailResp getOrThrow(Long id) {
@@ -89,6 +91,7 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
         return converter.toLogDetailResp(log);
     }
 
+    /** 按筛选条件导出定时任务执行日志。 */
     @Override
     public List<OpsJobLogExportResp> exportLogs(OpsJobLogPageReq req) {
         return list(buildWrapper(req).orderByDesc(OpsJobLog::getCreateTime)).stream()
@@ -96,6 +99,7 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
                 .toList();
     }
 
+    /** 清理指定定时任务执行日志。 */
     @Override
     @Transactional
     @CacheEvict(allEntries = true)
@@ -108,6 +112,7 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
         invalidateStats(jobId);
     }
 
+    /** 清理过期的定时任务执行日志。 */
     @Override
     @Transactional
     @CacheEvict(allEntries = true)
@@ -121,6 +126,7 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
         }
     }
 
+    /** 统计定时任务执行日志执行情况。 */
     @Override
     public OpsJobStatsResp stats(Long jobId) {
         String key = STATS_KEY_PREFIX + jobId;
@@ -138,6 +144,7 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
         return stats;
     }
 
+    /** 汇总定时任务仪表盘数据。 */
     @Override
     public OpsJobDashboardResp dashboard() {
         Object cached = getCache(DASHBOARD_KEY);
@@ -168,12 +175,14 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
         return response;
     }
 
+    /** 保存定时任务执行日志。 */
     @Override
     public void saveExecution(OpsJobLog log) {
         super.save(log);
         invalidateStats(log.getJobId());
     }
 
+    /** 更新定时任务执行结果。 */
     @Override
     @CacheEvict(key = "'detail:'+#log.id")
     public void updateExecution(OpsJobLog log) {
@@ -181,6 +190,7 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
         invalidateStats(log.getJobId());
     }
 
+    /** 清除指定任务的执行统计缓存。 */
     @Override
     public void invalidateStats(Long jobId) {
         try {
@@ -195,6 +205,7 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
         }
     }
 
+    /** 读取定时任务统计缓存。 */
     private Object getCache(String key) {
         try {
             return RedisUtil.get(key);
@@ -204,6 +215,7 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
         }
     }
 
+    /** 写入定时任务统计缓存。 */
     private void setCache(String key, Object value) {
         try {
             RedisUtil.set(key, JsonUtil.toJsonString(value), CACHE_MILLIS);
@@ -212,6 +224,7 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
         }
     }
 
+    /** 根据查询条件构建定时任务执行日志查询条件。 */
     private LambdaQueryWrapperX<OpsJobLog> buildWrapper(OpsJobLogPageReq req) {
         return new LambdaQueryWrapperX<OpsJobLog>()
                 .eqIfPresent(OpsJobLog::getJobId, req.getJobId())
@@ -221,6 +234,7 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
                 .leIfPresent(OpsJobLog::getCreateTime, req.getEndTime());
     }
 
+    /** 根据执行日志计算任务统计结果。 */
     private OpsJobStatsResp calculateStats(List<OpsJobLog> logs) {
         long total = logs.size();
         long success =

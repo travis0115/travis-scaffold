@@ -58,6 +58,7 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
                     "createTime",
                     SysVersion::getCreateTime);
 
+    /** 分页查询版本。 */
     @Override
     public PageResp<SysVersionResp> page(SysVersionPageReq req) {
         var wrapper =
@@ -85,12 +86,14 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
         return PageConverter.toResp(page.convert(this::toResp));
     }
 
+    /** 查询指定版本详情，不存在时抛出业务异常。 */
     @Override
     @Cacheable(key = "'detail:'+#id")
     public SysVersionResp getDetailByIdOrThrow(Long id) {
         return toResp(getByIdOrThrow(id));
     }
 
+    /** 创建版本。 */
     @Override
     @Transactional
     public void create(SysVersionCreateReq req) {
@@ -116,6 +119,7 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
         }
     }
 
+    /** 更新指定版本。 */
     @Override
     @Transactional
     @CacheEvict(key = "'detail:'+#id")
@@ -138,6 +142,7 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
         }
     }
 
+    /** 更新指定版本的状态。 */
     @Override
     @Transactional
     @CacheEvict(key = "'detail:'+#id")
@@ -156,6 +161,7 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
         }
     }
 
+    /** 分页查询已发布的系统公告。 */
     @Override
     public PageResp<SysVersionResp> pagePublished(PageRequest req) {
         var wrapper = new LambdaQueryWrapperX<SysVersion>();
@@ -167,6 +173,7 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
         return PageConverter.toResp(page.convert(this::toResp));
     }
 
+    /** 根据 ID 删除指定版本。 */
     @Override
     @Transactional
     @CacheEvict(key = "'detail:'+#id")
@@ -177,6 +184,7 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
         removeById(id);
     }
 
+    /** 将版本转换为消息发布请求。 */
     private SysSourceMessagePublishReq toMessageRequest(SysVersion version) {
         var req = new SysSourceMessagePublishReq();
         req.setMessageType(SysMessageType.VERSION_UPDATE.getValue());
@@ -189,6 +197,7 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
         return req;
     }
 
+    /** 将版本实体转换并补充为响应对象。 */
     private SysVersionResp toResp(SysVersion entity) {
         var resp = converter.toResp(entity);
         resp.setContent(fileApi.resolveManagedImageSources(resp.getContent()));

@@ -41,6 +41,7 @@ public class SysConfigServiceImpl extends ServiceImplX<SysConfigMapper, SysConfi
     private final SysConfigConverter converter;
     private final BuiltinResourceGuard builtinResourceGuard;
 
+    /** 分页查询系统配置。 */
     @Override
     public PageResp<SysConfigResp> page(SysConfigPageReq req) {
         var wrapper =
@@ -56,12 +57,14 @@ public class SysConfigServiceImpl extends ServiceImplX<SysConfigMapper, SysConfi
         return PageConverter.toResp(page.convert(converter::toResp));
     }
 
+    /** 查询指定系统配置详情，不存在时抛出业务异常。 */
     @Override
     @Cacheable(key = "'detail:id:'+#id")
     public SysConfigResp getDetailByIdOrThrow(Long id) {
         return converter.toResp(getByIdOrThrow(id));
     }
 
+    /** 根据配置键查询系统配置，不存在时抛出业务异常。 */
     @Override
     @Cacheable(key = "'detail:key:'+#configKey")
     public SysConfigResp getByKeyOrThrow(String configKey) {
@@ -72,6 +75,7 @@ public class SysConfigServiceImpl extends ServiceImplX<SysConfigMapper, SysConfi
         return converter.toResp(config);
     }
 
+    /** 创建系统配置。 */
     @Override
     @Transactional
     public void create(SysConfigCreateReq req) {
@@ -86,6 +90,7 @@ public class SysConfigServiceImpl extends ServiceImplX<SysConfigMapper, SysConfi
         save(entity);
     }
 
+    /** 更新指定系统配置。 */
     @Override
     @Transactional
     @CacheEvict(key = "'detail:id:'+#id")
@@ -97,6 +102,7 @@ public class SysConfigServiceImpl extends ServiceImplX<SysConfigMapper, SysConfi
         RedisUtil.deleteCacheKey("system:config", "detail:key:" + entity.getConfigKey());
     }
 
+    /** 根据 ID 删除指定系统配置。 */
     @Override
     @Transactional
     @CacheEvict(key = "'detail:id:'+#id")
@@ -107,6 +113,7 @@ public class SysConfigServiceImpl extends ServiceImplX<SysConfigMapper, SysConfi
         RedisUtil.deleteCacheKey("system:config", "detail:key:" + entity.getConfigKey());
     }
 
+    /** 校验系统配置是否允许删除。 */
     private void checkDeletable(SysConfig entity) {
         if (Integer.valueOf(1).equals(entity.getIsBuiltin())) {
             throw new BizException(SystemErrorCode.CONFIG_BUILTIN_NOT_DELETABLE);

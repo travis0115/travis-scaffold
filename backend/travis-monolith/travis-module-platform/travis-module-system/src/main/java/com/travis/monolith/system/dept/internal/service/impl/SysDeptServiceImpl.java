@@ -81,6 +81,7 @@ public class SysDeptServiceImpl extends ServiceImplX<SysDeptMapper, SysDept>
         return dept.getDeptName();
     }
 
+    /** 判断指定 ID 集合中是否存在部门。 */
     @Override
     public boolean existsAnyByIds(Collection<Long> deptIds) {
         return deptIds != null
@@ -88,6 +89,7 @@ public class SysDeptServiceImpl extends ServiceImplX<SysDeptMapper, SysDept>
                 && lambdaQuery().in(SysDept::getId, deptIds).exists();
     }
 
+    /** 查询指定部门及其全部下级部门 ID。 */
     @Override
     public List<Long> listSelfAndDescendantIds(Long deptId) {
         if (deptId == null) {

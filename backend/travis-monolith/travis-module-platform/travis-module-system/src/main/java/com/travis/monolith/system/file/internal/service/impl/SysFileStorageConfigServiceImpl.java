@@ -36,6 +36,7 @@ public class SysFileStorageConfigServiceImpl
 
     private final SysFileStorageConfigConverter converter;
 
+    /** 分页查询文件存储配置。 */
     @Override
     public PageResp<SysFileStorageConfigResp> page(SysFileStorageConfigPageReq req) {
         var wrapper =
@@ -46,6 +47,7 @@ public class SysFileStorageConfigServiceImpl
                 page(req.getPageNum(), req.getPageSize(), wrapper).convert(converter::toResp));
     }
 
+    /** 查询全部文件存储配置。 */
     @Override
     @Cacheable(key = "'list:all'")
     public List<SysFileStorageConfigResp> listAll() {
@@ -56,12 +58,14 @@ public class SysFileStorageConfigServiceImpl
                                 .orderByAsc(SysFileStorageConfig::getCreateTime)));
     }
 
+    /** 查询指定文件存储配置，不存在时抛出业务异常。 */
     @Override
     @Cacheable(key = "'detail:' + #id")
     public SysFileStorageConfigResp getOrThrow(Long id) {
         return converter.toResp(getByIdOrThrow(id));
     }
 
+    /** 查询默认文件存储配置，不存在时抛出业务异常。 */
     @Override
     @Cacheable(key = "'detail:default'")
     public SysFileStorageConfigResp getDefaultOrThrow() {
@@ -72,6 +76,7 @@ public class SysFileStorageConfigServiceImpl
                                 .eq(SysFileStorageConfig::getIsDefault, IsDefault.YES.getValue())));
     }
 
+    /** 查询已启用的本地文件存储配置。 */
     @Override
     @Cacheable(key = "'list:local-enabled'")
     public List<SysFileStorageConfig> listEnabledLocalConfigs() {
@@ -83,6 +88,7 @@ public class SysFileStorageConfigServiceImpl
                         .orderByAsc(SysFileStorageConfig::getCreateTime));
     }
 
+    /** 创建文件存储配置。 */
     @Override
     @Transactional
     @Caching(
@@ -96,6 +102,7 @@ public class SysFileStorageConfigServiceImpl
         save(converter.toEntity(req));
     }
 
+    /** 更新指定文件存储配置。 */
     @Override
     @Transactional
     @Caching(
@@ -115,6 +122,7 @@ public class SysFileStorageConfigServiceImpl
         updateById(entity);
     }
 
+    /** 更新指定文件存储配置的状态。 */
     @Override
     @Transactional
     @Caching(
@@ -132,6 +140,7 @@ public class SysFileStorageConfigServiceImpl
         updateById(entity);
     }
 
+    /** 将指定文件存储配置设为默认配置。 */
     @Override
     @Transactional
     @Caching(
@@ -147,6 +156,7 @@ public class SysFileStorageConfigServiceImpl
         updateById(entity);
     }
 
+    /** 根据 ID 删除指定文件存储配置。 */
     @Override
     @Transactional
     @Caching(
@@ -165,6 +175,7 @@ public class SysFileStorageConfigServiceImpl
         removeById(id);
     }
 
+    /** 按需取消原默认文件存储配置。 */
     private void resetDefault(Integer isDefault) {
         if (IsDefault.YES.getValue().equals(isDefault)) {
             lambdaUpdate()
@@ -174,6 +185,7 @@ public class SysFileStorageConfigServiceImpl
         }
     }
 
+    /** 校验默认文件存储配置必须处于启用状态。 */
     private void validateDefaultEnabled(Integer isDefault, Integer status) {
         if (IsDefault.YES.getValue().equals(isDefault)
                 && Status.DISABLED.getValue().equals(status)) {

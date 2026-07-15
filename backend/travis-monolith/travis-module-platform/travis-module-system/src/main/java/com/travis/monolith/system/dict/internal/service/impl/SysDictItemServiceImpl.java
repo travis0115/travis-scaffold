@@ -47,6 +47,7 @@ public class SysDictItemServiceImpl extends ServiceImplX<SysDictItemMapper, SysD
         return PageConverter.toResp(page);
     }
 
+    /** 查询全部启用的字典项。 */
     @Override
     @Cacheable(key = "'list:enabled'")
     public List<SysDictItem> listEnabled() {
@@ -56,6 +57,7 @@ public class SysDictItemServiceImpl extends ServiceImplX<SysDictItemMapper, SysD
                         .orderByAsc(SysDictItem::getSort));
     }
 
+    /** 查询指定字典下的字典项。 */
     @Override
     @Cacheable(key = "'list:' + #dictId")
     public List<SysDictItemResp> listItemByDictId(Long dictId) {

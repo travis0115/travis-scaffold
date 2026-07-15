@@ -43,6 +43,7 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
                     Map.entry("size", SysFile::getSize),
                     Map.entry("createTime", SysFile::getCreateTime));
 
+    /** 上传文件并保存文件元数据。 */
     @Override
     public FileUploadResp upload(
             MultipartFile file, Long folderId, String uploaderType, String uploaderName) {
@@ -79,6 +80,7 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
                 .build();
     }
 
+    /** 分页查询文件。 */
     @Override
     public PageResp<SysFileResp> page(SysFilePageReq req) {
         var wrapper =
@@ -112,6 +114,7 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
                         file -> toResp(file, storageConfigMap.get(file.getStorageConfigId()))));
     }
 
+    /** 根据文件 ID 生成可访问地址。 */
     @Override
     public String getFileUrlById(Long fileId) {
         if (fileId == null) {
@@ -126,6 +129,7 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
         return buildUrl(config, file.getPath());
     }
 
+    /** 更新指定上传主体的文件展示名称。 */
     @Override
     public void updateUploaderName(String uploaderType, Long uploaderId, String uploaderName) {
         if (uploaderType == null || uploaderType.isBlank() || uploaderId == null) {
@@ -138,10 +142,12 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
                 .update();
     }
 
+    /** 拼接文件访问地址。 */
     private String buildUrl(String domain, String path) {
         return domain == null || domain.isBlank() ? path : domain.replaceAll("/+$", "") + path;
     }
 
+    /** 提取文件扩展名。 */
     private String extension(String filename) {
         if (filename == null || !filename.contains(".")) {
             return "";
@@ -149,6 +155,7 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
         return filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
     }
 
+    /** 将文件实体转换并补充为响应对象。 */
     private SysFileResp toResp(SysFile file, SysFileStorageConfigResp storageConfig) {
         var response = converter.toResp(file);
         response.setUrl(
@@ -160,6 +167,7 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
         return response;
     }
 
+    /** 拼接文件访问地址。 */
     private String buildUrl(SysFileStorageConfigResp config, String path) {
         return config == null ? path : buildUrl(config.getDomain(), path);
     }

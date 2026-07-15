@@ -26,12 +26,6 @@ import com.travis.monolith.system.message.internal.mapper.SysMessageReceiverMapp
 import com.travis.monolith.system.message.internal.service.SysMessageReceiverService;
 import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.api.SysUserApi;
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +33,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /** 消息接收记录服务实现。 */
 @Service
@@ -70,6 +69,7 @@ public class SysMessageReceiverServiceImpl
         this.sourceContentProviders = sourceContentProviders;
     }
 
+    /** 查询用户最近可见的消息。 */
     @Override
     public List<SysUserMessageResp> listRecent(String receiverType, Long userId, Integer limit) {
         int actualLimit = limit == null || limit <= 0 ? 10 : Math.min(limit, 50);
@@ -92,6 +92,7 @@ public class SysMessageReceiverServiceImpl
                 .toList();
     }
 
+    /** 分页查询消息收件状态。 */
     @Override
     public PageResp<SysUserMessageResp> page(
             String receiverType, Long userId, SysUserMessagePageReq req) {
@@ -118,6 +119,7 @@ public class SysMessageReceiverServiceImpl
         return PageConverter.toResp(responsePage);
     }
 
+    /** 查询指定消息收件状态，不存在时抛出业务异常。 */
     @Override
     public SysUserMessageResp getOrThrow(String receiverType, Long userId, Long id) {
         ensureVisible(receiverType, userId, id);
@@ -143,6 +145,7 @@ public class SysMessageReceiverServiceImpl
         return resp;
     }
 
+    /** 统计用户未读消息数量。 */
     @Override
     public Long countUnread(String receiverType, Long userId) {
         var context = audienceContext(receiverType, userId);
@@ -150,6 +153,7 @@ public class SysMessageReceiverServiceImpl
                 userId, receiverType, context.roleIds(), context.deptId());
     }
 
+    /** 将指定消息标记为已读。 */
     @Override
     @Transactional
     public void markRead(String receiverType, Long userId, Long id) {
@@ -157,6 +161,7 @@ public class SysMessageReceiverServiceImpl
         upsertState(receiverType, userId, id, SysMessageReadStatus.READ.getValue());
     }
 
+    /** 将用户全部可见消息标记为已读。 */
     @Override
     @Transactional
     public void markAllRead(String receiverType, Long userId) {
@@ -171,6 +176,7 @@ public class SysMessageReceiverServiceImpl
         batchUpsertStates(receiverType, userId, messageIds, SysMessageReadStatus.READ.getValue());
     }
 
+    /** 删除指定消息收件状态。 */
     @Override
     @Transactional
     public void delete(String receiverType, Long userId, Long id) {
@@ -179,6 +185,7 @@ public class SysMessageReceiverServiceImpl
         notifyInboxChanged();
     }
 
+    /** 清空指定范围内的消息收件状态。 */
     @Override
     @Transactional
     public void clear(String receiverType, Long userId) {
@@ -190,12 +197,14 @@ public class SysMessageReceiverServiceImpl
                 receiverType, userId, messageIds, SysMessageReadStatus.DELETED.getValue());
     }
 
+    /** 删除指定消息的全部收件状态。 */
     @Override
     @Transactional
     public void deleteByMessageId(Long messageId) {
         baseMapper.deleteByMessageId(messageId);
     }
 
+    /** 重置指定消息的用户已读状态。 */
     @Override
     @Transactional
     public void resetReadStatus(Long messageId) {
@@ -208,12 +217,14 @@ public class SysMessageReceiverServiceImpl
                         .set(SysMessageReceiver::getReadTime, null));
     }
 
+    /** 构建用户消息收件状态的基础查询条件。 */
     private LambdaQueryWrapperX<SysMessageReceiver> baseWrapper(String receiverType, Long userId) {
         return new LambdaQueryWrapperX<SysMessageReceiver>()
                 .eq(SysMessageReceiver::getReceiverType, receiverType)
                 .eq(SysMessageReceiver::getReceiverId, userId);
     }
 
+    /** 按消息 ID 组织用户收件状态。 */
     private Map<Long, SysMessageReceiver> stateMap(
             String receiverType, Long userId, List<SysMessage> messages) {
         if (messages.isEmpty()) {
@@ -227,6 +238,7 @@ public class SysMessageReceiverServiceImpl
                 .collect(Collectors.toMap(SysMessageReceiver::getMessageId, Function.identity()));
     }
 
+    /** 将消息及收件状态转换为用户消息响应。 */
     private List<MessageWithState> toResponses(
             List<SysMessage> messages, Map<Long, SysMessageReceiver> stateMap) {
         return messages.stream()
@@ -234,6 +246,7 @@ public class SysMessageReceiverServiceImpl
                 .toList();
     }
 
+    /** 校验指定消息对当前用户可见。 */
     private void ensureVisible(String receiverType, Long userId, Long messageId) {
         var message = baseMapper.selectMessageById(messageId);
         if (message == null
@@ -250,6 +263,7 @@ public class SysMessageReceiverServiceImpl
         }
     }
 
+    /** 判断消息接收范围是否匹配当前用户。 */
     private boolean matchesAudience(String receiverType, Long userId, SysMessage message) {
         if (!receiverType.equals(message.getReceiverType())) {
             return false;
@@ -271,6 +285,7 @@ public class SysMessageReceiverServiceImpl
                 .orElse(false);
     }
 
+    /** 新增或更新单条用户消息收件状态。 */
     private void upsertState(String receiverType, Long userId, Long messageId, Integer readStatus) {
         var state = getState(receiverType, userId, messageId);
         if (state == null) {
@@ -287,6 +302,7 @@ public class SysMessageReceiverServiceImpl
         saveOrUpdate(state);
     }
 
+    /** 批量新增或更新用户消息收件状态。 */
     private void batchUpsertStates(
             String receiverType, Long userId, List<Long> messageIds, Integer readStatus) {
         for (int fromIndex = 0; fromIndex < messageIds.size(); fromIndex += STATE_BATCH_SIZE) {
@@ -328,12 +344,14 @@ public class SysMessageReceiverServiceImpl
         }
     }
 
+    /** 查询用户对指定消息的收件状态。 */
     private SysMessageReceiver getState(String receiverType, Long userId, Long messageId) {
         return getOne(
                 baseWrapper(receiverType, userId).eq(SysMessageReceiver::getMessageId, messageId),
                 false);
     }
 
+    /** 查询用户的角色和部门接收范围上下文。 */
     private AudienceContext audienceContext(String receiverType, Long userId) {
         if (!LoginType.ADMIN.equals(receiverType)) {
             return new AudienceContext(List.of(), null);
@@ -342,6 +360,7 @@ public class SysMessageReceiverServiceImpl
                 roleApi.getRoleIdsByUserId(userId), userApi.getDeptIdByUserId(userId));
     }
 
+    /** 解析消息接收对象 ID 列表。 */
     private List<Long> parseReceiverValues(String receiverValues) {
         if (receiverValues == null || receiverValues.isBlank()) {
             return List.of();
@@ -349,6 +368,7 @@ public class SysMessageReceiverServiceImpl
         return JsonUtil.parseArray(receiverValues, Long.class);
     }
 
+    /** 在事务提交后通过 WebSocket 通知收件箱发生变化。 */
     private void notifyInboxChanged() {
         Runnable sender =
                 () ->
