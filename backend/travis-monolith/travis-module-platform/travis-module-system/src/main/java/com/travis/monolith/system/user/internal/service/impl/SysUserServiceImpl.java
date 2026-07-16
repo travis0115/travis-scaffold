@@ -132,15 +132,6 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         return list().stream().map(SysUser::getId).toList();
     }
 
-    /** 根据部门ID查询用户ID列表 */
-    @Override
-    @Cacheable(key = "'list:id:dept:'+#deptId")
-    public List<Long> listUserIdsByDeptId(Long deptId) {
-        return list(new LambdaQueryWrapperX<SysUser>().eq(SysUser::getDeptId, deptId)).stream()
-                .map(SysUser::getId)
-                .toList();
-    }
-
     /** 新增用户，密码使用 BCrypt 加密存储 */
     @Override
     @Transactional
@@ -225,23 +216,6 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         roleApi.deleteUserRolesByUserId(id);
         // 使用户会话失效
         StpKit.of(LoginType.ADMIN).logout(id);
-    }
-
-    /**
-     * 重置用户部门为0
-     *
-     * @param id 用户ID
-     */
-    @Override
-    @Transactional
-    @CacheEvict(key = "'detail:'+#id")
-    public void resetDept(Long id) {
-        var user = getByIdOrThrow(id);
-        var originalDeptId = user.getDeptId();
-        user.setDeptId(0L);
-        updateById(user);
-        RedisUtil.deleteCacheKey(
-                "system:user", "list:id:dept:" + originalDeptId, "list:id:dept:" + 0L);
     }
 
     /** 批量重置指定部门下的用户部门归属 */

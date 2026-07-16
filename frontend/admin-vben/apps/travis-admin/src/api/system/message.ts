@@ -13,7 +13,6 @@ export namespace SystemMessageApi {
     channel?: string;
     content: string;
     id: number;
-    hasTemplate: boolean;
     jumpUrl?: string;
     messageType: number;
     pushType: number;
@@ -77,10 +76,6 @@ const createMessage = (data: Partial<SystemMessageApi.Message>) =>
   requestClient.post('/system/message', data);
 const updateMessage = (id: number, data: Partial<SystemMessageApi.Message>) =>
   requestClient.put(`/system/message/${id}`, data);
-const updateMessageStatus = (id: number, status: number) =>
-  requestClient.put(`/system/message/${id}/status`, undefined, {
-    params: { status },
-  });
 const deleteMessage = (id: number) =>
   requestClient.delete(`/system/message/${id}`);
 const pushMessage = (id: number) =>
@@ -147,10 +142,8 @@ const markAllMessagesRead = () =>
   requestClient.put('/system/message/inbox/read-all');
 const deleteInboxMessage = (id: number | string) =>
   requestClient.delete(`/system/message/inbox/${id}`);
-const clearMessages = () => requestClient.delete('/system/message/inbox/clear');
 
 export {
-  clearMessages,
   createMessage,
   createMessageTemplate,
   deleteInboxMessage,
@@ -168,7 +161,6 @@ export {
   pushMessage,
   revokeMessage,
   updateMessage,
-  updateMessageStatus,
   updateMessageTemplate,
   uploadMessageImage,
 };

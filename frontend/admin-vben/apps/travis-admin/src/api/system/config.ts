@@ -28,15 +28,6 @@ async function getConfigList(params: Recordable<any>) {
 }
 
 /**
- * 获取配置详情
- */
-async function getConfigDetail(id: string) {
-  return requestClient.get<SystemConfigApi.SystemConfig>(
-    `/system/config/${id}`,
-  );
-}
-
-/**
  * 创建配置
  */
 async function createConfig(
@@ -65,7 +56,6 @@ async function deleteConfig(id: string) {
 export {
   createConfig,
   deleteConfig,
-  getConfigDetail,
   getConfigList,
   updateConfig,
 };

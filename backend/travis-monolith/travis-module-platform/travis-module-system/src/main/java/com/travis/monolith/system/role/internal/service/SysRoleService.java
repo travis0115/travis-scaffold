@@ -132,7 +132,4 @@ public interface SysRoleService extends IService<SysRole> {
      * @param roleIds 角色ID列表
      */
     void assignUserRoles(Long userId, List<Long> roleIds);
-
-    /** 根据角色ID获取关联的用户ID列表 */
-    List<Long> getUserIdsByRoleId(Long roleId);
 }

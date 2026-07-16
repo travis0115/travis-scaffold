@@ -85,15 +85,4 @@ public class SysRoleApiImpl implements SysRoleApi {
     public void removeMenuRelations(List<Long> menuIds) {
         roleService.removeMenuRelations(menuIds);
     }
-
-    @Override
-    public List<Long> getUserIdsByRoleIds(List<Long> roleIds) {
-        if (roleIds == null || roleIds.isEmpty()) {
-            return List.of();
-        }
-        return roleIds.stream()
-                .flatMap(roleId -> roleService.getUserIdsByRoleId(roleId).stream())
-                .distinct()
-                .toList();
-    }
 }

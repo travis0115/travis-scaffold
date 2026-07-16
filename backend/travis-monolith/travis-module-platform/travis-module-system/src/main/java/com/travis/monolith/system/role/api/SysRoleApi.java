@@ -88,7 +88,4 @@ public interface SysRoleApi {
      * @param menuIds 菜单ID列表
      */
     void removeMenuRelations(List<Long> menuIds);
-
-    /** 根据角色ID查询关联用户ID。 */
-    List<Long> getUserIdsByRoleIds(List<Long> roleIds);
 }

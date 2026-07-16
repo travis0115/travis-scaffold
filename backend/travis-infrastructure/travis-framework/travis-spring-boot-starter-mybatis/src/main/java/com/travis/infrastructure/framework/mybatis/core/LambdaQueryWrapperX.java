@@ -4,10 +4,11 @@ import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
+import org.springframework.util.StringUtils;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import org.springframework.util.StringUtils;
 
 /**
  * 拓展 MyBatis Plus QueryWrapper 类，主要增加如下功能：
@@ -140,6 +141,18 @@ public class LambdaQueryWrapperX<T> extends LambdaQueryWrapper<T> {
     @Override
     public LambdaQueryWrapperX<T> eq(SFunction<T, ?> column, Object val) {
         super.eq(column, val);
+        return this;
+    }
+
+    @Override
+    public LambdaQueryWrapperX<T> ne(boolean condition, SFunction<T, ?> column, Object val) {
+        super.ne(condition, column, val);
+        return this;
+    }
+
+    @Override
+    public LambdaQueryWrapperX<T> ne(SFunction<T, ?> column, Object val) {
+        super.ne(column, val);
         return this;
     }
 

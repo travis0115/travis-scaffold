@@ -34,9 +34,6 @@ public interface SysUserService extends IService<SysUser> {
     /** 获取所有启用用户列表（不分页） */
     List<Long> listUserIds();
 
-    /** 根据部门ID获取用户ID列表 */
-    List<Long> listUserIdsByDeptId(Long deptId);
-
     /**
      * 新增用户
      *
@@ -62,13 +59,6 @@ public interface SysUserService extends IService<SysUser> {
      * @param id 用户ID
      */
     void deleteById(Long id);
-
-    /**
-     * 重置用户部门归属
-     *
-     * @param id 用户ID
-     */
-    void resetDept(Long id);
 
     /**
      * 批量重置指定部门下的用户部门归属

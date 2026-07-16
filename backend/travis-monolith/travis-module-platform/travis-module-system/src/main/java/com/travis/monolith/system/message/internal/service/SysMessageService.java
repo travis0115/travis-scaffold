@@ -23,9 +23,6 @@ public interface SysMessageService extends IService<SysMessage> {
     /** 更新未发布消息。 */
     void update(Long id, SysMessageUpdateReq req);
 
-    /** 更新消息状态。 */
-    void updateStatus(Long id, Integer status);
-
     /** 手动推送指定消息。 */
     void push(Long id);
 

@@ -71,14 +71,13 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         var wrapper = new LambdaQueryWrapperX<SysMessage>();
         wrapper.likeIfPresent(SysMessage::getTitle, req.getTitle())
                 .eqIfPresent(SysMessage::getPushType, req.getPushType())
-                .eqIfPresent(SysMessage::getStatus, req.getStatus());
-        wrapper.eq(SysMessage::getSourceType, SysMessageSourceType.MANUAL.getValue())
+                .eqIfPresent(SysMessage::getStatus, req.getStatus())
+                .eq(SysMessage::getSourceType, SysMessageSourceType.MANUAL.getValue())
                 .ne(SysMessage::getPushType, SysMessagePushType.AUTO.getValue())
                 .orderByDesc(SysMessage::getCreateTime);
         Page<SysMessage> page = page(req.getPageNum(), req.getPageSize(), wrapper);
-        var resp = PageConverter.toResp(page.convert(converter::toResp));
-        resp.getRecords().forEach(item -> item.setHasTemplate(item.getTemplateId() != null));
-        return resp;
+        page.getRecords().forEach(record -> record.setContent(null));
+        return PageConverter.toResp(page.convert(converter::toResp));
     }
 
     /** 查询指定消息，不存在时抛出业务异常。 */
@@ -86,7 +85,6 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     public SysMessageResp getOrThrow(Long id) {
         var resp = converter.toResp(getByIdOrThrow(id));
         resp.setContent(fileApi.resolveManagedImageSources(resp.getContent()));
-        resp.setHasTemplate(resp.getTemplateId() != null);
         return resp;
     }
 
@@ -100,9 +98,8 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         validatePush(req.getPushType(), req.getPublishTime());
         var entity = converter.toEntity(req);
         entity.setMessageType(SysMessageType.SYSTEM.getValue());
-        entity.setChannel(req.getChannel());
         entity.setSourceType(SysMessageSourceType.MANUAL.getValue());
-        entity.setStatus(initialStatus());
+        entity.setStatus(SysMessageStatus.PENDING.getValue());
         if (SysMessagePushType.MANUAL.getValue().equals(req.getPushType())) {
             entity.setPublishTime(null);
         }
@@ -110,26 +107,6 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         entity.setContent(fileApi.stripManagedImageSources(entity.getContent()));
         save(entity);
         return entity.getId();
-    }
-
-    /** 更新指定消息的状态。 */
-    @Override
-    @Transactional
-    @Caching(
-            evict = {
-                @CacheEvict(key = "'detail:'+#id"),
-                @CacheEvict(cacheNames = "system:message:inbox", allEntries = true)
-            })
-    public void updateStatus(Long id, Integer status) {
-        if (SysMessageStatus.SENT.getValue().equals(status)) {
-            push(id);
-            return;
-        }
-        if (SysMessageStatus.REVOKED.getValue().equals(status)) {
-            revoke(id);
-            return;
-        }
-        throw new BizException(CommonErrorCode.BAD_REQUEST);
     }
 
     /** 更新指定消息。 */
@@ -151,10 +128,9 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
         converter.update(req, entity);
         entity.setMessageType(SysMessageType.SYSTEM.getValue());
-        entity.setChannel(req.getChannel());
         entity.setSourceType(SysMessageSourceType.MANUAL.getValue());
         if (!SysMessageStatus.REVOKED.getValue().equals(entity.getStatus())) {
-            entity.setStatus(initialStatus());
+            entity.setStatus(SysMessageStatus.PENDING.getValue());
         }
         if (SysMessagePushType.MANUAL.getValue().equals(req.getPushType())) {
             entity.setPublishTime(null);
@@ -469,11 +445,6 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         if (SysMessagePushType.SCHEDULED.getValue().equals(pushType) && publishTime == null) {
             throw new BizException(CommonErrorCode.BAD_REQUEST);
         }
-    }
-
-    /** 返回新建消息的初始状态。 */
-    private int initialStatus() {
-        return SysMessageStatus.PENDING.getValue();
     }
 
     /** 判断消息是否应出现在站内收件箱。 */

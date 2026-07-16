@@ -313,22 +313,6 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
                 .collect(Collectors.toList());
     }
 
-    /** 查询指定角色下的用户 ID。 */
-    @Override
-    @Cacheable(value = "system:user-role", key = "'user-ids:'+#roleId")
-    public List<Long> getUserIdsByRoleId(Long roleId) {
-        if (roleId == null) {
-            return List.of();
-        }
-        return userRoleMapper
-                .selectList(
-                        new LambdaQueryWrapperX<SysUserRole>().eq(SysUserRole::getRoleId, roleId))
-                .stream()
-                .map(SysUserRole::getUserId)
-                .distinct()
-                .toList();
-    }
-
     /** 删除指定用户的所有角色关联 */
     @Override
     @Transactional

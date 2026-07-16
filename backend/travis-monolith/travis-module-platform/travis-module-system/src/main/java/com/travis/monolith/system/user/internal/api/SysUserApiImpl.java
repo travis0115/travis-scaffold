@@ -27,16 +27,6 @@ public class SysUserApiImpl implements SysUserApi {
     }
 
     @Override
-    public List<Long> listUserIdsByDeptIds(Collection<Long> deptIds) {
-        if (deptIds == null || deptIds.isEmpty()) {
-            return List.of();
-        }
-        var userIdList = new ArrayList<Long>();
-        deptIds.forEach(id -> userIdList.addAll(userService.listUserIdsByDeptId(id)));
-        return userIdList;
-    }
-
-    @Override
     public Long getDeptIdByUserId(Long userId) {
         if (userId == null) {
             return null;

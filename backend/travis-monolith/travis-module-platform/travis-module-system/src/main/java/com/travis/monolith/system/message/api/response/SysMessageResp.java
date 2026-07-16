@@ -19,9 +19,6 @@ public class SysMessageResp {
     /** 消息类型。 */
     private Integer messageType;
 
-    /** 是否关联消息模板。 */
-    private Boolean hasTemplate;
-
     /** 推送方式。 */
     private Integer pushType;
 

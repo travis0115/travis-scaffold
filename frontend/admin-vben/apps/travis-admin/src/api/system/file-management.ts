@@ -99,10 +99,6 @@ const updateStorageConfig = (
   id: number | string,
   data: Partial<SystemFileApi.StorageConfig>,
 ) => requestClient.put(`/system/file/storage/${id}`, data);
-const updateStorageConfigStatus = (id: number | string, status: number) =>
-  requestClient.put(`/system/file/storage/${id}/status`, undefined, {
-    params: { status },
-  });
 const setDefaultStorageConfig = (id: number | string) =>
   requestClient.put(`/system/file/storage/${id}/default`);
 const deleteStorageConfig = (id: number | string) =>
@@ -124,5 +120,4 @@ export {
   setDefaultStorageConfig,
   updateFileFolder,
   updateStorageConfig,
-  updateStorageConfigStatus,
 };
