@@ -11,12 +11,14 @@ import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.websocket.core.message.WebSocketMessage;
+import com.travis.infrastructure.framework.websocket.core.message.WebSocketSender;
 import com.travis.infrastructure.framework.websocket.core.sender.WebSocketMessageSender;
 import com.travis.monolith.system.file.api.SysFileApi;
 import com.travis.monolith.system.message.api.SysMessageSourceContentProvider;
 import com.travis.monolith.system.message.api.enums.SysMessageReadStatus;
 import com.travis.monolith.system.message.api.enums.SysMessageReceiverScope;
 import com.travis.monolith.system.message.api.enums.SysMessageStatus;
+import com.travis.monolith.system.message.api.enums.SysMessageWebSocketEvent;
 import com.travis.monolith.system.message.api.request.SysUserMessagePageReq;
 import com.travis.monolith.system.message.api.response.SysUserMessageResp;
 import com.travis.monolith.system.message.internal.converter.SysMessageReceiverConverter;
@@ -374,7 +376,8 @@ public class SysMessageReceiverServiceImpl
                 () ->
                         webSocketMessageSender.sendToAll(
                                 WebSocketMessage.toAll(
-                                        "system", Map.of("event", "SYSTEM_MESSAGE_INBOX_CHANGED")));
+                                        WebSocketSender.SYSTEM,
+                                        SysMessageWebSocketEvent.INBOX_CHANGED));
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(
                     new TransactionSynchronization() {

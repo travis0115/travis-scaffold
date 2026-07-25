@@ -17,7 +17,8 @@ import com.travis.infrastructure.framework.websocket.core.session.WebSocketSessi
  *
  *     public void notifyAdmin(Long adminId, String msg) {
  *         wsSender.sendToPrincipal("admin:" + adminId,
- *                 WebSocketMessage.toPrincipal("system", "admin:" + adminId, msg));
+ *                 WebSocketMessage.toPrincipal(
+ *                         WebSocketSender.SYSTEM, "admin:" + adminId, msg));
  *     }
  *
  *     public void pushMarketData(MarketDataVO data) {

@@ -8,6 +8,14 @@ import type { PageResp } from '#/api/types';
 import { requestClient } from '#/api/request';
 
 export namespace SystemMessageApi {
+  export enum WebSocketEvent {
+    Deleted = 'SYSTEM_MESSAGE_DELETED',
+    InboxChanged = 'SYSTEM_MESSAGE_INBOX_CHANGED',
+    Published = 'SYSTEM_MESSAGE_PUBLISHED',
+    Republished = 'SYSTEM_MESSAGE_REPUBLISHED',
+    Revoked = 'SYSTEM_MESSAGE_REVOKED',
+  }
+
   export interface Message {
     [key: string]: any;
     channel?: string;

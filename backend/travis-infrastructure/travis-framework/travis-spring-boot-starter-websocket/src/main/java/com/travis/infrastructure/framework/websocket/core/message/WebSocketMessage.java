@@ -1,5 +1,6 @@
 package com.travis.infrastructure.framework.websocket.core.message;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -66,6 +67,30 @@ public class WebSocketMessage {
                 .build();
     }
 
+    /**
+     * 创建点对点业务事件消息。
+     *
+     * @param fromUser 发送者标识
+     * @param to 接收者连接主体
+     * @param event 业务事件
+     * @param content 事件内容
+     */
+    public static WebSocketMessage toPrincipal(
+            String fromUser, String to, WebSocketEvent event, Map<String, Object> content) {
+        return toPrincipal(fromUser, to, eventContent(event, content));
+    }
+
+    /**
+     * 创建无附加内容的点对点业务事件消息。
+     *
+     * @param fromUser 发送者标识
+     * @param to 接收者连接主体
+     * @param event 业务事件
+     */
+    public static WebSocketMessage toPrincipal(String fromUser, String to, WebSocketEvent event) {
+        return toPrincipal(fromUser, to, event, Map.of());
+    }
+
     /** 创建广播消息 */
     public static WebSocketMessage toAll(String fromUser, Object content) {
         return WebSocketMessage.builder()
@@ -74,6 +99,28 @@ public class WebSocketMessage {
                 .content(content)
                 .timestamp(System.currentTimeMillis())
                 .build();
+    }
+
+    /**
+     * 创建业务事件广播消息。
+     *
+     * @param fromUser 发送者标识
+     * @param event 业务事件
+     * @param content 事件内容
+     */
+    public static WebSocketMessage toAll(
+            String fromUser, WebSocketEvent event, Map<String, Object> content) {
+        return toAll(fromUser, eventContent(event, content));
+    }
+
+    /**
+     * 创建无附加内容的业务事件广播消息。
+     *
+     * @param fromUser 发送者标识
+     * @param event 业务事件
+     */
+    public static WebSocketMessage toAll(String fromUser, WebSocketEvent event) {
+        return toAll(fromUser, event, Map.of());
     }
 
     /** 创建心跳消息 */
@@ -111,5 +158,13 @@ public class WebSocketMessage {
                 .to(principal)
                 .timestamp(System.currentTimeMillis())
                 .build();
+    }
+
+    /** 组装统一的业务事件内容。 */
+    private static Map<String, Object> eventContent(
+            WebSocketEvent event, Map<String, Object> content) {
+        Map<String, Object> eventContent = new LinkedHashMap<>(content);
+        eventContent.put("event", event.getEvent());
+        return eventContent;
     }
 }

@@ -24,6 +24,7 @@ import {
   getRecentMessages,
   markAllMessagesRead,
   markMessageRead,
+  SystemMessageApi,
 } from '#/api';
 import RichTextPreview from '#/components/rich-text-preview/index.vue';
 import { $t } from '#/locales';
@@ -50,6 +51,9 @@ let notificationSocket: undefined | WebSocket;
 let notificationSocketReconnectTimer: ReturnType<typeof setTimeout> | undefined;
 let notificationSocketClosedByClient = false;
 let notificationSocketReconnectDelay = 5000;
+const messageInboxChangedEvents = new Set<string>(
+  Object.values(SystemMessageApi.WebSocketEvent),
+);
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -229,15 +233,7 @@ function handleNotificationSocketMessage(event: MessageEvent) {
       notificationSocket?.send('pong');
       return;
     }
-    if (
-      [
-        'SYSTEM_MESSAGE_DELETED',
-        'SYSTEM_MESSAGE_INBOX_CHANGED',
-        'SYSTEM_MESSAGE_PUBLISHED',
-        'SYSTEM_MESSAGE_REPUBLISHED',
-        'SYSTEM_MESSAGE_REVOKED',
-      ].includes(message?.content?.event)
-    ) {
+    if (messageInboxChangedEvents.has(message?.content?.event)) {
       window.dispatchEvent(new CustomEvent('travis:message-inbox-changed'));
     }
   } catch {

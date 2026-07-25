@@ -10,6 +10,7 @@ import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.websocket.core.message.WebSocketMessage;
+import com.travis.infrastructure.framework.websocket.core.message.WebSocketSender;
 import com.travis.infrastructure.framework.websocket.core.sender.WebSocketMessageSender;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.file.api.SysFileApi;
@@ -22,6 +23,12 @@ import com.travis.monolith.system.message.internal.mapper.SysMessageMapper;
 import com.travis.monolith.system.message.internal.service.SysMessageReceiverService;
 import com.travis.monolith.system.message.internal.service.SysMessageService;
 import com.travis.monolith.system.message.internal.service.SysMessageTemplateService;
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
@@ -30,13 +37,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import tools.jackson.core.type.TypeReference;
-
-import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /** 消息推送服务实现。 */
 @Service
@@ -203,7 +203,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
         entity.setStatus(SysMessageStatus.REVOKED.getValue());
         updateById(entity);
-        notifyInboxChanged("SYSTEM_MESSAGE_REVOKED", entity);
+        notifyInboxChanged(SysMessageWebSocketEvent.REVOKED, entity);
     }
 
     /** 创建或更新业务来源消息，并按发布时间决定是否立即发布。 */
@@ -254,7 +254,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                 resetReceiverReadStatus(entity.getId());
             }
             if (SysMessageStatus.SENT.getValue().equals(previousStatus)) {
-                notifyInboxChanged("SYSTEM_MESSAGE_REVOKED", entity);
+                notifyInboxChanged(SysMessageWebSocketEvent.REVOKED, entity);
             }
             return;
         }
@@ -267,10 +267,12 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
         if (created || republished || !SysMessageStatus.SENT.getValue().equals(previousStatus)) {
             notifyInboxChanged(
-                    republished ? "SYSTEM_MESSAGE_REPUBLISHED" : "SYSTEM_MESSAGE_PUBLISHED",
+                    republished
+                            ? SysMessageWebSocketEvent.REPUBLISHED
+                            : SysMessageWebSocketEvent.PUBLISHED,
                     entity);
         } else {
-            notifyInboxChanged("SYSTEM_MESSAGE_INBOX_CHANGED", entity);
+            notifyInboxChanged(SysMessageWebSocketEvent.INBOX_CHANGED, entity);
         }
     }
 
@@ -287,7 +289,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         entity.setStatus(SysMessageStatus.REVOKED.getValue());
         updateById(entity);
         if (visible) {
-            notifyInboxChanged("SYSTEM_MESSAGE_REVOKED", entity);
+            notifyInboxChanged(SysMessageWebSocketEvent.REVOKED, entity);
         }
     }
 
@@ -302,7 +304,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
         messageReceiverService.deleteByMessageId(entity.getId());
         removeById(entity.getId());
-        notifyInboxChanged("SYSTEM_MESSAGE_DELETED", entity);
+        notifyInboxChanged(SysMessageWebSocketEvent.DELETED, entity);
     }
 
     /** 发布所有已到发送时间的定时消息。 */
@@ -337,7 +339,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         ensureManualMessage(entity);
         messageReceiverService.deleteByMessageId(id);
         removeById(id);
-        notifyInboxChanged("SYSTEM_MESSAGE_DELETED", entity);
+        notifyInboxChanged(SysMessageWebSocketEvent.DELETED, entity);
     }
 
     /** 发布消息并更新发布时间与发送状态。 */
@@ -346,7 +348,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         message.setStatus(SysMessageStatus.SENT.getValue());
         message.setPublishTime(LocalDateTime.now());
         updateById(message);
-        notifyInboxChanged("SYSTEM_MESSAGE_PUBLISHED", message);
+        notifyInboxChanged(SysMessageWebSocketEvent.PUBLISHED, message);
     }
 
     /** 重置消息接收人的已读状态。 */
@@ -355,7 +357,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     }
 
     /** 在事务提交后通过 WebSocket 通知收件箱发生变化。 */
-    private void notifyInboxChanged(String event, SysMessage message) {
+    private void notifyInboxChanged(SysMessageWebSocketEvent event, SysMessage message) {
         if (!isInboxVisible(message)) {
             return;
         }
@@ -363,9 +365,9 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                 () ->
                         webSocketMessageSender.sendToAll(
                                 WebSocketMessage.toAll(
-                                        "system",
+                                        WebSocketSender.SYSTEM,
+                                        event,
                                         Map.of(
-                                                "event", event,
                                                 "messageId", message.getId(),
                                                 "title", message.getTitle())));
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
