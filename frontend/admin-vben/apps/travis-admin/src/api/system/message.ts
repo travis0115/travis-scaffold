@@ -56,7 +56,6 @@ export namespace SystemMessageApi {
   export interface UserMessage {
     content?: string;
     createTime: string;
-    id: number;
     messageId: number;
     messageType: number;
     publishTime?: string;

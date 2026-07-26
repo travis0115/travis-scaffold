@@ -3,19 +3,18 @@ package com.travis.monolith.ops.job.internal.mapper;
 import com.travis.infrastructure.framework.mybatis.core.BaseMapperX;
 import com.travis.monolith.ops.job.internal.entity.OpsJobLog;
 import java.time.LocalDateTime;
-import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 @Mapper
 public interface OpsJobLogMapper extends BaseMapperX<OpsJobLog> {
 
-    @Delete("DELETE FROM ops_job_log WHERE job_id = #{jobId}")
+    /** 根据任务编号物理删除调度日志。 */
     int deletePhysicallyByJobId(@Param("jobId") Long jobId);
 
-    @Delete("DELETE FROM ops_job_log")
+    /** 物理删除全部调度日志。 */
     int deleteAllPhysically();
 
-    @Delete("DELETE FROM ops_job_log WHERE job_id = #{jobId} AND create_time < #{before}")
+    /** 物理删除指定任务在截止时间之前的调度日志。 */
     int deleteExpiredPhysically(@Param("jobId") Long jobId, @Param("before") LocalDateTime before);
 }

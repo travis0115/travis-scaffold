@@ -14,6 +14,7 @@ import {
   messageChannelOptions,
   messageStatusOptions,
 } from '#/utils/business-options';
+import { getDictOptions } from '#/utils/dict';
 import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
 
 const requiredNumber = (message: string) =>
@@ -336,6 +337,33 @@ export const useFormSchema = (
 
 export const useGridFormSchema = (): VbenFormSchema[] => [
   { component: 'Input', fieldName: 'title', label: '消息标题' },
+  {
+    component: 'Select',
+    componentProps: {
+      allowClear: true,
+      options: getDictOptions('sys_message_type'),
+    },
+    fieldName: 'messageType',
+    label: '消息类型',
+  },
+  {
+    component: 'Select',
+    componentProps: {
+      allowClear: true,
+      options: getDictOptions('sys_message_channel'),
+    },
+    fieldName: 'channel',
+    label: '推送渠道',
+  },
+  {
+    component: 'Select',
+    componentProps: {
+      allowClear: true,
+      options: getDictOptions('sys_message_receiver_type'),
+    },
+    fieldName: 'receiverType',
+    label: '接收端',
+  },
   {
     component: 'RangePicker',
     componentProps: { valueFormat: 'YYYY-MM-DD' },

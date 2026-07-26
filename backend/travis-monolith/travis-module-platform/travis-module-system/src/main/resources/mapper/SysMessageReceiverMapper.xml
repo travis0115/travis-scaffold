@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--suppress XmlUnresolvedReference -->
+<mapper namespace="com.travis.monolith.system.message.internal.mapper.SysMessageReceiverMapper">
+
+    <!-- 匹配当前用户可见的全员、指定用户、角色或部门消息。 -->
+    <sql id="inboxScopeCondition">
+        AND (
+            m.receiver_scope = 0
+            OR (
+                m.receiver_scope = 1
+                AND JSON_CONTAINS(m.receiver_values, CAST(#{userId} AS CHAR))
+            )
+            <if test="roleIds != null and roleIds.size() > 0">
+                OR (
+                    m.receiver_scope = 2
+                    AND JSON_OVERLAPS(
+                        m.receiver_values,
+                        JSON_ARRAY(
+                            <foreach collection="roleIds" item="roleId" separator=",">
+                                #{roleId}
+                            </foreach>
+                        )
+                    )
+                )
+            </if>
+            <if test="deptId != null">
+                OR (
+                    m.receiver_scope = 3
+                    AND JSON_CONTAINS(m.receiver_values, CAST(#{deptId} AS CHAR))
+                )
+            </if>
+        )
+    </sql>
+
+    <!-- 分页查询当前用户可见的站内信。 -->
+    <select id="selectInboxPage"
+            resultType="com.travis.monolith.system.message.api.response.SysUserMessageResp">
+        SELECT m.id AS message_id,
+               m.title,
+               m.message_type,
+               m.source_type,
+               m.source_id,
+               m.publish_time,
+               m.create_time,
+               COALESCE(r.read_status, 0) AS read_status,
+               r.read_time
+        FROM sys_message m
+        LEFT JOIN sys_message_receiver r
+          ON r.message_id = m.id
+         AND r.receiver_type = #{receiverType}
+         AND r.receiver_id = #{userId}
+         AND r.is_deleted = 0
+        WHERE m.is_deleted = 0
+          AND m.status = 1
+          AND m.receiver_type = #{receiverType}
+          AND m.channel = 'IN_APP'
+          AND m.publish_time &lt;= NOW()
+          AND (r.id IS NULL OR r.read_status != 2)
+        <if test="readStatus != null">
+            <choose>
+                <when test="readStatus == 0">
+                    AND (r.id IS NULL OR r.read_status = 0)
+                </when>
+                <otherwise>
+                    AND r.read_status = #{readStatus}
+                </otherwise>
+            </choose>
+        </if>
+        <if test="title != null and title != ''">
+            AND m.title LIKE CONCAT('%', #{title}, '%')
+        </if>
+        <if test="messageType != null">
+            AND m.message_type = #{messageType}
+        </if>
+        <if test="publishStartDate != null">
+            AND m.publish_time &gt;= #{publishStartDate}
+        </if>
+        <if test="publishEndDate != null">
+            AND m.publish_time &lt; DATE_ADD(#{publishEndDate}, INTERVAL 1 DAY)
+        </if>
+        <include refid="inboxScopeCondition"/>
+        ORDER BY m.publish_time DESC, m.id DESC
+    </select>
+
+    <!-- 统计当前用户可见的未读站内信数量。 -->
+    <select id="countUnreadInbox" resultType="java.lang.Long">
+        SELECT COUNT(1)
+        FROM sys_message m
+        LEFT JOIN sys_message_receiver r
+          ON r.message_id = m.id
+         AND r.receiver_type = #{receiverType}
+         AND r.receiver_id = #{userId}
+         AND r.is_deleted = 0
+        WHERE m.is_deleted = 0
+          AND m.status = 1
+          AND m.receiver_type = #{receiverType}
+          AND m.channel = 'IN_APP'
+          AND m.publish_time &lt;= NOW()
+          AND (r.id IS NULL OR r.read_status = 0)
+        <include refid="inboxScopeCondition"/>
+    </select>
+
+    <!-- 查询当前用户可见且符合读取状态的站内信编号。 -->
+    <select id="selectInboxMessageIds" resultType="java.lang.Long">
+        SELECT m.id
+        FROM sys_message m
+        LEFT JOIN sys_message_receiver r
+          ON r.message_id = m.id
+         AND r.receiver_type = #{receiverType}
+         AND r.receiver_id = #{userId}
+         AND r.is_deleted = 0
+        WHERE m.is_deleted = 0
+          AND m.status = 1
+          AND m.receiver_type = #{receiverType}
+          AND m.channel = 'IN_APP'
+          AND m.publish_time &lt;= NOW()
+          AND (r.id IS NULL OR r.read_status != 2)
+        <if test="readStatus != null">
+            <choose>
+                <when test="readStatus == 0">
+                    AND (r.id IS NULL OR r.read_status = 0)
+                </when>
+                <otherwise>
+                    AND r.read_status = #{readStatus}
+                </otherwise>
+            </choose>
+        </if>
+        <include refid="inboxScopeCondition"/>
+    </select>
+
+    <!-- 根据消息编号物理删除接收状态。 -->
+    <delete id="deleteByMessageId">
+        DELETE FROM sys_message_receiver
+        WHERE message_id = #{messageId}
+    </delete>
+
+    <!-- 利用唯一键原子写入接收状态；普通已读操作不得恢复已删除消息。 -->
+    <insert id="upsertStates">
+        INSERT INTO sys_message_receiver (
+            id,
+            message_id,
+            receiver_type,
+            receiver_id,
+            read_status,
+            read_time,
+            create_time,
+            create_by,
+            update_time,
+            update_by,
+            is_deleted
+        )
+        VALUES
+        <foreach collection="states" item="state" separator=",">
+            (
+                #{state.id},
+                #{state.messageId},
+                #{state.receiverType},
+                #{state.receiverId},
+                #{state.readStatus},
+                #{state.readTime},
+                NOW(),
+                #{state.receiverId},
+                NULL,
+                NULL,
+                0
+            )
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+            read_time = CASE
+                WHEN sys_message_receiver.read_status = 2 AND VALUES(read_status) = 1
+                    THEN sys_message_receiver.read_time
+                WHEN VALUES(read_status) = 1
+                    THEN COALESCE(sys_message_receiver.read_time, VALUES(read_time))
+                ELSE NULL
+            END,
+            read_status = CASE
+                WHEN sys_message_receiver.read_status = 2 AND VALUES(read_status) = 1
+                    THEN sys_message_receiver.read_status
+                ELSE VALUES(read_status)
+            END,
+            update_time = CASE
+                WHEN sys_message_receiver.read_status = 2 AND VALUES(read_status) = 1
+                    THEN sys_message_receiver.update_time
+                ELSE NOW()
+            END,
+            update_by = CASE
+                WHEN sys_message_receiver.read_status = 2 AND VALUES(read_status) = 1
+                    THEN sys_message_receiver.update_by
+                ELSE VALUES(receiver_id)
+            END
+    </insert>
+
+</mapper>

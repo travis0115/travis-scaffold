@@ -6,6 +6,7 @@ import com.travis.infrastructure.common.validation.annotation.JsonValue;
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.web.core.annotation.SanitizeHtml;
 import com.travis.monolith.system.common.api.enums.Status;
+import com.travis.monolith.system.message.api.constant.SysMessageTemplatePattern;
 import com.travis.monolith.system.message.api.enums.SysMessageChannel;
 import com.travis.monolith.system.message.api.enums.SysMessageTemplateParamType;
 import jakarta.validation.constraints.AssertTrue;
@@ -15,20 +16,12 @@ import jakarta.validation.constraints.Size;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.regex.Pattern;
 import lombok.Data;
 import tools.jackson.core.type.TypeReference;
 
 /** 新增消息模板请求参数。 */
 @Data
 public class SysMessageTemplateCreateReq {
-    /** 合法模板参数键格式。 */
-    private static final Pattern PARAM_KEY_PATTERN = Pattern.compile("^[A-Za-z][A-Za-z0-9_]*$");
-
-    /** 从模板正文中提取双花括号参数的表达式。 */
-    private static final Pattern TEMPLATE_PARAM_PATTERN =
-            Pattern.compile("\\{\\{\\s*([^{}]+?)\\s*}}");
-
     /** 模板编码。 */
     @NotBlank(message = "模板编码不能为空")
     @Size(max = 64, message = "模板编码长度不能超过64个字符")
@@ -130,7 +123,7 @@ public class SysMessageTemplateCreateReq {
         var key = entry.getKey();
         var config = entry.getValue();
         return StrUtil.isNotBlank(key)
-                && PARAM_KEY_PATTERN.matcher(key).matches()
+                && SysMessageTemplatePattern.PARAM_KEY_PATTERN.matcher(key).matches()
                 && config != null
                 && StrUtil.isNotBlank(config.getType())
                 && SysMessageTemplateParamType.contains(config.getType())
@@ -142,10 +135,10 @@ public class SysMessageTemplateCreateReq {
     /** 按正文出现顺序提取模板参数键。 */
     private LinkedHashSet<String> extractTemplateParamKeys() {
         var keys = new LinkedHashSet<String>();
-        var matcher = TEMPLATE_PARAM_PATTERN.matcher(content);
+        var matcher = SysMessageTemplatePattern.TEMPLATE_PARAM_EXPRESSION_PATTERN.matcher(content);
         while (matcher.find()) {
             var key = matcher.group(1).trim();
-            if (!PARAM_KEY_PATTERN.matcher(key).matches()) {
+            if (!SysMessageTemplatePattern.PARAM_KEY_PATTERN.matcher(key).matches()) {
                 return null;
             }
             keys.add(key);

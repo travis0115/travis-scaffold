@@ -163,7 +163,8 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
                 @CacheEvict(value = "system:user-role", allEntries = true),
                 @CacheEvict(value = "system:role-menu", key = "'menu-ids:'+#id"),
                 @CacheEvict(value = "system:menu:tree:vben", allEntries = true),
-                @CacheEvict(value = "system:user:detail", allEntries = true)
+                @CacheEvict(value = "system:user:detail", allEntries = true),
+                @CacheEvict(value = "system:message:inbox", allEntries = true)
             })
     public void deleteById(Long id) {
         var role = getByIdOrThrow(id);
@@ -320,7 +321,11 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
             evict = {
                 @CacheEvict(value = "system:user-role", allEntries = true),
                 @CacheEvict(value = "system:menu:tree:vben", key = "#userId"),
-                @CacheEvict(value = "system:user", key = "'detail:'+#userId")
+                @CacheEvict(value = "system:user", key = "'detail:'+#userId"),
+                @CacheEvict(
+                        value = "system:message:inbox",
+                        key =
+                                "'unread:' + T(com.travis.infrastructure.common.web.constant.LoginType).ADMIN + ':' + #userId")
             })
     public void deleteUserRolesByUserId(Long userId) {
         userRoleMapper.delete(
@@ -334,7 +339,11 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
             evict = {
                 @CacheEvict(value = "system:user-role", allEntries = true),
                 @CacheEvict(value = "system:menu:tree:vben", key = "#userId"),
-                @CacheEvict(value = "system:user", key = "'detail:'+#userId")
+                @CacheEvict(value = "system:user", key = "'detail:'+#userId"),
+                @CacheEvict(
+                        value = "system:message:inbox",
+                        key =
+                                "'unread:' + T(com.travis.infrastructure.common.web.constant.LoginType).ADMIN + ':' + #userId")
             })
     public void assignUserRoles(Long userId, List<Long> roleIds) {
         userRoleMapper.delete(

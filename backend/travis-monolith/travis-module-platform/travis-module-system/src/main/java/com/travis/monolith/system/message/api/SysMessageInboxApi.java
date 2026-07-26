@@ -31,8 +31,8 @@ public interface SysMessageInboxApi {
             @NotNull(message = "用户ID不能为空") Long userId,
             @NotNull(message = "分页查询请求不能为空") @Valid SysUserMessagePageReq req);
 
-    /** 查询指定用户的收件箱消息详情。 */
-    SysUserMessageResp get(
+    /** 查询指定用户的收件箱消息详情，并在首次查看时标记为已读。 */
+    SysUserMessageResp getAndMarkRead(
             @NotBlank(message = "接收端不能为空")
                     @EnumValue(value = SysMessageReceiverType.class, message = "接收端错误")
                     String receiverType,

@@ -26,6 +26,8 @@ import {
 
 import {
   isMessageTemplateParamType,
+  MESSAGE_TEMPLATE_PARAM_EXPRESSION_PATTERN,
+  MESSAGE_TEMPLATE_PARAM_KEY_PATTERN,
   messageTemplateParamTypeOptions,
 } from '../message/param-types';
 import { useFormSchema } from './data';
@@ -104,9 +106,6 @@ const statusOptions = [
   { label: '禁用', value: 0 },
   { label: '启用', value: 1 },
 ];
-const paramKeyPattern = /^[A-Za-z][A-Za-z0-9_]*$/;
-const templateParamPattern = /\{\{\s*([^{}]+?)\s*}}/g;
-
 function parseJsonObject(value?: string) {
   if (!value) return undefined;
   try {
@@ -202,7 +201,9 @@ function validateVariableRows(rows = variableRows.value) {
     message.error('请填写参数名');
     return false;
   }
-  if (rows.some((row) => !paramKeyPattern.test(row.key.trim()))) {
+  if (
+    rows.some((row) => !MESSAGE_TEMPLATE_PARAM_KEY_PATTERN.test(row.key.trim()))
+  ) {
     message.error('参数名格式错误，仅支持英文字母开头，包含字母、数字、下划线');
     return false;
   }
@@ -213,6 +214,14 @@ function validateVariableRows(rows = variableRows.value) {
   }
   if (rows.some((row) => !isMessageTemplateParamType(row.type))) {
     message.error('参数类型不支持');
+    return false;
+  }
+  if (rows.some((row) => (row.label?.trim().length ?? 0) > 100)) {
+    message.error('参数显示名称长度不能超过100个字符');
+    return false;
+  }
+  if (rows.some((row) => (row.description?.trim().length ?? 0) > 255)) {
+    message.error('参数说明长度不能超过255个字符');
     return false;
   }
   return true;
@@ -231,10 +240,15 @@ function buildContentSchema() {
 function extractTemplateParamKeys(content?: string) {
   if (!content) return [];
   const keys: string[] = [];
-  for (const match of content.matchAll(templateParamPattern)) {
+  for (const match of content.matchAll(
+    MESSAGE_TEMPLATE_PARAM_EXPRESSION_PATTERN,
+  )) {
     const key = match[1]?.trim();
-    if (!key) continue;
-    if (!paramKeyPattern.test(key)) {
+    if (!key) {
+      message.error('模板参数引用格式错误：参数名不能为空');
+      return undefined;
+    }
+    if (!MESSAGE_TEMPLATE_PARAM_KEY_PATTERN.test(key)) {
       message.error(`模板参数引用格式错误：${key}`);
       return undefined;
     }
@@ -460,6 +474,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
         <template #label="{ row }">
           <Input
             v-model:value="row.label"
+            :maxlength="100"
             placeholder="请输入显示名称"
             size="small"
           />
@@ -478,6 +493,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
         <template #description="{ row }">
           <Input
             v-model:value="row.description"
+            :maxlength="255"
             placeholder="请输入说明"
             size="small"
           />

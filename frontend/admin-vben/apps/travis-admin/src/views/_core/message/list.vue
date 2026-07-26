@@ -60,7 +60,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
           }),
       },
     },
-    rowConfig: { keyField: 'id' },
+    rowConfig: { keyField: 'messageId' },
     toolbarConfig: { custom: true, refresh: true, search: true, zoom: true },
   } as VxeTableGridOptions<SystemMessageApi.UserMessage>,
 });
@@ -74,12 +74,12 @@ async function onActionClick({
     return;
   }
   if (code === 'read') {
-    await markMessageRead(row.id);
+    await markMessageRead(row.messageId);
     markReadLocally(row);
     return;
   }
   if (code === 'delete') {
-    await deleteInboxMessage(row.id);
+    await deleteInboxMessage(row.messageId);
     window.dispatchEvent(new CustomEvent('travis:message-inbox-changed'));
   }
 }

@@ -41,8 +41,8 @@ public interface SysMessageService extends IService<SysMessage> {
     /** 删除指定业务来源的消息。 */
     void deleteSourceMessage(String sourceType, String sourceId, String receiverType);
 
-    /** 推送所有已到期的定时消息，并返回成功处理数量。 */
-    int pushDueScheduledMessages();
+    /** 推送指定的到期定时消息，并返回是否实际完成推送。 */
+    boolean pushScheduled(Long id);
 
     /** 删除消息及其接收记录。 */
     void delete(Long id);

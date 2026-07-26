@@ -412,6 +412,20 @@ const schema: VbenFormSchema[] = [
       show: (values) => values.menuType === 1,
       triggerFields: ['menuType'],
     },
+    defaultValue: true,
+    fieldName: '_keepAlive',
+    renderComponentContent() {
+      return {
+        default: () => $t('system.menu.keepAlive'),
+      };
+    },
+  },
+  {
+    component: 'Checkbox',
+    dependencies: {
+      show: (values) => values.menuType === 1,
+      triggerFields: ['menuType'],
+    },
     fieldName: '_hideInMenu',
     renderComponentContent() {
       return {
@@ -480,6 +494,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
             : undefined,
           _hideInMenu: metaObj.hideInMenu ?? false,
           _hideInTab: metaObj.hideInTab ?? false,
+          _keepAlive: metaObj.keepAlive ?? false,
           externalOpenMode: metaObj.iframeSrc ? 'iframe' : 'newWindow',
           isExternal: metaObj.iframeSrc || metaObj.link ? 1 : 0,
         };
@@ -512,6 +527,7 @@ async function onSubmit() {
         _badgeVariants?: string;
         _hideInMenu?: boolean;
         _hideInTab?: boolean;
+        _keepAlive?: boolean;
         externalOpenMode?: 'iframe' | 'newWindow';
         isExternal?: number;
         linkSrc?: string;
@@ -534,6 +550,7 @@ async function onSubmit() {
     if (values.menuType === 1 && values._affixTab) metaObj.affixTab = true;
     if (values.menuType === 1 && values._hideInMenu) metaObj.hideInMenu = true;
     if (values.menuType === 1 && values._hideInTab) metaObj.hideInTab = true;
+    if (values.menuType === 1 && values._keepAlive) metaObj.keepAlive = true;
 
     // 清理开关未勾选的字段
     if (values.menuType === 2 || !values._activeIcon) delete metaObj.activeIcon;
@@ -543,9 +560,9 @@ async function onSubmit() {
     if (values.menuType !== 1 || !values._affixTab) delete metaObj.affixTab;
     if (values.menuType !== 1 || !values._hideInMenu) delete metaObj.hideInMenu;
     if (values.menuType !== 1 || !values._hideInTab) delete metaObj.hideInTab;
+    if (values.menuType !== 1 || !values._keepAlive) delete metaObj.keepAlive;
     delete metaObj.hideChildrenInMenu;
     delete metaObj.hideInBreadcrumb;
-    delete metaObj.keepAlive;
     delete metaObj.openInNewWindow;
 
     if (values.menuType === 1 && values.isExternal === 1) {
@@ -582,6 +599,7 @@ async function onSubmit() {
     delete (data as any)._badgeVariants;
     delete (data as any)._hideInMenu;
     delete (data as any)._hideInTab;
+    delete (data as any)._keepAlive;
     delete (data as any).externalOpenMode;
     delete (data as any).isExternal;
     delete (data as any).linkSrc;

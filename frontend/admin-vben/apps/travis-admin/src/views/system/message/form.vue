@@ -27,6 +27,7 @@ import TemplateSelectorModalComponent from './modules/template-selector-modal.vu
 import UserSelectorModalComponent from './modules/user-selector-modal.vue';
 import {
   getMessageTemplateParamTypeLabel,
+  MESSAGE_TEMPLATE_PARAM_EXPRESSION_PATTERN,
   validateMessageTemplateParamValue,
 } from './param-types';
 
@@ -390,8 +391,9 @@ const templatePreviewContent = computed(() => {
   const params = Object.fromEntries(
     templateParamRows.value.map((row) => [row.key, row.value]),
   );
-  return template.content.replace(/\{\{\s*([^{}]+?)\s*}}/g, (_, key) =>
-    escapeHtml(String(params[key.trim()] ?? '')),
+  return template.content.replace(
+    MESSAGE_TEMPLATE_PARAM_EXPRESSION_PATTERN,
+    (_, key) => escapeHtml(String(params[key.trim()] ?? '')),
   );
 });
 

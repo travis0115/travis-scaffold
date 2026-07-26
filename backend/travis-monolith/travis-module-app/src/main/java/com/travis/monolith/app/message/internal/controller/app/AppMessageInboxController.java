@@ -5,10 +5,8 @@ import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.monolith.system.message.api.SysMessageInboxApi;
-import com.travis.monolith.system.message.api.enums.SysMessageReadStatus;
 import com.travis.monolith.system.message.api.request.SysUserMessagePageReq;
 import com.travis.monolith.system.message.api.response.SysUserMessageResp;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -42,14 +40,9 @@ public class AppMessageInboxController {
     /** 查询消息详情，并在首次查看时标记为已读。 */
     @GetMapping("/{id}")
     public ApiResponse<SysUserMessageResp> get(@PathVariable Long id) {
-        var userId = StpKit.of(LoginType.APP).getLoginIdAsLong();
-        var message = messageInboxApi.get(LoginType.APP, userId, id);
-        if (SysMessageReadStatus.UNREAD.getValue().equals(message.getReadStatus())) {
-            messageInboxApi.markRead(LoginType.APP, userId, id);
-            message.setReadStatus(SysMessageReadStatus.READ.getValue());
-            message.setReadTime(LocalDateTime.now());
-        }
-        return ApiResponse.success(message);
+        return ApiResponse.success(
+                messageInboxApi.getAndMarkRead(
+                        LoginType.APP, StpKit.of(LoginType.APP).getLoginIdAsLong(), id));
     }
 
     /** 统计当前用户的未读消息数。 */

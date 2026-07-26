@@ -158,7 +158,14 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     /** 更新用户信息，密码为空时保持原密码不变 */
     @Override
     @Transactional
-    @Caching(evict = {@CacheEvict(key = "'detail:'+#id")})
+    @Caching(
+            evict = {
+                @CacheEvict(key = "'detail:'+#id"),
+                @CacheEvict(
+                        value = "system:message:inbox",
+                        key =
+                                "'unread:' + T(com.travis.infrastructure.common.web.constant.LoginType).ADMIN + ':' + #id")
+            })
     public void update(Long id, SysUserUpdateReq req) {
         var user = getByIdOrThrow(id);
         var oldUsername = user.getUsername();
@@ -221,6 +228,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     /** 批量重置指定部门下的用户部门归属 */
     @Override
     @Transactional
+    @CacheEvict(value = "system:message:inbox", allEntries = true)
     public void resetDeptByDeptIds(Collection<Long> deptIds) {
         if (deptIds == null || deptIds.isEmpty()) {
             return;

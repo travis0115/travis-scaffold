@@ -9,6 +9,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.AllArgsConstructor;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.*;
@@ -33,6 +34,7 @@ import org.springframework.core.io.Resource;
  *
  * @author travis
  */
+@AllArgsConstructor
 @AutoConfiguration(before = DataRedisAutoConfiguration.class)
 @EnableConfigurationProperties({RedissonProperties.class, DataRedisProperties.class})
 public class RedissonAutoConfiguration {
@@ -47,17 +49,6 @@ public class RedissonAutoConfiguration {
     private final DataRedisProperties redisProperties;
 
     private final ApplicationContext ctx;
-
-    public RedissonAutoConfiguration(
-            List<RedissonAutoConfigurationCustomizer> redissonAutoConfigurationCustomizers,
-            RedissonProperties redissonProperties,
-            DataRedisProperties redisProperties,
-            ApplicationContext ctx) {
-        this.redissonAutoConfigurationCustomizers = redissonAutoConfigurationCustomizers;
-        this.redissonProperties = redissonProperties;
-        this.redisProperties = redisProperties;
-        this.ctx = ctx;
-    }
 
     /** 注册基于 Redisson 的分布式锁切面。 */
     @Bean

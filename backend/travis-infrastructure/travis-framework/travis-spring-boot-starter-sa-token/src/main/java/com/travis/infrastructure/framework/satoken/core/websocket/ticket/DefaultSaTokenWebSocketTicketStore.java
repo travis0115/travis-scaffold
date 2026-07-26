@@ -6,8 +6,10 @@ import com.travis.infrastructure.framework.satoken.core.websocket.SaTokenWebSock
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Map;
+import lombok.AllArgsConstructor;
 
 /** 基于 Sa-Token Dao 的 WebSocket ticket 存储，跟随 Sa-Token 当前存储实现。 */
+@AllArgsConstructor
 public class DefaultSaTokenWebSocketTicketStore implements SaTokenWebSocketTicketStore {
 
     /** 握手凭证使用的随机字节数。 */
@@ -19,11 +21,6 @@ public class DefaultSaTokenWebSocketTicketStore implements SaTokenWebSocketTicke
     private final SaTokenDao saTokenDao;
     private final String tokenName;
     private final SecureRandom secureRandom = new SecureRandom();
-
-    public DefaultSaTokenWebSocketTicketStore(SaTokenDao saTokenDao, String tokenName) {
-        this.saTokenDao = saTokenDao;
-        this.tokenName = tokenName;
-    }
 
     @Override
     public String create(String loginType, Object loginId, String token) {

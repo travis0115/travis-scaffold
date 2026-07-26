@@ -164,7 +164,7 @@ async function loadNotifications() {
   try {
     const messages = await getRecentMessages();
     notifications.value = messages.map((item) => ({
-      id: item.id,
+      id: item.messageId,
       avatar: preferences.app.defaultAvatar,
       date: formatDateTime(item.publishTime || item.createTime),
       isRead: false,

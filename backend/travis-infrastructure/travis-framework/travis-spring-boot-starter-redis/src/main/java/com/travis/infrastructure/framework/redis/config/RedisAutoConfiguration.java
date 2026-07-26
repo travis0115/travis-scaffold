@@ -10,6 +10,7 @@ import com.travis.infrastructure.framework.redis.core.serializer.TravisJacksonJs
 import com.travis.infrastructure.framework.redis.core.util.RedisUtil;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -36,15 +37,12 @@ import tools.jackson.databind.module.SimpleModule;
  *
  * @author travis
  */
+@AllArgsConstructor
 @AutoConfiguration(after = JacksonAutoConfiguration.class)
 @EnableConfigurationProperties(TravisRedisProperties.class)
 public class RedisAutoConfiguration {
 
     private final JacksonProperties jacksonProperties;
-
-    public RedisAutoConfiguration(JacksonProperties jacksonProperties) {
-        this.jacksonProperties = jacksonProperties;
-    }
 
     @Bean
     @ConditionalOnMissingBean

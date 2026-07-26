@@ -5,6 +5,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -14,16 +15,11 @@ import org.springframework.web.util.ContentCachingResponseWrapper;
 
 /** 请求上下文过滤器 */
 @Slf4j
+@AllArgsConstructor
 public class RequestContextFilter extends OncePerRequestFilter {
 
     private final HandlerExceptionResolver handlerExceptionResolver;
     private final int requestCacheLimit;
-
-    public RequestContextFilter(
-            HandlerExceptionResolver handlerExceptionResolver, int requestCacheLimit) {
-        this.handlerExceptionResolver = handlerExceptionResolver;
-        this.requestCacheLimit = requestCacheLimit;
-    }
 
     @Override
     protected void doFilterInternal(

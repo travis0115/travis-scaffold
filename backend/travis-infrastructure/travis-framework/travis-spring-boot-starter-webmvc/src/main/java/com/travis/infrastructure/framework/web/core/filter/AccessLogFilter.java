@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.logstash.logback.argument.StructuredArgument;
 import org.jspecify.annotations.NonNull;
@@ -44,6 +45,7 @@ import org.springframework.web.util.ContentCachingResponseWrapper;
 
 /** 访问日志过滤器 */
 @Slf4j
+@AllArgsConstructor
 public class AccessLogFilter extends OncePerRequestFilter {
 
     private final HandlerExceptionResolver handlerExceptionResolver;
@@ -54,13 +56,6 @@ public class AccessLogFilter extends OncePerRequestFilter {
             SpringUtil.getProperty("logging.output", AccessLogger.STDOUT.name());
     private final String tokenName =
             SpringUtil.getProperty("sa-token.token-name", HttpHeaders.AUTHORIZATION);
-
-    public AccessLogFilter(
-            HandlerExceptionResolver handlerExceptionResolver,
-            RequestMappingHandlerMapping requestMappingHandlerMapping) {
-        this.handlerExceptionResolver = handlerExceptionResolver;
-        this.requestMappingHandlerMapping = requestMappingHandlerMapping;
-    }
 
     @Override
     protected void doFilterInternal(

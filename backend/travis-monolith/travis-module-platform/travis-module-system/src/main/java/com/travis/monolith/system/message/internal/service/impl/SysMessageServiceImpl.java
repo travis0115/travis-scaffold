@@ -1,6 +1,5 @@
 package com.travis.monolith.system.message.internal.service.impl;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.exception.BizException;
@@ -14,76 +13,76 @@ import com.travis.infrastructure.framework.websocket.core.message.WebSocketSende
 import com.travis.infrastructure.framework.websocket.core.sender.WebSocketMessageSender;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.file.api.SysFileApi;
+import com.travis.monolith.system.message.api.constant.SysMessageTemplatePattern;
 import com.travis.monolith.system.message.api.enums.*;
 import com.travis.monolith.system.message.api.request.*;
 import com.travis.monolith.system.message.api.response.SysMessageResp;
+import com.travis.monolith.system.message.internal.channel.SysMessageChannelHandler;
+import com.travis.monolith.system.message.internal.channel.SysMessageChannelHandlerRegistry;
 import com.travis.monolith.system.message.internal.converter.SysMessageConverter;
 import com.travis.monolith.system.message.internal.entity.SysMessage;
 import com.travis.monolith.system.message.internal.mapper.SysMessageMapper;
+import com.travis.monolith.system.message.internal.quartz.SysMessageScheduledPushScheduler;
 import com.travis.monolith.system.message.internal.service.SysMessageReceiverService;
 import com.travis.monolith.system.message.internal.service.SysMessageService;
 import com.travis.monolith.system.message.internal.service.SysMessageTemplateService;
-import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Caching;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import tools.jackson.core.type.TypeReference;
 
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+
 /** 消息推送服务实现。 */
 @Service
 @CacheConfig(cacheNames = "system:message")
+@AllArgsConstructor
+@Slf4j
 public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMessage>
         implements SysMessageService {
-    private static final Pattern TEMPLATE_VARIABLE_PATTERN =
-            Pattern.compile("\\{\\{\\s*([A-Za-z0-9_.-]+)\\s*}}");
-
     private final SysMessageReceiverService messageReceiverService;
     private final SysMessageTemplateService messageTemplateService;
     private final SysMessageConverter converter;
     private final WebSocketMessageSender webSocketMessageSender;
     private final SysFileApi fileApi;
-
-    public SysMessageServiceImpl(
-            SysMessageReceiverService messageReceiverService,
-            SysMessageTemplateService messageTemplateService,
-            SysMessageConverter converter,
-            WebSocketMessageSender webSocketMessageSender,
-            SysFileApi fileApi) {
-        this.messageReceiverService = messageReceiverService;
-        this.messageTemplateService = messageTemplateService;
-        this.converter = converter;
-        this.webSocketMessageSender = webSocketMessageSender;
-        this.fileApi = fileApi;
-    }
+    private final CacheManager cacheManager;
+    private final SysMessageChannelHandlerRegistry channelHandlerRegistry;
+    private final SysMessageScheduledPushScheduler scheduledPushScheduler;
 
     /** 分页查询消息。 */
     @Override
     public PageResp<SysMessageResp> page(SysMessagePageReq req) {
         var wrapper = new LambdaQueryWrapperX<SysMessage>();
         wrapper.likeIfPresent(SysMessage::getTitle, req.getTitle())
+                .eqIfPresent(SysMessage::getMessageType, req.getMessageType())
+                .eqIfPresent(SysMessage::getChannel, req.getChannel())
+                .eqIfPresent(SysMessage::getReceiverType, req.getReceiverType())
                 .eqIfPresent(SysMessage::getPushType, req.getPushType())
                 .eqIfPresent(SysMessage::getStatus, req.getStatus())
                 .eq(SysMessage::getSourceType, SysMessageSourceType.MANUAL.getValue())
                 .ne(SysMessage::getPushType, SysMessagePushType.AUTO.getValue())
                 .orderByDesc(SysMessage::getCreateTime);
-        Page<SysMessage> page = page(req.getPageNum(), req.getPageSize(), wrapper);
+        var page = page(req.getPageNum(), req.getPageSize(), wrapper);
         page.getRecords().forEach(record -> record.setContent(null));
         return PageConverter.toResp(page.convert(converter::toResp));
     }
 
     /** 查询指定消息，不存在时抛出业务异常。 */
     @Override
+    @Cacheable(key = "'detail:'+#id")
     public SysMessageResp getOrThrow(Long id) {
-        var resp = converter.toResp(getByIdOrThrow(id));
+        var resp = converter.toResp(super.getByIdOrThrow(id));
         resp.setContent(fileApi.resolveManagedImageSources(resp.getContent()));
         return resp;
     }
@@ -91,7 +90,6 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     /** 创建消息。 */
     @Override
     @Transactional
-    @CacheEvict(cacheNames = "system:message:inbox", allEntries = true)
     public Long create(SysMessageCreateReq req) {
         validateReceiver(req.getReceiverType(), req.getReceiverScope(), req.getReceiverValues());
         validateChannel(req.getChannel());
@@ -106,17 +104,14 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         renderTemplate(entity);
         entity.setContent(fileApi.stripManagedImageSources(entity.getContent()));
         save(entity);
+        syncScheduledTriggerAfterCommit(entity);
         return entity.getId();
     }
 
     /** 更新指定消息。 */
     @Override
     @Transactional
-    @Caching(
-            evict = {
-                @CacheEvict(key = "'detail:'+#id"),
-                @CacheEvict(cacheNames = "system:message:inbox", allEntries = true)
-            })
+    @CacheEvict(key = "'detail:'+#id")
     public void update(Long id, SysMessageUpdateReq req) {
         validateReceiver(req.getReceiverType(), req.getReceiverScope(), req.getReceiverValues());
         validateChannel(req.getChannel());
@@ -138,16 +133,13 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         renderTemplate(entity);
         entity.setContent(fileApi.stripManagedImageSources(entity.getContent()));
         updateById(entity);
+        syncScheduledTriggerAfterCommit(entity);
     }
 
     /** 手动推送指定消息。 */
     @Override
     @Transactional
-    @Caching(
-            evict = {
-                @CacheEvict(key = "'detail:'+#id"),
-                @CacheEvict(cacheNames = "system:message:inbox", allEntries = true)
-            })
+    @CacheEvict(key = "'detail:'+#id")
     public void push(Long id) {
         var entity = getByIdOrThrow(id);
         ensureManualMessage(entity);
@@ -161,19 +153,17 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         boolean republished = SysMessageStatus.REVOKED.getValue().equals(entity.getStatus());
         entity.setPushType(SysMessagePushType.MANUAL.getValue());
         publish(entity);
+        syncScheduledTriggerAfterCommit(entity);
         if (republished) {
             resetReceiverReadStatus(entity.getId());
         }
+        messageReceiverService.evictUnreadCache();
     }
 
     /** 自动推送指定待发送消息。 */
     @Override
     @Transactional
-    @Caching(
-            evict = {
-                @CacheEvict(key = "'detail:'+#id"),
-                @CacheEvict(cacheNames = "system:message:inbox", allEntries = true)
-            })
+    @CacheEvict(key = "'detail:'+#id")
     public void pushAutomatic(Long id) {
         var entity = getByIdOrThrow(id);
         ensureManualMessage(entity);
@@ -182,16 +172,14 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
         entity.setPushType(SysMessagePushType.AUTO.getValue());
         publish(entity);
+        syncScheduledTriggerAfterCommit(entity);
+        messageReceiverService.evictUnreadCache();
     }
 
     /** 撤回指定站内消息。 */
     @Override
     @Transactional
-    @Caching(
-            evict = {
-                @CacheEvict(key = "'detail:'+#id"),
-                @CacheEvict(cacheNames = "system:message:inbox", allEntries = true)
-            })
+    @CacheEvict(key = "'detail:'+#id")
     public void revoke(Long id) {
         var entity = getByIdOrThrow(id);
         ensureManualMessage(entity);
@@ -203,13 +191,13 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
         entity.setStatus(SysMessageStatus.REVOKED.getValue());
         updateById(entity);
+        messageReceiverService.evictUnreadCache();
         notifyInboxChanged(SysMessageWebSocketEvent.REVOKED, entity);
     }
 
     /** 创建或更新业务来源消息，并按发布时间决定是否立即发布。 */
     @Override
     @Transactional
-    @CacheEvict(cacheNames = "system:message:inbox", allEntries = true)
     public void publishSourceMessage(SysSourceMessagePublishReq req) {
         validateReceiver(req.getReceiverType(), req.getReceiverScope(), req.getReceiverValues());
         if (SysMessageSourceType.MANUAL.getValue().equals(req.getSourceType())
@@ -250,10 +238,13 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
             entity.setPushType(SysMessagePushType.SCHEDULED.getValue());
             entity.setStatus(SysMessageStatus.PENDING.getValue());
             saveOrUpdate(entity);
+            syncScheduledTriggerAfterCommit(entity);
+            evictDetailCache(entity.getId());
             if (republished) {
                 resetReceiverReadStatus(entity.getId());
             }
             if (SysMessageStatus.SENT.getValue().equals(previousStatus)) {
+                messageReceiverService.evictUnreadCache();
                 notifyInboxChanged(SysMessageWebSocketEvent.REVOKED, entity);
             }
             return;
@@ -262,9 +253,12 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         entity.setPushType(SysMessagePushType.AUTO.getValue());
         entity.setStatus(SysMessageStatus.SENT.getValue());
         saveOrUpdate(entity);
+        syncScheduledTriggerAfterCommit(entity);
+        evictDetailCache(entity.getId());
         if (republished) {
             resetReceiverReadStatus(entity.getId());
         }
+        messageReceiverService.evictUnreadCache();
         if (created || republished || !SysMessageStatus.SENT.getValue().equals(previousStatus)) {
             notifyInboxChanged(
                     republished
@@ -279,7 +273,6 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     /** 撤回指定业务来源消息。 */
     @Override
     @Transactional
-    @CacheEvict(cacheNames = "system:message:inbox", allEntries = true)
     public void revokeSourceMessage(String sourceType, String sourceId, String receiverType) {
         var entity = findSourceMessage(sourceType, sourceId, receiverType);
         if (entity == null || SysMessageStatus.REVOKED.getValue().equals(entity.getStatus())) {
@@ -288,7 +281,10 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         boolean visible = SysMessageStatus.SENT.getValue().equals(entity.getStatus());
         entity.setStatus(SysMessageStatus.REVOKED.getValue());
         updateById(entity);
+        syncScheduledTriggerAfterCommit(entity);
+        evictDetailCache(entity.getId());
         if (visible) {
+            messageReceiverService.evictUnreadCache();
             notifyInboxChanged(SysMessageWebSocketEvent.REVOKED, entity);
         }
     }
@@ -296,55 +292,61 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     /** 删除指定业务来源消息及其收件状态。 */
     @Override
     @Transactional
-    @CacheEvict(cacheNames = "system:message:inbox", allEntries = true)
     public void deleteSourceMessage(String sourceType, String sourceId, String receiverType) {
         var entity = findSourceMessage(sourceType, sourceId, receiverType);
         if (entity == null) {
             return;
         }
+        boolean visible = SysMessageStatus.SENT.getValue().equals(entity.getStatus());
         messageReceiverService.deleteByMessageId(entity.getId());
         removeById(entity.getId());
+        deleteScheduledTriggerAfterCommit(entity.getId());
+        evictDetailCache(entity.getId());
+        if (visible) {
+            messageReceiverService.evictUnreadCache();
+        }
         notifyInboxChanged(SysMessageWebSocketEvent.DELETED, entity);
     }
 
-    /** 发布所有已到发送时间的定时消息。 */
+    /** 发布指定的到期定时消息。 */
     @Override
     @Transactional
-    @CacheEvict(cacheNames = "system:message:inbox", allEntries = true)
-    public int pushDueScheduledMessages() {
-        // TODO 后续可改为按消息发布时间创建一次性 Quartz trigger，避免固定频率扫描。
-        var messages =
-                list(
-                        new LambdaQueryWrapperX<SysMessage>()
-                                .eq(SysMessage::getStatus, SysMessageStatus.PENDING.getValue())
-                                .eq(
-                                        SysMessage::getPushType,
-                                        SysMessagePushType.SCHEDULED.getValue())
-                                .le(SysMessage::getPublishTime, LocalDateTime.now())
-                                .orderByAsc(SysMessage::getPublishTime));
-        messages.forEach(this::publish);
-        return messages.size();
+    public boolean pushScheduled(Long id) {
+        var message = getById(id);
+        if (message == null
+                || !SysMessageStatus.PENDING.getValue().equals(message.getStatus())
+                || !SysMessagePushType.SCHEDULED.getValue().equals(message.getPushType())
+                || message.getPublishTime() == null
+                || message.getPublishTime().isAfter(LocalDateTime.now())) {
+            return false;
+        }
+        publish(message);
+        evictDetailCache(message.getId());
+        messageReceiverService.evictUnreadCache();
+        return true;
     }
 
     /** 删除指定消息。 */
     @Override
     @Transactional
-    @Caching(
-            evict = {
-                @CacheEvict(key = "'detail:'+#id"),
-                @CacheEvict(cacheNames = "system:message:inbox", allEntries = true)
-            })
+    @CacheEvict(key = "'detail:'+#id")
     public void delete(Long id) {
         var entity = getByIdOrThrow(id);
         ensureManualMessage(entity);
+        boolean visible = SysMessageStatus.SENT.getValue().equals(entity.getStatus());
         messageReceiverService.deleteByMessageId(id);
         removeById(id);
+        deleteScheduledTriggerAfterCommit(id);
+        if (visible) {
+            messageReceiverService.evictUnreadCache();
+        }
         notifyInboxChanged(SysMessageWebSocketEvent.DELETED, entity);
     }
 
     /** 发布消息并更新发布时间与发送状态。 */
     private void publish(SysMessage message) {
-        validateChannel(message.getChannel());
+        var channelHandler = getChannelHandler(message.getChannel());
+        channelHandler.send(message);
         message.setStatus(SysMessageStatus.SENT.getValue());
         message.setPublishTime(LocalDateTime.now());
         updateById(message);
@@ -356,7 +358,60 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         messageReceiverService.resetReadStatus(messageId);
     }
 
-    /** 在事务提交后通过 WebSocket 通知收件箱发生变化。 */
+    /** 精准清除指定消息详情缓存。 */
+    private void evictDetailCache(Long messageId) {
+        var cache = cacheManager.getCache("system:message");
+        if (cache != null) {
+            cache.evict("detail:" + messageId);
+        }
+    }
+
+    /** 事务提交后根据消息当前状态创建、重排或删除一次性任务。 */
+    private void syncScheduledTriggerAfterCommit(SysMessage message) {
+        Long messageId = message.getId();
+        LocalDateTime publishTime = message.getPublishTime();
+        boolean scheduled =
+                SysMessageStatus.PENDING.getValue().equals(message.getStatus())
+                        && SysMessagePushType.SCHEDULED.getValue().equals(message.getPushType())
+                        && publishTime != null;
+        runAfterCommit(
+                messageId,
+                scheduled
+                        ? () -> scheduledPushScheduler.schedule(messageId, publishTime)
+                        : () -> scheduledPushScheduler.delete(messageId));
+    }
+
+    /** 事务提交后删除指定消息的一次性任务。 */
+    private void deleteScheduledTriggerAfterCommit(Long messageId) {
+        runAfterCommit(messageId, () -> scheduledPushScheduler.delete(messageId));
+    }
+
+    /** 在事务确认提交后同步 Quartz，失败时保留业务数据供下次启动对账。 */
+    private void runAfterCommit(Long messageId, Runnable action) {
+        Runnable guardedAction =
+                () -> {
+                    try {
+                        action.run();
+                    } catch (Exception exception) {
+                        log.error("[消息调度] 同步一次性任务失败，messageId={}", messageId, exception);
+                    }
+                };
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(
+                    new TransactionSynchronization() {
+                        @Override
+                        public void afterCompletion(int status) {
+                            if (status == TransactionSynchronization.STATUS_COMMITTED) {
+                                guardedAction.run();
+                            }
+                        }
+                    });
+        } else {
+            guardedAction.run();
+        }
+    }
+
+    /** 在事务完成且确认提交后通过 WebSocket 通知收件箱发生变化。 */
     private void notifyInboxChanged(SysMessageWebSocketEvent event, SysMessage message) {
         if (!isInboxVisible(message)) {
             return;
@@ -374,8 +429,10 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
             TransactionSynchronizationManager.registerSynchronization(
                     new TransactionSynchronization() {
                         @Override
-                        public void afterCommit() {
-                            sender.run();
+                        public void afterCompletion(int status) {
+                            if (status == TransactionSynchronization.STATUS_COMMITTED) {
+                                sender.run();
+                            }
                         }
                     });
         } else {
@@ -429,12 +486,19 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
 
     /** 校验消息通道是否受支持。 */
     private void validateChannel(String channel) {
+        getChannelHandler(channel);
+    }
+
+    /** 获取消息通道处理器。 */
+    private SysMessageChannelHandler getChannelHandler(String channel) {
         if (!SysMessageChannel.contains(channel)) {
             throw new BizException(CommonErrorCode.BAD_REQUEST);
         }
-        if (!SysMessageChannel.IN_APP.getValue().equals(channel)) {
+        var handler = channelHandlerRegistry.get(channel);
+        if (handler == null) {
             throw new BizException(SystemErrorCode.MESSAGE_CHANNEL_UNAVAILABLE);
         }
+        return handler;
     }
 
     /** 校验消息推送方式和定时发布时间。 */
@@ -541,8 +605,8 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         if (templateContent == null || templateContent.isBlank()) {
             return templateContent;
         }
-        var matcher = TEMPLATE_VARIABLE_PATTERN.matcher(templateContent);
-        var result = new StringBuffer();
+        var matcher = SysMessageTemplatePattern.TEMPLATE_VARIABLE_PATTERN.matcher(templateContent);
+        var result = new StringBuilder();
         while (matcher.find()) {
             var value = params.get(matcher.group(1));
             matcher.appendReplacement(

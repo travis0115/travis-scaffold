@@ -29,7 +29,8 @@ export const overridesPreferences = defineOverridesPreferences({
   logo: {
     enable: true,
     fit: 'contain',
-    source: 'https://unpkg.com/@vbenjs/static-source@0.1.7/source/logo-v1.webp',
+    source: '/static/img/logo.png',
+    // source: 'https://unpkg.com/@vbenjs/static-source@0.1.7/source/logo-v1.webp',
     // sourceDark: 'https://unpkg.com/@vbenjs/static-source@0.1.7/source/logo-dark.webp', // 可选：暗色主题logo
   },
   navigation: {

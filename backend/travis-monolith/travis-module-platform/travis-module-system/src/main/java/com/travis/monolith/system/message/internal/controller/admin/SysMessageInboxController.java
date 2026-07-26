@@ -4,12 +4,10 @@ import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
-import com.travis.monolith.system.message.api.enums.SysMessageReadStatus;
 import com.travis.monolith.system.message.api.request.SysUserMessagePageReq;
 import com.travis.monolith.system.message.api.response.SysUserMessageResp;
 import com.travis.monolith.system.message.internal.service.SysMessageReceiverService;
 import jakarta.validation.Valid;
-import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -43,14 +41,9 @@ public class SysMessageInboxController {
     /** 查询消息详情，并在首次查看时标记为已读。 */
     @GetMapping("/{id}")
     public ApiResponse<SysUserMessageResp> get(@PathVariable Long id) {
-        var userId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
-        var message = messageService.getOrThrow(LoginType.ADMIN, userId, id);
-        if (SysMessageReadStatus.UNREAD.getValue().equals(message.getReadStatus())) {
-            messageService.markRead(LoginType.ADMIN, userId, id);
-            message.setReadStatus(SysMessageReadStatus.READ.getValue());
-            message.setReadTime(LocalDateTime.now());
-        }
-        return ApiResponse.success(message);
+        return ApiResponse.success(
+                messageService.getAndMarkRead(
+                        LoginType.ADMIN, StpKit.of(LoginType.ADMIN).getLoginIdAsLong(), id));
     }
 
     /** 将指定消息标记为已读。 */

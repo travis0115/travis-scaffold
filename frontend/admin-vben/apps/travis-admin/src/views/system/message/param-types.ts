@@ -9,6 +9,10 @@ export const messageTemplateParamTypeOptions = [
   { label: '链接', value: 'url' },
 ];
 
+export const MESSAGE_TEMPLATE_PARAM_KEY_PATTERN = /^[A-Za-z][A-Za-z0-9_]*$/;
+export const MESSAGE_TEMPLATE_PARAM_EXPRESSION_PATTERN =
+  /\{\{\s*([^{}]+?)\s*}}/g;
+
 export function isMessageTemplateParamType(type?: string) {
   return messageTemplateParamTypeOptions.some((item) => item.value === type);
 }

@@ -15,8 +15,8 @@ public interface SysMessageReceiverService extends IService<SysMessageReceiver> 
     /** 分页查询指定登录体系用户的收件箱消息。 */
     PageResp<SysUserMessageResp> page(String receiverType, Long userId, SysUserMessagePageReq req);
 
-    /** 查询指定登录体系用户的消息详情，不存在时抛出业务异常。 */
-    SysUserMessageResp getOrThrow(String receiverType, Long userId, Long id);
+    /** 查询指定登录体系用户的消息详情，并在首次查看时标记为已读。 */
+    SysUserMessageResp getAndMarkRead(String receiverType, Long userId, Long id);
 
     /** 统计指定登录体系用户的未读消息数。 */
     Long countUnread(String receiverType, Long userId);
@@ -38,4 +38,7 @@ public interface SysMessageReceiverService extends IService<SysMessageReceiver> 
 
     /** 将指定消息的全部接收记录重置为未读。 */
     void resetReadStatus(Long messageId);
+
+    /** 清除全部收件箱未读数缓存。 */
+    void evictUnreadCache();
 }

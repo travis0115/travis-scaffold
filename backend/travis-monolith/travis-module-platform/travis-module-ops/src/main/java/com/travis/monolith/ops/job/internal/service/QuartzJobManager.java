@@ -15,6 +15,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import lombok.AllArgsConstructor;
 import org.quartz.*;
 import org.quartz.impl.calendar.DailyCalendar;
 import org.quartz.impl.calendar.HolidayCalendar;
@@ -23,16 +24,13 @@ import org.springframework.stereotype.Component;
 
 /** 负责将业务任务配置同步到 Quartz 调度器。 */
 @Component
+@AllArgsConstructor
 public class QuartzJobManager {
 
     /** 业务任务在 Quartz 中使用的统一分组。 */
     private static final String GROUP = "ops-job";
 
     private final Scheduler scheduler;
-
-    public QuartzJobManager(Scheduler scheduler) {
-        this.scheduler = scheduler;
-    }
 
     /** 新增或覆盖注册任务的 Quartz 调度配置。 */
     public void schedule(OpsJob job) {

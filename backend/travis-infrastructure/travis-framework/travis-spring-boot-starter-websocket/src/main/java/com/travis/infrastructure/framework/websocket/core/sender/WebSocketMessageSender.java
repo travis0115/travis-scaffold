@@ -2,6 +2,7 @@ package com.travis.infrastructure.framework.websocket.core.sender;
 
 import com.travis.infrastructure.framework.websocket.core.message.WebSocketMessage;
 import com.travis.infrastructure.framework.websocket.core.session.WebSocketSessionManager;
+import lombok.AllArgsConstructor;
 
 /**
  * WebSocket 消息发送工具类，供业务层直接注入使用。
@@ -29,13 +30,10 @@ import com.travis.infrastructure.framework.websocket.core.session.WebSocketSessi
  *
  * @author travis
  */
+@AllArgsConstructor
 public class WebSocketMessageSender {
 
     private final WebSocketSessionManager sessionManager;
-
-    public WebSocketMessageSender(WebSocketSessionManager sessionManager) {
-        this.sessionManager = sessionManager;
-    }
 
     /**
      * 发送消息给指定连接主体

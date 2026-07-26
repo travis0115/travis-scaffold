@@ -2,6 +2,7 @@ package com.travis.infrastructure.framework.web.core.advice;
 
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.framework.web.core.service.I18nService;
+import lombok.AllArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
@@ -12,12 +13,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
 @RestControllerAdvice
+@AllArgsConstructor
 public class I18nResponseBodyAdvice implements ResponseBodyAdvice<Object> {
     private final I18nService i18nService;
-
-    public I18nResponseBodyAdvice(I18nService i18nService) {
-        this.i18nService = i18nService;
-    }
 
     @Override
     public boolean supports(

@@ -14,6 +14,7 @@ import com.travis.infrastructure.framework.websocket.core.session.LocalWebSocket
 import com.travis.infrastructure.framework.websocket.core.session.WebSocketSessionListener;
 import com.travis.infrastructure.framework.websocket.core.session.WebSocketSessionManager;
 import java.util.stream.Stream;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.ObjectProvider;
@@ -147,6 +148,7 @@ public class WebSocketAutoConfiguration {
      */
     @Configuration
     @EnableWebSocket
+    @AllArgsConstructor
     static class WebSocketEndpointConfigurer implements WebSocketConfigurer {
 
         private final WebSocketProperties properties;
@@ -155,21 +157,6 @@ public class WebSocketAutoConfiguration {
         private final ObjectProvider<WebSocketAuthService> authServiceProvider;
         private final ObjectProvider<WebSocketEndpoint> endpointProvider;
         private final ObjectProvider<WebSocketEndpointProvider> endpointProviderProvider;
-
-        public WebSocketEndpointConfigurer(
-                WebSocketProperties properties,
-                WebProperties webProperties,
-                LocalWebSocketSessionManager sessionManager,
-                ObjectProvider<WebSocketAuthService> authServiceProvider,
-                ObjectProvider<WebSocketEndpoint> endpointProvider,
-                ObjectProvider<WebSocketEndpointProvider> endpointProviderProvider) {
-            this.properties = properties;
-            this.webProperties = webProperties;
-            this.sessionManager = sessionManager;
-            this.authServiceProvider = authServiceProvider;
-            this.endpointProvider = endpointProvider;
-            this.endpointProviderProvider = endpointProviderProvider;
-        }
 
         @Override
         public void registerWebSocketHandlers(@NonNull WebSocketHandlerRegistry registry) {

@@ -7,9 +7,6 @@ import lombok.Data;
 /** 用户收件箱消息详情响应。 */
 @Data
 public class SysUserMessageResp {
-    /** 收件记录 ID。 */
-    private Long id;
-
     /** 消息 ID。 */
     private Long messageId;
 
@@ -37,7 +34,7 @@ public class SysUserMessageResp {
     /** 消息发布时间。 */
     private LocalDateTime publishTime;
 
-    /** 收件记录创建时间。 */
+    /** 消息创建时间。 */
     private LocalDateTime createTime;
 
     /** 来源内容附加元数据。 */

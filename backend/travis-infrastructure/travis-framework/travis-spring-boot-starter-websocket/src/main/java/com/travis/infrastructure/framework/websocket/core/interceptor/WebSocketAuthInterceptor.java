@@ -6,6 +6,7 @@ import com.travis.infrastructure.framework.websocket.core.auth.WebSocketAuthServ
 import com.travis.infrastructure.framework.websocket.core.endpoint.WebSocketEndpoint;
 import com.travis.infrastructure.framework.websocket.core.session.WebSocketPrincipal;
 import java.util.Map;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.http.server.ServerHttpRequest;
@@ -34,20 +35,12 @@ import org.springframework.web.socket.server.HandshakeInterceptor;
  * @author travis
  */
 @Slf4j
+@AllArgsConstructor
 public class WebSocketAuthInterceptor implements HandshakeInterceptor {
 
     private final WebSocketAuthService authService;
     private final WebSocketProperties properties;
     private final WebSocketEndpoint endpoint;
-
-    public WebSocketAuthInterceptor(
-            WebSocketAuthService authService,
-            WebSocketProperties properties,
-            WebSocketEndpoint endpoint) {
-        this.authService = authService;
-        this.properties = properties;
-        this.endpoint = endpoint;
-    }
 
     @Override
     public boolean beforeHandshake(

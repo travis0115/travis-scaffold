@@ -1,13 +1,16 @@
 package com.travis.monolith.system.message.internal.entity;
 
 import com.travis.infrastructure.framework.mybatis.core.BaseEntity;
+import lombok.*;
+
 import java.time.LocalDateTime;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 /** 消息接收记录实体。 */
 @Data
 @EqualsAndHashCode(callSuper = true)
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class SysMessageReceiver extends BaseEntity {
     /** 消息 ID。 */
     private Long messageId;

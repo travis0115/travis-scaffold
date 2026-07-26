@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.travis.monolith.ops.job.internal.mapper.OpsJobLogMapper">
+
+    <!-- 根据任务编号物理删除调度日志。 -->
+    <delete id="deletePhysicallyByJobId">
+        DELETE FROM ops_job_log
+        WHERE job_id = #{jobId}
+    </delete>
+
+    <!-- 物理删除全部调度日志。 -->
+    <delete id="deleteAllPhysically">
+        DELETE FROM ops_job_log
+    </delete>
+
+    <!-- 物理删除指定任务在截止时间之前的调度日志。 -->
+    <delete id="deleteExpiredPhysically">
+        DELETE FROM ops_job_log
+        WHERE job_id = #{jobId}
+          AND create_time &lt; #{before}
+    </delete>
+
+</mapper>
