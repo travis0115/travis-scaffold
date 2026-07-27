@@ -21,7 +21,6 @@ public class SysMessageCreateReq {
     private String title;
 
     /** 消息 HTML 内容。 */
-    @NotBlank(message = "消息内容不能为空")
     @SanitizeHtml
     @Size(max = 5000, message = "消息内容长度不能超过5000个字符")
     private String content;
@@ -94,11 +93,25 @@ public class SysMessageCreateReq {
                 || (receiverValues != null && !receiverValues.isEmpty());
     }
 
-    /** 校验除短信外的消息是否填写标题。 */
+    /** 校验自定义的非短信消息是否填写标题。 */
     @AssertTrue(message = "消息标题不能为空")
     public boolean isTitleValid() {
-        return SysMessageChannel.SMS.getValue().equals(channel)
+        return templateId != null
+                || SysMessageChannel.SMS.getValue().equals(channel)
                 || (title != null && !title.isBlank());
+    }
+
+    /** 校验自定义消息是否填写内容。 */
+    @AssertTrue(message = "消息内容不能为空")
+    public boolean isContentValid() {
+        return templateId != null || (content != null && !content.isBlank());
+    }
+
+    /** 校验模板消息的标题和内容只能由模板生成。 */
+    @AssertTrue(message = "使用消息模板时不能自定义消息标题或内容")
+    public boolean isTemplateContentValid() {
+        return templateId == null
+                || ((title == null || title.isBlank()) && (content == null || content.isBlank()));
     }
 
     /** 校验外部推送通道是否选择消息模板。 */

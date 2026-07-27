@@ -396,7 +396,6 @@ watch(
       <Notification
         ref="notificationPopupRef"
         :dot="showDot"
-        empty-text="暂无未读消息"
         :notifications="notifications"
         :show-clear="false"
         :show-item-dot="false"
@@ -405,6 +404,9 @@ watch(
         @on-click="handleClick"
         @view-all="viewAll"
       >
+        <template #empty>
+          <span class="text-sm">暂无未读消息</span>
+        </template>
         <template #content="{ item }">
           <div class="min-w-0 w-full">
             <p class="line-clamp-2 text-sm font-normal leading-5">

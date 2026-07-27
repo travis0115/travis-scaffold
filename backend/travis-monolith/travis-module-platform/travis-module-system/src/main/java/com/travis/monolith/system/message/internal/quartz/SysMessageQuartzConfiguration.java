@@ -1,7 +1,5 @@
 package com.travis.monolith.system.message.internal.quartz;
 
-import org.jspecify.annotations.NonNull;
-import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,13 +8,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration(proxyBeanMethods = false)
 public class SysMessageQuartzConfiguration {
     @Bean
-    public ApplicationRunner sysMessageScheduledPushScheduler(
+    public ApplicationRunner sysMessageScheduledPushInitializer(
             SysMessageScheduledPushScheduler scheduler) {
-        return new ApplicationRunner() {
-            @Override
-            public void run(@NonNull ApplicationArguments args) throws Exception {
-                scheduler.initialize();
-            }
-        };
+        return _ -> scheduler.initialize();
     }
 }

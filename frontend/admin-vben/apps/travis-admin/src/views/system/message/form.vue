@@ -188,15 +188,19 @@ async function handleReceiverTypeChange(_value: unknown) {
 
 function toFormValues(detail: SystemMessageApi.Message) {
   const channel = detail.channel || 'IN_APP';
+  const hasTemplate = Boolean(detail.templateId);
   return {
     ...detail,
     channel,
-    inAppContent: channel === 'IN_APP' ? detail.content : undefined,
-    plainContent: channel === 'IN_APP' ? undefined : detail.content,
+    inAppContent:
+      !hasTemplate && channel === 'IN_APP' ? detail.content : undefined,
+    plainContent:
+      !hasTemplate && channel !== 'IN_APP' ? detail.content : undefined,
     publishTime:
       typeof detail.publishTime === 'string'
         ? detail.publishTime.slice(0, 16)
         : detail.publishTime,
+    title: hasTemplate ? undefined : detail.title,
   };
 }
 
@@ -502,15 +506,13 @@ async function handleTemplateSelected(
   await nextTick();
   await formApi.setValues(
     {
-      inAppContent:
-        template.channel === 'IN_APP' ? template.content : undefined,
+      inAppContent: undefined,
       jumpUrl: template.redirectUrl,
-      plainContent:
-        template.channel === 'IN_APP' ? undefined : template.content,
+      plainContent: undefined,
       templateId: template.id,
       templateName: `${template.templateName}（${template.templateCode}）`,
       templateParams: buildTemplateParams(),
-      title: template.title || template.templateName,
+      title: undefined,
     },
     true,
     false,
@@ -568,6 +570,10 @@ const [Drawer, drawerApi] = useVbenDrawer({
       data.publishTime = `${data.publishTime}:00`;
     }
     cleanFormOnlyFields(data);
+    if (selectedTemplateId.value) {
+      delete data.content;
+      delete data.title;
+    }
     await (formData.value?.id
       ? updateMessage(formData.value.id, data)
       : createMessage(data));
@@ -616,6 +622,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
         ? await getMessageTemplateDetail(detail.templateId)
         : undefined;
       if (template) templateOptions.value = [template];
+      await formApi.setFieldValue('templateId', detail.templateId, false);
+      await nextTick();
       await formApi.setValues({
         ...toFormValues(detail),
         templateName: template
@@ -631,18 +639,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
         await setSelectedUsers(options);
       }
       updateTemplateParamRows(detail.templateId, detail.templateParams);
-      if (template && detail.templateId) {
-        await nextTick();
-        await formApi.setValues(
-          {
-            templateId: detail.templateId,
-            templateName: `${template.templateName}（${template.templateCode}）`,
-            templateParams: detail.templateParams,
-          },
-          true,
-          false,
-        );
-      }
     } else {
       formData.value = undefined;
       templateParamRows.value = [];

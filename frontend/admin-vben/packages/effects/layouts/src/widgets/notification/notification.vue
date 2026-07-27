@@ -157,7 +157,9 @@ const handleMakeAll = () => {
 
       <template v-else>
         <div class="flex-center min-h-37.5 w-full text-muted-foreground">
-          {{ emptyText || $t('common.noData') }}
+          <slot name="empty">
+            {{ emptyText || $t('common.noData') }}
+          </slot>
         </div>
       </template>
 

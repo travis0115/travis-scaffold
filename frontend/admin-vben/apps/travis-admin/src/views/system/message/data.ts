@@ -258,9 +258,7 @@ export const useFormSchema = (
   {
     component: 'Input',
     dependencies: {
-      disabled: (values) =>
-        values.channel !== 'IN_APP' || Boolean(values.templateId),
-      show: (values) => needsTitle(values.channel),
+      show: (values) => !values.templateId && needsTitle(values.channel),
       triggerFields: ['channel', 'templateId'],
     },
     fieldName: 'title',
@@ -301,8 +299,7 @@ export const useFormSchema = (
       minHeight: 240,
     },
     dependencies: {
-      show: (values) => values.channel === 'IN_APP',
-      componentProps: (values) => ({ editable: !values.templateId }),
+      show: (values) => values.channel === 'IN_APP' && !values.templateId,
       triggerFields: ['channel', 'templateId'],
     },
     fieldName: 'inAppContent',
@@ -322,7 +319,7 @@ export const useFormSchema = (
     component: 'Textarea',
     componentProps: { disabled: true, rows: 6 },
     dependencies: {
-      show: (values) => isExternalChannel(values.channel),
+      show: (values) => !values.templateId && isExternalChannel(values.channel),
       triggerFields: ['channel', 'templateId'],
     },
     fieldName: 'plainContent',
