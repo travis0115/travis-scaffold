@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.travis.monolith.system.message.internal.mapper.SysMessageTemplateMapper">
+
+    <!-- 物理删除消息模板，避免逻辑删除记录占用编码和通道唯一索引。 -->
+    <delete id="deletePhysicallyById">
+        DELETE FROM sys_message_template
+        WHERE id = #{id}
+    </delete>
+
+</mapper>

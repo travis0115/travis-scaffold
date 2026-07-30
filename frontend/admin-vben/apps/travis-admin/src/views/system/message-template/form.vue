@@ -237,22 +237,24 @@ function buildContentSchema() {
   }
 }
 
-function extractTemplateParamKeys(content?: string) {
-  if (!content) return [];
+function extractTemplateParamKeys(...contents: Array<string | undefined>) {
   const keys: string[] = [];
-  for (const match of content.matchAll(
-    MESSAGE_TEMPLATE_PARAM_EXPRESSION_PATTERN,
-  )) {
-    const key = match[1]?.trim();
-    if (!key) {
-      message.error('模板参数引用格式错误：参数名不能为空');
-      return undefined;
+  for (const content of contents) {
+    if (!content) continue;
+    for (const match of content.matchAll(
+      MESSAGE_TEMPLATE_PARAM_EXPRESSION_PATTERN,
+    )) {
+      const key = match[1]?.trim();
+      if (!key) {
+        message.error('模板参数引用格式错误：参数名不能为空');
+        return undefined;
+      }
+      if (!MESSAGE_TEMPLATE_PARAM_KEY_PATTERN.test(key)) {
+        message.error(`模板参数引用格式错误：${key}`);
+        return undefined;
+      }
+      keys.push(key);
     }
-    if (!MESSAGE_TEMPLATE_PARAM_KEY_PATTERN.test(key)) {
-      message.error(`模板参数引用格式错误：${key}`);
-      return undefined;
-    }
-    keys.push(key);
   }
   return [...new Set(keys)];
 }
@@ -261,7 +263,11 @@ async function syncTemplateParamsFromContent() {
   const values = await formApi.getValues();
   const content =
     values.channel === 'IN_APP' ? values.inAppContent : values.content;
-  const keys = extractTemplateParamKeys(content);
+  const keys = extractTemplateParamKeys(
+    values.title,
+    content,
+    values.redirectUrl,
+  );
   if (!keys) return;
   const existingRows = new Map(
     variableRows.value.map((row) => [row.key.trim(), row]),
@@ -282,8 +288,8 @@ async function syncTemplateParamsFromContent() {
   );
 }
 
-function validateTemplateParamUsage(content?: string) {
-  const contentKeys = extractTemplateParamKeys(content);
+function validateTemplateParamUsage(...contents: Array<string | undefined>) {
+  const contentKeys = extractTemplateParamKeys(...contents);
   if (!contentKeys) return false;
   const contentKeySet = new Set(contentKeys);
   const configuredKeys = variableRows.value.map((row) => row.key.trim());
@@ -340,7 +346,14 @@ const [Drawer, drawerApi] = useVbenDrawer({
     if (!['WECHAT_MP', 'WECHAT_OA'].includes(values.channel)) {
       values.redirectUrl = undefined;
     }
-    if (!validateTemplateParamUsage(values.content)) return;
+    if (
+      !validateTemplateParamUsage(
+        values.title,
+        values.content,
+        values.redirectUrl,
+      )
+    )
+      return;
     delete values.inAppContent;
     if (formData.value?.id) {
       delete values.templateCode;

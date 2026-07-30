@@ -20,6 +20,7 @@ import {
   getUserOptionsByIds,
   updateMessage,
 } from '#/api';
+import RichTextPreview from '#/components/rich-text-preview/index.vue';
 import { isDeptEnabled } from '#/features';
 
 import { useFormSchema } from './data';
@@ -315,9 +316,6 @@ function getTemplateParamComponentProps(row: TemplateParamRow) {
         stringMode: true,
       };
     }
-    case 'number': {
-      return { class: 'w-full', placeholder, stringMode: true };
-    }
     case 'date': {
       return {
         class: 'w-full',
@@ -346,6 +344,9 @@ function getTemplateParamComponentProps(row: TemplateParamRow) {
     }
     case 'mobile': {
       return { inputmode: 'numeric', maxlength: 11, placeholder, type: 'tel' };
+    }
+    case 'number': {
+      return { class: 'w-full', placeholder, stringMode: true };
     }
     case 'url': {
       return { placeholder, type: 'url' };
@@ -378,7 +379,7 @@ function createTemplateParamRule(row: TemplateParamRow) {
 }
 
 function escapeHtml(value: string) {
-  return value.replace(/[&<>'"]/g, (character) => {
+  return value.replaceAll(/[&<>'"]/g, (character) => {
     return (
       { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[
         character
@@ -507,7 +508,10 @@ async function handleTemplateSelected(
   await formApi.setValues(
     {
       inAppContent: undefined,
-      jumpUrl: template.redirectUrl,
+      jumpUrl:
+        ['WECHAT_MP', 'WECHAT_OA'].includes(template.channel)
+          ? template.redirectUrl
+          : undefined,
       plainContent: undefined,
       templateId: template.id,
       templateName: `${template.templateName}（${template.templateCode}）`,
@@ -564,6 +568,9 @@ const [Drawer, drawerApi] = useVbenDrawer({
       receiverType,
       receiverValues: receiverField ? receiverValues : [],
     };
+    if (!['WECHAT_MP', 'WECHAT_OA'].includes(values.channel)) {
+      delete data.jumpUrl;
+    }
     if (values.pushType === 0) {
       delete data.publishTime;
     } else if (typeof data.publishTime === 'string' && data.publishTime.length === 16) {
@@ -670,10 +677,10 @@ const [Drawer, drawerApi] = useVbenDrawer({
       <Divider>消息预览</Divider>
       <div class="px-3 py-2">
         <p class="text-base font-semibold">{{ templatePreviewTitle }}</p>
-        <div
+        <RichTextPreview
           class="prose mt-3 max-w-none text-sm leading-6"
-          v-html="templatePreviewContent"
-        ></div>
+          :content="templatePreviewContent"
+        />
       </div>
     </div>
   </Drawer>

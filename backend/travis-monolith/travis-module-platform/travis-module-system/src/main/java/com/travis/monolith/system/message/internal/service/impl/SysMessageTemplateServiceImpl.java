@@ -102,7 +102,7 @@ public class SysMessageTemplateServiceImpl
         if (IsBuiltin.YES.getValue().equals(entity.getIsBuiltin())) {
             throw new BizException(SystemErrorCode.MESSAGE_TEMPLATE_BUILTIN_NOT_DELETABLE);
         }
-        removeById(id);
+        baseMapper.deletePhysicallyById(id);
     }
 
     /** 校验消息模板唯一性。 */
@@ -124,6 +124,9 @@ public class SysMessageTemplateServiceImpl
         } else if (SysMessageChannel.SMS.getValue().equals(req.getChannel())) {
             req.setTitle(null);
         }
+        if (!SysMessageChannel.supportsJumpUrl(req.getChannel())) {
+            req.setRedirectUrl(null);
+        }
         req.setContentSchema(normalizeContentSchema(req.getContentSchema()));
     }
 
@@ -133,6 +136,9 @@ public class SysMessageTemplateServiceImpl
             req.setPlatformTemplateId(null);
         } else if (SysMessageChannel.SMS.getValue().equals(req.getChannel())) {
             req.setTitle(null);
+        }
+        if (!SysMessageChannel.supportsJumpUrl(req.getChannel())) {
+            req.setRedirectUrl(null);
         }
         req.setContentSchema(normalizeContentSchema(req.getContentSchema()));
     }

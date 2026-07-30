@@ -35,4 +35,9 @@ public enum SysMessageChannel {
     public static boolean isExternal(String value) {
         return !IN_APP.value.equals(value);
     }
+
+    /** 判断通道是否支持跳转地址。 */
+    public static boolean supportsJumpUrl(String value) {
+        return WECHAT_MP.value.equals(value) || WECHAT_OA.value.equals(value);
+    }
 }

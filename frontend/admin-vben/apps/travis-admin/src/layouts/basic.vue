@@ -197,7 +197,7 @@ async function buildNotificationSocketUrl() {
 
 async function connectNotificationSocket() {
   if (!accessStore.accessToken || notificationSocket) return;
-  let socketUrl = '';
+  let socketUrl: string;
   try {
     socketUrl = await buildNotificationSocketUrl();
   } catch {

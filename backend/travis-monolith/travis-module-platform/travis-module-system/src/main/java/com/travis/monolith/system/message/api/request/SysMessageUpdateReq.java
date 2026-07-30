@@ -125,4 +125,23 @@ public class SysMessageUpdateReq {
     public boolean isPublishTimeValid() {
         return !SysMessagePushType.SCHEDULED.getValue().equals(pushType) || publishTime != null;
     }
+
+    /** 校验跳转地址为站内绝对路径或 HTTP(S) 地址。 */
+    @AssertTrue(message = "跳转地址必须是站内绝对路径或HTTP(S)地址")
+    public boolean isJumpUrlValid() {
+        return jumpUrl == null
+                || jumpUrl.isBlank()
+                || (jumpUrl.startsWith("/")
+                        && !jumpUrl.startsWith("//")
+                        && jumpUrl.chars().noneMatch(Character::isWhitespace))
+                || (((jumpUrl.startsWith("http://") && jumpUrl.length() > 7)
+                                || (jumpUrl.startsWith("https://") && jumpUrl.length() > 8))
+                        && jumpUrl.chars().noneMatch(Character::isWhitespace));
+    }
+
+    /** 仅微信通道允许配置跳转地址。 */
+    @AssertTrue(message = "仅微信通道支持跳转地址")
+    public boolean isJumpUrlChannelValid() {
+        return jumpUrl == null || jumpUrl.isBlank() || SysMessageChannel.supportsJumpUrl(channel);
+    }
 }

@@ -15,6 +15,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import lombok.Data;
 import tools.jackson.core.type.TypeReference;
@@ -80,6 +81,27 @@ public class SysMessageTemplateUpdateReq {
         return !SysMessageChannel.isExternal(channel) || StrUtil.isNotBlank(platformTemplateId);
     }
 
+    /** 校验跳转地址模板为站内绝对路径或 HTTP(S) 地址。 */
+    @AssertTrue(message = "跳转地址必须是站内绝对路径或HTTP(S)地址")
+    public boolean isRedirectUrlValid() {
+        return redirectUrl == null
+                || redirectUrl.isBlank()
+                || (redirectUrl.startsWith("/")
+                        && !redirectUrl.startsWith("//")
+                        && redirectUrl.chars().noneMatch(Character::isWhitespace))
+                || (((redirectUrl.startsWith("http://") && redirectUrl.length() > 7)
+                                || (redirectUrl.startsWith("https://") && redirectUrl.length() > 8))
+                        && redirectUrl.chars().noneMatch(Character::isWhitespace));
+    }
+
+    /** 仅微信模板允许配置跳转地址。 */
+    @AssertTrue(message = "仅微信模板支持跳转地址")
+    public boolean isRedirectUrlChannelValid() {
+        return redirectUrl == null
+                || redirectUrl.isBlank()
+                || SysMessageChannel.supportsJumpUrl(channel);
+    }
+
     /** 校验参数结构中的参数名、类型及描述配置。 */
     @AssertTrue(message = "字段参数配置错误")
     public boolean isContentSchemaConfigValid() {
@@ -127,16 +149,24 @@ public class SysMessageTemplateUpdateReq {
                 && isLengthValid(config.getDescription(), 255);
     }
 
-    /** 按正文出现顺序提取模板参数键。 */
+    /** 按标题、正文和跳转地址出现顺序提取模板参数键。 */
     private LinkedHashSet<String> extractTemplateParamKeys() {
         var keys = new LinkedHashSet<String>();
-        var matcher = SysMessageTemplatePattern.TEMPLATE_PARAM_EXPRESSION_PATTERN.matcher(content);
-        while (matcher.find()) {
-            var key = matcher.group(1).trim();
-            if (!SysMessageTemplatePattern.PARAM_KEY_PATTERN.matcher(key).matches()) {
-                return null;
+        for (String templatePart :
+                List.of(
+                        title == null ? "" : title,
+                        content == null ? "" : content,
+                        redirectUrl == null ? "" : redirectUrl)) {
+            var matcher =
+                    SysMessageTemplatePattern.TEMPLATE_PARAM_EXPRESSION_PATTERN.matcher(
+                            templatePart);
+            while (matcher.find()) {
+                var key = matcher.group(1).trim();
+                if (!SysMessageTemplatePattern.PARAM_KEY_PATTERN.matcher(key).matches()) {
+                    return null;
+                }
+                keys.add(key);
             }
-            keys.add(key);
         }
         return keys;
     }

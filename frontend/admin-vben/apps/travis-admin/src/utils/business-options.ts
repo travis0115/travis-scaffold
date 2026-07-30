@@ -38,12 +38,7 @@ export const manualMessagePushTypeOptions = getTranslatedOptions(
 
 export const messageChannelOptions = getTranslatedOptions(
   'sys_message_channel',
-  [
-    { label: '站内信', value: 'IN_APP' },
-    { label: '短信', value: 'SMS' },
-    { label: '微信公众号', value: 'WECHAT_OA' },
-    { label: '微信小程序', value: 'WECHAT_MP' },
-  ],
+  [{ label: '站内信', value: 'IN_APP' }],
 );
 
 export const messageTypeOptions = getTranslatedOptions('sys_message_type', [

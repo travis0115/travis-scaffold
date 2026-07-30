@@ -8,9 +8,11 @@ import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
+import com.travis.infrastructure.framework.satoken.core.websocket.SaTokenWebSocketPrincipal;
 import com.travis.infrastructure.framework.websocket.core.message.WebSocketMessage;
 import com.travis.infrastructure.framework.websocket.core.message.WebSocketSender;
 import com.travis.infrastructure.framework.websocket.core.sender.WebSocketMessageSender;
+import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.file.api.SysFileApi;
 import com.travis.monolith.system.message.api.constant.SysMessageTemplatePattern;
@@ -26,6 +28,17 @@ import com.travis.monolith.system.message.internal.quartz.SysMessageScheduledPus
 import com.travis.monolith.system.message.internal.service.SysMessageReceiverService;
 import com.travis.monolith.system.message.internal.service.SysMessageService;
 import com.travis.monolith.system.message.internal.service.SysMessageTemplateService;
+import com.travis.monolith.system.role.api.SysRoleApi;
+import com.travis.monolith.system.user.api.SysUserApi;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.regex.Matcher;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.CacheManager;
@@ -36,13 +49,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.web.util.HtmlUtils;
 import tools.jackson.core.type.TypeReference;
-
-import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
 
 /** 消息推送服务实现。 */
 @Service
@@ -59,6 +67,8 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     private final CacheManager cacheManager;
     private final SysMessageChannelHandlerRegistry channelHandlerRegistry;
     private final SysMessageScheduledPushScheduler scheduledPushScheduler;
+    private final SysUserApi sysUserApi;
+    private final SysRoleApi sysRoleApi;
 
     /** 分页查询消息。 */
     @Override
@@ -150,9 +160,12 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                 && !SysMessageStatus.REVOKED.getValue().equals(entity.getStatus())) {
             throw new BizException(CommonErrorCode.BAD_REQUEST);
         }
+        Integer expectedStatus = entity.getStatus();
         boolean republished = SysMessageStatus.REVOKED.getValue().equals(entity.getStatus());
         entity.setPushType(SysMessagePushType.MANUAL.getValue());
-        publish(entity);
+        if (!publish(entity, expectedStatus)) {
+            return;
+        }
         syncScheduledTriggerAfterCommit(entity);
         if (republished) {
             resetReceiverReadStatus(entity.getId());
@@ -171,7 +184,9 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
             throw new BizException(CommonErrorCode.BAD_REQUEST);
         }
         entity.setPushType(SysMessagePushType.AUTO.getValue());
-        publish(entity);
+        if (!publish(entity, SysMessageStatus.PENDING.getValue())) {
+            return;
+        }
         syncScheduledTriggerAfterCommit(entity);
         messageReceiverService.evictUnreadCache();
     }
@@ -214,6 +229,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                 findSourceMessage(req.getSourceType(), req.getSourceId(), req.getReceiverType());
         boolean created = entity == null;
         Integer previousStatus = created ? null : entity.getStatus();
+        Audience previousAudience = created ? null : Audience.from(entity);
         boolean republished = SysMessageStatus.REVOKED.getValue().equals(previousStatus);
         if (created) {
             entity = new SysMessage();
@@ -245,7 +261,8 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
             }
             if (SysMessageStatus.SENT.getValue().equals(previousStatus)) {
                 messageReceiverService.evictUnreadCache();
-                notifyInboxChanged(SysMessageWebSocketEvent.REVOKED, entity);
+                notifyInboxChanged(
+                        SysMessageWebSocketEvent.REVOKED, entity.getId(), previousAudience);
             }
             return;
         }
@@ -266,7 +283,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                             : SysMessageWebSocketEvent.PUBLISHED,
                     entity);
         } else {
-            notifyInboxChanged(SysMessageWebSocketEvent.INBOX_CHANGED, entity);
+            notifyInboxChanged(SysMessageWebSocketEvent.INBOX_CHANGED, entity, previousAudience);
         }
     }
 
@@ -299,7 +316,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
         boolean visible = SysMessageStatus.SENT.getValue().equals(entity.getStatus());
         messageReceiverService.deleteByMessageId(entity.getId());
-        removeById(entity.getId());
+        baseMapper.deletePhysicallyById(entity.getId());
         deleteScheduledTriggerAfterCommit(entity.getId());
         evictDetailCache(entity.getId());
         if (visible) {
@@ -320,7 +337,9 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                 || message.getPublishTime().isAfter(LocalDateTime.now())) {
             return false;
         }
-        publish(message);
+        if (!publish(message, SysMessageStatus.PENDING.getValue())) {
+            return false;
+        }
         evictDetailCache(message.getId());
         messageReceiverService.evictUnreadCache();
         return true;
@@ -343,14 +362,26 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         notifyInboxChanged(SysMessageWebSocketEvent.DELETED, entity);
     }
 
-    /** 发布消息并更新发布时间与发送状态。 */
-    private void publish(SysMessage message) {
+    /** 原子占用待发送消息后执行通道发送，避免手动任务与 Quartz 并发重复推送。 */
+    private boolean publish(SysMessage message, Integer expectedStatus) {
         var channelHandler = getChannelHandler(message.getChannel());
-        channelHandler.send(message);
+        var publishTime = LocalDateTime.now();
+        boolean claimed =
+                baseMapper.claimForPublish(
+                                message.getId(),
+                                expectedStatus,
+                                message.getPushType(),
+                                SysMessageStatus.SENT.getValue(),
+                                publishTime)
+                        > 0;
+        if (!claimed) {
+            return false;
+        }
         message.setStatus(SysMessageStatus.SENT.getValue());
-        message.setPublishTime(LocalDateTime.now());
-        updateById(message);
+        message.setPublishTime(publishTime);
+        channelHandler.send(message);
         notifyInboxChanged(SysMessageWebSocketEvent.PUBLISHED, message);
+        return true;
     }
 
     /** 重置消息接收人的已读状态。 */
@@ -411,20 +442,72 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
     }
 
-    /** 在事务完成且确认提交后通过 WebSocket 通知收件箱发生变化。 */
-    private void notifyInboxChanged(SysMessageWebSocketEvent event, SysMessage message) {
+    /** 按消息当前及补充接收范围通知收件箱变化。 */
+    private void notifyInboxChanged(
+            SysMessageWebSocketEvent event, SysMessage message, Audience... additionalAudiences) {
         if (!isInboxVisible(message)) {
+            return;
+        }
+        var audiences = new LinkedHashSet<Audience>();
+        audiences.add(Audience.from(message));
+        Arrays.stream(additionalAudiences).filter(Objects::nonNull).forEach(audiences::add);
+        notifyInboxChanged(event, message.getId(), audiences.toArray(Audience[]::new));
+    }
+
+    /** 在事务确认提交后，只向符合消息接收范围的在线主体发送 WebSocket 通知。 */
+    private void notifyInboxChanged(
+            SysMessageWebSocketEvent event, Long messageId, Audience... audiences) {
+        var validAudiences = Arrays.stream(audiences).filter(Objects::nonNull).toList();
+        if (validAudiences.isEmpty()) {
             return;
         }
         Runnable sender =
                 () ->
-                        webSocketMessageSender.sendToAll(
-                                WebSocketMessage.toAll(
-                                        WebSocketSender.SYSTEM,
-                                        event,
-                                        Map.of(
-                                                "messageId", message.getId(),
-                                                "title", message.getTitle())));
+                        validAudiences.stream()
+                                .map(Audience::receiverType)
+                                .distinct()
+                                .flatMap(
+                                        receiverType ->
+                                                webSocketMessageSender
+                                                        .getConnectedPrincipals(receiverType)
+                                                        .stream())
+                                .distinct()
+                                .forEach(
+                                        principal -> {
+                                            var subject =
+                                                    SaTokenWebSocketPrincipal.parse(principal);
+                                            if (subject == null) {
+                                                return;
+                                            }
+                                            Long userId;
+                                            try {
+                                                userId = Long.valueOf(subject.loginId());
+                                            } catch (NumberFormatException ignored) {
+                                                return;
+                                            }
+                                            boolean matched =
+                                                    validAudiences.stream()
+                                                            .filter(
+                                                                    audience ->
+                                                                            audience.receiverType()
+                                                                                    .equals(
+                                                                                            subject
+                                                                                                    .loginType()))
+                                                            .anyMatch(
+                                                                    audience ->
+                                                                            matchesAudience(
+                                                                                    userId,
+                                                                                    audience));
+                                            if (matched) {
+                                                webSocketMessageSender.sendToPrincipal(
+                                                        principal,
+                                                        WebSocketMessage.toPrincipal(
+                                                                WebSocketSender.SYSTEM,
+                                                                principal,
+                                                                event,
+                                                                Map.of("messageId", messageId)));
+                                            }
+                                        });
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(
                     new TransactionSynchronization() {
@@ -438,6 +521,24 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         } else {
             sender.run();
         }
+    }
+
+    /** 判断指定用户是否命中消息接收范围。 */
+    private boolean matchesAudience(Long userId, Audience audience) {
+        return SysMessageReceiverScope.findByValue(audience.receiverScope())
+                .map(
+                        scope ->
+                                switch (scope) {
+                                    case ALL -> true;
+                                    case USER -> audience.receiverValues().contains(userId);
+                                    case ROLE ->
+                                            sysRoleApi.getRoleIdsByUserId(userId).stream()
+                                                    .anyMatch(audience.receiverValues()::contains);
+                                    case DEPT ->
+                                            audience.receiverValues()
+                                                    .contains(sysUserApi.getDeptIdByUserId(userId));
+                                })
+                .orElse(false);
     }
 
     /** 根据来源信息查询对应业务消息。 */
@@ -520,18 +621,31 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
 
     /** 使用模板参数渲染消息标题、内容及跳转地址。 */
     private void renderTemplate(SysMessage message) {
+        if (!SysMessageChannel.supportsJumpUrl(message.getChannel())) {
+            message.setJumpUrl(null);
+        }
         if (message.getTemplateId() == null) {
             return;
         }
         var template = messageTemplateService.get(message.getTemplateId());
-        if (template == null || !message.getChannel().equals(template.getChannel())) {
-            throw new BizException(CommonErrorCode.VALIDATE_FAILED, "消息模板不存在或通道不匹配");
+        if (template == null
+                || !Status.ENABLED.getValue().equals(template.getStatus())
+                || !message.getChannel().equals(template.getChannel())) {
+            throw new BizException(CommonErrorCode.VALIDATE_FAILED, "消息模板不存在、已禁用或通道不匹配");
         }
         var params = parseTemplateParams(message.getTemplateParams());
         validateTemplateParams(template.getContentSchema(), params);
-        message.setContent(renderTemplate(template.getContent(), params));
-        message.setTitle(template.getTitle());
-        message.setJumpUrl(template.getRedirectUrl());
+        message.setContent(
+                renderTemplate(
+                        template.getContent(),
+                        params,
+                        SysMessageChannel.IN_APP.getValue().equals(message.getChannel())));
+        message.setTitle(renderTemplate(template.getTitle(), params, false));
+        message.setJumpUrl(
+                SysMessageChannel.supportsJumpUrl(message.getChannel())
+                        ? renderTemplate(template.getRedirectUrl(), params, false)
+                        : null);
+        validateRenderedJumpUrl(message.getJumpUrl());
     }
 
     /** 解析并规范化消息模板参数。 */
@@ -600,8 +714,9 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                 });
     }
 
-    /** 使用模板参数渲染消息标题、内容及跳转地址。 */
-    private String renderTemplate(String templateContent, Map<String, Object> params) {
+    /** 使用模板参数渲染字段；站内富文本参数按纯文本转义，避免存储型 XSS。 */
+    static String renderTemplate(
+            String templateContent, Map<String, Object> params, boolean escapeHtml) {
         if (templateContent == null || templateContent.isBlank()) {
             return templateContent;
         }
@@ -609,10 +724,43 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         var result = new StringBuilder();
         while (matcher.find()) {
             var value = params.get(matcher.group(1));
-            matcher.appendReplacement(
-                    result, Matcher.quoteReplacement(value == null ? "" : String.valueOf(value)));
+            var replacement = value == null ? "" : String.valueOf(value);
+            if (escapeHtml) {
+                replacement = HtmlUtils.htmlEscape(replacement, StandardCharsets.UTF_8.name());
+            }
+            matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
         }
         matcher.appendTail(result);
         return result.toString();
+    }
+
+    /** 校验模板渲染后的站内路径或 HTTP(S) 地址，防止参数拼出危险协议。 */
+    private void validateRenderedJumpUrl(String jumpUrl) {
+        if (jumpUrl == null || jumpUrl.isBlank()) {
+            return;
+        }
+        boolean internal =
+                jumpUrl.startsWith("/")
+                        && !jumpUrl.startsWith("//")
+                        && jumpUrl.chars().noneMatch(Character::isWhitespace);
+        boolean external =
+                ((jumpUrl.startsWith("http://") && jumpUrl.length() > 7)
+                                || (jumpUrl.startsWith("https://") && jumpUrl.length() > 8))
+                        && jumpUrl.chars().noneMatch(Character::isWhitespace);
+        if (!internal && !external) {
+            throw new BizException(CommonErrorCode.VALIDATE_FAILED, "模板跳转地址格式不正确");
+        }
+    }
+
+    /** WebSocket 定向通知所需的消息接收范围快照。 */
+    private record Audience(String receiverType, Integer receiverScope, List<Long> receiverValues) {
+
+        private static Audience from(SysMessage message) {
+            var values =
+                    message.getReceiverValues() == null || message.getReceiverValues().isBlank()
+                            ? List.<Long>of()
+                            : JsonUtil.parseArray(message.getReceiverValues(), Long.class);
+            return new Audience(message.getReceiverType(), message.getReceiverScope(), values);
+        }
     }
 }

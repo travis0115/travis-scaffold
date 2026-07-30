@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.travis.monolith.system.message.internal.mapper.SysMessageMapper">
+
+    <!-- 物理删除业务来源消息，避免逻辑删除记录占用来源唯一索引。 -->
+    <delete id="deletePhysicallyById">
+        DELETE FROM sys_message
+        WHERE id = #{id}
+    </delete>
+
+    <!-- 按预期状态原子更新发送状态，保证并发发送只有一个执行者成功。 -->
+    <update id="claimForPublish">
+        UPDATE sys_message
+        SET push_type = #{pushType},
+            status = #{sentStatus},
+            publish_time = #{publishTime},
+            update_time = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+          AND status = #{expectedStatus}
+          AND deleted = 0
+    </update>
+
+</mapper>

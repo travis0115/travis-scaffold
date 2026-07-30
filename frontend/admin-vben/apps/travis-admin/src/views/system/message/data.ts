@@ -45,6 +45,14 @@ function needsRedirect(channel?: string) {
   return channel ? redirectChannels.has(channel) : false;
 }
 
+function isValidJumpUrl(value: string) {
+  return (
+    value.length === 0 ||
+    (/^\/(?!\/)\S*$/.test(value) && !/\s/.test(value)) ||
+    (/^https?:\/\/\S/.test(value) && !/\s/.test(value))
+  );
+}
+
 function hasRichTextContent(value?: string) {
   if (!value) return false;
   return (
@@ -271,7 +279,7 @@ export const useFormSchema = (
   {
     component: 'Input',
     dependencies: {
-      disabled: () => true,
+      disabled: (values) => Boolean(values.templateId),
       show: (values) => needsRedirect(values.channel),
       triggerFields: ['channel', 'templateId'],
     },
@@ -280,6 +288,7 @@ export const useFormSchema = (
     rules: z
       .string()
       .max(500, '跳转地址长度不能超过500个字符')
+      .refine(isValidJumpUrl, '请输入站内绝对路径或 HTTP(S) 地址')
       .optional()
       .or(z.literal('')),
   },

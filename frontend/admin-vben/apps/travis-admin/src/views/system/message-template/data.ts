@@ -13,20 +13,28 @@ const requiredString = (message: string) =>
 const optionalString = (max: number, message: string) =>
   z.string().max(max, message).optional().or(z.literal(''));
 
-const externalChannels = ['SMS', 'WECHAT_MP', 'WECHAT_OA'];
-const titleChannels = ['IN_APP', 'WECHAT_MP', 'WECHAT_OA'];
-const redirectChannels = ['WECHAT_MP', 'WECHAT_OA'];
+const externalChannels = new Set(['SMS', 'WECHAT_MP', 'WECHAT_OA']);
+const titleChannels = new Set(['IN_APP', 'WECHAT_MP', 'WECHAT_OA']);
+const redirectChannels = new Set(['WECHAT_MP', 'WECHAT_OA']);
+
+function isValidJumpUrl(value: string) {
+  return (
+    value.length === 0 ||
+    (/^\/(?!\/)\S*$/.test(value) && !/\s/.test(value)) ||
+    (/^https?:\/\/\S/.test(value) && !/\s/.test(value))
+  );
+}
 
 function isExternalChannel(channel?: string) {
-  return channel ? externalChannels.includes(channel) : false;
+  return channel ? externalChannels.has(channel) : false;
 }
 
 function needsTitle(channel?: string) {
-  return channel ? titleChannels.includes(channel) : false;
+  return channel ? titleChannels.has(channel) : false;
 }
 
 function needsRedirect(channel?: string) {
-  return channel ? redirectChannels.includes(channel) : false;
+  return channel ? redirectChannels.has(channel) : false;
 }
 
 function hasRichTextContent(value?: string) {
@@ -91,16 +99,21 @@ export const useFormSchema = (
   },
   {
     component: 'Input',
+    componentProps: { onBlur: onContentBlur },
     dependencies: {
       show: (values) => needsRedirect(values.channel),
       triggerFields: ['channel'],
     },
     fieldName: 'redirectUrl',
     label: '跳转地址',
-    rules: optionalString(500, '跳转地址长度不能超过500个字符'),
+    rules: optionalString(500, '跳转地址长度不能超过500个字符').refine(
+      (value) => value === undefined || isValidJumpUrl(value),
+      '请输入站内绝对路径或 HTTP(S) 地址',
+    ),
   },
   {
     component: 'Input',
+    componentProps: { onBlur: onContentBlur },
     dependencies: {
       show: (values) => needsTitle(values.channel),
       triggerFields: ['channel'],

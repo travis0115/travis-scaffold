@@ -2,6 +2,7 @@ package com.travis.infrastructure.framework.websocket.core.sender;
 
 import com.travis.infrastructure.framework.websocket.core.message.WebSocketMessage;
 import com.travis.infrastructure.framework.websocket.core.session.WebSocketSessionManager;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 
 /**
@@ -52,6 +53,16 @@ public class WebSocketMessageSender {
      */
     public void sendToAll(WebSocketMessage message) {
         sessionManager.sendToAll(message);
+    }
+
+    /**
+     * 获取指定命名空间下所有已连接主体。
+     *
+     * @param namespace 连接命名空间
+     * @return 已连接主体集合
+     */
+    public Set<String> getConnectedPrincipals(String namespace) {
+        return sessionManager.getConnectedPrincipals(namespace);
     }
 
     /**

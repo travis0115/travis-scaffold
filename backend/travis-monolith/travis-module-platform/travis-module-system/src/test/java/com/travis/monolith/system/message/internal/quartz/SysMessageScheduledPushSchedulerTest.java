@@ -8,12 +8,14 @@ import static org.mockito.Mockito.when;
 
 import com.travis.monolith.system.message.internal.mapper.SysMessageMapper;
 import java.time.LocalDateTime;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.quartz.JobDetail;
 import org.quartz.Scheduler;
 import org.quartz.SimpleTrigger;
 import org.quartz.Trigger;
+import org.quartz.TriggerKey;
 
 class SysMessageScheduledPushSchedulerTest {
 
@@ -53,5 +55,22 @@ class SysMessageScheduledPushSchedulerTest {
         scheduler.schedule(1001L, LocalDateTime.of(2026, 7, 26, 12, 30));
 
         verify(quartzScheduler).rescheduleJob(any(), any());
+    }
+
+    @Test
+    void shouldRecreateMissingTriggerDuringReconciliation() throws Exception {
+        Scheduler quartzScheduler = mock(Scheduler.class);
+        SysMessageMapper messageMapper = mock(SysMessageMapper.class);
+        var scheduler = new SysMessageScheduledPushScheduler(quartzScheduler, messageMapper);
+        var message = new com.travis.monolith.system.message.internal.entity.SysMessage();
+        message.setId(1001L);
+        message.setPublishTime(LocalDateTime.of(2026, 7, 26, 12, 30));
+        when(messageMapper.selectList(any())).thenReturn(List.of(message));
+        when(quartzScheduler.checkExists(any(TriggerKey.class))).thenReturn(false);
+        when(quartzScheduler.checkExists(any(org.quartz.JobKey.class))).thenReturn(false);
+
+        scheduler.reconcile();
+
+        verify(quartzScheduler).scheduleJob(any(JobDetail.class), any(Trigger.class));
     }
 }
