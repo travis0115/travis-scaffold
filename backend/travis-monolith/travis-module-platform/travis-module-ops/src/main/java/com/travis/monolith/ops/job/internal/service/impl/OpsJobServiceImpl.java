@@ -27,15 +27,18 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /** 定时任务管理服务实现，负责任务配置维护、运行控制，并同步 Quartz 调度状态。 */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @CacheConfig(cacheNames = "ops:job")
 public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implements OpsJobService {
 
@@ -86,7 +89,6 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
 
     /** 查询指定定时任务，不存在时抛出业务异常。 */
     @Override
-    @Cacheable(key = "'detail:'+#id")
     public OpsJobDetailResp getOrThrow(Long id) {
         OpsJob job = getRequired(id);
         return enrichResponse(
@@ -95,7 +97,6 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
 
     /** 查询指定定时任务，不存在时返回空结果。 */
     @Override
-    @Cacheable(key = "'detail:'+#id", unless = "#result == null")
     public OpsJobDetailResp find(Long id) {
         OpsJob job = super.getById(id);
         return job == null
@@ -132,7 +133,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         OpsJob job = buildEntity(req);
         job.setStatus(OpsJobStatus.DISABLED.getValue());
         save(job);
-        quartzJobManager.schedule(job);
+        synchronizeAfterCommit(job);
     }
 
     /** 更新指定定时任务。 */
@@ -143,8 +144,11 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         OpsJob job = getRequired(id);
         validateUserScope(req);
         converter.update(req, job);
+        if (OpsJobStatus.ENABLED.getValue().equals(job.getStatus())) {
+            ensureHandlerExists(job.getHandlerName());
+        }
         updateById(job);
-        quartzJobManager.schedule(job);
+        synchronizeAfterCommit(job);
     }
 
     /** 删除指定定时任务。 */
@@ -153,8 +157,8 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
     @CacheEvict(key = "'detail:'+#id")
     public void delete(Long id) {
         getRequired(id);
-        quartzJobManager.delete(id);
         removeById(id);
+        runAfterCommit(id, () -> quartzJobManager.delete(id));
     }
 
     /** 变更指定定时任务的状态。 */
@@ -165,13 +169,12 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         OpsJob job = getRequired(id);
         if (OpsJobStatus.ENABLED.getValue().equals(status)) {
             ensureHandlerExists(job.getHandlerName());
-            quartzJobManager.resume(id);
             job.setStatus(OpsJobStatus.ENABLED.getValue());
         } else {
-            quartzJobManager.pause(id);
             job.setStatus(OpsJobStatus.DISABLED.getValue());
         }
         updateById(job);
+        synchronizeAfterCommit(job);
     }
 
     /** 立即运行指定定时任务。 */
@@ -194,7 +197,23 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         copy.setJobName(source.getJobName() + "-副本");
         copy.setStatus(OpsJobStatus.DISABLED.getValue());
         save(copy);
-        quartzJobManager.schedule(copy);
+        synchronizeAfterCommit(copy);
+    }
+
+    /** 当前配置对应的单次计划执行结束后将任务恢复为停用状态。 */
+    @Override
+    @Transactional
+    @CacheEvict(key = "'detail:'+#id")
+    public void completeOnce(Long id, String configFingerprint) {
+        OpsJob job = super.getById(id);
+        if (job == null
+                || !"ONCE".equals(job.getScheduleType())
+                || !OpsJobStatus.ENABLED.getValue().equals(job.getStatus())
+                || !Objects.equals(configFingerprint, quartzJobManager.configFingerprint(job))) {
+            return;
+        }
+        job.setStatus(OpsJobStatus.DISABLED.getValue());
+        updateById(job);
     }
 
     /** 预览定时任务后续执行时间。 */
@@ -287,6 +306,36 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         if (!handlerRegistry.contains(handlerName)) {
             throw new BizException(OpsJobErrorCode.HANDLER_NOT_FOUND, handlerName);
         }
+    }
+
+    /** 事务提交后将当前业务配置同步至 Quartz。 */
+    private void synchronizeAfterCommit(OpsJob job) {
+        runAfterCommit(job.getId(), () -> quartzJobManager.schedule(job));
+    }
+
+    /** 在事务确认提交后执行 Quartz 操作，失败时由周期对账恢复。 */
+    private void runAfterCommit(Long jobId, Runnable action) {
+        Runnable guardedAction =
+                () -> {
+                    try {
+                        action.run();
+                    } catch (Exception exception) {
+                        log.error("同步 Quartz 任务失败，jobId={}", jobId, exception);
+                    }
+                };
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(
+                    new TransactionSynchronization() {
+                        @Override
+                        public void afterCompletion(int status) {
+                            if (status == TransactionSynchronization.STATUS_COMMITTED) {
+                                guardedAction.run();
+                            }
+                        }
+                    });
+            return;
+        }
+        guardedAction.run();
     }
 
     /** 查询指定定时任务实体，确保记录存在。 */

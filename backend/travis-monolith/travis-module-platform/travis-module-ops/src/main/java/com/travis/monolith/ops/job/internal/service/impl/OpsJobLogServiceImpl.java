@@ -126,6 +126,15 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
         }
     }
 
+    /** 收敛因执行节点中断而遗留的运行中日志。 */
+    @Override
+    @Transactional
+    public void markInterruptedExecutions() {
+        if (baseMapper.markInterruptedExecutions(LocalDateTime.now()) > 0) {
+            invalidateStats(null);
+        }
+    }
+
     /** 统计定时任务执行日志执行情况。 */
     @Override
     public OpsJobStatsResp stats(Long jobId) {

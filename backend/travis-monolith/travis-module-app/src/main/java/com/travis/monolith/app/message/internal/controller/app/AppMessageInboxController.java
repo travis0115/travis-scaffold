@@ -7,6 +7,7 @@ import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.monolith.system.message.api.SysMessageInboxApi;
 import com.travis.monolith.system.message.api.request.SysUserMessagePageReq;
 import com.travis.monolith.system.message.api.response.SysUserMessageResp;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +32,7 @@ public class AppMessageInboxController {
 
     /** 分页查询当前用户的消息。 */
     @GetMapping("/page")
-    public ApiResponse<PageResp<SysUserMessageResp>> page(SysUserMessagePageReq req) {
+    public ApiResponse<PageResp<SysUserMessageResp>> page(@Valid SysUserMessagePageReq req) {
         return ApiResponse.success(
                 messageInboxApi.page(
                         LoginType.APP, StpKit.of(LoginType.APP).getLoginIdAsLong(), req));

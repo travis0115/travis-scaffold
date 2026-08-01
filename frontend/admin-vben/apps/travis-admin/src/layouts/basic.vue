@@ -34,7 +34,7 @@ import LoginForm from '#/views/_core/authentication/login.vue';
 
 type MessageNotification = NotificationItem & {
   content?: string;
-  messageId: number;
+  messageId: SystemMessageApi.Id;
   messageType: number;
   metadata?: Record<string, any>;
 };
@@ -116,7 +116,9 @@ function refreshNotifications() {
 }
 
 function handleMessageRead(event: Event) {
-  const { messageId } = (event as CustomEvent<{ messageId: number }>).detail;
+  const { messageId } = (
+    event as CustomEvent<{ messageId: SystemMessageApi.Id }>
+  ).detail;
   notifications.value = notifications.value.filter(
     (item) => item.messageId !== messageId,
   );

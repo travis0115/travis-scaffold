@@ -4,11 +4,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.travis.infrastructure.framework.mybatis.core.BaseMapperX;
 import com.travis.monolith.system.message.api.response.SysUserMessageResp;
 import com.travis.monolith.system.message.internal.entity.SysMessageReceiver;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-
 import java.time.LocalDate;
 import java.util.List;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /** 消息接收记录 Mapper。 */
 @Mapper

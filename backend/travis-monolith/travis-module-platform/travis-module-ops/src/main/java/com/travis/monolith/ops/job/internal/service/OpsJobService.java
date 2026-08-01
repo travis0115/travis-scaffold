@@ -47,6 +47,9 @@ public interface OpsJobService {
     /** 立即触发一次任务执行。 */
     void runNow(Long id, String params);
 
+    /** 当前配置对应的单次计划执行结束后将任务恢复为停用状态。 */
+    void completeOnce(Long id, String configFingerprint);
+
     /** 复制指定任务。 */
     void copy(Long id);
 

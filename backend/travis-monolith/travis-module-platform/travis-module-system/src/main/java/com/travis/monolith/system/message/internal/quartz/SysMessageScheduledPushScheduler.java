@@ -8,14 +8,13 @@ import com.travis.monolith.system.message.api.enums.SysMessagePushType;
 import com.travis.monolith.system.message.api.enums.SysMessageStatus;
 import com.travis.monolith.system.message.internal.entity.SysMessage;
 import com.travis.monolith.system.message.internal.mapper.SysMessageMapper;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
 import org.springframework.stereotype.Component;
-
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
 
 /** 负责维护消息发布时间对应的一次性 Quartz 任务。 */
 @Component
@@ -86,7 +85,12 @@ public class SysMessageScheduledPushScheduler {
                                             SysMessagePushType.SCHEDULED.getValue())
                                     .isNotNull(SysMessage::getPublishTime));
             for (SysMessage message : messages) {
-                if (!scheduler.checkExists(triggerKey(message.getId()))) {
+                Trigger trigger = scheduler.getTrigger(triggerKey(message.getId()));
+                Date expectedFireTime = toDate(message.getPublishTime());
+                if (trigger == null
+                        || trigger.getNextFireTime() == null
+                        || trigger.getNextFireTime().toInstant().getEpochSecond()
+                                != expectedFireTime.toInstant().getEpochSecond()) {
                     schedule(message.getId(), message.getPublishTime());
                 }
             }
@@ -109,12 +113,16 @@ public class SysMessageScheduledPushScheduler {
         return TriggerBuilder.newTrigger()
                 .withIdentity(triggerKey(messageId))
                 .forJob(jobKey(messageId))
-                .startAt(Date.from(publishTime.atZone(ZoneId.systemDefault()).toInstant()))
+                .startAt(toDate(publishTime))
                 .withSchedule(
                         SimpleScheduleBuilder.simpleSchedule()
                                 .withRepeatCount(0)
                                 .withMisfireHandlingInstructionFireNow())
                 .build();
+    }
+
+    private Date toDate(LocalDateTime publishTime) {
+        return Date.from(publishTime.atZone(ZoneId.systemDefault()).toInstant());
     }
 
     private JobKey jobKey(Long messageId) {
@@ -126,6 +134,10 @@ public class SysMessageScheduledPushScheduler {
     }
 
     private BizException schedulerError(Exception exception) {
-        return new BizException(SystemErrorCode.MESSAGE_SCHEDULER_ERROR, exception.getMessage());
+        if (exception instanceof BizException bizException) {
+            return bizException;
+        }
+        return new BizException(
+                SystemErrorCode.MESSAGE_SCHEDULER_ERROR, exception, exception.getMessage());
     }
 }

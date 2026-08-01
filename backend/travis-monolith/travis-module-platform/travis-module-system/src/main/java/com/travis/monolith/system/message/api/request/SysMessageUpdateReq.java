@@ -34,13 +34,6 @@ public class SysMessageUpdateReq {
     @EnumValue(value = SysMessagePushType.class, message = "推送方式错误")
     private Integer pushType;
 
-    /** 业务来源类型。 */
-    @EnumValue(value = SysMessageSourceType.class, message = "来源类型错误")
-    private String sourceType;
-
-    /** 业务来源记录 ID。 */
-    private String sourceId;
-
     /** 推送通道。 */
     @NotBlank(message = "推送通道不能为空")
     @EnumValue(value = SysMessageChannel.class, message = "推送通道错误")

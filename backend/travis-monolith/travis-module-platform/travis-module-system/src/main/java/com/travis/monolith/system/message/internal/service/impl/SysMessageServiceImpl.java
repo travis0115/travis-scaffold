@@ -8,6 +8,7 @@ import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
+import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
 import com.travis.infrastructure.framework.satoken.core.websocket.SaTokenWebSocketPrincipal;
 import com.travis.infrastructure.framework.websocket.core.message.WebSocketMessage;
 import com.travis.infrastructure.framework.websocket.core.message.WebSocketSender;
@@ -59,6 +60,10 @@ import tools.jackson.core.type.TypeReference;
 @Slf4j
 public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMessage>
         implements SysMessageService {
+    private static final int MAX_TITLE_LENGTH = 255;
+    private static final int MAX_CONTENT_LENGTH = 5000;
+    private static final int MAX_JUMP_URL_LENGTH = 500;
+
     private final SysMessageReceiverService messageReceiverService;
     private final SysMessageTemplateService messageTemplateService;
     private final SysMessageConverter converter;
@@ -90,9 +95,11 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
 
     /** 查询指定消息，不存在时抛出业务异常。 */
     @Override
-    @Cacheable(key = "'detail:'+#id")
+    @Cacheable(key = "'manual-detail:'+#id")
     public SysMessageResp getOrThrow(Long id) {
-        var resp = converter.toResp(super.getByIdOrThrow(id));
+        var entity = super.getByIdOrThrow(id);
+        ensureManualMessage(entity);
+        var resp = converter.toResp(entity);
         resp.setContent(fileApi.resolveManagedImageSources(resp.getContent()));
         return resp;
     }
@@ -107,6 +114,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         var entity = converter.toEntity(req);
         entity.setMessageType(SysMessageType.SYSTEM.getValue());
         entity.setSourceType(SysMessageSourceType.MANUAL.getValue());
+        entity.setSourceId(null);
         entity.setStatus(SysMessageStatus.PENDING.getValue());
         if (SysMessagePushType.MANUAL.getValue().equals(req.getPushType())) {
             entity.setPublishTime(null);
@@ -121,7 +129,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     /** 更新指定消息。 */
     @Override
     @Transactional
-    @CacheEvict(key = "'detail:'+#id")
+    @CacheEvict(key = "'manual-detail:'+#id")
     public void update(Long id, SysMessageUpdateReq req) {
         validateReceiver(req.getReceiverType(), req.getReceiverScope(), req.getReceiverValues());
         validateChannel(req.getChannel());
@@ -134,6 +142,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         converter.update(req, entity);
         entity.setMessageType(SysMessageType.SYSTEM.getValue());
         entity.setSourceType(SysMessageSourceType.MANUAL.getValue());
+        entity.setSourceId(null);
         if (!SysMessageStatus.REVOKED.getValue().equals(entity.getStatus())) {
             entity.setStatus(SysMessageStatus.PENDING.getValue());
         }
@@ -149,7 +158,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     /** 手动推送指定消息。 */
     @Override
     @Transactional
-    @CacheEvict(key = "'detail:'+#id")
+    @CacheEvict(key = "'manual-detail:'+#id")
     public void push(Long id) {
         var entity = getByIdOrThrow(id);
         ensureManualMessage(entity);
@@ -176,7 +185,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     /** 自动推送指定待发送消息。 */
     @Override
     @Transactional
-    @CacheEvict(key = "'detail:'+#id")
+    @CacheEvict(key = "'manual-detail:'+#id")
     public void pushAutomatic(Long id) {
         var entity = getByIdOrThrow(id);
         ensureManualMessage(entity);
@@ -194,7 +203,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     /** 撤回指定站内消息。 */
     @Override
     @Transactional
-    @CacheEvict(key = "'detail:'+#id")
+    @CacheEvict(key = "'manual-detail:'+#id")
     public void revoke(Long id) {
         var entity = getByIdOrThrow(id);
         ensureManualMessage(entity);
@@ -213,6 +222,10 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     /** 创建或更新业务来源消息，并按发布时间决定是否立即发布。 */
     @Override
     @Transactional
+    @DistributedLock(
+            namespace = "system-message",
+            key = "#req.sourceType + ':' + #req.sourceId + ':' + #req.receiverType",
+            waitTime = 10_000)
     public void publishSourceMessage(SysSourceMessagePublishReq req) {
         validateReceiver(req.getReceiverType(), req.getReceiverScope(), req.getReceiverValues());
         if (SysMessageSourceType.MANUAL.getValue().equals(req.getSourceType())
@@ -290,6 +303,10 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     /** 撤回指定业务来源消息。 */
     @Override
     @Transactional
+    @DistributedLock(
+            namespace = "system-message",
+            key = "#sourceType + ':' + #sourceId + ':' + #receiverType",
+            waitTime = 10_000)
     public void revokeSourceMessage(String sourceType, String sourceId, String receiverType) {
         var entity = findSourceMessage(sourceType, sourceId, receiverType);
         if (entity == null || SysMessageStatus.REVOKED.getValue().equals(entity.getStatus())) {
@@ -309,6 +326,10 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     /** 删除指定业务来源消息及其收件状态。 */
     @Override
     @Transactional
+    @DistributedLock(
+            namespace = "system-message",
+            key = "#sourceType + ':' + #sourceId + ':' + #receiverType",
+            waitTime = 10_000)
     public void deleteSourceMessage(String sourceType, String sourceId, String receiverType) {
         var entity = findSourceMessage(sourceType, sourceId, receiverType);
         if (entity == null) {
@@ -348,7 +369,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     /** 删除指定消息。 */
     @Override
     @Transactional
-    @CacheEvict(key = "'detail:'+#id")
+    @CacheEvict(key = "'manual-detail:'+#id")
     public void delete(Long id) {
         var entity = getByIdOrThrow(id);
         ensureManualMessage(entity);
@@ -393,7 +414,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     private void evictDetailCache(Long messageId) {
         var cache = cacheManager.getCache("system:message");
         if (cache != null) {
-            cache.evict("detail:" + messageId);
+            cache.evict("manual-detail:" + messageId);
         }
     }
 
@@ -645,7 +666,25 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                 SysMessageChannel.supportsJumpUrl(message.getChannel())
                         ? renderTemplate(template.getRedirectUrl(), params, false)
                         : null);
+        if (message.getTitle() == null) {
+            message.setTitle("");
+        }
+        validateRenderedFields(message);
         validateRenderedJumpUrl(message.getJumpUrl());
+    }
+
+    /** 校验模板渲染后的字段长度，避免数据库截断或外部通道收到超限内容。 */
+    static void validateRenderedFields(SysMessage message) {
+        validateRenderedLength(message.getTitle(), MAX_TITLE_LENGTH, "消息标题");
+        validateRenderedLength(message.getContent(), MAX_CONTENT_LENGTH, "消息内容");
+        validateRenderedLength(message.getJumpUrl(), MAX_JUMP_URL_LENGTH, "跳转地址");
+    }
+
+    private static void validateRenderedLength(String value, int maxLength, String fieldName) {
+        if (value != null && value.length() > maxLength) {
+            throw new BizException(
+                    CommonErrorCode.VALIDATE_FAILED, fieldName + "渲染后长度不能超过" + maxLength + "个字符");
+        }
     }
 
     /** 解析并规范化消息模板参数。 */

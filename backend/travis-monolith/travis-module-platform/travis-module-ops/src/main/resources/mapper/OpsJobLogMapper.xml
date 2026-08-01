@@ -22,4 +22,21 @@
           AND create_time &lt; #{before}
     </delete>
 
+    <!-- 将 Quartz 中已不存在执行记录的运行中日志标记为中断失败。 -->
+    <update id="markInterruptedExecutions">
+        UPDATE ops_job_log log
+        SET status = 2,
+            end_time = #{endTime},
+            result_message = '执行节点中断',
+            exception_class = 'SchedulerInterrupted',
+            exception_message = 'Quartz 执行记录已不存在'
+        WHERE log.status = 0
+          AND log.is_deleted = 0
+          AND NOT EXISTS (
+              SELECT 1
+              FROM qrtz_fired_triggers fired
+              WHERE fired.entry_id = log.fire_instance_id
+          )
+    </update>
+
 </mapper>

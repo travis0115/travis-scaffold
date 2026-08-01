@@ -3,11 +3,14 @@ package com.travis.monolith.system.message.internal.quartz;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.travis.monolith.system.message.internal.mapper.SysMessageMapper;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -72,5 +75,53 @@ class SysMessageScheduledPushSchedulerTest {
         scheduler.reconcile();
 
         verify(quartzScheduler).scheduleJob(any(JobDetail.class), any(Trigger.class));
+    }
+
+    @Test
+    void shouldRescheduleTriggerWithOutdatedFireTimeDuringReconciliation() throws Exception {
+        Scheduler quartzScheduler = mock(Scheduler.class);
+        SysMessageMapper messageMapper = mock(SysMessageMapper.class);
+        var scheduler = new SysMessageScheduledPushScheduler(quartzScheduler, messageMapper);
+        LocalDateTime publishTime = LocalDateTime.of(2026, 7, 26, 12, 30);
+        var message = new com.travis.monolith.system.message.internal.entity.SysMessage();
+        message.setId(1001L);
+        message.setPublishTime(publishTime);
+        Trigger existingTrigger = mock(Trigger.class);
+        when(existingTrigger.getNextFireTime())
+                .thenReturn(
+                        Date.from(
+                                publishTime
+                                        .plusHours(1)
+                                        .atZone(ZoneId.systemDefault())
+                                        .toInstant()));
+        when(messageMapper.selectList(any())).thenReturn(List.of(message));
+        when(quartzScheduler.getTrigger(any())).thenReturn(existingTrigger);
+        when(quartzScheduler.checkExists(any(org.quartz.JobKey.class))).thenReturn(true);
+        when(quartzScheduler.rescheduleJob(any(), any())).thenReturn(new Date());
+
+        scheduler.reconcile();
+
+        verify(quartzScheduler).rescheduleJob(any(), any());
+    }
+
+    @Test
+    void shouldKeepTriggerWithCurrentFireTimeDuringReconciliation() throws Exception {
+        Scheduler quartzScheduler = mock(Scheduler.class);
+        SysMessageMapper messageMapper = mock(SysMessageMapper.class);
+        var scheduler = new SysMessageScheduledPushScheduler(quartzScheduler, messageMapper);
+        LocalDateTime publishTime = LocalDateTime.of(2026, 7, 26, 12, 30);
+        var message = new com.travis.monolith.system.message.internal.entity.SysMessage();
+        message.setId(1001L);
+        message.setPublishTime(publishTime);
+        Trigger existingTrigger = mock(Trigger.class);
+        when(existingTrigger.getNextFireTime())
+                .thenReturn(Date.from(publishTime.atZone(ZoneId.systemDefault()).toInstant()));
+        when(messageMapper.selectList(any())).thenReturn(List.of(message));
+        when(quartzScheduler.getTrigger(any())).thenReturn(existingTrigger);
+
+        scheduler.reconcile();
+
+        verify(quartzScheduler, never()).rescheduleJob(any(), any());
+        verify(quartzScheduler, never()).scheduleJob(any(JobDetail.class), any(Trigger.class));
     }
 }

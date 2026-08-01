@@ -32,6 +32,9 @@ const requiredIdList = (message: string) =>
 
 const externalChannels = new Set(['SMS', 'WECHAT_MP', 'WECHAT_OA']);
 const redirectChannels = new Set(['WECHAT_MP', 'WECHAT_OA']);
+const availableMessageChannelOptions = messageChannelOptions.filter(
+  (option) => option.value === 'IN_APP',
+);
 
 function isExternalChannel(channel?: string) {
   return channel ? externalChannels.has(channel) : false;
@@ -93,7 +96,7 @@ export const useFormSchema = (
     component: 'Select',
     componentProps: {
       onChange: onChannelChange,
-      options: messageChannelOptions,
+      options: availableMessageChannelOptions,
     },
     defaultValue: 'IN_APP',
     fieldName: 'channel',

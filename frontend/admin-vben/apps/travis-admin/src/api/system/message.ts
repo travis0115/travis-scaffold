@@ -8,6 +8,8 @@ import type { PageResp } from '#/api/types';
 import { requestClient } from '#/api/request';
 
 export namespace SystemMessageApi {
+  export type Id = number | string;
+
   export enum WebSocketEvent {
     Deleted = 'SYSTEM_MESSAGE_DELETED',
     InboxChanged = 'SYSTEM_MESSAGE_INBOX_CHANGED',
@@ -20,19 +22,19 @@ export namespace SystemMessageApi {
     [key: string]: any;
     channel?: string;
     content: string;
-    id: number;
+    id: Id;
     jumpUrl?: string;
     messageType: number;
     pushType: number;
     publishTime?: string;
     receiverScope: number;
     receiverType: string;
-    receiverValues?: number[];
+    receiverValues?: Id[];
     remark?: string;
     sourceId?: string;
     sourceType?: string;
     status: number;
-    templateId?: number;
+    templateId?: Id;
     templateParams?: string;
     title: string;
   }
@@ -42,7 +44,7 @@ export namespace SystemMessageApi {
     content?: string;
     contentSchema?: string;
     createTime?: string;
-    id: number;
+    id: Id;
     isBuiltin: 0 | 1;
     platformTemplateId?: string;
     redirectUrl?: string;
@@ -56,7 +58,7 @@ export namespace SystemMessageApi {
   export interface UserMessage {
     content?: string;
     createTime: string;
-    messageId: number;
+    messageId: Id;
     messageType: number;
     publishTime?: string;
     readStatus: number;
@@ -77,17 +79,20 @@ const getMessagePage = (params: Recordable<any>) =>
     '/system/message/page',
     { params },
   );
-const getMessageDetail = (id: number) =>
+const getMessageDetail = (id: SystemMessageApi.Id) =>
   requestClient.get<SystemMessageApi.Message>(`/system/message/${id}`);
 const createMessage = (data: Partial<SystemMessageApi.Message>) =>
   requestClient.post('/system/message', data);
-const updateMessage = (id: number, data: Partial<SystemMessageApi.Message>) =>
+const updateMessage = (
+  id: SystemMessageApi.Id,
+  data: Partial<SystemMessageApi.Message>,
+) =>
   requestClient.put(`/system/message/${id}`, data);
-const deleteMessage = (id: number) =>
+const deleteMessage = (id: SystemMessageApi.Id) =>
   requestClient.delete(`/system/message/${id}`);
-const pushMessage = (id: number) =>
+const pushMessage = (id: SystemMessageApi.Id) =>
   requestClient.put(`/system/message/${id}/push`);
-const revokeMessage = (id: number) =>
+const revokeMessage = (id: SystemMessageApi.Id) =>
   requestClient.put(`/system/message/${id}/revoke`);
 const uploadMessageImage = (
   file: File,
@@ -110,7 +115,7 @@ const getMessageTemplatePage = (params: Recordable<any>) =>
     '/system/message/template/page',
     { params },
   );
-const getMessageTemplateDetail = (id: number) =>
+const getMessageTemplateDetail = (id: SystemMessageApi.Id) =>
   requestClient.get<SystemMessageApi.MessageTemplate>(
     `/system/message/template/${id}`,
   );
@@ -118,10 +123,10 @@ const createMessageTemplate = (
   data: Partial<SystemMessageApi.MessageTemplate>,
 ) => requestClient.post('/system/message/template', data);
 const updateMessageTemplate = (
-  id: number,
+  id: SystemMessageApi.Id,
   data: Partial<SystemMessageApi.MessageTemplate>,
 ) => requestClient.put(`/system/message/template/${id}`, data);
-const deleteMessageTemplate = (id: number) =>
+const deleteMessageTemplate = (id: SystemMessageApi.Id) =>
   requestClient.delete(`/system/message/template/${id}`);
 
 const getRecentMessages = (limit = 10) =>

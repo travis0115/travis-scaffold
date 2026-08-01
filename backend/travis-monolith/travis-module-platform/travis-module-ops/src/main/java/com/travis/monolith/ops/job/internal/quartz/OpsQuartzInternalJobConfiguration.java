@@ -11,9 +11,11 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /** 运维模块内部维护任务的 Quartz 配置。 */
 @Configuration(proxyBeanMethods = false)
+@EnableScheduling
 public class OpsQuartzInternalJobConfiguration {
 
     /** 过期日志清理任务的固定标识。 */
@@ -23,15 +25,18 @@ public class OpsQuartzInternalJobConfiguration {
     private static final TriggerKey TRIGGER_KEY =
             TriggerKey.triggerKey("log-cleanup-trigger", "ops-internal");
 
+    /** 应用启动后立即对账业务任务配置。 */
+    @Bean
+    public ApplicationRunner opsJobQuartzInitializer(OpsJobQuartzReconcileTask reconcileTask) {
+        return _ -> reconcileTask.run();
+    }
+
     /** 应用启动后注册每天凌晨三点执行的过期日志清理任务。 */
     @Bean
     public ApplicationRunner opsJobLogCleanupScheduler(Scheduler scheduler) {
         return new ApplicationRunner() {
             @Override
             public void run(ApplicationArguments args) throws Exception {
-                if (scheduler.checkExists(JOB_KEY)) {
-                    return;
-                }
                 var detail =
                         JobBuilder.newJob(OpsJobLogCleanupJob.class)
                                 .withIdentity(JOB_KEY)
@@ -44,9 +49,23 @@ public class OpsQuartzInternalJobConfiguration {
                                 .withSchedule(CronScheduleBuilder.cronSchedule("0 0 3 * * ?"))
                                 .build();
                 try {
-                    scheduler.scheduleJob(detail, trigger);
+                    if (!scheduler.checkExists(JOB_KEY)) {
+                        scheduler.scheduleJob(detail, trigger);
+                        return;
+                    }
+                    scheduler.addJob(detail, true, true);
+                    if (scheduler.rescheduleJob(TRIGGER_KEY, trigger) == null) {
+                        scheduler.scheduleJob(trigger);
+                    }
                 } catch (ObjectAlreadyExistsException ignored) {
-                    // 其他集群实例已完成注册。
+                    scheduler.addJob(detail, true, true);
+                    if (scheduler.rescheduleJob(TRIGGER_KEY, trigger) == null) {
+                        try {
+                            scheduler.scheduleJob(trigger);
+                        } catch (ObjectAlreadyExistsException concurrentRegistration) {
+                            scheduler.rescheduleJob(TRIGGER_KEY, trigger);
+                        }
+                    }
                 }
             }
         };

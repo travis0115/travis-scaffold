@@ -27,6 +27,9 @@ public interface OpsJobLogService {
     /** 按各任务的保留期限清理过期执行日志。 */
     void cleanExpired();
 
+    /** 收敛因执行节点中断而遗留的运行中日志。 */
+    void markInterruptedExecutions();
+
     /** 统计指定任务的执行情况。 */
     OpsJobStatsResp stats(Long jobId);
 

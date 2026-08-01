@@ -12,8 +12,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.JobExecutionContext;
@@ -25,12 +23,11 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class OpsQuartzExecutionObserver implements QuartzJobExecutionObserver {
 
+    private static final String CONTEXT_LOG_ID = "opsJobLogId";
+
     private final OpsJobService jobService;
     private final OpsJobLogService logService;
     private final SysMessageApi messageApi;
-
-    /** Quartz 触发实例 ID 与持久化执行日志 ID 的临时映射。 */
-    private final Map<String, Long> executingLogs = new ConcurrentHashMap<>();
 
     @Override
     public void beforeExecution(JobExecutionContext context) {
@@ -60,7 +57,7 @@ public class OpsQuartzExecutionObserver implements QuartzJobExecutionObserver {
         executionLog.setStatus(OpsJobLogStatus.RUNNING.getValue());
         executionLog.setAlertStatus(0);
         logService.saveExecution(executionLog);
-        executingLogs.put(context.getFireInstanceId(), executionLog.getId());
+        context.put(CONTEXT_LOG_ID, executionLog.getId());
     }
 
     @Override
@@ -76,25 +73,41 @@ public class OpsQuartzExecutionObserver implements QuartzJobExecutionObserver {
 
     /** 根据执行结果完成日志记录，并在失败时触发告警。 */
     private void finish(JobExecutionContext context, long durationMillis, Throwable throwable) {
-        Long logId = executingLogs.remove(context.getFireInstanceId());
-        if (logId == null) {
-            return;
+        Long jobId = context.getMergedJobDataMap().getLong(QuartzDispatchJob.DATA_JOB_ID);
+        try {
+            Long logId = (Long) context.get(CONTEXT_LOG_ID);
+            if (logId == null) {
+                return;
+            }
+            OpsJobLog executionLog = new OpsJobLog();
+            executionLog.setId(logId);
+            executionLog.setJobId(jobId);
+            executionLog.setEndTime(LocalDateTime.now());
+            executionLog.setDurationMillis(durationMillis);
+            executionLog.setStatus(throwable == null ? 1 : 2);
+            executionLog.setResultMessage(throwable == null ? "执行成功" : "执行失败");
+            if (throwable != null) {
+                executionLog.setExceptionClass(throwable.getClass().getName());
+                executionLog.setExceptionMessage(throwable.getMessage());
+                executionLog.setStackTrace(stackTrace(throwable));
+            }
+            logService.updateExecution(executionLog);
+            if (throwable != null) {
+                publishFailure(jobId, logId, throwable);
+            }
+        } finally {
+            completeScheduledOnce(context, jobId);
         }
-        OpsJobLog executionLog = new OpsJobLog();
-        executionLog.setId(logId);
-        executionLog.setJobId(context.getMergedJobDataMap().getLong(QuartzDispatchJob.DATA_JOB_ID));
-        executionLog.setEndTime(LocalDateTime.now());
-        executionLog.setDurationMillis(durationMillis);
-        executionLog.setStatus(throwable == null ? 1 : 2);
-        executionLog.setResultMessage(throwable == null ? "执行成功" : "执行失败");
-        if (throwable != null) {
-            executionLog.setExceptionClass(throwable.getClass().getName());
-            executionLog.setExceptionMessage(throwable.getMessage());
-            executionLog.setStackTrace(stackTrace(throwable));
-        }
-        logService.updateExecution(executionLog);
-        if (throwable != null) {
-            publishFailure(executionLog.getJobId(), logId, throwable);
+    }
+
+    /** 单次计划任务执行结束后同步业务状态，手动执行不消费原计划。 */
+    private void completeScheduledOnce(JobExecutionContext context, Long jobId) {
+        if (!Boolean.TRUE.equals(
+                context.getMergedJobDataMap().get(QuartzDispatchJob.DATA_MANUAL_RUN))) {
+            jobService.completeOnce(
+                    jobId,
+                    context.getMergedJobDataMap()
+                            .getString(QuartzDispatchJob.DATA_CONFIG_FINGERPRINT));
         }
     }
 
@@ -113,9 +126,7 @@ public class OpsQuartzExecutionObserver implements QuartzJobExecutionObserver {
                             + logId
                             + "\n异常："
                             + throwable.getMessage(),
-                    job.getAlertUserIds(),
-                    "OPS_JOB",
-                    String.valueOf(logId));
+                    job.getAlertUserIds());
             var update = new OpsJobLog();
             update.setId(logId);
             update.setJobId(jobId);

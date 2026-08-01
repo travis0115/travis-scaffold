@@ -17,4 +17,7 @@ public interface OpsJobLogMapper extends BaseMapperX<OpsJobLog> {
 
     /** 物理删除指定任务在截止时间之前的调度日志。 */
     int deleteExpiredPhysically(@Param("jobId") Long jobId, @Param("before") LocalDateTime before);
+
+    /** 将 Quartz 中已不存在执行记录的运行中日志标记为中断失败。 */
+    int markInterruptedExecutions(@Param("endTime") LocalDateTime endTime);
 }

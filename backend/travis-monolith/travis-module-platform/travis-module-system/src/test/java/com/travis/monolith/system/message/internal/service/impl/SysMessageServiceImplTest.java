@@ -1,12 +1,15 @@
 package com.travis.monolith.system.message.internal.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.travis.infrastructure.common.web.exception.BizException;
+import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
 import com.travis.infrastructure.framework.websocket.core.sender.WebSocketMessageSender;
 import com.travis.monolith.system.file.api.SysFileApi;
 import com.travis.monolith.system.message.api.enums.SysMessageChannel;
@@ -24,6 +27,7 @@ import com.travis.monolith.system.message.internal.service.SysMessageReceiverSer
 import com.travis.monolith.system.message.internal.service.SysMessageTemplateService;
 import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.api.SysUserApi;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.cache.CacheManager;
@@ -81,5 +85,92 @@ class SysMessageServiceImplTest {
         service.push(1001L);
 
         verify(handler, never()).send(any());
+    }
+
+    @Test
+    void shouldRejectRenderedFieldsThatExceedDatabaseLimits() {
+        var message = new SysMessage();
+        message.setTitle("a".repeat(256));
+
+        assertThatThrownBy(() -> SysMessageServiceImpl.validateRenderedFields(message))
+                .isInstanceOf(BizException.class)
+                .satisfies(
+                        exception ->
+                                assertThat(((BizException) exception).getArgs())
+                                        .contains("消息标题渲染后长度不能超过255个字符"));
+    }
+
+    @Test
+    void shouldRejectBusinessSourceMessageFromManualDetailQuery() {
+        SysMessageMapper mapper = mock(SysMessageMapper.class);
+        var service = newService(mapper, mock(SysMessageChannelHandlerRegistry.class));
+        var message = new SysMessage();
+        message.setSourceType(SysMessageSourceType.NOTICE.getValue());
+        when(mapper.selectById(1001L)).thenReturn(message);
+
+        assertThatThrownBy(() -> service.getOrThrow(1001L))
+                .isInstanceOf(BizException.class)
+                .satisfies(
+                        exception ->
+                                assertThat(((BizException) exception).getArgs())
+                                        .contains("来源消息请在对应业务中操作"));
+    }
+
+    @Test
+    void shouldUseActualLogicalDeleteColumnInPublishClaimSql() throws Exception {
+        try (var input = getClass().getResourceAsStream("/mapper/SysMessageMapper.xml")) {
+            assertThat(input).isNotNull();
+            String mapperXml = new String(input.readAllBytes(), StandardCharsets.UTF_8);
+            assertThat(mapperXml).contains("AND is_deleted = 0");
+            assertThat(mapperXml).doesNotContain("AND deleted = 0");
+        }
+    }
+
+    @Test
+    void shouldSerializeSourceMessagePublicationWithDistributedLock() throws Exception {
+        var publishMethod =
+                SysMessageServiceImpl.class.getMethod(
+                        "publishSourceMessage",
+                        com.travis.monolith.system.message.api.request.SysSourceMessagePublishReq
+                                .class);
+        var lifecycleMethod =
+                SysMessageServiceImpl.class.getMethod(
+                        "revokeSourceMessage", String.class, String.class, String.class);
+
+        assertThat(publishMethod.getAnnotation(DistributedLock.class))
+                .satisfies(
+                        lock -> {
+                            assertThat(lock.waitTime()).isEqualTo(10_000);
+                            assertThat(lock.key())
+                                    .contains(
+                                            "#req.sourceType",
+                                            "#req.sourceId",
+                                            "#req.receiverType");
+                        });
+        assertThat(lifecycleMethod.getAnnotation(DistributedLock.class))
+                .satisfies(
+                        lock -> {
+                            assertThat(lock.waitTime()).isEqualTo(10_000);
+                            assertThat(lock.key())
+                                    .contains("#sourceType", "#sourceId", "#receiverType");
+                        });
+    }
+
+    private SysMessageServiceImpl newService(
+            SysMessageMapper mapper, SysMessageChannelHandlerRegistry registry) {
+        var service =
+                new SysMessageServiceImpl(
+                        mock(SysMessageReceiverService.class),
+                        mock(SysMessageTemplateService.class),
+                        mock(SysMessageConverter.class),
+                        mock(WebSocketMessageSender.class),
+                        mock(SysFileApi.class),
+                        mock(CacheManager.class),
+                        registry,
+                        mock(SysMessageScheduledPushScheduler.class),
+                        mock(SysUserApi.class),
+                        mock(SysRoleApi.class));
+        ReflectionTestUtils.setField(service, "baseMapper", mapper);
+        return service;
     }
 }

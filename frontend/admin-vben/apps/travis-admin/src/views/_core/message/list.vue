@@ -100,7 +100,9 @@ function markReadLocally(row: SystemMessageApi.UserMessage) {
 }
 
 function handleMessageRead(event: Event) {
-  const { messageId } = (event as CustomEvent<{ messageId: number }>).detail;
+  const { messageId } = (
+    event as CustomEvent<{ messageId: SystemMessageApi.Id }>
+  ).detail;
   const row = gridApi.grid
     .getData()
     .find((item) => item.messageId === messageId);
@@ -117,7 +119,7 @@ function handleAllMessagesRead() {
   });
 }
 
-function notifyMessageRead(messageId: number) {
+function notifyMessageRead(messageId: SystemMessageApi.Id) {
   window.dispatchEvent(
     new CustomEvent('travis:message-read', { detail: { messageId } }),
   );
