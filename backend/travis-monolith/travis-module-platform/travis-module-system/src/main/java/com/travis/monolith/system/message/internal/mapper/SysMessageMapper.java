@@ -10,6 +10,15 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface SysMessageMapper extends BaseMapperX<SysMessage> {
 
+    /** 按主键查询并锁定消息行。 */
+    SysMessage selectByIdForUpdate(@Param("id") Long id);
+
+    /** 按来源唯一键查询并锁定消息行。 */
+    SysMessage selectSourceForUpdate(
+            @Param("sourceType") String sourceType,
+            @Param("sourceId") String sourceId,
+            @Param("receiverType") String receiverType);
+
     /** 物理删除业务来源消息，允许同一来源后续重新发布。 */
     int deletePhysicallyById(@Param("id") Long id);
 
@@ -17,6 +26,8 @@ public interface SysMessageMapper extends BaseMapperX<SysMessage> {
     int claimForPublish(
             @Param("id") Long id,
             @Param("expectedStatus") Integer expectedStatus,
+            @Param("expectedPushType") Integer expectedPushType,
+            @Param("expectedPublishTime") LocalDateTime expectedPublishTime,
             @Param("pushType") Integer pushType,
             @Param("sentStatus") Integer sentStatus,
             @Param("publishTime") LocalDateTime publishTime);

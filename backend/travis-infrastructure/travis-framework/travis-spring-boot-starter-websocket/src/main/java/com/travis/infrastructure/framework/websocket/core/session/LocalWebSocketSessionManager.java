@@ -202,6 +202,14 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
     }
 
     @Override
+    public void sendToNamespace(String namespace, WebSocketMessage message) {
+        deliverToNamespaceLocal(namespace, message);
+        if (dispatcher != null) {
+            dispatcher.publish(message);
+        }
+    }
+
+    @Override
     public void close(String principal) {
         if (principal == null || principal.isBlank()) {
             return;
@@ -325,6 +333,17 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
      */
     public void deliverToAllLocal(WebSocketMessage message) {
         localSessions.forEach((principal, _) -> deliverToLocal(principal, message));
+    }
+
+    /** 将消息投递给当前实例指定命名空间下的全部连接。 */
+    public void deliverToNamespaceLocal(String namespace, WebSocketMessage message) {
+        String normalizedNamespace = normalizeNamespace(namespace);
+        localSessions.forEach(
+                (principal, _) -> {
+                    if (Objects.equals(normalizedNamespace, getNamespace(principal))) {
+                        deliverToLocal(principal, message);
+                    }
+                });
     }
 
     /** 仅关闭当前应用实例中指定主体的全部连接。 */

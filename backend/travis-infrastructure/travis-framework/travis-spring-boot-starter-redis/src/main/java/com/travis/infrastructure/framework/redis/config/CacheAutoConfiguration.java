@@ -1,6 +1,9 @@
 package com.travis.infrastructure.framework.redis.config;
 
 import cn.hutool.core.util.StrUtil;
+import com.travis.infrastructure.framework.redis.config.properties.TravisRedisProperties;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.cache.autoconfigure.CacheProperties;
@@ -74,12 +77,21 @@ public class CacheAutoConfiguration {
     @Bean
     public CacheManager cacheManager(
             RedisCacheConfiguration redisCacheConfiguration,
-            RedisTemplate<String, Object> redisTemplate) {
+            RedisTemplate<String, Object> redisTemplate,
+            TravisRedisProperties travisRedisProperties) {
+        Map<String, RedisCacheConfiguration> initialConfigurations = new LinkedHashMap<>();
+        travisRedisProperties
+                .getCacheTtl()
+                .forEach(
+                        (cacheName, ttl) ->
+                                initialConfigurations.put(
+                                        cacheName, redisCacheConfiguration.entryTtl(ttl)));
         return RedisCacheManager.RedisCacheManagerBuilder
                 // Redis 连接工厂
                 .fromConnectionFactory(Objects.requireNonNull(redisTemplate.getConnectionFactory()))
                 // 缓存配置
                 .cacheDefaults(redisCacheConfiguration)
+                .withInitialCacheConfigurations(initialConfigurations)
                 // 事务感知
                 .transactionAware()
                 .build();

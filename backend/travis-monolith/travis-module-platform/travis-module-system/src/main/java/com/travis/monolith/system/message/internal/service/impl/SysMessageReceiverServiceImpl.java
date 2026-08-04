@@ -170,15 +170,14 @@ public class SysMessageReceiverServiceImpl
     @CacheEvict(key = "'unread:' + #receiverType + ':' + #userId")
     public void markAllRead(String receiverType, Long userId) {
         var context = audienceContext(receiverType, userId);
-        var messageIds =
-                baseMapper.selectInboxMessageIds(
-                        userId,
+        boolean changed =
+                processInboxStates(
                         receiverType,
-                        context.roleIds(),
-                        context.deptId(),
-                        SysMessageReadStatus.UNREAD.getValue());
-        batchUpsertStates(receiverType, userId, messageIds, SysMessageReadStatus.READ.getValue());
-        if (!messageIds.isEmpty()) {
+                        userId,
+                        context,
+                        SysMessageReadStatus.UNREAD.getValue(),
+                        SysMessageReadStatus.READ.getValue());
+        if (changed) {
             notifyInboxChanged(receiverType, userId);
         }
     }
@@ -199,12 +198,14 @@ public class SysMessageReceiverServiceImpl
     @CacheEvict(key = "'unread:' + #receiverType + ':' + #userId")
     public void clear(String receiverType, Long userId) {
         var context = audienceContext(receiverType, userId);
-        var messageIds =
-                baseMapper.selectInboxMessageIds(
-                        userId, receiverType, context.roleIds(), context.deptId(), null);
-        batchUpsertStates(
-                receiverType, userId, messageIds, SysMessageReadStatus.DELETED.getValue());
-        if (!messageIds.isEmpty()) {
+        boolean changed =
+                processInboxStates(
+                        receiverType,
+                        userId,
+                        context,
+                        null,
+                        SysMessageReadStatus.DELETED.getValue());
+        if (changed) {
             notifyInboxChanged(receiverType, userId);
         }
     }
@@ -351,6 +352,34 @@ public class SysMessageReceiverServiceImpl
                                                     readTime))
                             .toList();
             baseMapper.upsertStates(states);
+        }
+    }
+
+    /** 使用消息 ID 游标分批处理全部可见收件状态，避免一次性加载全部历史消息。 */
+    private boolean processInboxStates(
+            String receiverType,
+            Long userId,
+            AudienceContext context,
+            Integer sourceReadStatus,
+            Integer targetReadStatus) {
+        Long afterMessageId = null;
+        boolean changed = false;
+        while (true) {
+            var messageIds =
+                    baseMapper.selectInboxMessageIds(
+                            userId,
+                            receiverType,
+                            context.roleIds(),
+                            context.deptId(),
+                            sourceReadStatus,
+                            afterMessageId,
+                            STATE_BATCH_SIZE);
+            if (messageIds.isEmpty()) {
+                return changed;
+            }
+            batchUpsertStates(receiverType, userId, messageIds, targetReadStatus);
+            changed = true;
+            afterMessageId = messageIds.getLast();
         }
     }
 

@@ -8,6 +8,7 @@ import com.travis.monolith.system.message.api.enums.*;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -62,7 +63,9 @@ public class SysMessageCreateReq {
     private Integer receiverScope;
 
     /** 指定接收范围对应的用户、角色或部门 ID 列表。 */
-    private List<Long> receiverValues;
+    @Size(max = 1000, message = "接收对象数量不能超过1000个")
+    private List<@NotNull(message = "接收对象ID不能为空") @Positive(message = "接收对象ID必须为正数") Long>
+            receiverValues;
 
     /** 计划发布时间；即时推送时可为空。 */
     private LocalDateTime publishTime;

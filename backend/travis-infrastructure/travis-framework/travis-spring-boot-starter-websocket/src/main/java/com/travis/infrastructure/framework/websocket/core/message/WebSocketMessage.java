@@ -123,6 +123,18 @@ public class WebSocketMessage {
         return toAll(fromUser, event, Map.of());
     }
 
+    /** 创建命名空间广播消息。 */
+    public static WebSocketMessage toNamespace(
+            String fromUser, String namespace, WebSocketEvent event, Map<String, Object> content) {
+        return WebSocketMessage.builder()
+                .type(WebSocketMessageType.NAMESPACE)
+                .fromUser(fromUser)
+                .to(namespace)
+                .content(eventContent(event, content))
+                .timestamp(System.currentTimeMillis())
+                .build();
+    }
+
     /** 创建心跳消息 */
     public static WebSocketMessage ping() {
         return WebSocketMessage.builder()

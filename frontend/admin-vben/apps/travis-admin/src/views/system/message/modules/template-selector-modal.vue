@@ -18,7 +18,7 @@ const emit = defineEmits<{
 
 const channel = ref('IN_APP');
 const previewTemplate = ref<SystemMessageApi.MessageTemplate>();
-const selectedId = ref<number>();
+const selectedId = ref<SystemMessageApi.Id>();
 const emptyValueFormatter = ({ cellValue }: { cellValue: unknown }) =>
   cellValue === undefined || cellValue === null || cellValue === ''
     ? '-'
@@ -100,7 +100,10 @@ const [Modal, modalApi] = useVbenModal({
   footer: false,
   async onOpenChange(open) {
     if (!open) return;
-    const data = modalApi.getData<{ channel: string; selectedId?: number }>();
+    const data = modalApi.getData<{
+      channel: string;
+      selectedId?: SystemMessageApi.Id;
+    }>();
     channel.value = data.channel;
     selectedId.value = data.selectedId;
     previewTemplate.value = data.selectedId

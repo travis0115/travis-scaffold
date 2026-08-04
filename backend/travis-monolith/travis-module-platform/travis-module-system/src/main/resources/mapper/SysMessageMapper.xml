@@ -4,6 +4,28 @@
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.travis.monolith.system.message.internal.mapper.SysMessageMapper">
 
+    <!-- 锁定指定消息，串行化编辑、发送、撤回和删除。 -->
+    <select id="selectByIdForUpdate"
+            resultType="com.travis.monolith.system.message.internal.entity.SysMessage">
+        SELECT *
+        FROM sys_message
+        WHERE id = #{id}
+          AND is_deleted = 0
+        FOR UPDATE
+    </select>
+
+    <!-- 锁定指定业务来源消息，串行化来源消息生命周期与 Quartz 发送。 -->
+    <select id="selectSourceForUpdate"
+            resultType="com.travis.monolith.system.message.internal.entity.SysMessage">
+        SELECT *
+        FROM sys_message
+        WHERE source_type = #{sourceType}
+          AND source_id = #{sourceId}
+          AND receiver_type = #{receiverType}
+          AND is_deleted = 0
+        FOR UPDATE
+    </select>
+
     <!-- 物理删除业务来源消息，避免逻辑删除记录占用来源唯一索引。 -->
     <delete id="deletePhysicallyById">
         DELETE FROM sys_message
@@ -19,6 +41,8 @@
             update_time = CURRENT_TIMESTAMP
         WHERE id = #{id}
           AND status = #{expectedStatus}
+          AND push_type = #{expectedPushType}
+          AND publish_time &lt;=> #{expectedPublishTime}
           AND is_deleted = 0
     </update>
 

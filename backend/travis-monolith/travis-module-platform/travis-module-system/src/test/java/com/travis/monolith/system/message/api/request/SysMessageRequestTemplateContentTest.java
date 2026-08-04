@@ -2,6 +2,8 @@ package com.travis.monolith.system.message.api.request;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import jakarta.validation.Validation;
+import java.util.Collections;
 import org.junit.jupiter.api.Test;
 
 class SysMessageRequestTemplateContentTest {
@@ -125,5 +127,29 @@ class SysMessageRequestTemplateContentTest {
         assertThat(templateReq.isRedirectUrlChannelValid()).isTrue();
         templateReq.setChannel("WECHAT_OA");
         assertThat(templateReq.isRedirectUrlChannelValid()).isTrue();
+    }
+
+    @Test
+    void messageRequestShouldRejectInvalidOrExcessiveReceiverIds() {
+        try (var factory = Validation.buildDefaultValidatorFactory()) {
+            var validator = factory.getValidator();
+            var req = new SysMessageCreateReq();
+            req.setReceiverValues(Collections.nCopies(1001, 1L));
+
+            assertThat(validator.validate(req))
+                    .anyMatch(
+                            violation ->
+                                    "receiverValues"
+                                            .equals(violation.getPropertyPath().toString()));
+
+            req.setReceiverValues(java.util.List.of(0L));
+            assertThat(validator.validate(req))
+                    .anyMatch(
+                            violation ->
+                                    violation
+                                            .getPropertyPath()
+                                            .toString()
+                                            .startsWith("receiverValues"));
+        }
     }
 }

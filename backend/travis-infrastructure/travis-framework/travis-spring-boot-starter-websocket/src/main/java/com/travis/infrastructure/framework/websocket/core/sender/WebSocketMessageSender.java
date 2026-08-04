@@ -55,6 +55,11 @@ public class WebSocketMessageSender {
         sessionManager.sendToAll(message);
     }
 
+    /** 向指定连接命名空间广播消息。 */
+    public void sendToNamespace(String namespace, WebSocketMessage message) {
+        sessionManager.sendToNamespace(namespace, message);
+    }
+
     /**
      * 获取指定命名空间下所有已连接主体。
      *

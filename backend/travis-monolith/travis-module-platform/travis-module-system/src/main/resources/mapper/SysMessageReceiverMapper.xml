@@ -128,7 +128,12 @@
                 </otherwise>
             </choose>
         </if>
+        <if test="afterMessageId != null">
+            AND m.id &gt; #{afterMessageId}
+        </if>
         <include refid="inboxScopeCondition"/>
+        ORDER BY m.id ASC
+        LIMIT #{limit}
     </select>
 
     <!-- 根据消息编号物理删除接收状态。 -->

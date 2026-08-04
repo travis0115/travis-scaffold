@@ -135,6 +135,9 @@ public class RedisWebSocketMessageDispatcher {
             // 根据消息类型投递到本地 Session
             if (wsMessage.getType() == WebSocketMessageType.BROADCAST) {
                 sessionManager.deliverToAllLocal(wsMessage);
+            } else if (wsMessage.getType() == WebSocketMessageType.NAMESPACE
+                    && wsMessage.getTo() != null) {
+                sessionManager.deliverToNamespaceLocal(wsMessage.getTo(), wsMessage);
             } else if (wsMessage.getType() == WebSocketMessageType.USER
                     && wsMessage.getTo() != null) {
                 sessionManager.deliverToLocal(wsMessage.getTo(), wsMessage);

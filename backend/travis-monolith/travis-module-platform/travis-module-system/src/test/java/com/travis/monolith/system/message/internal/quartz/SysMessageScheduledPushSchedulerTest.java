@@ -12,9 +12,11 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.quartz.JobDetail;
+import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.SimpleTrigger;
 import org.quartz.Trigger;
@@ -123,5 +125,19 @@ class SysMessageScheduledPushSchedulerTest {
 
         verify(quartzScheduler, never()).rescheduleJob(any(), any());
         verify(quartzScheduler, never()).scheduleJob(any(JobDetail.class), any(Trigger.class));
+    }
+
+    @Test
+    void shouldDeleteOrphanJobDuringReconciliation() throws Exception {
+        Scheduler quartzScheduler = mock(Scheduler.class);
+        SysMessageMapper messageMapper = mock(SysMessageMapper.class);
+        var scheduler = new SysMessageScheduledPushScheduler(quartzScheduler, messageMapper);
+        JobKey orphanJob = JobKey.jobKey("scheduled-message-push-1001", "system-message");
+        when(messageMapper.selectList(any())).thenReturn(List.of());
+        when(quartzScheduler.getJobKeys(any())).thenReturn(Set.of(orphanJob));
+
+        scheduler.reconcile();
+
+        verify(quartzScheduler).deleteJob(orphanJob);
     }
 }

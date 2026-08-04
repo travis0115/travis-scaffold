@@ -9,6 +9,7 @@ import com.travis.monolith.system.message.api.enums.SysMessageType;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -48,7 +49,9 @@ public class SysSourceMessagePublishReq {
     private Integer receiverScope;
 
     /** 接收对象ID列表，全部用户时为空。 */
-    private List<Long> receiverValues;
+    @Size(max = 1000, message = "接收对象数量不能超过1000个")
+    private List<@NotNull(message = "接收对象ID不能为空") @Positive(message = "接收对象ID必须为正数") Long>
+            receiverValues;
 
     /** 发布时间。 */
     @NotNull(message = "发布时间不能为空")

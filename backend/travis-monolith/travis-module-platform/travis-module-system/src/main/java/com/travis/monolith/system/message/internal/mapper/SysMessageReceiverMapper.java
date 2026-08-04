@@ -39,7 +39,9 @@ public interface SysMessageReceiverMapper extends BaseMapperX<SysMessageReceiver
             @Param("receiverType") String receiverType,
             @Param("roleIds") List<Long> roleIds,
             @Param("deptId") Long deptId,
-            @Param("readStatus") Integer readStatus);
+            @Param("readStatus") Integer readStatus,
+            @Param("afterMessageId") Long afterMessageId,
+            @Param("limit") int limit);
 
     /** 物理删除消息的接收状态，避免保留无主记录。 */
     int deleteByMessageId(@Param("messageId") Long messageId);

@@ -30,6 +30,9 @@ public interface WebSocketSessionManager {
      */
     void sendToAll(WebSocketMessage message);
 
+    /** 向指定连接命名空间广播消息。 */
+    void sendToNamespace(String namespace, WebSocketMessage message);
+
     /**
      * 关闭指定连接主体的所有连接
      *

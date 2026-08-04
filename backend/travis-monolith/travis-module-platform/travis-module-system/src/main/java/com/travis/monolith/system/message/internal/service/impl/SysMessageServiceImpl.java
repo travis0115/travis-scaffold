@@ -9,12 +9,12 @@ import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
-import com.travis.infrastructure.framework.satoken.core.websocket.SaTokenWebSocketPrincipal;
 import com.travis.infrastructure.framework.websocket.core.message.WebSocketMessage;
 import com.travis.infrastructure.framework.websocket.core.message.WebSocketSender;
 import com.travis.infrastructure.framework.websocket.core.sender.WebSocketMessageSender;
 import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
+import com.travis.monolith.system.dept.api.SysDeptApi;
 import com.travis.monolith.system.file.api.SysFileApi;
 import com.travis.monolith.system.message.api.constant.SysMessageTemplatePattern;
 import com.travis.monolith.system.message.api.enums.*;
@@ -42,10 +42,6 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -55,7 +51,6 @@ import tools.jackson.core.type.TypeReference;
 
 /** 消息推送服务实现。 */
 @Service
-@CacheConfig(cacheNames = "system:message")
 @AllArgsConstructor
 @Slf4j
 public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMessage>
@@ -69,11 +64,11 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     private final SysMessageConverter converter;
     private final WebSocketMessageSender webSocketMessageSender;
     private final SysFileApi fileApi;
-    private final CacheManager cacheManager;
     private final SysMessageChannelHandlerRegistry channelHandlerRegistry;
     private final SysMessageScheduledPushScheduler scheduledPushScheduler;
     private final SysUserApi sysUserApi;
     private final SysRoleApi sysRoleApi;
+    private final SysDeptApi sysDeptApi;
 
     /** 分页查询消息。 */
     @Override
@@ -85,6 +80,16 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                 .eqIfPresent(SysMessage::getReceiverType, req.getReceiverType())
                 .eqIfPresent(SysMessage::getPushType, req.getPushType())
                 .eqIfPresent(SysMessage::getStatus, req.getStatus())
+                .geIfPresent(
+                        SysMessage::getPublishTime,
+                        req.getPublishStartDate() == null
+                                ? null
+                                : req.getPublishStartDate().atStartOfDay())
+                .ltIfPresent(
+                        SysMessage::getPublishTime,
+                        req.getPublishEndDate() == null
+                                ? null
+                                : req.getPublishEndDate().plusDays(1).atStartOfDay())
                 .eq(SysMessage::getSourceType, SysMessageSourceType.MANUAL.getValue())
                 .ne(SysMessage::getPushType, SysMessagePushType.AUTO.getValue())
                 .orderByDesc(SysMessage::getCreateTime);
@@ -95,7 +100,6 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
 
     /** 查询指定消息，不存在时抛出业务异常。 */
     @Override
-    @Cacheable(key = "'manual-detail:'+#id")
     public SysMessageResp getOrThrow(Long id) {
         var entity = super.getByIdOrThrow(id);
         ensureManualMessage(entity);
@@ -108,7 +112,9 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     @Override
     @Transactional
     public Long create(SysMessageCreateReq req) {
-        validateReceiver(req.getReceiverType(), req.getReceiverScope(), req.getReceiverValues());
+        req.setReceiverValues(
+                validateReceiver(
+                        req.getReceiverType(), req.getReceiverScope(), req.getReceiverValues()));
         validateChannel(req.getChannel());
         validatePush(req.getPushType(), req.getPublishTime());
         var entity = converter.toEntity(req);
@@ -129,12 +135,13 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     /** 更新指定消息。 */
     @Override
     @Transactional
-    @CacheEvict(key = "'manual-detail:'+#id")
     public void update(Long id, SysMessageUpdateReq req) {
-        validateReceiver(req.getReceiverType(), req.getReceiverScope(), req.getReceiverValues());
+        req.setReceiverValues(
+                validateReceiver(
+                        req.getReceiverType(), req.getReceiverScope(), req.getReceiverValues()));
         validateChannel(req.getChannel());
         validatePush(req.getPushType(), req.getPublishTime());
-        var entity = getByIdOrThrow(id);
+        var entity = getByIdForUpdateOrThrow(id);
         ensureManualMessage(entity);
         if (SysMessageStatus.SENT.getValue().equals(entity.getStatus())) {
             throw new BizException(CommonErrorCode.BAD_REQUEST);
@@ -158,9 +165,8 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     /** 手动推送指定消息。 */
     @Override
     @Transactional
-    @CacheEvict(key = "'manual-detail:'+#id")
     public void push(Long id) {
-        var entity = getByIdOrThrow(id);
+        var entity = getByIdForUpdateOrThrow(id);
         ensureManualMessage(entity);
         if (SysMessageStatus.SENT.getValue().equals(entity.getStatus())) {
             return;
@@ -170,9 +176,11 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
             throw new BizException(CommonErrorCode.BAD_REQUEST);
         }
         Integer expectedStatus = entity.getStatus();
+        Integer expectedPushType = entity.getPushType();
+        LocalDateTime expectedPublishTime = entity.getPublishTime();
         boolean republished = SysMessageStatus.REVOKED.getValue().equals(entity.getStatus());
         entity.setPushType(SysMessagePushType.MANUAL.getValue());
-        if (!publish(entity, expectedStatus)) {
+        if (!publish(entity, expectedStatus, expectedPushType, expectedPublishTime)) {
             return;
         }
         syncScheduledTriggerAfterCommit(entity);
@@ -185,15 +193,20 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     /** 自动推送指定待发送消息。 */
     @Override
     @Transactional
-    @CacheEvict(key = "'manual-detail:'+#id")
     public void pushAutomatic(Long id) {
-        var entity = getByIdOrThrow(id);
+        var entity = getByIdForUpdateOrThrow(id);
         ensureManualMessage(entity);
         if (!SysMessageStatus.PENDING.getValue().equals(entity.getStatus())) {
             throw new BizException(CommonErrorCode.BAD_REQUEST);
         }
+        Integer expectedPushType = entity.getPushType();
+        LocalDateTime expectedPublishTime = entity.getPublishTime();
         entity.setPushType(SysMessagePushType.AUTO.getValue());
-        if (!publish(entity, SysMessageStatus.PENDING.getValue())) {
+        if (!publish(
+                entity,
+                SysMessageStatus.PENDING.getValue(),
+                expectedPushType,
+                expectedPublishTime)) {
             return;
         }
         syncScheduledTriggerAfterCommit(entity);
@@ -203,9 +216,8 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     /** 撤回指定站内消息。 */
     @Override
     @Transactional
-    @CacheEvict(key = "'manual-detail:'+#id")
     public void revoke(Long id) {
-        var entity = getByIdOrThrow(id);
+        var entity = getByIdForUpdateOrThrow(id);
         ensureManualMessage(entity);
         if (!SysMessageChannel.IN_APP.getValue().equals(entity.getChannel())) {
             throw new BizException(SystemErrorCode.MESSAGE_CHANNEL_REVOKE_NOT_SUPPORTED);
@@ -227,7 +239,9 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
             key = "#req.sourceType + ':' + #req.sourceId + ':' + #req.receiverType",
             waitTime = 10_000)
     public void publishSourceMessage(SysSourceMessagePublishReq req) {
-        validateReceiver(req.getReceiverType(), req.getReceiverScope(), req.getReceiverValues());
+        req.setReceiverValues(
+                validateReceiver(
+                        req.getReceiverType(), req.getReceiverScope(), req.getReceiverValues()));
         if (SysMessageSourceType.MANUAL.getValue().equals(req.getSourceType())
                 || !isSourceTypeMatched(req.getMessageType(), req.getSourceType())
                 || req.getSourceId() == null
@@ -239,7 +253,8 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
 
         var entity =
-                findSourceMessage(req.getSourceType(), req.getSourceId(), req.getReceiverType());
+                findSourceMessageForUpdate(
+                        req.getSourceType(), req.getSourceId(), req.getReceiverType());
         boolean created = entity == null;
         Integer previousStatus = created ? null : entity.getStatus();
         Audience previousAudience = created ? null : Audience.from(entity);
@@ -257,7 +272,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         entity.setReceiverType(req.getReceiverType());
         entity.setReceiverScope(req.getReceiverScope());
         entity.setReceiverValues(
-                req.getReceiverValues() == null
+                req.getReceiverValues() == null || req.getReceiverValues().isEmpty()
                         ? null
                         : JsonUtil.toJsonString(req.getReceiverValues()));
         entity.setPublishTime(req.getPublishTime());
@@ -268,7 +283,6 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
             entity.setStatus(SysMessageStatus.PENDING.getValue());
             saveOrUpdate(entity);
             syncScheduledTriggerAfterCommit(entity);
-            evictDetailCache(entity.getId());
             if (republished) {
                 resetReceiverReadStatus(entity.getId());
             }
@@ -284,7 +298,6 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         entity.setStatus(SysMessageStatus.SENT.getValue());
         saveOrUpdate(entity);
         syncScheduledTriggerAfterCommit(entity);
-        evictDetailCache(entity.getId());
         if (republished) {
             resetReceiverReadStatus(entity.getId());
         }
@@ -308,7 +321,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
             key = "#sourceType + ':' + #sourceId + ':' + #receiverType",
             waitTime = 10_000)
     public void revokeSourceMessage(String sourceType, String sourceId, String receiverType) {
-        var entity = findSourceMessage(sourceType, sourceId, receiverType);
+        var entity = findSourceMessageForUpdate(sourceType, sourceId, receiverType);
         if (entity == null || SysMessageStatus.REVOKED.getValue().equals(entity.getStatus())) {
             return;
         }
@@ -316,7 +329,6 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         entity.setStatus(SysMessageStatus.REVOKED.getValue());
         updateById(entity);
         syncScheduledTriggerAfterCommit(entity);
-        evictDetailCache(entity.getId());
         if (visible) {
             messageReceiverService.evictUnreadCache();
             notifyInboxChanged(SysMessageWebSocketEvent.REVOKED, entity);
@@ -331,7 +343,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
             key = "#sourceType + ':' + #sourceId + ':' + #receiverType",
             waitTime = 10_000)
     public void deleteSourceMessage(String sourceType, String sourceId, String receiverType) {
-        var entity = findSourceMessage(sourceType, sourceId, receiverType);
+        var entity = findSourceMessageForUpdate(sourceType, sourceId, receiverType);
         if (entity == null) {
             return;
         }
@@ -339,7 +351,6 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         messageReceiverService.deleteByMessageId(entity.getId());
         baseMapper.deletePhysicallyById(entity.getId());
         deleteScheduledTriggerAfterCommit(entity.getId());
-        evictDetailCache(entity.getId());
         if (visible) {
             messageReceiverService.evictUnreadCache();
         }
@@ -350,7 +361,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     @Override
     @Transactional
     public boolean pushScheduled(Long id) {
-        var message = getById(id);
+        var message = baseMapper.selectByIdForUpdate(id);
         if (message == null
                 || !SysMessageStatus.PENDING.getValue().equals(message.getStatus())
                 || !SysMessagePushType.SCHEDULED.getValue().equals(message.getPushType())
@@ -358,10 +369,13 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                 || message.getPublishTime().isAfter(LocalDateTime.now())) {
             return false;
         }
-        if (!publish(message, SysMessageStatus.PENDING.getValue())) {
+        if (!publish(
+                message,
+                SysMessageStatus.PENDING.getValue(),
+                message.getPushType(),
+                message.getPublishTime())) {
             return false;
         }
-        evictDetailCache(message.getId());
         messageReceiverService.evictUnreadCache();
         return true;
     }
@@ -369,9 +383,8 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     /** 删除指定消息。 */
     @Override
     @Transactional
-    @CacheEvict(key = "'manual-detail:'+#id")
     public void delete(Long id) {
-        var entity = getByIdOrThrow(id);
+        var entity = getByIdForUpdateOrThrow(id);
         ensureManualMessage(entity);
         boolean visible = SysMessageStatus.SENT.getValue().equals(entity.getStatus());
         messageReceiverService.deleteByMessageId(id);
@@ -384,13 +397,19 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     }
 
     /** 原子占用待发送消息后执行通道发送，避免手动任务与 Quartz 并发重复推送。 */
-    private boolean publish(SysMessage message, Integer expectedStatus) {
+    private boolean publish(
+            SysMessage message,
+            Integer expectedStatus,
+            Integer expectedPushType,
+            LocalDateTime expectedPublishTime) {
         var channelHandler = getChannelHandler(message.getChannel());
         var publishTime = LocalDateTime.now();
         boolean claimed =
                 baseMapper.claimForPublish(
                                 message.getId(),
                                 expectedStatus,
+                                expectedPushType,
+                                expectedPublishTime,
                                 message.getPushType(),
                                 SysMessageStatus.SENT.getValue(),
                                 publishTime)
@@ -408,14 +427,6 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     /** 重置消息接收人的已读状态。 */
     private void resetReceiverReadStatus(Long messageId) {
         messageReceiverService.resetReadStatus(messageId);
-    }
-
-    /** 精准清除指定消息详情缓存。 */
-    private void evictDetailCache(Long messageId) {
-        var cache = cacheManager.getCache("system:message");
-        if (cache != null) {
-            cache.evict("manual-detail:" + messageId);
-        }
     }
 
     /** 事务提交后根据消息当前状态创建、重排或删除一次性任务。 */
@@ -475,7 +486,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         notifyInboxChanged(event, message.getId(), audiences.toArray(Audience[]::new));
     }
 
-    /** 在事务确认提交后，只向符合消息接收范围的在线主体发送 WebSocket 通知。 */
+    /** 在事务确认提交后，按接收端命名空间发送收件箱变化通知。 */
     private void notifyInboxChanged(
             SysMessageWebSocketEvent event, Long messageId, Audience... audiences) {
         var validAudiences = Arrays.stream(audiences).filter(Objects::nonNull).toList();
@@ -487,48 +498,15 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                         validAudiences.stream()
                                 .map(Audience::receiverType)
                                 .distinct()
-                                .flatMap(
-                                        receiverType ->
-                                                webSocketMessageSender
-                                                        .getConnectedPrincipals(receiverType)
-                                                        .stream())
-                                .distinct()
                                 .forEach(
-                                        principal -> {
-                                            var subject =
-                                                    SaTokenWebSocketPrincipal.parse(principal);
-                                            if (subject == null) {
-                                                return;
-                                            }
-                                            Long userId;
-                                            try {
-                                                userId = Long.valueOf(subject.loginId());
-                                            } catch (NumberFormatException ignored) {
-                                                return;
-                                            }
-                                            boolean matched =
-                                                    validAudiences.stream()
-                                                            .filter(
-                                                                    audience ->
-                                                                            audience.receiverType()
-                                                                                    .equals(
-                                                                                            subject
-                                                                                                    .loginType()))
-                                                            .anyMatch(
-                                                                    audience ->
-                                                                            matchesAudience(
-                                                                                    userId,
-                                                                                    audience));
-                                            if (matched) {
-                                                webSocketMessageSender.sendToPrincipal(
-                                                        principal,
-                                                        WebSocketMessage.toPrincipal(
+                                        receiverType ->
+                                                webSocketMessageSender.sendToNamespace(
+                                                        receiverType,
+                                                        WebSocketMessage.toNamespace(
                                                                 WebSocketSender.SYSTEM,
-                                                                principal,
+                                                                receiverType,
                                                                 event,
-                                                                Map.of("messageId", messageId)));
-                                            }
-                                        });
+                                                                Map.of("messageId", messageId))));
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(
                     new TransactionSynchronization() {
@@ -544,31 +522,19 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
     }
 
-    /** 判断指定用户是否命中消息接收范围。 */
-    private boolean matchesAudience(Long userId, Audience audience) {
-        return SysMessageReceiverScope.findByValue(audience.receiverScope())
-                .map(
-                        scope ->
-                                switch (scope) {
-                                    case ALL -> true;
-                                    case USER -> audience.receiverValues().contains(userId);
-                                    case ROLE ->
-                                            sysRoleApi.getRoleIdsByUserId(userId).stream()
-                                                    .anyMatch(audience.receiverValues()::contains);
-                                    case DEPT ->
-                                            audience.receiverValues()
-                                                    .contains(sysUserApi.getDeptIdByUserId(userId));
-                                })
-                .orElse(false);
+    /** 查询并锁定指定消息，不存在时抛出业务异常。 */
+    private SysMessage getByIdForUpdateOrThrow(Long id) {
+        var message = baseMapper.selectByIdForUpdate(id);
+        if (message == null) {
+            throw new BizException(SystemErrorCode.MESSAGE_NOT_FOUND);
+        }
+        return message;
     }
 
-    /** 根据来源信息查询对应业务消息。 */
-    private SysMessage findSourceMessage(String sourceType, String sourceId, String receiverType) {
-        return getOne(
-                new LambdaQueryWrapperX<SysMessage>()
-                        .eq(SysMessage::getSourceType, sourceType)
-                        .eq(SysMessage::getSourceId, sourceId)
-                        .eq(SysMessage::getReceiverType, receiverType));
+    /** 根据来源信息查询并锁定对应业务消息。 */
+    private SysMessage findSourceMessageForUpdate(
+            String sourceType, String sourceId, String receiverType) {
+        return baseMapper.selectSourceForUpdate(sourceType, sourceId, receiverType);
     }
 
     /** 校验消息是否允许在消息管理中操作。 */
@@ -587,7 +553,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     }
 
     /** 校验消息接收端、接收范围及接收对象。 */
-    private void validateReceiver(
+    private List<Long> validateReceiver(
             String receiverType, Integer receiverScope, List<Long> receiverValues) {
         if (!LoginType.ADMIN.equals(receiverType) && !LoginType.APP.equals(receiverType)) {
             throw new BizException(CommonErrorCode.BAD_REQUEST);
@@ -600,9 +566,45 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                 && !SysMessageReceiverScope.USER.getValue().equals(receiverScope)) {
             throw new BizException(CommonErrorCode.VALIDATE_FAILED, "客户端用户不支持按角色或部门接收");
         }
-        if (!SysMessageReceiverScope.ALL.getValue().equals(receiverScope)
-                && (receiverValues == null || receiverValues.isEmpty())) {
+        if (SysMessageReceiverScope.ALL.getValue().equals(receiverScope)) {
+            return null;
+        }
+        if (receiverValues == null || receiverValues.isEmpty()) {
             throw new BizException(CommonErrorCode.BAD_REQUEST);
+        }
+        if (receiverValues.size() > 1000) {
+            throw new BizException(CommonErrorCode.VALIDATE_FAILED, "接收对象ID不合法或数量超过1000个");
+        }
+        var normalized = receiverValues.stream().distinct().toList();
+        if (normalized.stream().anyMatch(value -> value == null || value <= 0)) {
+            throw new BizException(CommonErrorCode.VALIDATE_FAILED, "接收对象ID不合法或数量超过1000个");
+        }
+        validateReceiverTargets(receiverType, receiverScope, normalized);
+        return normalized;
+    }
+
+    /** 校验当前模块可查询的接收对象是否真实存在。 */
+    private void validateReceiverTargets(
+            String receiverType, Integer receiverScope, List<Long> receiverValues) {
+        if (LoginType.APP.equals(receiverType)) {
+            return;
+        }
+        int existingCount;
+        try {
+            if (SysMessageReceiverScope.USER.getValue().equals(receiverScope)) {
+                existingCount = sysUserApi.getUsernameMapByIds(receiverValues).size();
+            } else if (SysMessageReceiverScope.ROLE.getValue().equals(receiverScope)) {
+                existingCount = sysRoleApi.getRoleNamesByRoleIds(receiverValues).size();
+            } else if (SysMessageReceiverScope.DEPT.getValue().equals(receiverScope)) {
+                existingCount = sysDeptApi.getDeptNameMapByIds(receiverValues).size();
+            } else {
+                return;
+            }
+        } catch (BizException exception) {
+            throw new BizException(CommonErrorCode.VALIDATE_FAILED, "接收对象不存在");
+        }
+        if (existingCount != receiverValues.size()) {
+            throw new BizException(CommonErrorCode.VALIDATE_FAILED, "接收对象不存在");
         }
     }
 
@@ -632,6 +634,10 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
         if (SysMessagePushType.SCHEDULED.getValue().equals(pushType) && publishTime == null) {
             throw new BizException(CommonErrorCode.BAD_REQUEST);
+        }
+        if (SysMessagePushType.SCHEDULED.getValue().equals(pushType)
+                && !publishTime.isAfter(LocalDateTime.now())) {
+            throw new BizException(CommonErrorCode.VALIDATE_FAILED, "定时发布时间必须晚于当前时间");
         }
     }
 
@@ -791,15 +797,11 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
     }
 
-    /** WebSocket 定向通知所需的消息接收范围快照。 */
-    private record Audience(String receiverType, Integer receiverScope, List<Long> receiverValues) {
+    /** WebSocket 通知所需的接收端命名空间快照。 */
+    private record Audience(String receiverType) {
 
         private static Audience from(SysMessage message) {
-            var values =
-                    message.getReceiverValues() == null || message.getReceiverValues().isBlank()
-                            ? List.<Long>of()
-                            : JsonUtil.parseArray(message.getReceiverValues(), Long.class);
-            return new Audience(message.getReceiverType(), message.getReceiverScope(), values);
+            return new Audience(message.getReceiverType());
         }
     }
 }

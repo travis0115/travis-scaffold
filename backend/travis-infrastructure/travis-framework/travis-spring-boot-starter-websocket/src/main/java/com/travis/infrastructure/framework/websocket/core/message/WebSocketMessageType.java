@@ -19,6 +19,9 @@ public enum WebSocketMessageType {
     /** 广播消息 */
     BROADCAST,
 
+    /** 命名空间广播消息 */
+    NAMESPACE,
+
     /** 内部指令：关闭指定连接主体的连接 */
     CLOSE,
 

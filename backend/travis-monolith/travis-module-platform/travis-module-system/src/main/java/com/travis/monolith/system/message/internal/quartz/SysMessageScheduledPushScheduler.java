@@ -11,9 +11,12 @@ import com.travis.monolith.system.message.internal.mapper.SysMessageMapper;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
+import org.quartz.impl.matchers.GroupMatcher;
 import org.springframework.stereotype.Component;
 
 /** 负责维护消息发布时间对应的一次性 Quartz 任务。 */
@@ -84,6 +87,10 @@ public class SysMessageScheduledPushScheduler {
                                             SysMessage::getPushType,
                                             SysMessagePushType.SCHEDULED.getValue())
                                     .isNotNull(SysMessage::getPublishTime));
+            Set<JobKey> expectedJobKeys =
+                    messages.stream()
+                            .map(message -> jobKey(message.getId()))
+                            .collect(Collectors.toSet());
             for (SysMessage message : messages) {
                 Trigger trigger = scheduler.getTrigger(triggerKey(message.getId()));
                 Date expectedFireTime = toDate(message.getPublishTime());
@@ -92,6 +99,14 @@ public class SysMessageScheduledPushScheduler {
                         || trigger.getNextFireTime().toInstant().getEpochSecond()
                                 != expectedFireTime.toInstant().getEpochSecond()) {
                     schedule(message.getId(), message.getPublishTime());
+                }
+            }
+            var existingJobKeys = scheduler.getJobKeys(GroupMatcher.jobGroupEquals(GROUP));
+            if (existingJobKeys != null) {
+                for (JobKey existingJobKey : existingJobKeys) {
+                    if (!expectedJobKeys.contains(existingJobKey)) {
+                        scheduler.deleteJob(existingJobKey);
+                    }
                 }
             }
         } catch (BizException exception) {

@@ -886,7 +886,7 @@ CREATE TABLE `sys_message` (
   `jump_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '跳转链接',
   `template_id` bigint DEFAULT NULL COMMENT '消息模板ID',
   `template_params` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT '模板参数JSON',
-  `status` tinyint NOT NULL DEFAULT '0' COMMENT '状态：0-待推送 1-定时推送 2-已推送 3-已撤回',
+  `status` tinyint NOT NULL DEFAULT '0' COMMENT '状态：0-待推送 1-已推送 2-已撤回',
   `receiver_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'admin' COMMENT '接收端登录体系，与 LoginType 常量取值保持一致：admin/app',
   `receiver_scope` tinyint NOT NULL COMMENT '接收范围：0-全部用户 1-指定用户 2-指定角色 3-指定部门',
   `receiver_values` json DEFAULT NULL COMMENT '接收范围值JSON数组；全部用户为空',
