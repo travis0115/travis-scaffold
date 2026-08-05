@@ -76,6 +76,12 @@ spring:
   docker:
     compose:
       enabled: false
+  flyway:
+    enabled: false
+    locations: classpath:db/migration
+    validate-on-migrate: true # 检查已经执行过的 SQL 是否被修改
+    clean-disabled: true  # 禁止 Flyway 清空数据库
+    baseline-on-migrate: false # 禁止 Flyway 基线
   jackson:
     locale: ${travis.web.locale:zh_CN}
     time-zone: ${travis.web.time-zone:UTC}
@@ -111,7 +117,7 @@ spring:
       completion-mode: DELETE
       jdbc:
         schema-initialization:
-          enabled: true
+          enabled: false
       republish-outstanding-events-on-restart: true
   servlet:
     multipart:
