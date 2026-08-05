@@ -10,17 +10,12 @@ import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
-import com.travis.infrastructure.framework.satoken.core.websocket.SaTokenWebSocketPrincipal;
-import com.travis.infrastructure.framework.websocket.core.message.WebSocketMessage;
-import com.travis.infrastructure.framework.websocket.core.message.WebSocketSender;
-import com.travis.infrastructure.framework.websocket.core.sender.WebSocketMessageSender;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.file.api.SysFileApi;
 import com.travis.monolith.system.message.api.SysMessageSourceContentProvider;
 import com.travis.monolith.system.message.api.enums.SysMessageReadStatus;
 import com.travis.monolith.system.message.api.enums.SysMessageReceiverScope;
 import com.travis.monolith.system.message.api.enums.SysMessageStatus;
-import com.travis.monolith.system.message.api.enums.SysMessageWebSocketEvent;
 import com.travis.monolith.system.message.api.request.SysUserMessagePageReq;
 import com.travis.monolith.system.message.api.response.SysUserMessageResp;
 import com.travis.monolith.system.message.internal.converter.SysMessageReceiverConverter;
@@ -28,6 +23,7 @@ import com.travis.monolith.system.message.internal.entity.SysMessage;
 import com.travis.monolith.system.message.internal.entity.SysMessageReceiver;
 import com.travis.monolith.system.message.internal.mapper.SysMessageMapper;
 import com.travis.monolith.system.message.internal.mapper.SysMessageReceiverMapper;
+import com.travis.monolith.system.message.internal.notification.SysMessageInboxNotifier;
 import com.travis.monolith.system.message.internal.service.SysMessageReceiverService;
 import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.api.SysUserApi;
@@ -38,8 +34,6 @@ import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /** 消息接收记录服务实现。 */
 @Service
@@ -53,7 +47,7 @@ public class SysMessageReceiverServiceImpl
     private final SysMessageReceiverConverter converter;
     private final SysUserApi userApi;
     private final SysRoleApi roleApi;
-    private final WebSocketMessageSender webSocketMessageSender;
+    private final SysMessageInboxNotifier inboxNotifier;
     private final SysFileApi fileApi;
     private final ObjectProvider<SysMessageSourceContentProvider> sourceContentProviders;
     private final SysMessageMapper sysMessageMapper;
@@ -437,28 +431,7 @@ public class SysMessageReceiverServiceImpl
 
     /** 在事务提交后通过 WebSocket 通知收件箱发生变化。 */
     private void notifyInboxChanged(String receiverType, Long userId) {
-        var principal = SaTokenWebSocketPrincipal.build(receiverType, userId);
-        Runnable sender =
-                () ->
-                        webSocketMessageSender.sendToPrincipal(
-                                principal,
-                                WebSocketMessage.toPrincipal(
-                                        WebSocketSender.SYSTEM,
-                                        principal,
-                                        SysMessageWebSocketEvent.INBOX_CHANGED));
-        if (TransactionSynchronizationManager.isSynchronizationActive()) {
-            TransactionSynchronizationManager.registerSynchronization(
-                    new TransactionSynchronization() {
-                        @Override
-                        public void afterCompletion(int status) {
-                            if (status == TransactionSynchronization.STATUS_COMMITTED) {
-                                sender.run();
-                            }
-                        }
-                    });
-        } else {
-            sender.run();
-        }
+        inboxNotifier.notifyUser(receiverType, userId);
     }
 
     private record AudienceContext(List<Long> roleIds, Long deptId) {}

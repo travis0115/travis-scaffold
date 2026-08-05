@@ -1,7 +1,11 @@
 package com.travis.monolith.system.message.internal.api;
 
 import com.travis.infrastructure.common.web.constant.LoginType;
+import com.travis.infrastructure.common.web.exception.BizException;
+import com.travis.infrastructure.common.web.exception.CommonErrorCode;
+import com.travis.infrastructure.framework.web.core.xss.HtmlSanitizer;
 import com.travis.monolith.system.message.api.SysMessageApi;
+import com.travis.monolith.system.message.api.constant.SysMessageConstraints;
 import com.travis.monolith.system.message.api.enums.SysMessageChannel;
 import com.travis.monolith.system.message.api.enums.SysMessagePushType;
 import com.travis.monolith.system.message.api.enums.SysMessageReceiverScope;
@@ -19,8 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 public class SysMessageApiImpl implements SysMessageApi {
-
     private final SysMessageService messageService;
+    private final HtmlSanitizer htmlSanitizer;
 
     @Override
     @Transactional
@@ -28,9 +32,18 @@ public class SysMessageApiImpl implements SysMessageApi {
         if (userIds == null || userIds.isEmpty()) {
             return;
         }
+        String sanitizedContent = htmlSanitizer.sanitize(content);
+        if (sanitizedContent == null || sanitizedContent.isBlank()) {
+            throw new BizException(CommonErrorCode.VALIDATE_FAILED, "消息内容清洗后不能为空");
+        }
+        if (sanitizedContent.length() > SysMessageConstraints.CONTENT_MAX_LENGTH) {
+            throw new BizException(
+                    CommonErrorCode.VALIDATE_FAILED,
+                    "消息内容清洗后长度不能超过" + SysMessageConstraints.CONTENT_MAX_LENGTH + "个字符");
+        }
         var request = new SysMessageCreateReq();
         request.setTitle(title);
-        request.setContent(content);
+        request.setContent(sanitizedContent);
         request.setMessageType(SysMessageType.SYSTEM.getValue());
         request.setPushType(SysMessagePushType.MANUAL.getValue());
         request.setChannel(SysMessageChannel.IN_APP.getValue());

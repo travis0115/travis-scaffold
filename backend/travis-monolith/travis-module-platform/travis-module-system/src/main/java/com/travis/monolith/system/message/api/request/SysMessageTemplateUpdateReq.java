@@ -6,6 +6,7 @@ import com.travis.infrastructure.common.validation.annotation.JsonValue;
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.web.core.annotation.SanitizeHtml;
 import com.travis.monolith.system.common.api.enums.Status;
+import com.travis.monolith.system.message.api.constant.SysMessageConstraints;
 import com.travis.monolith.system.message.api.constant.SysMessageTemplatePattern;
 import com.travis.monolith.system.message.api.enums.SysMessageChannel;
 import com.travis.monolith.system.message.api.enums.SysMessageTemplateParamType;
@@ -35,7 +36,7 @@ public class SysMessageTemplateUpdateReq {
     private String channel;
 
     /** 模板标题。 */
-    @Size(max = 255, message = "模板标题长度不能超过255个字符")
+    @Size(max = SysMessageConstraints.TITLE_MAX_LENGTH, message = "模板标题长度不能超过255个字符")
     private String title;
 
     /** 外部平台模板 ID。 */
@@ -43,18 +44,18 @@ public class SysMessageTemplateUpdateReq {
     private String platformTemplateId;
 
     /** 模板参数结构，使用 JSON 对象格式。 */
-    @Size(max = 4000, message = "字段结构长度不能超过4000个字符")
+    @Size(max = SysMessageConstraints.TEMPLATE_PARAMS_MAX_LENGTH, message = "字段结构长度不能超过4000个字符")
     @JsonValue(message = "字段结构必须是合法JSON对象")
     private String contentSchema;
 
     /** 模板 HTML 内容。 */
     @SanitizeHtml
-    @Size(max = 5000, message = "模板内容长度不能超过5000个字符")
+    @Size(max = SysMessageConstraints.CONTENT_MAX_LENGTH, message = "模板内容长度不能超过5000个字符")
     @NotBlank(message = "模板内容不能为空")
     private String content;
 
     /** 点击消息后的跳转地址模板。 */
-    @Size(max = 500, message = "跳转地址长度不能超过500个字符")
+    @Size(max = SysMessageConstraints.JUMP_URL_MAX_LENGTH, message = "跳转地址长度不能超过500个字符")
     private String redirectUrl;
 
     /** 模板状态。 */

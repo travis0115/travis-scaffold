@@ -6,12 +6,14 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /** 使用版本键维护未读数缓存，避免消息发布时扫描并清空全部用户缓存。 */
 @Component
+@Slf4j
 public class SysMessageInboxCache {
     private static final String KEY_PREFIX = "system:message:inbox:unread:";
     private static final long UNREAD_TTL_MILLIS = TimeUnit.MINUTES.toMillis(10);
@@ -50,13 +52,11 @@ public class SysMessageInboxCache {
             invalidateReceiver(receiverType);
             return;
         }
-        runAfterCommit(
-                () ->
-                        receiverValues.forEach(
-                                value ->
-                                        incrementVersion(
-                                                audienceVersionKey(
-                                                        receiverType, receiverScope, value))));
+        var versionKeys =
+                receiverValues.stream()
+                        .map(value -> audienceVersionKey(receiverType, receiverScope, value))
+                        .toList();
+        runAfterCommit(() -> RedisUtil.incrementAndExpire(versionKeys, 1, VERSION_TTL_MILLIS));
     }
 
     private String dataKey(String receiverType, Long userId, List<Long> roleIds, Long deptId) {
@@ -147,7 +147,11 @@ public class SysMessageInboxCache {
                     new TransactionSynchronization() {
                         @Override
                         public void afterCommit() {
-                            task.run();
+                            try {
+                                task.run();
+                            } catch (RuntimeException exception) {
+                                log.error("[消息缓存] 事务提交后更新未读缓存版本失败", exception);
+                            }
                         }
                     });
             return;

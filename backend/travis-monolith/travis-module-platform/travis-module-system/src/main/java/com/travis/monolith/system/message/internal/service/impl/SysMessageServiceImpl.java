@@ -9,14 +9,13 @@ import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
-import com.travis.infrastructure.framework.websocket.core.message.WebSocketMessage;
-import com.travis.infrastructure.framework.websocket.core.message.WebSocketSender;
-import com.travis.infrastructure.framework.websocket.core.sender.WebSocketMessageSender;
+import com.travis.infrastructure.framework.redis.core.annotation.DistributedLockNamespace;
 import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.dept.api.SysDeptApi;
 import com.travis.monolith.system.file.api.SysFileApi;
 import com.travis.monolith.system.message.api.SysMessageReceiverTargetValidator;
+import com.travis.monolith.system.message.api.constant.SysMessageConstraints;
 import com.travis.monolith.system.message.api.constant.SysMessageTemplatePattern;
 import com.travis.monolith.system.message.api.enums.*;
 import com.travis.monolith.system.message.api.request.*;
@@ -26,7 +25,9 @@ import com.travis.monolith.system.message.internal.channel.SysMessageChannelHand
 import com.travis.monolith.system.message.internal.converter.SysMessageConverter;
 import com.travis.monolith.system.message.internal.entity.SysMessage;
 import com.travis.monolith.system.message.internal.mapper.SysMessageMapper;
-import com.travis.monolith.system.message.internal.quartz.SysMessageScheduledPushScheduler;
+import com.travis.monolith.system.message.internal.model.SysMessageAudience;
+import com.travis.monolith.system.message.internal.notification.SysMessageInboxNotifier;
+import com.travis.monolith.system.message.internal.quartz.SysMessageScheduleCoordinator;
 import com.travis.monolith.system.message.internal.service.SysMessageReceiverService;
 import com.travis.monolith.system.message.internal.service.SysMessageService;
 import com.travis.monolith.system.message.internal.service.SysMessageTemplateService;
@@ -34,40 +35,36 @@ import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.api.SysUserApi;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.regex.Matcher;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.util.HtmlUtils;
 import tools.jackson.core.type.TypeReference;
 
 /** 消息推送服务实现。 */
 @Service
-@AllArgsConstructor
-@Slf4j
+@RequiredArgsConstructor
+@DistributedLockNamespace("system-message")
 public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMessage>
         implements SysMessageService {
-    private static final int MAX_TITLE_LENGTH = 255;
-    private static final int MAX_CONTENT_LENGTH = 5000;
-    private static final int MAX_JUMP_URL_LENGTH = 500;
+    private static final String SOURCE_REQUEST_LOCK_KEY_SPEL =
+            "#req.sourceType + ':' + #req.sourceId + ':' + #req.receiverType";
+    private static final String SOURCE_ARGUMENTS_LOCK_KEY_SPEL =
+            "#sourceType + ':' + #sourceId + ':' + #receiverType";
+    private static final long SOURCE_LOCK_WAIT_MILLIS = 10_000;
 
     private final SysMessageReceiverService messageReceiverService;
     private final SysMessageTemplateService messageTemplateService;
     private final SysMessageConverter converter;
-    private final WebSocketMessageSender webSocketMessageSender;
+    private final SysMessageInboxNotifier inboxNotifier;
     private final SysFileApi fileApi;
     private final SysMessageChannelHandlerRegistry channelHandlerRegistry;
-    private final SysMessageScheduledPushScheduler scheduledPushScheduler;
+    private final SysMessageScheduleCoordinator scheduleCoordinator;
     private final SysUserApi sysUserApi;
     private final SysRoleApi sysRoleApi;
     private final SysDeptApi sysDeptApi;
@@ -77,6 +74,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     @Override
     public PageResp<SysMessageResp> page(SysMessagePageReq req) {
         var wrapper = new LambdaQueryWrapperX<SysMessage>();
+        wrapper.select(SysMessage.class, field -> !"content".equals(field.getColumn()));
         wrapper.likeIfPresent(SysMessage::getTitle, req.getTitle())
                 .eqIfPresent(SysMessage::getMessageType, req.getMessageType())
                 .eqIfPresent(SysMessage::getChannel, req.getChannel())
@@ -237,10 +235,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     /** 创建或更新业务来源消息，并按发布时间决定是否立即发布。 */
     @Override
     @Transactional
-    @DistributedLock(
-            namespace = "system-message",
-            key = "#req.sourceType + ':' + #req.sourceId + ':' + #req.receiverType",
-            waitTime = 10_000)
+    @DistributedLock(key = SOURCE_REQUEST_LOCK_KEY_SPEL, waitTime = SOURCE_LOCK_WAIT_MILLIS)
     public void publishSourceMessage(SysSourceMessagePublishReq req) {
         req.setReceiverValues(
                 validateReceiver(
@@ -260,7 +255,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                         req.getSourceType(), req.getSourceId(), req.getReceiverType());
         boolean created = entity == null;
         Integer previousStatus = created ? null : entity.getStatus();
-        Audience previousAudience = created ? null : Audience.from(entity);
+        SysMessageAudience previousAudience = created ? null : SysMessageAudience.from(entity);
         boolean republished = SysMessageStatus.REVOKED.getValue().equals(previousStatus);
         if (created) {
             entity = new SysMessage();
@@ -304,7 +299,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         if (republished) {
             resetReceiverReadStatus(entity.getId());
         }
-        Audience currentAudience = Audience.from(entity);
+        SysMessageAudience currentAudience = SysMessageAudience.from(entity);
         evictUnreadCache(currentAudience);
         if (SysMessageStatus.SENT.getValue().equals(previousStatus)
                 && !currentAudience.equals(previousAudience)) {
@@ -324,10 +319,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     /** 撤回指定业务来源消息。 */
     @Override
     @Transactional
-    @DistributedLock(
-            namespace = "system-message",
-            key = "#sourceType + ':' + #sourceId + ':' + #receiverType",
-            waitTime = 10_000)
+    @DistributedLock(key = SOURCE_ARGUMENTS_LOCK_KEY_SPEL, waitTime = SOURCE_LOCK_WAIT_MILLIS)
     public void revokeSourceMessage(String sourceType, String sourceId, String receiverType) {
         var entity = findSourceMessageForUpdate(sourceType, sourceId, receiverType);
         if (entity == null || SysMessageStatus.REVOKED.getValue().equals(entity.getStatus())) {
@@ -346,10 +338,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     /** 删除指定业务来源消息及其收件状态。 */
     @Override
     @Transactional
-    @DistributedLock(
-            namespace = "system-message",
-            key = "#sourceType + ':' + #sourceId + ':' + #receiverType",
-            waitTime = 10_000)
+    @DistributedLock(key = SOURCE_ARGUMENTS_LOCK_KEY_SPEL, waitTime = SOURCE_LOCK_WAIT_MILLIS)
     public void deleteSourceMessage(String sourceType, String sourceId, String receiverType) {
         var entity = findSourceMessageForUpdate(sourceType, sourceId, receiverType);
         if (entity == null) {
@@ -361,8 +350,8 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         deleteScheduledTriggerAfterCommit(entity.getId());
         if (visible) {
             evictUnreadCache(entity);
+            notifyInboxChanged(SysMessageWebSocketEvent.DELETED, entity);
         }
-        notifyInboxChanged(SysMessageWebSocketEvent.DELETED, entity);
     }
 
     /** 发布指定的到期定时消息。 */
@@ -400,8 +389,8 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         deleteScheduledTriggerAfterCommit(id);
         if (visible) {
             evictUnreadCache(entity);
+            notifyInboxChanged(SysMessageWebSocketEvent.DELETED, entity);
         }
-        notifyInboxChanged(SysMessageWebSocketEvent.DELETED, entity);
     }
 
     /** 原子占用待发送消息后执行通道发送，避免手动任务与 Quartz 并发重复推送。 */
@@ -439,110 +428,42 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
 
     /** 使消息当前接收范围关联的未读数缓存失效。 */
     private void evictUnreadCache(SysMessage message) {
-        evictUnreadCache(Audience.from(message));
+        evictUnreadCache(SysMessageAudience.from(message));
     }
 
     /** 使接收范围快照关联的未读数缓存失效。 */
-    private void evictUnreadCache(Audience audience) {
+    private void evictUnreadCache(SysMessageAudience audience) {
         messageReceiverService.evictUnreadCache(
                 audience.receiverType(), audience.receiverScope(), audience.receiverValues());
     }
 
     /** 事务提交后根据消息当前状态创建、重排或删除一次性任务。 */
     private void syncScheduledTriggerAfterCommit(SysMessage message) {
-        Long messageId = message.getId();
-        LocalDateTime publishTime = message.getPublishTime();
-        boolean scheduled =
-                SysMessageStatus.PENDING.getValue().equals(message.getStatus())
-                        && SysMessagePushType.SCHEDULED.getValue().equals(message.getPushType())
-                        && publishTime != null;
-        runAfterCommit(
-                messageId,
-                scheduled
-                        ? () -> scheduledPushScheduler.schedule(messageId, publishTime)
-                        : () -> scheduledPushScheduler.delete(messageId));
+        syncScheduledTriggerAfterCommit(message.getId());
     }
 
     /** 事务提交后删除指定消息的一次性任务。 */
     private void deleteScheduledTriggerAfterCommit(Long messageId) {
-        runAfterCommit(messageId, () -> scheduledPushScheduler.delete(messageId));
+        syncScheduledTriggerAfterCommit(messageId);
     }
 
-    /** 在事务确认提交后同步 Quartz，失败时保留业务数据供下次启动对账。 */
-    private void runAfterCommit(Long messageId, Runnable action) {
-        Runnable guardedAction =
-                () -> {
-                    try {
-                        action.run();
-                    } catch (Exception exception) {
-                        log.error("[消息调度] 同步一次性任务失败，messageId={}", messageId, exception);
-                    }
-                };
-        if (TransactionSynchronizationManager.isSynchronizationActive()) {
-            TransactionSynchronizationManager.registerSynchronization(
-                    new TransactionSynchronization() {
-                        @Override
-                        public void afterCompletion(int status) {
-                            if (status == TransactionSynchronization.STATUS_COMMITTED) {
-                                guardedAction.run();
-                            }
-                        }
-                    });
-        } else {
-            guardedAction.run();
-        }
+    /** 事务提交后按消息最新数据库状态同步一次性任务。 */
+    private void syncScheduledTriggerAfterCommit(Long messageId) {
+        scheduleCoordinator.syncAfterCommit(messageId);
     }
 
     /** 按消息当前及补充接收范围通知收件箱变化。 */
     private void notifyInboxChanged(
-            SysMessageWebSocketEvent event, SysMessage message, Audience... additionalAudiences) {
-        if (!isInboxVisible(message)) {
-            return;
-        }
-        var audiences = new LinkedHashSet<Audience>();
-        audiences.add(Audience.from(message));
-        Arrays.stream(additionalAudiences).filter(Objects::nonNull).forEach(audiences::add);
-        notifyInboxChanged(event, message.getId(), audiences.toArray(Audience[]::new));
+            SysMessageWebSocketEvent event,
+            SysMessage message,
+            SysMessageAudience... additionalAudiences) {
+        inboxNotifier.notify(event, message, additionalAudiences);
     }
 
-    /** 在事务确认提交后，按接收端命名空间发送收件箱变化通知。 */
+    /** 按指定接收范围通知收件箱变化。 */
     private void notifyInboxChanged(
-            SysMessageWebSocketEvent event, Long messageId, Audience... audiences) {
-        var validAudiences = Arrays.stream(audiences).filter(Objects::nonNull).toList();
-        if (validAudiences.isEmpty()) {
-            return;
-        }
-        Runnable sender = () -> sendInboxChanged(event, messageId, validAudiences);
-        if (TransactionSynchronizationManager.isSynchronizationActive()) {
-            TransactionSynchronizationManager.registerSynchronization(
-                    new TransactionSynchronization() {
-                        @Override
-                        public void afterCompletion(int status) {
-                            if (status == TransactionSynchronization.STATUS_COMMITTED) {
-                                sender.run();
-                            }
-                        }
-                    });
-        } else {
-            sender.run();
-        }
-    }
-
-    /** 按接收端命名空间广播收件箱变化，由 HTTP 收件箱接口执行最终权限过滤。 */
-    private void sendInboxChanged(
-            SysMessageWebSocketEvent event, Long messageId, List<Audience> audiences) {
-        audiences.stream()
-                .map(Audience::receiverType)
-                .distinct()
-                .forEach(
-                        receiverType ->
-                                webSocketMessageSender.sendToNamespace(
-                                        receiverType,
-                                        WebSocketMessage.toNamespace(
-                                                WebSocketSender.SYSTEM,
-                                                receiverType,
-                                                event,
-                                                Map.of("messageId", messageId))));
+            SysMessageWebSocketEvent event, Long messageId, SysMessageAudience... audiences) {
+        inboxNotifier.notify(event, messageId, audiences);
     }
 
     /** 查询并锁定指定消息，不存在时抛出业务异常。 */
@@ -595,7 +516,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         if (receiverValues == null || receiverValues.isEmpty()) {
             throw new BizException(CommonErrorCode.BAD_REQUEST);
         }
-        if (receiverValues.size() > 1000) {
+        if (receiverValues.size() > SysMessageConstraints.RECEIVER_VALUES_MAX_SIZE) {
             throw new BizException(CommonErrorCode.VALIDATE_FAILED, "接收对象ID不合法或数量超过1000个");
         }
         var normalized = receiverValues.stream().distinct().toList();
@@ -674,17 +595,14 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
     }
 
-    /** 判断消息是否应出现在站内收件箱。 */
-    private boolean isInboxVisible(SysMessage message) {
-        return SysMessageChannel.IN_APP.getValue().equals(message.getChannel());
-    }
-
     /** 使用模板参数渲染消息标题、内容及跳转地址。 */
     private void renderTemplate(SysMessage message) {
         if (!SysMessageChannel.supportsJumpUrl(message.getChannel())) {
             message.setJumpUrl(null);
         }
         if (message.getTemplateId() == null) {
+            validateRenderedFields(message);
+            validateRenderedJumpUrl(message.getJumpUrl());
             return;
         }
         var template = messageTemplateService.get(message.getTemplateId());
@@ -714,9 +632,11 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
 
     /** 校验模板渲染后的字段长度，避免数据库截断或外部通道收到超限内容。 */
     static void validateRenderedFields(SysMessage message) {
-        validateRenderedLength(message.getTitle(), MAX_TITLE_LENGTH, "消息标题");
-        validateRenderedLength(message.getContent(), MAX_CONTENT_LENGTH, "消息内容");
-        validateRenderedLength(message.getJumpUrl(), MAX_JUMP_URL_LENGTH, "跳转地址");
+        validateRenderedLength(message.getTitle(), SysMessageConstraints.TITLE_MAX_LENGTH, "消息标题");
+        validateRenderedLength(
+                message.getContent(), SysMessageConstraints.CONTENT_MAX_LENGTH, "消息内容");
+        validateRenderedLength(
+                message.getJumpUrl(), SysMessageConstraints.JUMP_URL_MAX_LENGTH, "跳转地址");
     }
 
     private static void validateRenderedLength(String value, int maxLength, String fieldName) {
@@ -827,19 +747,6 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                         && jumpUrl.chars().noneMatch(Character::isWhitespace);
         if (!internal && !external) {
             throw new BizException(CommonErrorCode.VALIDATE_FAILED, "模板跳转地址格式不正确");
-        }
-    }
-
-    /** WebSocket 通知所需的接收端命名空间快照。 */
-    private record Audience(String receiverType, Integer receiverScope, List<Long> receiverValues) {
-
-        private static Audience from(SysMessage message) {
-            List<Long> receiverValues =
-                    message.getReceiverValues() == null || message.getReceiverValues().isBlank()
-                            ? List.of()
-                            : JsonUtil.parseArray(message.getReceiverValues(), Long.class);
-            return new Audience(
-                    message.getReceiverType(), message.getReceiverScope(), receiverValues);
         }
     }
 }

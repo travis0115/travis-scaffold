@@ -14,7 +14,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 @Slf4j
 public class SysMessageScheduledPushReconcileTask {
-    private static final String SLOT_KEY_PREFIX = "system:message:scheduled-push:reconcile:";
     private static final long RECONCILE_INTERVAL_MILLIS = 300_000;
     private static final long SLOT_TTL_MILLIS = 600_000;
 
@@ -24,7 +23,10 @@ public class SysMessageScheduledPushReconcileTask {
     @Scheduled(initialDelay = RECONCILE_INTERVAL_MILLIS, fixedDelay = RECONCILE_INTERVAL_MILLIS)
     public void run() {
         long timeSlot = Instant.now().toEpochMilli() / RECONCILE_INTERVAL_MILLIS;
-        if (!RedisUtil.setIfAbsent(SLOT_KEY_PREFIX + timeSlot, Boolean.TRUE, SLOT_TTL_MILLIS)) {
+        if (!RedisUtil.setIfAbsent(
+                SysMessageScheduledPushNames.RECONCILE_SLOT_KEY_PREFIX + timeSlot,
+                Boolean.TRUE,
+                SLOT_TTL_MILLIS)) {
             return;
         }
         try {

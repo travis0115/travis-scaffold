@@ -26,8 +26,9 @@ public class RedisUtil {
 
     private static final DefaultRedisScript<Long> INCREMENT_AND_EXPIRE_SCRIPT =
             new DefaultRedisScript<>(
-                    "local value = redis.call('INCRBY', KEYS[1], ARGV[1]); "
-                            + "redis.call('PEXPIRE', KEYS[1], ARGV[2]); return value",
+                    "local value = 0; for i = 1, #KEYS do "
+                            + "value = redis.call('INCRBY', KEYS[i], ARGV[1]); "
+                            + "redis.call('PEXPIRE', KEYS[i], ARGV[2]); end; return value",
                     Long.class);
 
     private static RedisTemplate<String, Object> redisTemplate;
@@ -409,15 +410,30 @@ public class RedisUtil {
      * @return 递增后的值
      */
     public static Long incrementAndExpire(String key, long delta, long time) {
+        return incrementAndExpire(List.of(key), delta, time);
+    }
+
+    /**
+     * 原子递增多个 value 并刷新过期时间。
+     *
+     * @param keys 键集合
+     * @param delta 递增值（可为负）
+     * @param time 过期时间（毫秒），必须大于 0
+     * @return 最后一个键递增后的值；键集合为空时返回 0
+     */
+    public static Long incrementAndExpire(Collection<String> keys, long delta, long time) {
+        if (CollectionUtils.isEmpty(keys)) {
+            return 0L;
+        }
         if (time <= 0) {
             throw new IllegalArgumentException("redis expiration must be greater than 0");
         }
         try {
-            return redisTemplate.execute(
-                    INCREMENT_AND_EXPIRE_SCRIPT, List.of(resolveKey(key)), delta, time);
+            var resolvedKeys = keys.stream().map(RedisUtil::resolveKey).toList();
+            return redisTemplate.execute(INCREMENT_AND_EXPIRE_SCRIPT, resolvedKeys, delta, time);
         } catch (Exception e) {
-            log.warn("redis incrementAndExpire failed, key={}", key, e);
-            throw new IllegalStateException("redis incrementAndExpire failed: " + key, e);
+            log.warn("redis incrementAndExpire failed, keys={}", keys, e);
+            throw new IllegalStateException("redis incrementAndExpire failed", e);
         }
     }
 
