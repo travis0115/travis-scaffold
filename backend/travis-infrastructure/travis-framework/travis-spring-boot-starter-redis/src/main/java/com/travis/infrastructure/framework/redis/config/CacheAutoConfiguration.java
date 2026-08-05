@@ -11,9 +11,11 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
+import org.springframework.data.redis.cache.BatchStrategies;
 import org.springframework.data.redis.cache.CacheKeyPrefix;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
+import org.springframework.data.redis.cache.RedisCacheWriter;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 
@@ -86,9 +88,11 @@ public class CacheAutoConfiguration {
                         (cacheName, ttl) ->
                                 initialConfigurations.put(
                                         cacheName, redisCacheConfiguration.entryTtl(ttl)));
-        return RedisCacheManager.RedisCacheManagerBuilder
-                // Redis 连接工厂
-                .fromConnectionFactory(Objects.requireNonNull(redisTemplate.getConnectionFactory()))
+        var connectionFactory = Objects.requireNonNull(redisTemplate.getConnectionFactory());
+        var cacheWriter =
+                RedisCacheWriter.nonLockingRedisCacheWriter(
+                        connectionFactory, BatchStrategies.scan(1000));
+        return RedisCacheManager.RedisCacheManagerBuilder.fromCacheWriter(cacheWriter)
                 // 缓存配置
                 .cacheDefaults(redisCacheConfiguration)
                 .withInitialCacheConfigurations(initialConfigurations)

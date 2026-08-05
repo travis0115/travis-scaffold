@@ -16,6 +16,7 @@ spring:
     type: redis
     redis:
       key-prefix: ${travis.redis.key-prefix}
+      time-to-live: 1d # 默认缓存时间
 
   data:
     redis:
@@ -173,9 +174,6 @@ travis:
     base-package: com.travis.monolith
   redis:
     key-prefix: ${spring.application.name}
-    cache-ttl:
-      "[system:message:inbox]": 10m
-      "[system:message:template]": 30m
   web:
     # Web路径前缀配置
     apis:

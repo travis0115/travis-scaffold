@@ -13,6 +13,7 @@ import java.util.Collection;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 /** 消息推送对外 API 默认实现。 */
 @Component
@@ -22,6 +23,7 @@ public class SysMessageApiImpl implements SysMessageApi {
     private final SysMessageService messageService;
 
     @Override
+    @Transactional
     public void publishToUsers(String title, String content, Collection<Long> userIds) {
         if (userIds == null || userIds.isEmpty()) {
             return;

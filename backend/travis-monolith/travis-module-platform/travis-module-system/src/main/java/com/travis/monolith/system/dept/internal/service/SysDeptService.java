@@ -7,6 +7,7 @@ import com.travis.monolith.system.dept.api.response.SysDeptResp;
 import com.travis.monolith.system.dept.internal.entity.SysDept;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 部门管理服务接口，提供部门树查询、增删改查
@@ -68,6 +69,9 @@ public interface SysDeptService extends IService<SysDept> {
      * @return 部门名称，不存在返回 null
      */
     String getDeptNameByIdOrThrow(Long deptId);
+
+    /** 批量查询部门 ID 与部门名称。 */
+    Map<Long, String> getDeptNameMapByIds(Collection<Long> deptIds);
 
     /**
      * 判断指定部门中是否仍有任意一个存在

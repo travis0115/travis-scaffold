@@ -22,14 +22,13 @@ import com.travis.monolith.system.dept.api.SysDeptApi;
 import com.travis.monolith.system.file.api.SysFileApi;
 import com.travis.monolith.system.file.api.event.UploaderNameChangedEvent;
 import com.travis.monolith.system.role.api.SysRoleApi;
+import com.travis.monolith.system.user.api.event.UserMessageAudienceChangedEvent;
 import com.travis.monolith.system.user.api.request.*;
 import com.travis.monolith.system.user.api.response.SysUserResp;
 import com.travis.monolith.system.user.internal.converter.SysUserConverter;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.mapper.SysUserMapper;
 import com.travis.monolith.system.user.internal.service.SysUserService;
-import java.time.LocalDateTime;
-import java.util.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.cache.annotation.CacheConfig;
@@ -39,6 +38,10 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 用户管理服务实现，包含密码加密（BCrypt）、角色分配及部门名称关联查询
@@ -158,17 +161,11 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     /** 更新用户信息，密码为空时保持原密码不变 */
     @Override
     @Transactional
-    @Caching(
-            evict = {
-                @CacheEvict(key = "'detail:'+#id"),
-                @CacheEvict(
-                        value = "system:message:inbox",
-                        key =
-                                "'unread:' + T(com.travis.infrastructure.common.web.constant.LoginType).ADMIN + ':' + #id")
-            })
+    @Caching(evict = {@CacheEvict(key = "'detail:'+#id")})
     public void update(Long id, SysUserUpdateReq req) {
         var user = getByIdOrThrow(id);
         var oldUsername = user.getUsername();
+        var oldDeptId = user.getDeptId();
         // 检查用户名唯一性（排除自身）
         var count =
                 count(
@@ -185,6 +182,9 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         }
         converter.update(req, user);
         updateById(user);
+        if (!Objects.equals(oldDeptId, user.getDeptId())) {
+            eventPublisher.publishEvent(new UserMessageAudienceChangedEvent(id));
+        }
         if (!user.getUsername().equals(oldUsername)) {
             RedisUtil.deleteCacheKey("system:user:username", String.valueOf(user.getId()));
             syncCurrentSessionUsername(id, user.getUsername());
@@ -228,7 +228,6 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     /** 批量重置指定部门下的用户部门归属 */
     @Override
     @Transactional
-    @CacheEvict(value = "system:message:inbox", allEntries = true)
     public void resetDeptByDeptIds(Collection<Long> deptIds) {
         if (deptIds == null || deptIds.isEmpty()) {
             return;
@@ -241,6 +240,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         }
         cacheKeys.add("list:id:dept:" + 0L);
         RedisUtil.deleteCacheKey("system:user", cacheKeys);
+        eventPublisher.publishEvent(new UserMessageAudienceChangedEvent(null));
     }
 
     /** 标记用户上线 */
@@ -299,6 +299,40 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
                                 .select(SysUser::getId, SysUser::getUsername)
                                 .eq(SysUser::getId, userId));
         return user == null ? null : user.getUsername();
+    }
+
+    /** 批量查询用户 ID 与用户名。 */
+    @Override
+    public Map<Long, String> getUsernameMapByIds(Collection<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Map.of();
+        }
+        return list(
+                        new LambdaQueryWrapperX<SysUser>()
+                                .select(SysUser::getId, SysUser::getUsername)
+                                .in(SysUser::getId, userIds))
+                .stream()
+                .collect(
+                        Collectors.toMap(
+                                SysUser::getId,
+                                SysUser::getUsername,
+                                (left, right) -> left,
+                                LinkedHashMap::new));
+    }
+
+    /** 查询属于指定部门的用户 ID。 */
+    @Override
+    public Set<Long> getUserIdsByDeptIds(Collection<Long> deptIds) {
+        if (deptIds == null || deptIds.isEmpty()) {
+            return Set.of();
+        }
+        return list(
+                        new LambdaQueryWrapperX<SysUser>()
+                                .select(SysUser::getId)
+                                .in(SysUser::getDeptId, deptIds))
+                .stream()
+                .map(SysUser::getId)
+                .collect(Collectors.toSet());
     }
 
     /** 当前登录用户修改个人资料 */

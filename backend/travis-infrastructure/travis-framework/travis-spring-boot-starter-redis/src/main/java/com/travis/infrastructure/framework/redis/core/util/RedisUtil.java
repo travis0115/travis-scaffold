@@ -3,6 +3,7 @@ package com.travis.infrastructure.framework.redis.core.util;
 import com.travis.infrastructure.framework.redis.core.key.RedisKeyPrefixResolver;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -279,6 +280,26 @@ public class RedisUtil {
         } catch (Exception e) {
             log.warn("redis get failed, key={}", key, e);
             throw new IllegalStateException("redis get failed: " + key, e);
+        }
+    }
+
+    /**
+     * 批量获取 value，返回结果顺序与 key 顺序一致。
+     *
+     * @param keys 键集合
+     * @return value 列表，不存在的键对应 null
+     */
+    public static List<Object> multiGet(Collection<String> keys) {
+        if (CollectionUtils.isEmpty(keys)) {
+            return List.of();
+        }
+        try {
+            var resolvedKeys = keys.stream().map(RedisUtil::resolveKey).toList();
+            var values = redisTemplate.opsForValue().multiGet(resolvedKeys);
+            return values == null ? java.util.Collections.nCopies(keys.size(), null) : values;
+        } catch (Exception e) {
+            log.warn("redis multiGet failed, keys={}", keys, e);
+            throw new IllegalStateException("redis multiGet failed", e);
         }
     }
 

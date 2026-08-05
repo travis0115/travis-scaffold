@@ -1,7 +1,9 @@
 package com.travis.monolith.system.role.api;
 
 import jakarta.validation.constraints.NotNull;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import org.springframework.validation.annotation.Validated;
 
 /**
@@ -51,6 +53,9 @@ public interface SysRoleApi {
      * @return 角色名称列表
      */
     List<String> getRoleNamesByRoleIds(List<Long> roleIds);
+
+    /** 查询拥有指定角色的用户 ID。 */
+    Set<Long> getUserIdsByRoleIds(Collection<Long> roleIds);
 
     /**
      * 根据角色ID列表获取关联的菜单ID列表

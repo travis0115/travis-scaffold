@@ -15,15 +15,16 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class SysMessageScheduledPushReconcileTask {
     private static final String SLOT_KEY_PREFIX = "system:message:scheduled-push:reconcile:";
-    private static final long SLOT_TTL_MILLIS = 120_000;
+    private static final long RECONCILE_INTERVAL_MILLIS = 300_000;
+    private static final long SLOT_TTL_MILLIS = 600_000;
 
     private final SysMessageScheduledPushScheduler scheduler;
 
     /** 使用分钟时间槽去重后执行全局加锁对账。 */
-    @Scheduled(initialDelay = 60_000, fixedDelay = 60_000)
+    @Scheduled(initialDelay = RECONCILE_INTERVAL_MILLIS, fixedDelay = RECONCILE_INTERVAL_MILLIS)
     public void run() {
-        long minuteSlot = Instant.now().getEpochSecond() / 60;
-        if (!RedisUtil.setIfAbsent(SLOT_KEY_PREFIX + minuteSlot, Boolean.TRUE, SLOT_TTL_MILLIS)) {
+        long timeSlot = Instant.now().toEpochMilli() / RECONCILE_INTERVAL_MILLIS;
+        if (!RedisUtil.setIfAbsent(SLOT_KEY_PREFIX + timeSlot, Boolean.TRUE, SLOT_TTL_MILLIS)) {
             return;
         }
         try {

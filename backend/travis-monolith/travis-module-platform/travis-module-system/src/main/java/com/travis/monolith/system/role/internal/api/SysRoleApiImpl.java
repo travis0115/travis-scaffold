@@ -2,8 +2,10 @@ package com.travis.monolith.system.role.internal.api;
 
 import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.role.internal.service.SysRoleService;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -49,10 +51,12 @@ public class SysRoleApiImpl implements SysRoleApi {
         if (roleIds == null || roleIds.isEmpty()) {
             return List.of();
         }
-        return roleIds.stream()
-                .map(roleService::getRoleNameByRoleId)
-                .filter(Objects::nonNull)
-                .toList();
+        return roleService.getRoleNamesByRoleIds(roleIds);
+    }
+
+    @Override
+    public Set<Long> getUserIdsByRoleIds(Collection<Long> roleIds) {
+        return roleService.getUserIdsByRoleIds(roleIds);
     }
 
     @Override

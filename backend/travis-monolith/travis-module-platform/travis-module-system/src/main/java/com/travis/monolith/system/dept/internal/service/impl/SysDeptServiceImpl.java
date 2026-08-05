@@ -81,6 +81,25 @@ public class SysDeptServiceImpl extends ServiceImplX<SysDeptMapper, SysDept>
         return dept.getDeptName();
     }
 
+    /** 批量查询部门 ID 与部门名称。 */
+    @Override
+    public Map<Long, String> getDeptNameMapByIds(Collection<Long> deptIds) {
+        if (deptIds == null || deptIds.isEmpty()) {
+            return Map.of();
+        }
+        return list(
+                        new LambdaQueryWrapperX<SysDept>()
+                                .select(SysDept::getId, SysDept::getDeptName)
+                                .in(SysDept::getId, deptIds))
+                .stream()
+                .collect(
+                        Collectors.toMap(
+                                SysDept::getId,
+                                SysDept::getDeptName,
+                                (left, right) -> left,
+                                LinkedHashMap::new));
+    }
+
     /** 判断指定 ID 集合中是否存在部门。 */
     @Override
     public boolean existsAnyByIds(Collection<Long> deptIds) {

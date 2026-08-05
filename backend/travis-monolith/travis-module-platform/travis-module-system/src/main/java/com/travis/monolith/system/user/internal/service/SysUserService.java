@@ -7,6 +7,8 @@ import com.travis.monolith.system.user.api.response.SysUserResp;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * 用户管理服务接口，提供管理员的分页查询、增删改查及角色分配
@@ -103,6 +105,12 @@ public interface SysUserService extends IService<SysUser> {
      * @return 用户名，不存在返回 null
      */
     String getUsernameById(Long userId);
+
+    /** 批量查询用户 ID 与用户名。 */
+    Map<Long, String> getUsernameMapByIds(Collection<Long> userIds);
+
+    /** 查询属于指定部门的用户 ID。 */
+    Set<Long> getUserIdsByDeptIds(Collection<Long> deptIds);
 
     /**
      * 当前登录用户修改个人资料

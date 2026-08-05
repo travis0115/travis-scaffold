@@ -51,14 +51,12 @@ public class SysUserApiImpl implements SysUserApi {
         if (userIds == null || userIds.isEmpty()) {
             return Map.of();
         }
-        Map<Long, String> result = new LinkedHashMap<>();
-        for (Long userId : userIds) {
-            var username = userService.getUsernameById(userId);
-            if (username != null) {
-                result.put(userId, username);
-            }
-        }
-        return result;
+        return userService.getUsernameMapByIds(userIds);
+    }
+
+    @Override
+    public Set<Long> getUserIdsByDeptIds(Collection<Long> deptIds) {
+        return userService.getUserIdsByDeptIds(deptIds);
     }
 
     @Override

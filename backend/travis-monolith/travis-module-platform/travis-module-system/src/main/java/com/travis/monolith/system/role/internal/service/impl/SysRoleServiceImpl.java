@@ -10,6 +10,7 @@ import com.travis.monolith.system.common.api.enums.IsBuiltin;
 import com.travis.monolith.system.common.api.enums.Modifiable;
 import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
+import com.travis.monolith.system.role.api.event.RoleMessageAudienceChangedEvent;
 import com.travis.monolith.system.role.api.request.SysRoleCreateReq;
 import com.travis.monolith.system.role.api.request.SysRoleMenuReq;
 import com.travis.monolith.system.role.api.request.SysRolePageReq;
@@ -24,13 +25,17 @@ import com.travis.monolith.system.role.internal.mapper.SysRoleMapper;
 import com.travis.monolith.system.role.internal.mapper.SysRoleMenuMapper;
 import com.travis.monolith.system.role.internal.mapper.SysUserRoleMapper;
 import com.travis.monolith.system.role.internal.service.SysRoleService;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,6 +60,8 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
     private final SysRoleConverter converter;
 
     private final BuiltinResourceGuard builtinResourceGuard;
+
+    private final ApplicationEventPublisher eventPublisher;
 
     /** 分页查询角色列表，支持按角色名称、编码、状态筛选 */
     @Override
@@ -163,8 +170,7 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
                 @CacheEvict(value = "system:user-role", allEntries = true),
                 @CacheEvict(value = "system:role-menu", key = "'menu-ids:'+#id"),
                 @CacheEvict(value = "system:menu:tree:vben", allEntries = true),
-                @CacheEvict(value = "system:user:detail", allEntries = true),
-                @CacheEvict(value = "system:message:inbox", allEntries = true)
+                @CacheEvict(value = "system:user:detail", allEntries = true)
             })
     public void deleteById(Long id) {
         var role = getByIdOrThrow(id);
@@ -176,6 +182,7 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
         // 删除用户-角色关联
         userRoleMapper.delete(
                 new LambdaQueryWrapperX<SysUserRole>().eq(SysUserRole::getRoleId, id));
+        eventPublisher.publishEvent(new RoleMessageAudienceChangedEvent(null));
     }
 
     /** 分配角色菜单：先删除原有关联，再批量插入新关联，清除菜单缓存 */
@@ -228,6 +235,42 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
         }
         var role = super.getById(roleId);
         return role == null ? null : role.getRoleName();
+    }
+
+    /** 批量查询角色名称，返回顺序与存在的输入角色 ID 一致。 */
+    @Override
+    public List<String> getRoleNamesByRoleIds(List<Long> roleIds) {
+        if (roleIds == null || roleIds.isEmpty()) {
+            return List.of();
+        }
+        Map<Long, String> names =
+                list(
+                                new LambdaQueryWrapperX<SysRole>()
+                                        .select(SysRole::getId, SysRole::getRoleName)
+                                        .in(SysRole::getId, roleIds))
+                        .stream()
+                        .collect(
+                                Collectors.toMap(
+                                        SysRole::getId,
+                                        SysRole::getRoleName,
+                                        (left, right) -> left));
+        return roleIds.stream().map(names::get).filter(java.util.Objects::nonNull).toList();
+    }
+
+    /** 查询拥有指定角色的用户 ID。 */
+    @Override
+    public Set<Long> getUserIdsByRoleIds(Collection<Long> roleIds) {
+        if (roleIds == null || roleIds.isEmpty()) {
+            return Set.of();
+        }
+        return userRoleMapper
+                .selectList(
+                        new LambdaQueryWrapperX<SysUserRole>()
+                                .select(SysUserRole::getUserId)
+                                .in(SysUserRole::getRoleId, roleIds))
+                .stream()
+                .map(SysUserRole::getUserId)
+                .collect(Collectors.toSet());
     }
 
     /** 根据角色ID查询关联的菜单ID列表 */
@@ -321,15 +364,12 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
             evict = {
                 @CacheEvict(value = "system:user-role", allEntries = true),
                 @CacheEvict(value = "system:menu:tree:vben", key = "#userId"),
-                @CacheEvict(value = "system:user", key = "'detail:'+#userId"),
-                @CacheEvict(
-                        value = "system:message:inbox",
-                        key =
-                                "'unread:' + T(com.travis.infrastructure.common.web.constant.LoginType).ADMIN + ':' + #userId")
+                @CacheEvict(value = "system:user", key = "'detail:'+#userId")
             })
     public void deleteUserRolesByUserId(Long userId) {
         userRoleMapper.delete(
                 new LambdaQueryWrapperX<SysUserRole>().eq(SysUserRole::getUserId, userId));
+        eventPublisher.publishEvent(new RoleMessageAudienceChangedEvent(userId));
     }
 
     /** 为指定用户分配角色 */
@@ -339,11 +379,7 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
             evict = {
                 @CacheEvict(value = "system:user-role", allEntries = true),
                 @CacheEvict(value = "system:menu:tree:vben", key = "#userId"),
-                @CacheEvict(value = "system:user", key = "'detail:'+#userId"),
-                @CacheEvict(
-                        value = "system:message:inbox",
-                        key =
-                                "'unread:' + T(com.travis.infrastructure.common.web.constant.LoginType).ADMIN + ':' + #userId")
+                @CacheEvict(value = "system:user", key = "'detail:'+#userId")
             })
     public void assignUserRoles(Long userId, List<Long> roleIds) {
         userRoleMapper.delete(
@@ -361,6 +397,7 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
                             .toList();
             list.forEach(userRoleMapper::insert);
         }
+        eventPublisher.publishEvent(new RoleMessageAudienceChangedEvent(userId));
     }
 
     /** 校验角色是否允许修改。 */

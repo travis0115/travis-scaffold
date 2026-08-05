@@ -1,5 +1,6 @@
 package com.travis.monolith.system.message.internal.quartz;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
@@ -12,7 +13,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
@@ -26,6 +26,7 @@ import org.springframework.stereotype.Component;
 public class SysMessageScheduledPushScheduler {
     private static final String GROUP = "system-message";
     private static final JobKey LEGACY_JOB_KEY = JobKey.jobKey("scheduled-message-push", GROUP);
+    private static final int RECONCILE_BATCH_SIZE = 500;
 
     private final Scheduler scheduler;
     private final SysMessageMapper messageMapper;
@@ -53,15 +54,29 @@ public class SysMessageScheduledPushScheduler {
             JobKey jobKey = jobKey(messageId);
             Trigger trigger = buildTrigger(messageId, publishTime);
             if (scheduler.checkExists(jobKey)) {
-                if (scheduler.rescheduleJob(triggerKey(messageId), trigger) == null) {
+                var triggers = scheduler.getTriggersOfJob(jobKey);
+                if (triggers.stream()
+                        .anyMatch(existing -> existing.getKey().equals(trigger.getKey()))) {
+                    triggers.stream()
+                            .filter(existing -> !existing.getKey().equals(trigger.getKey()))
+                            .map(Trigger::getKey)
+                            .forEach(this::unscheduleQuietly);
+                    return;
+                }
+                if (triggers.isEmpty()) {
+                    scheduler.scheduleJob(trigger);
+                    return;
+                }
+                if (scheduler.rescheduleJob(triggers.getFirst().getKey(), trigger) == null) {
                     scheduler.scheduleJob(trigger);
                 }
+                triggers.stream().skip(1).map(Trigger::getKey).forEach(this::unscheduleQuietly);
                 return;
             }
             try {
                 scheduler.scheduleJob(buildJobDetail(messageId), trigger);
             } catch (ObjectAlreadyExistsException ignored) {
-                scheduler.rescheduleJob(triggerKey(messageId), trigger);
+                schedule(messageId, publishTime);
             }
         } catch (Exception exception) {
             throw schedulerError(exception);
@@ -79,27 +94,55 @@ public class SysMessageScheduledPushScheduler {
 
     private void reconcileMissingTriggers() {
         try {
-            var messages =
-                    messageMapper.selectList(
-                            new LambdaQueryWrapperX<SysMessage>()
-                                    .eq(SysMessage::getStatus, SysMessageStatus.PENDING.getValue())
-                                    .eq(
-                                            SysMessage::getPushType,
-                                            SysMessagePushType.SCHEDULED.getValue())
-                                    .isNotNull(SysMessage::getPublishTime));
-            Set<JobKey> expectedJobKeys =
-                    messages.stream()
-                            .map(message -> jobKey(message.getId()))
-                            .collect(Collectors.toSet());
-            for (SysMessage message : messages) {
-                Trigger trigger = scheduler.getTrigger(triggerKey(message.getId()));
-                Date expectedFireTime = toDate(message.getPublishTime());
-                if (trigger == null
-                        || trigger.getNextFireTime() == null
-                        || trigger.getNextFireTime().toInstant().getEpochSecond()
-                                != expectedFireTime.toInstant().getEpochSecond()) {
-                    schedule(message.getId(), message.getPublishTime());
+            Set<JobKey> expectedJobKeys = new java.util.HashSet<>();
+            Set<TriggerKey> expectedTriggerKeys = new java.util.HashSet<>();
+            Set<TriggerKey> existingTriggerKeys =
+                    java.util.Optional.ofNullable(
+                                    scheduler.getTriggerKeys(
+                                            GroupMatcher.triggerGroupEquals(GROUP)))
+                            .orElseGet(Set::of);
+            long pageNumber = 1;
+            while (true) {
+                var page =
+                        messageMapper.selectPage(
+                                new Page<SysMessage>(pageNumber, RECONCILE_BATCH_SIZE, false),
+                                new LambdaQueryWrapperX<SysMessage>()
+                                        .eq(
+                                                SysMessage::getStatus,
+                                                SysMessageStatus.PENDING.getValue())
+                                        .eq(
+                                                SysMessage::getPushType,
+                                                SysMessagePushType.SCHEDULED.getValue())
+                                        .isNotNull(SysMessage::getPublishTime)
+                                        .orderByAsc(SysMessage::getId));
+                for (SysMessage message : page.getRecords()) {
+                    JobKey expectedJobKey = jobKey(message.getId());
+                    TriggerKey expectedTriggerKey =
+                            triggerKey(message.getId(), message.getPublishTime());
+                    expectedJobKeys.add(expectedJobKey);
+                    expectedTriggerKeys.add(expectedTriggerKey);
+                    if (!existingTriggerKeys.contains(expectedTriggerKey)) {
+                        schedule(message.getId(), message.getPublishTime());
+                        continue;
+                    }
+                    Trigger existingTrigger = scheduler.getTrigger(expectedTriggerKey);
+                    Date expectedFireTime = toDate(message.getPublishTime());
+                    if (existingTrigger == null
+                            || existingTrigger.getNextFireTime() == null
+                            || existingTrigger.getNextFireTime().getTime()
+                                    != expectedFireTime.getTime()) {
+                        if (scheduler.rescheduleJob(
+                                        expectedTriggerKey,
+                                        buildTrigger(message.getId(), message.getPublishTime()))
+                                == null) {
+                            schedule(message.getId(), message.getPublishTime());
+                        }
+                    }
                 }
+                if (page.getRecords().size() < RECONCILE_BATCH_SIZE) {
+                    break;
+                }
+                pageNumber++;
             }
             var existingJobKeys = scheduler.getJobKeys(GroupMatcher.jobGroupEquals(GROUP));
             if (existingJobKeys != null) {
@@ -108,6 +151,13 @@ public class SysMessageScheduledPushScheduler {
                         scheduler.deleteJob(existingJobKey);
                     }
                 }
+            }
+            if (existingTriggerKeys != null) {
+                existingTriggerKeys.stream()
+                        .filter(
+                                existingTriggerKey ->
+                                        !expectedTriggerKeys.contains(existingTriggerKey))
+                        .forEach(this::unscheduleQuietly);
             }
         } catch (BizException exception) {
             throw exception;
@@ -126,7 +176,7 @@ public class SysMessageScheduledPushScheduler {
 
     private Trigger buildTrigger(Long messageId, LocalDateTime publishTime) {
         return TriggerBuilder.newTrigger()
-                .withIdentity(triggerKey(messageId))
+                .withIdentity(triggerKey(messageId, publishTime))
                 .forJob(jobKey(messageId))
                 .startAt(toDate(publishTime))
                 .withSchedule(
@@ -144,8 +194,18 @@ public class SysMessageScheduledPushScheduler {
         return JobKey.jobKey("scheduled-message-push-" + messageId, GROUP);
     }
 
-    private TriggerKey triggerKey(Long messageId) {
-        return TriggerKey.triggerKey("scheduled-message-push-trigger-" + messageId, GROUP);
+    private TriggerKey triggerKey(Long messageId, LocalDateTime publishTime) {
+        return TriggerKey.triggerKey(
+                "scheduled-message-push-trigger-" + messageId + '-' + toDate(publishTime).getTime(),
+                GROUP);
+    }
+
+    private void unscheduleQuietly(TriggerKey triggerKey) {
+        try {
+            scheduler.unscheduleJob(triggerKey);
+        } catch (Exception exception) {
+            throw schedulerError(exception);
+        }
     }
 
     private BizException schedulerError(Exception exception) {
