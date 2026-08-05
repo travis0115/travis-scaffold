@@ -29,6 +29,9 @@ import com.travis.monolith.system.user.internal.converter.SysUserConverter;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.mapper.SysUserMapper;
 import com.travis.monolith.system.user.internal.service.SysUserService;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.cache.annotation.CacheConfig;
@@ -38,10 +41,6 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 用户管理服务实现，包含密码加密（BCrypt）、角色分配及部门名称关联查询
@@ -318,21 +317,6 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
                                 SysUser::getUsername,
                                 (left, right) -> left,
                                 LinkedHashMap::new));
-    }
-
-    /** 查询属于指定部门的用户 ID。 */
-    @Override
-    public Set<Long> getUserIdsByDeptIds(Collection<Long> deptIds) {
-        if (deptIds == null || deptIds.isEmpty()) {
-            return Set.of();
-        }
-        return list(
-                        new LambdaQueryWrapperX<SysUser>()
-                                .select(SysUser::getId)
-                                .in(SysUser::getDeptId, deptIds))
-                .stream()
-                .map(SysUser::getId)
-                .collect(Collectors.toSet());
     }
 
     /** 当前登录用户修改个人资料 */

@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-/** 集群内每分钟仅执行一次消息定时任务对账。 */
+/** 集群内每五分钟仅执行一次消息定时任务对账。 */
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -20,7 +20,7 @@ public class SysMessageScheduledPushReconcileTask {
 
     private final SysMessageScheduledPushScheduler scheduler;
 
-    /** 使用分钟时间槽去重后执行全局加锁对账。 */
+    /** 使用五分钟时间槽去重后执行全局加锁对账。 */
     @Scheduled(initialDelay = RECONCILE_INTERVAL_MILLIS, fixedDelay = RECONCILE_INTERVAL_MILLIS)
     public void run() {
         long timeSlot = Instant.now().toEpochMilli() / RECONCILE_INTERVAL_MILLIS;

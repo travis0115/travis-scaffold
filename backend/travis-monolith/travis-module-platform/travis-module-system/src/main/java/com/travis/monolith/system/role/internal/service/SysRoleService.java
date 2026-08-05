@@ -8,9 +8,7 @@ import com.travis.monolith.system.role.api.request.SysRolePageReq;
 import com.travis.monolith.system.role.api.request.SysRoleUpdateReq;
 import com.travis.monolith.system.role.api.response.SysRoleResp;
 import com.travis.monolith.system.role.internal.entity.SysRole;
-import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 /**
  * 角色管理服务接口，提供角色的增删改查、菜单分配及角色信息查询
@@ -85,9 +83,6 @@ public interface SysRoleService extends IService<SysRole> {
 
     /** 批量查询角色名称，返回顺序与存在的输入角色 ID 一致。 */
     List<String> getRoleNamesByRoleIds(List<Long> roleIds);
-
-    /** 查询拥有指定角色的用户 ID。 */
-    Set<Long> getUserIdsByRoleIds(Collection<Long> roleIds);
 
     /**
      * 根据角色ID获取关联的菜单ID列表

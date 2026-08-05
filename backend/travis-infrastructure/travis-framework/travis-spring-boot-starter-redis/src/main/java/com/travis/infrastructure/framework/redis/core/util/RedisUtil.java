@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.redis.cache.CacheKeyPrefix;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -22,6 +23,12 @@ import org.springframework.util.CollectionUtils;
  */
 @Slf4j
 public class RedisUtil {
+
+    private static final DefaultRedisScript<Long> INCREMENT_AND_EXPIRE_SCRIPT =
+            new DefaultRedisScript<>(
+                    "local value = redis.call('INCRBY', KEYS[1], ARGV[1]); "
+                            + "redis.call('PEXPIRE', KEYS[1], ARGV[2]); return value",
+                    Long.class);
 
     private static RedisTemplate<String, Object> redisTemplate;
 
@@ -390,6 +397,27 @@ public class RedisUtil {
         } catch (Exception e) {
             log.warn("redis increment failed, key={}", key, e);
             throw new IllegalStateException("redis increment failed: " + key, e);
+        }
+    }
+
+    /**
+     * 原子递增 value 并刷新过期时间。
+     *
+     * @param key 键
+     * @param delta 递增值（可为负）
+     * @param time 过期时间（毫秒），必须大于 0
+     * @return 递增后的值
+     */
+    public static Long incrementAndExpire(String key, long delta, long time) {
+        if (time <= 0) {
+            throw new IllegalArgumentException("redis expiration must be greater than 0");
+        }
+        try {
+            return redisTemplate.execute(
+                    INCREMENT_AND_EXPIRE_SCRIPT, List.of(resolveKey(key)), delta, time);
+        } catch (Exception e) {
+            log.warn("redis incrementAndExpire failed, key={}", key, e);
+            throw new IllegalStateException("redis incrementAndExpire failed: " + key, e);
         }
     }
 

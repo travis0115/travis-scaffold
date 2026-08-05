@@ -55,11 +55,6 @@ public class SysUserApiImpl implements SysUserApi {
     }
 
     @Override
-    public Set<Long> getUserIdsByDeptIds(Collection<Long> deptIds) {
-        return userService.getUserIdsByDeptIds(deptIds);
-    }
-
-    @Override
     public List<SysUserOptionResp> listCurrentUserScopedOptions(String keyword, int limit) {
         var wrapper = currentUserScopeWrapper();
         if (keyword != null && !keyword.isBlank()) {

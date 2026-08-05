@@ -1,6 +1,5 @@
 package com.travis.monolith.system.message.internal.quartz;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
@@ -25,6 +24,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class SysMessageScheduledPushScheduler {
     private static final String GROUP = "system-message";
+    private static final String RECONCILE_LOCK_KEY = "'scheduled-push-reconcile'";
     private static final JobKey LEGACY_JOB_KEY = JobKey.jobKey("scheduled-message-push", GROUP);
     private static final int RECONCILE_BATCH_SIZE = 500;
 
@@ -43,12 +43,13 @@ public class SysMessageScheduledPushScheduler {
     }
 
     /** 在全局分布式锁内补齐缺失的一次性任务。 */
-    @DistributedLock(namespace = "system-message", key = "'scheduled-push-reconcile'")
+    @DistributedLock(namespace = "system-message", key = RECONCILE_LOCK_KEY)
     public void reconcile() {
         reconcileMissingTriggers();
     }
 
     /** 创建或重排指定消息的一次性任务。 */
+    @DistributedLock(namespace = "system-message", key = RECONCILE_LOCK_KEY, waitTime = 10_000)
     public void schedule(Long messageId, LocalDateTime publishTime) {
         try {
             JobKey jobKey = jobKey(messageId);
@@ -84,6 +85,7 @@ public class SysMessageScheduledPushScheduler {
     }
 
     /** 删除指定消息的一次性任务。 */
+    @DistributedLock(namespace = "system-message", key = RECONCILE_LOCK_KEY, waitTime = 10_000)
     public void delete(Long messageId) {
         try {
             scheduler.deleteJob(jobKey(messageId));
@@ -101,21 +103,21 @@ public class SysMessageScheduledPushScheduler {
                                     scheduler.getTriggerKeys(
                                             GroupMatcher.triggerGroupEquals(GROUP)))
                             .orElseGet(Set::of);
-            long pageNumber = 1;
+            Long afterMessageId = null;
             while (true) {
-                var page =
-                        messageMapper.selectPage(
-                                new Page<SysMessage>(pageNumber, RECONCILE_BATCH_SIZE, false),
-                                new LambdaQueryWrapperX<SysMessage>()
-                                        .eq(
-                                                SysMessage::getStatus,
-                                                SysMessageStatus.PENDING.getValue())
-                                        .eq(
-                                                SysMessage::getPushType,
-                                                SysMessagePushType.SCHEDULED.getValue())
-                                        .isNotNull(SysMessage::getPublishTime)
-                                        .orderByAsc(SysMessage::getId));
-                for (SysMessage message : page.getRecords()) {
+                var wrapper =
+                        new LambdaQueryWrapperX<SysMessage>()
+                                .select(SysMessage::getId, SysMessage::getPublishTime)
+                                .eq(SysMessage::getStatus, SysMessageStatus.PENDING.getValue())
+                                .eq(
+                                        SysMessage::getPushType,
+                                        SysMessagePushType.SCHEDULED.getValue())
+                                .isNotNull(SysMessage::getPublishTime)
+                                .gt(afterMessageId != null, SysMessage::getId, afterMessageId)
+                                .orderByAsc(SysMessage::getId)
+                                .last("LIMIT " + RECONCILE_BATCH_SIZE);
+                var messages = messageMapper.selectList(wrapper);
+                for (SysMessage message : messages) {
                     JobKey expectedJobKey = jobKey(message.getId());
                     TriggerKey expectedTriggerKey =
                             triggerKey(message.getId(), message.getPublishTime());
@@ -139,10 +141,10 @@ public class SysMessageScheduledPushScheduler {
                         }
                     }
                 }
-                if (page.getRecords().size() < RECONCILE_BATCH_SIZE) {
+                if (messages.size() < RECONCILE_BATCH_SIZE) {
                     break;
                 }
-                pageNumber++;
+                afterMessageId = messages.getLast().getId();
             }
             var existingJobKeys = scheduler.getJobKeys(GroupMatcher.jobGroupEquals(GROUP));
             if (existingJobKeys != null) {

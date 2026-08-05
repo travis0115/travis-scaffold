@@ -137,8 +137,7 @@ public class SysMessageInboxCache {
     }
 
     private void incrementVersion(String key) {
-        RedisUtil.increment(key, 1);
-        RedisUtil.setExpire(key, VERSION_TTL_MILLIS);
+        RedisUtil.incrementAndExpire(key, 1, VERSION_TTL_MILLIS);
     }
 
     private void runAfterCommit(Runnable task) {

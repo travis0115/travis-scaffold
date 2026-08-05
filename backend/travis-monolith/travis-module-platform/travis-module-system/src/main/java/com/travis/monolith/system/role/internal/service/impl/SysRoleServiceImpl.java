@@ -25,10 +25,8 @@ import com.travis.monolith.system.role.internal.mapper.SysRoleMapper;
 import com.travis.monolith.system.role.internal.mapper.SysRoleMenuMapper;
 import com.travis.monolith.system.role.internal.mapper.SysUserRoleMapper;
 import com.travis.monolith.system.role.internal.service.SysRoleService;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
@@ -255,22 +253,6 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
                                         SysRole::getRoleName,
                                         (left, right) -> left));
         return roleIds.stream().map(names::get).filter(java.util.Objects::nonNull).toList();
-    }
-
-    /** 查询拥有指定角色的用户 ID。 */
-    @Override
-    public Set<Long> getUserIdsByRoleIds(Collection<Long> roleIds) {
-        if (roleIds == null || roleIds.isEmpty()) {
-            return Set.of();
-        }
-        return userRoleMapper
-                .selectList(
-                        new LambdaQueryWrapperX<SysUserRole>()
-                                .select(SysUserRole::getUserId)
-                                .in(SysUserRole::getRoleId, roleIds))
-                .stream()
-                .map(SysUserRole::getUserId)
-                .collect(Collectors.toSet());
     }
 
     /** 根据角色ID查询关联的菜单ID列表 */

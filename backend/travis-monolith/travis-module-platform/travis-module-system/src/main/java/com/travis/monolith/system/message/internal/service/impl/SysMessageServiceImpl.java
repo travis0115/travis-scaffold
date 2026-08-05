@@ -9,7 +9,6 @@ import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
-import com.travis.infrastructure.framework.satoken.core.websocket.SaTokenWebSocketPrincipal;
 import com.travis.infrastructure.framework.websocket.core.message.WebSocketMessage;
 import com.travis.infrastructure.framework.websocket.core.message.WebSocketSender;
 import com.travis.infrastructure.framework.websocket.core.sender.WebSocketMessageSender;
@@ -41,7 +40,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.regex.Matcher;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -306,7 +304,12 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         if (republished) {
             resetReceiverReadStatus(entity.getId());
         }
-        evictUnreadCache(entity);
+        Audience currentAudience = Audience.from(entity);
+        evictUnreadCache(currentAudience);
+        if (SysMessageStatus.SENT.getValue().equals(previousStatus)
+                && !currentAudience.equals(previousAudience)) {
+            evictUnreadCache(previousAudience);
+        }
         if (created || republished || !SysMessageStatus.SENT.getValue().equals(previousStatus)) {
             notifyInboxChanged(
                     republished
@@ -525,86 +528,21 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
     }
 
-    /** 全量范围使用命名空间广播，其他范围只通知实际匹配的在线用户。 */
+    /** 按接收端命名空间广播收件箱变化，由 HTTP 收件箱接口执行最终权限过滤。 */
     private void sendInboxChanged(
             SysMessageWebSocketEvent event, Long messageId, List<Audience> audiences) {
         audiences.stream()
                 .map(Audience::receiverType)
                 .distinct()
                 .forEach(
-                        receiverType -> {
-                            var receiverAudiences =
-                                    audiences.stream()
-                                            .filter(
-                                                    audience ->
-                                                            receiverType.equals(
-                                                                    audience.receiverType()))
-                                            .toList();
-                            if (receiverAudiences.stream()
-                                    .anyMatch(
-                                            audience ->
-                                                    SysMessageReceiverScope.ALL
-                                                            .getValue()
-                                                            .equals(audience.receiverScope()))) {
+                        receiverType ->
                                 webSocketMessageSender.sendToNamespace(
                                         receiverType,
                                         WebSocketMessage.toNamespace(
                                                 WebSocketSender.SYSTEM,
                                                 receiverType,
                                                 event,
-                                                Map.of("messageId", messageId)));
-                                return;
-                            }
-                            Set<String> connectedPrincipals =
-                                    webSocketMessageSender.getConnectedPrincipals(receiverType);
-                            if (connectedPrincipals.isEmpty()) {
-                                webSocketMessageSender.sendToNamespace(
-                                        receiverType,
-                                        WebSocketMessage.toNamespace(
-                                                WebSocketSender.SYSTEM,
-                                                receiverType,
-                                                event,
-                                                Map.of("messageId", messageId)));
-                                return;
-                            }
-                            receiverAudiences.stream()
-                                    .flatMap(audience -> resolveAudienceUserIds(audience).stream())
-                                    .distinct()
-                                    .map(
-                                            userId ->
-                                                    SaTokenWebSocketPrincipal.build(
-                                                            receiverType, userId))
-                                    .filter(connectedPrincipals::contains)
-                                    .forEach(
-                                            principal ->
-                                                    webSocketMessageSender.sendToPrincipal(
-                                                            principal,
-                                                            WebSocketMessage.toPrincipal(
-                                                                    WebSocketSender.SYSTEM,
-                                                                    principal,
-                                                                    event,
-                                                                    Map.of(
-                                                                            "messageId",
-                                                                            messageId))));
-                        });
-    }
-
-    /** 批量解析指定用户、角色或部门范围内的用户 ID。 */
-    private Set<Long> resolveAudienceUserIds(Audience audience) {
-        return SysMessageReceiverScope.findByValue(audience.receiverScope())
-                .map(
-                        scope ->
-                                switch (scope) {
-                                    case ALL -> Set.<Long>of();
-                                    case USER -> Set.copyOf(audience.receiverValues());
-                                    case ROLE ->
-                                            sysRoleApi.getUserIdsByRoleIds(
-                                                    audience.receiverValues());
-                                    case DEPT ->
-                                            sysUserApi.getUserIdsByDeptIds(
-                                                    audience.receiverValues());
-                                })
-                .orElseGet(Set::of);
+                                                Map.of("messageId", messageId))));
     }
 
     /** 查询并锁定指定消息，不存在时抛出业务异常。 */
