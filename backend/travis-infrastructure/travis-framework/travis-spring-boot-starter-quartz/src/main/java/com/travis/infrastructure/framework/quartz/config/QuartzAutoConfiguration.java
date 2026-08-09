@@ -3,7 +3,10 @@ package com.travis.infrastructure.framework.quartz.config;
 import com.travis.infrastructure.framework.quartz.core.QuartzJobExecutionObserver;
 import com.travis.infrastructure.framework.quartz.core.QuartzJobHandler;
 import com.travis.infrastructure.framework.quartz.core.QuartzJobHandlerRegistry;
+import com.travis.infrastructure.framework.quartz.core.QuartzOneShotManager;
+import com.travis.infrastructure.framework.quartz.core.QuartzSyncExecutor;
 import java.util.List;
+import org.quartz.Scheduler;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -24,6 +27,18 @@ public class QuartzAutoConfiguration {
     @ConditionalOnMissingBean
     public QuartzJobExecutionObserver quartzJobExecutionObserver() {
         return new QuartzJobExecutionObserver() {};
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public QuartzOneShotManager quartzOneShotManager(Scheduler scheduler) {
+        return new QuartzOneShotManager(scheduler);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public QuartzSyncExecutor quartzSyncExecutor() {
+        return new QuartzSyncExecutor();
     }
 
     @Bean

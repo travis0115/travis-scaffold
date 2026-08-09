@@ -27,9 +27,6 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 public class DistributedLockAspect {
 
-    /** 分布式锁键的统一业务前缀。 */
-    private static final String KEY_PREFIX = "lock:";
-
     private static final DefaultParameterNameDiscoverer PARAMETER_NAME_DISCOVERER =
             new DefaultParameterNameDiscoverer();
 
@@ -103,6 +100,6 @@ public class DistributedLockAspect {
         if (!StringUtils.hasText(namespace)) {
             namespace = method.getDeclaringClass().getName() + ":" + method.getName();
         }
-        return redisKeyPrefixResolver.apply(KEY_PREFIX + namespace + ":" + keyValue);
+        return redisKeyPrefixResolver.applyLock(namespace, keyValue.toString());
     }
 }

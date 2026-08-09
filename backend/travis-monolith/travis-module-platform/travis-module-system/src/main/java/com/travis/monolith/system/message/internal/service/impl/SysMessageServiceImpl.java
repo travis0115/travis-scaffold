@@ -10,6 +10,7 @@ import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
 import com.travis.infrastructure.framework.redis.core.annotation.DistributedLockNamespace;
+import com.travis.infrastructure.framework.web.core.xss.HtmlSanitizer;
 import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.dept.api.SysDeptApi;
@@ -511,7 +512,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         return (SysMessageSourceType.NOTICE.getValue().equals(sourceType)
                         && SysMessageType.NOTICE.getValue().equals(messageType))
                 || (SysMessageSourceType.VERSION.getValue().equals(sourceType)
-                        && SysMessageType.VERSION_UPDATE.getValue().equals(messageType));
+                        && SysMessageType.VERSION.getValue().equals(messageType));
     }
 
     /** 校验消息接收端、接收范围及接收对象。 */
@@ -653,6 +654,9 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         validateRenderedLength(message.getTitle(), 255, "消息标题");
         validateRenderedLength(message.getContent(), 5000, "消息内容");
         validateRenderedLength(message.getJumpUrl(), 500, "跳转地址");
+        if (!HtmlSanitizer.hasContent(message.getContent())) {
+            throw new BizException(CommonErrorCode.VALIDATE_FAILED, "消息内容不能为空");
+        }
     }
 
     private static void validateRenderedLength(String value, int maxLength, String fieldName) {
@@ -703,9 +707,16 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     /** 根据模板参数结构校验消息模板参数。 */
     private void validateTemplateParams(String contentSchema, Map<String, Object> params) {
         var schema = parseContentSchema(contentSchema);
+        if (!schema.keySet().containsAll(params.keySet())) {
+            throw new BizException(CommonErrorCode.VALIDATE_FAILED, "模板参数与字段结构不一致");
+        }
         schema.forEach(
                 (key, config) -> {
                     var value = params.get(key);
+                    if (value instanceof Map<?, ?> || value instanceof Iterable<?>) {
+                        throw new BizException(
+                                CommonErrorCode.VALIDATE_FAILED, "模板参数【" + key + "】必须是标量值");
+                    }
                     var text = value == null ? "" : String.valueOf(value).trim();
                     var label =
                             config.getLabel() == null || config.getLabel().isBlank()

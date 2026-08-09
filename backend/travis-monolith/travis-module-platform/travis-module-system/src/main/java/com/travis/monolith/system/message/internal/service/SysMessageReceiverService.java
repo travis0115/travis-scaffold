@@ -39,6 +39,9 @@ public interface SysMessageReceiverService extends IService<SysMessageReceiver> 
     /** 将指定消息的全部接收记录重置为未读。 */
     void resetReadStatus(Long messageId);
 
-    /** 使指定接收范围关联的未读数缓存失效。 */
+    /** 使指定用户的未读数缓存失效。 */
+    void evictUserUnreadCache(String receiverType, Long userId);
+
+    /** 使全部未读数缓存失效。 */
     void evictUnreadCache(String receiverType, Integer receiverScope, List<Long> receiverValues);
 }

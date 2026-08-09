@@ -7,7 +7,6 @@ import com.travis.monolith.system.message.api.SysMessageApi;
 import com.travis.monolith.system.message.api.enums.SysMessageChannel;
 import com.travis.monolith.system.message.api.enums.SysMessagePushType;
 import com.travis.monolith.system.message.api.enums.SysMessageReceiverScope;
-import com.travis.monolith.system.message.api.enums.SysMessageType;
 import com.travis.monolith.system.message.api.request.SysMessageCreateReq;
 import com.travis.monolith.system.message.api.request.SysSourceMessagePublishReq;
 import com.travis.monolith.system.message.internal.service.SysMessageService;
@@ -32,7 +31,7 @@ public class SysMessageApiImpl implements SysMessageApi {
             return;
         }
         String sanitizedContent = htmlSanitizer.sanitize(content);
-        if (sanitizedContent == null || sanitizedContent.isBlank()) {
+        if (!HtmlSanitizer.hasContent(sanitizedContent)) {
             throw new BizException(CommonErrorCode.VALIDATE_FAILED, "消息内容清洗后不能为空");
         }
         if (sanitizedContent.length() > 5000) {
@@ -41,7 +40,6 @@ public class SysMessageApiImpl implements SysMessageApi {
         var request = new SysMessageCreateReq();
         request.setTitle(title);
         request.setContent(sanitizedContent);
-        request.setMessageType(SysMessageType.SYSTEM.getValue());
         request.setPushType(SysMessagePushType.MANUAL.getValue());
         request.setChannel(SysMessageChannel.IN_APP.getValue());
         request.setReceiverType(receiverType);

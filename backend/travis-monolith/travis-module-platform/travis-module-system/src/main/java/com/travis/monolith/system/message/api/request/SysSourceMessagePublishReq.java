@@ -9,6 +9,7 @@ import com.travis.monolith.system.message.api.enums.SysMessageType;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
@@ -26,6 +27,7 @@ public class SysSourceMessagePublishReq {
     /** 消息来源类型。 */
     @NotBlank(message = "来源类型不能为空")
     @EnumValue(value = SysMessageSourceType.class, message = "来源类型错误")
+    @Pattern(regexp = "NOTICE|VERSION", message = "来源类型仅支持NOTICE或VERSION")
     private String sourceType;
 
     /** 来源业务数据ID。 */
@@ -68,5 +70,14 @@ public class SysSourceMessagePublishReq {
     public boolean isReceiverValuesValid() {
         return SysMessageReceiverScope.ALL.getValue().equals(receiverScope)
                 || (receiverValues != null && !receiverValues.isEmpty());
+    }
+
+    /** 消息类型必须与独立业务来源一致。 */
+    @AssertTrue(message = "消息类型与来源类型不匹配")
+    public boolean isMessageSourceTypeValid() {
+        return (SysMessageSourceType.NOTICE.getValue().equals(sourceType)
+                        && SysMessageType.NOTICE.getValue().equals(messageType))
+                || (SysMessageSourceType.VERSION.getValue().equals(sourceType)
+                        && SysMessageType.VERSION.getValue().equals(messageType));
     }
 }

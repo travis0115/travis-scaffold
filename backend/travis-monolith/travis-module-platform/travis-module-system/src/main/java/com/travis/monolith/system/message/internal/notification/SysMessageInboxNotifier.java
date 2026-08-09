@@ -14,15 +14,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /** 事务提交后广播消息收件箱变化。 */
 @Component
 @RequiredArgsConstructor
-@Slf4j
 public class SysMessageInboxNotifier {
     private final WebSocketMessageSender webSocketMessageSender;
 
@@ -47,43 +43,16 @@ public class SysMessageInboxNotifier {
         if (validAudiences.isEmpty()) {
             return;
         }
-        runAfterCommit(() -> send(event, messageId, validAudiences));
+        send(event, messageId, validAudiences);
     }
 
     /** 通知指定用户重新获取收件箱状态。 */
     public void notifyUser(String receiverType, Long userId) {
         var principal = SaTokenWebSocketPrincipal.build(receiverType, userId);
-        runAfterCommit(
-                () ->
-                        webSocketMessageSender.sendToPrincipal(
-                                principal,
-                                WebSocketMessage.toPrincipal(
-                                        WebSocketSender.SYSTEM,
-                                        principal,
-                                        SysMessageWebSocketEvent.INBOX_CHANGED)));
-    }
-
-    private void runAfterCommit(Runnable sender) {
-        Runnable guardedSender =
-                () -> {
-                    try {
-                        sender.run();
-                    } catch (RuntimeException exception) {
-                        log.error("[消息通知] 事务提交后发送收件箱变更通知失败", exception);
-                    }
-                };
-        if (TransactionSynchronizationManager.isActualTransactionActive()
-                && TransactionSynchronizationManager.isSynchronizationActive()) {
-            TransactionSynchronizationManager.registerSynchronization(
-                    new TransactionSynchronization() {
-                        @Override
-                        public void afterCommit() {
-                            guardedSender.run();
-                        }
-                    });
-            return;
-        }
-        guardedSender.run();
+        webSocketMessageSender.sendToPrincipal(
+                principal,
+                WebSocketMessage.toPrincipal(
+                        WebSocketSender.SYSTEM, principal, SysMessageWebSocketEvent.INBOX_CHANGED));
     }
 
     private void send(

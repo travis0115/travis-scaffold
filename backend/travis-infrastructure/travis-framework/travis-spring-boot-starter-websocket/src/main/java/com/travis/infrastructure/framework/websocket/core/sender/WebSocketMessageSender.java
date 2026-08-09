@@ -1,12 +1,17 @@
 package com.travis.infrastructure.framework.websocket.core.sender;
 
+import com.travis.infrastructure.common.transaction.AfterCommitExecutor;
 import com.travis.infrastructure.framework.websocket.core.message.WebSocketMessage;
 import com.travis.infrastructure.framework.websocket.core.session.WebSocketSessionManager;
-import java.util.Set;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.Set;
 
 /**
  * WebSocket 消息发送工具类，供业务层直接注入使用。
+ *
+ * <p>发送操作在事务中调用时延迟到事务提交成功后执行；没有事务时立即执行。
  *
  * <p>使用示例：
  *
@@ -32,6 +37,7 @@ import lombok.AllArgsConstructor;
  * @author travis
  */
 @AllArgsConstructor
+@Slf4j
 public class WebSocketMessageSender {
 
     private final WebSocketSessionManager sessionManager;
@@ -43,7 +49,7 @@ public class WebSocketMessageSender {
      * @param message 消息体
      */
     public void sendToPrincipal(String principal, WebSocketMessage message) {
-        sessionManager.sendToPrincipal(principal, message);
+        sendAfterCommit(() -> sessionManager.sendToPrincipal(principal, message));
     }
 
     /**
@@ -52,12 +58,12 @@ public class WebSocketMessageSender {
      * @param message 消息体
      */
     public void sendToAll(WebSocketMessage message) {
-        sessionManager.sendToAll(message);
+        sendAfterCommit(() -> sessionManager.sendToAll(message));
     }
 
     /** 向指定连接命名空间广播消息。 */
     public void sendToNamespace(String namespace, WebSocketMessage message) {
-        sessionManager.sendToNamespace(namespace, message);
+        sendAfterCommit(() -> sessionManager.sendToNamespace(namespace, message));
     }
 
     /**
@@ -78,5 +84,16 @@ public class WebSocketMessageSender {
      */
     public boolean isConnected(String principal) {
         return sessionManager.isConnected(principal);
+    }
+
+    private void sendAfterCommit(Runnable sender) {
+        AfterCommitExecutor.execute(
+                () -> {
+                    try {
+                        sender.run();
+                    } catch (RuntimeException exception) {
+                        log.error("[WebSocket] 消息发送失败", exception);
+                    }
+                });
     }
 }

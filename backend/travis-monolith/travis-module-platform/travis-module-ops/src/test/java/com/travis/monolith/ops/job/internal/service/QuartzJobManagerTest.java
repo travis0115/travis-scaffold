@@ -8,10 +8,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.travis.infrastructure.framework.quartz.core.QuartzDispatchJob;
+import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
+import com.travis.infrastructure.framework.redis.core.annotation.DistributedLockNamespace;
 import com.travis.monolith.ops.job.api.enums.OpsJobMisfirePolicy;
 import com.travis.monolith.ops.job.api.enums.OpsJobStatus;
 import com.travis.monolith.ops.job.internal.entity.OpsJob;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.quartz.JobDetail;
@@ -21,6 +25,17 @@ import org.quartz.Trigger;
 import org.quartz.TriggerKey;
 
 class QuartzJobManagerTest {
+
+    @Test
+    void shouldSerializeQuartzMutationsWithReconciliationLock() throws Exception {
+        var namespace = QuartzJobManager.class.getAnnotation(DistributedLockNamespace.class);
+        assertThat(namespace.value()).isEqualTo(QuartzJobManager.LOCK_NAMESPACE);
+
+        assertSharedLock(QuartzJobManager.class.getMethod("schedule", OpsJob.class));
+        assertSharedLock(QuartzJobManager.class.getMethod("delete", Long.class));
+        assertSharedLock(QuartzJobManager.class.getMethod("reconcile", List.class));
+        assertSharedLock(QuartzJobManager.class.getMethod("runNow", OpsJob.class, String.class));
+    }
 
     @Test
     void shouldKeepDisabledJobDurableWithoutAutomaticTrigger() throws Exception {
@@ -97,6 +112,14 @@ class QuartzJobManagerTest {
         job.setScheduleType("INTERVAL");
         job.setIntervalMillis(60_000L);
         return job;
+    }
+
+    private void assertSharedLock(java.lang.reflect.Method method) {
+        var lock = method.getAnnotation(DistributedLock.class);
+        assertThat(lock).isNotNull();
+        assertThat(lock.key()).isEqualTo("'" + QuartzJobManager.RECONCILE_LOCK_KEY + "'");
+        assertThat(lock.waitTime()).isEqualTo(30);
+        assertThat(lock.timeUnit()).isEqualTo(TimeUnit.SECONDS);
     }
 
     private OpsJob onceJob() {

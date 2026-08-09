@@ -11,11 +11,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class SysMessageQuartzConfiguration {
     @Bean
     public ApplicationRunner sysMessageScheduledPushInitializer(
-            SysMessageScheduledPushScheduler scheduler,
             SysMessageScheduledPushReconcileTask reconcileTask) {
-        return _ -> {
-            scheduler.initialize();
-            reconcileTask.run();
-        };
+        return _ -> reconcileTask.run();
     }
 }

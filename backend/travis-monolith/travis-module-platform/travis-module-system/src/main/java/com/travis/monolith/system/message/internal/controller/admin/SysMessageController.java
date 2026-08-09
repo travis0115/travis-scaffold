@@ -21,6 +21,7 @@ import com.travis.monolith.system.message.api.request.SysMessageUpdateReq;
 import com.travis.monolith.system.message.api.response.SysMessageResp;
 import com.travis.monolith.system.message.internal.service.SysMessageService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -46,7 +47,8 @@ public class SysMessageController {
     /** 查询消息详情。 */
     @GetMapping("/{id}")
     @SaCheckPermission(value = SystemPermission.MESSAGE_QUERY, type = LoginType.ADMIN)
-    public ApiResponse<SysMessageResp> getById(@PathVariable Long id) {
+    public ApiResponse<SysMessageResp> getById(
+            @PathVariable @Positive(message = "消息ID必须为正数") Long id) {
         return ApiResponse.success(messageService.getOrThrow(id));
     }
 
@@ -66,7 +68,8 @@ public class SysMessageController {
     @PutMapping("/{id}")
     @SaCheckPermission(value = SystemPermission.MESSAGE_UPDATE, type = LoginType.ADMIN)
     public ApiResponse<Void> update(
-            @PathVariable Long id, @RequestBody @Valid SysMessageUpdateReq req) {
+            @PathVariable @Positive(message = "消息ID必须为正数") Long id,
+            @RequestBody @Valid SysMessageUpdateReq req) {
         messageService.update(id, req);
         return ApiResponse.success();
     }
@@ -92,7 +95,7 @@ public class SysMessageController {
     @NoRepeatSubmit
     @PutMapping("/{id}/push")
     @SaCheckPermission(value = SystemPermission.MESSAGE_UPDATE, type = LoginType.ADMIN)
-    public ApiResponse<Void> push(@PathVariable Long id) {
+    public ApiResponse<Void> push(@PathVariable @Positive(message = "消息ID必须为正数") Long id) {
         messageService.push(id);
         return ApiResponse.success();
     }
@@ -102,7 +105,7 @@ public class SysMessageController {
     @NoRepeatSubmit
     @PutMapping("/{id}/revoke")
     @SaCheckPermission(value = SystemPermission.MESSAGE_UPDATE, type = LoginType.ADMIN)
-    public ApiResponse<Void> revoke(@PathVariable Long id) {
+    public ApiResponse<Void> revoke(@PathVariable @Positive(message = "消息ID必须为正数") Long id) {
         messageService.revoke(id);
         return ApiResponse.success();
     }
@@ -112,7 +115,7 @@ public class SysMessageController {
     @NoRepeatSubmit
     @DeleteMapping("/{id}")
     @SaCheckPermission(value = SystemPermission.MESSAGE_DELETE, type = LoginType.ADMIN)
-    public ApiResponse<Void> delete(@PathVariable Long id) {
+    public ApiResponse<Void> delete(@PathVariable @Positive(message = "消息ID必须为正数") Long id) {
         messageService.delete(id);
         return ApiResponse.success();
     }

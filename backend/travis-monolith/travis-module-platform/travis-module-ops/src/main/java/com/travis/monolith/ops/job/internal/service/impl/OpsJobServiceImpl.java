@@ -3,6 +3,7 @@ package com.travis.monolith.ops.job.internal.service.impl;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
+import com.travis.infrastructure.common.transaction.AfterCommitExecutor;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
@@ -32,8 +33,6 @@ import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /** 定时任务管理服务实现，负责任务配置维护、运行控制，并同步 Quartz 调度状态。 */
 @Service
@@ -323,19 +322,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
                         log.error("同步 Quartz 任务失败，jobId={}", jobId, exception);
                     }
                 };
-        if (TransactionSynchronizationManager.isSynchronizationActive()) {
-            TransactionSynchronizationManager.registerSynchronization(
-                    new TransactionSynchronization() {
-                        @Override
-                        public void afterCompletion(int status) {
-                            if (status == TransactionSynchronization.STATUS_COMMITTED) {
-                                guardedAction.run();
-                            }
-                        }
-                    });
-            return;
-        }
-        guardedAction.run();
+        AfterCommitExecutor.execute(guardedAction);
     }
 
     /** 查询指定定时任务实体，确保记录存在。 */

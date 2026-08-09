@@ -187,7 +187,7 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
     /** 将版本转换为消息发布请求。 */
     private SysSourceMessagePublishReq toMessageRequest(SysVersion version) {
         var req = new SysSourceMessagePublishReq();
-        req.setMessageType(SysMessageType.VERSION_UPDATE.getValue());
+        req.setMessageType(SysMessageType.VERSION.getValue());
         req.setSourceType(SysMessageSourceType.VERSION.getValue());
         req.setSourceId(version.getId().toString());
         req.setTitle(version.getTitle());

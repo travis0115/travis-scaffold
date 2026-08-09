@@ -32,12 +32,16 @@ import java.util.List;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /** 消息接收记录服务实现。 */
 @Service
 @AllArgsConstructor
+@CacheConfig(cacheNames = "system:message:inbox:unread")
 public class SysMessageReceiverServiceImpl
         extends ServiceImplX<SysMessageReceiverMapper, SysMessageReceiver>
         implements SysMessageReceiverService {
@@ -51,7 +55,6 @@ public class SysMessageReceiverServiceImpl
     private final SysFileApi fileApi;
     private final ObjectProvider<SysMessageSourceContentProvider> sourceContentProviders;
     private final SysMessageMapper sysMessageMapper;
-    private final SysMessageInboxCache inboxCache;
 
     /** 查询用户最近可见的消息。 */
     @Override
@@ -96,6 +99,7 @@ public class SysMessageReceiverServiceImpl
     /** 查询指定消息详情，并在首次查看时标记为已读。 */
     @Override
     @Transactional
+    @CacheEvict(key = "#receiverType + ':' + #userId")
     public SysUserMessageResp getAndMarkRead(String receiverType, Long userId, Long id) {
         var message = sysMessageMapper.selectById(id);
         if (message == null) {
@@ -117,8 +121,7 @@ public class SysMessageReceiverServiceImpl
         if (provider == null) {
             resp.setContent(fileApi.resolveManagedImageSources(message.getContent()));
             if (stateChange.changed()) {
-                inboxCache.invalidateUser(receiverType, userId);
-                notifyInboxChanged(receiverType, userId);
+                inboxNotifier.notifyUser(receiverType, userId);
             }
             return resp;
         }
@@ -128,43 +131,37 @@ public class SysMessageReceiverServiceImpl
         resp.setPublishTime(sourceContent.getPublishTime());
         resp.setMetadata(sourceContent.getMetadata());
         if (stateChange.changed()) {
-            inboxCache.invalidateUser(receiverType, userId);
-            notifyInboxChanged(receiverType, userId);
+            inboxNotifier.notifyUser(receiverType, userId);
         }
         return resp;
     }
 
     /** 统计用户未读消息数量。 */
     @Override
+    @Cacheable(key = "#receiverType + ':' + #userId")
     public Long countUnread(String receiverType, Long userId) {
         var context = audienceContext(receiverType, userId);
-        var lookup = inboxCache.lookup(receiverType, userId, context.roleIds(), context.deptId());
-        if (lookup.value() != null) {
-            return lookup.value();
-        }
-        Long count =
-                baseMapper.countUnreadInbox(
-                        userId, receiverType, context.roleIds(), context.deptId());
-        inboxCache.put(lookup, count);
-        return count;
+        return baseMapper.countUnreadInbox(
+                userId, receiverType, context.roleIds(), context.deptId());
     }
 
     /** 将指定消息标记为已读。 */
     @Override
     @Transactional
+    @CacheEvict(key = "#receiverType + ':' + #userId")
     public void markRead(String receiverType, Long userId, Long id) {
         var state = ensureVisible(receiverType, userId, id);
         var stateChange =
                 upsertState(receiverType, userId, id, state, SysMessageReadStatus.READ.getValue());
         if (stateChange.changed()) {
-            inboxCache.invalidateUser(receiverType, userId);
-            notifyInboxChanged(receiverType, userId);
+            inboxNotifier.notifyUser(receiverType, userId);
         }
     }
 
     /** 将用户全部可见消息标记为已读。 */
     @Override
     @Transactional
+    @CacheEvict(key = "#receiverType + ':' + #userId")
     public void markAllRead(String receiverType, Long userId) {
         var context = audienceContext(receiverType, userId);
         boolean changed =
@@ -175,24 +172,24 @@ public class SysMessageReceiverServiceImpl
                         SysMessageReadStatus.UNREAD.getValue(),
                         SysMessageReadStatus.READ.getValue());
         if (changed) {
-            inboxCache.invalidateUser(receiverType, userId);
-            notifyInboxChanged(receiverType, userId);
+            inboxNotifier.notifyUser(receiverType, userId);
         }
     }
 
     /** 删除指定消息收件状态。 */
     @Override
     @Transactional
+    @CacheEvict(key = "#receiverType + ':' + #userId")
     public void delete(String receiverType, Long userId, Long id) {
         var state = ensureVisible(receiverType, userId, id);
         upsertState(receiverType, userId, id, state, SysMessageReadStatus.DELETED.getValue());
-        inboxCache.invalidateUser(receiverType, userId);
-        notifyInboxChanged(receiverType, userId);
+        inboxNotifier.notifyUser(receiverType, userId);
     }
 
     /** 清空指定范围内的消息收件状态。 */
     @Override
     @Transactional
+    @CacheEvict(key = "#receiverType + ':' + #userId")
     public void clear(String receiverType, Long userId) {
         var context = audienceContext(receiverType, userId);
         boolean changed =
@@ -203,8 +200,7 @@ public class SysMessageReceiverServiceImpl
                         null,
                         SysMessageReadStatus.DELETED.getValue());
         if (changed) {
-            inboxCache.invalidateUser(receiverType, userId);
-            notifyInboxChanged(receiverType, userId);
+            inboxNotifier.notifyUser(receiverType, userId);
         }
     }
 
@@ -228,12 +224,16 @@ public class SysMessageReceiverServiceImpl
                         .set(SysMessageReceiver::getReadTime, null));
     }
 
-    /** 使指定接收范围关联的未读数缓存失效。 */
+    /** 使指定用户的未读数缓存失效。 */
     @Override
+    @CacheEvict(key = "#receiverType + ':' + #userId")
+    public void evictUserUnreadCache(String receiverType, Long userId) {}
+
+    /** 使全部未读数缓存失效。 */
+    @Override
+    @CacheEvict(allEntries = true)
     public void evictUnreadCache(
-            String receiverType, Integer receiverScope, List<Long> receiverValues) {
-        inboxCache.invalidateAudience(receiverType, receiverScope, receiverValues);
-    }
+            String receiverType, Integer receiverScope, List<Long> receiverValues) {}
 
     /** 构建用户消息收件状态的基础查询条件。 */
     private LambdaQueryWrapperX<SysMessageReceiver> baseWrapper(String receiverType, Long userId) {
@@ -427,11 +427,6 @@ public class SysMessageReceiverServiceImpl
             return List.of();
         }
         return JsonUtil.parseArray(receiverValues, Long.class);
-    }
-
-    /** 在事务提交后通过 WebSocket 通知收件箱发生变化。 */
-    private void notifyInboxChanged(String receiverType, Long userId) {
-        inboxNotifier.notifyUser(receiverType, userId);
     }
 
     private record AudienceContext(List<Long> roleIds, Long deptId) {}

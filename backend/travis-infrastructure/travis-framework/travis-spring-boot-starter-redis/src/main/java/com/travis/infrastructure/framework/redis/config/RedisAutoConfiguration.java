@@ -7,10 +7,12 @@ import com.travis.infrastructure.framework.redis.config.properties.TravisRedisPr
 import com.travis.infrastructure.framework.redis.core.key.RedisKeyPrefixResolver;
 import com.travis.infrastructure.framework.redis.core.pubsub.RedisPubSubClient;
 import com.travis.infrastructure.framework.redis.core.serializer.TravisJacksonJsonRedisSerializer;
+import com.travis.infrastructure.framework.redis.core.task.ClusterPeriodicTaskExecutor;
 import com.travis.infrastructure.framework.redis.core.util.RedisUtil;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import lombok.AllArgsConstructor;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -133,5 +135,16 @@ public class RedisAutoConfiguration {
             RedisMessageListenerContainer listenerContainer,
             RedisKeyPrefixResolver redisKeyPrefixResolver) {
         return new RedisPubSubClient(redisTemplate, listenerContainer, redisKeyPrefixResolver);
+    }
+
+    /** 集群周期任务执行器。 */
+    @Bean
+    @ConditionalOnMissingBean
+    public ClusterPeriodicTaskExecutor clusterPeriodicTaskExecutor(
+            RedissonClient redissonClient,
+            RedisTemplate<String, Object> redisTemplate,
+            RedisKeyPrefixResolver redisKeyPrefixResolver) {
+        return new ClusterPeriodicTaskExecutor(
+                redissonClient, redisTemplate, redisKeyPrefixResolver);
     }
 }

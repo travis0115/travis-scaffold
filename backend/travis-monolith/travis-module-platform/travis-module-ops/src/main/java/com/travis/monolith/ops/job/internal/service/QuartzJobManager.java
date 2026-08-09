@@ -5,6 +5,7 @@ import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.quartz.core.NonConcurrentQuartzDispatchJob;
 import com.travis.infrastructure.framework.quartz.core.QuartzDispatchJob;
 import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
+import com.travis.infrastructure.framework.redis.core.annotation.DistributedLockNamespace;
 import com.travis.monolith.ops.job.api.OpsJobErrorCode;
 import com.travis.monolith.ops.job.api.enums.OpsJobConcurrentPolicy;
 import com.travis.monolith.ops.job.api.enums.OpsJobMisfirePolicy;
@@ -19,6 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import lombok.AllArgsConstructor;
 import org.quartz.*;
 import org.quartz.impl.calendar.DailyCalendar;
@@ -30,14 +32,24 @@ import org.springframework.stereotype.Component;
 /** 负责将业务任务配置同步到 Quartz 调度器。 */
 @Component
 @AllArgsConstructor
+@DistributedLockNamespace(QuartzJobManager.LOCK_NAMESPACE)
 public class QuartzJobManager {
 
     /** 业务任务在 Quartz 中使用的统一分组。 */
     private static final String GROUP = "ops-job";
 
+    public static final String LOCK_NAMESPACE = "ops-job";
+    public static final String RECONCILE_LOCK_KEY = "quartz-reconcile";
+    private static final String RECONCILE_LOCK_KEY_SPEL = "'" + RECONCILE_LOCK_KEY + "'";
+    private static final long LOCK_WAIT_SECONDS = 30;
+
     private final Scheduler scheduler;
 
     /** 按业务配置同步任务；停用任务只保留不可自动触发的持久 Job。 */
+    @DistributedLock(
+            key = RECONCILE_LOCK_KEY_SPEL,
+            waitTime = LOCK_WAIT_SECONDS,
+            timeUnit = TimeUnit.SECONDS)
     public void schedule(OpsJob job) {
         try {
             String fingerprint = configFingerprint(job);
@@ -63,6 +75,10 @@ public class QuartzJobManager {
     }
 
     /** 删除任务及其关联日历。 */
+    @DistributedLock(
+            key = RECONCILE_LOCK_KEY_SPEL,
+            waitTime = LOCK_WAIT_SECONDS,
+            timeUnit = TimeUnit.SECONDS)
     public void delete(Long jobId) {
         try {
             scheduler.deleteJob(jobKey(jobId));
@@ -73,7 +89,10 @@ public class QuartzJobManager {
     }
 
     /** 对账业务任务与 Quartz 状态，并清理不存在的孤立任务。 */
-    @DistributedLock(namespace = "ops-job", key = "'quartz-reconcile'")
+    @DistributedLock(
+            key = RECONCILE_LOCK_KEY_SPEL,
+            waitTime = LOCK_WAIT_SECONDS,
+            timeUnit = TimeUnit.SECONDS)
     public void reconcile(List<OpsJob> jobs) {
         try {
             Set<JobKey> expectedJobKeys = new HashSet<>();
@@ -123,6 +142,10 @@ public class QuartzJobManager {
     }
 
     /** 使用指定参数立即触发一次任务；参数为空时使用任务默认参数。 */
+    @DistributedLock(
+            key = RECONCILE_LOCK_KEY_SPEL,
+            waitTime = LOCK_WAIT_SECONDS,
+            timeUnit = TimeUnit.SECONDS)
     public void runNow(OpsJob job, String params) {
         try {
             scheduler.addJob(buildJobDetail(job, configFingerprint(job)), true);

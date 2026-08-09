@@ -1,12 +1,10 @@
 package com.travis.monolith.ops.job.internal.quartz;
 
-import com.travis.infrastructure.common.web.exception.BizException;
-import com.travis.infrastructure.common.web.exception.CommonErrorCode;
-import com.travis.infrastructure.framework.redis.core.util.RedisUtil;
+import com.travis.infrastructure.framework.redis.core.task.ClusterPeriodicTaskExecutor;
 import com.travis.monolith.ops.job.internal.service.OpsJobLogService;
 import com.travis.monolith.ops.job.internal.service.OpsJobService;
 import com.travis.monolith.ops.job.internal.service.QuartzJobManager;
-import java.time.Instant;
+import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -18,29 +16,26 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class OpsJobQuartzReconcileTask {
 
-    private static final String SLOT_KEY_PREFIX = "ops:job:quartz:reconcile:";
-    private static final long SLOT_TTL_MILLIS = 120_000;
+    private static final long RECONCILE_INTERVAL_MILLIS = 60_000;
+    private static final Duration RECONCILE_INTERVAL = Duration.ofMillis(RECONCILE_INTERVAL_MILLIS);
 
     private final OpsJobService jobService;
     private final OpsJobLogService jobLogService;
     private final QuartzJobManager quartzJobManager;
+    private final ClusterPeriodicTaskExecutor periodicTaskExecutor;
 
-    /** 使用分钟时间槽去重后执行集群对账。 */
-    @Scheduled(initialDelay = 60_000, fixedDelay = 60_000)
+    /** 在集群内按分钟限频执行对账。 */
+    @Scheduled(initialDelay = RECONCILE_INTERVAL_MILLIS, fixedDelay = RECONCILE_INTERVAL_MILLIS)
     public void run() {
         try {
-            long minuteSlot = Instant.now().getEpochSecond() / 60;
-            if (!RedisUtil.setIfAbsent(
-                    SLOT_KEY_PREFIX + minuteSlot, Boolean.TRUE, SLOT_TTL_MILLIS)) {
-                return;
-            }
-            quartzJobManager.reconcile(jobService.listAll());
-            jobLogService.markInterruptedExecutions();
-        } catch (BizException exception) {
-            if (CommonErrorCode.DISTRIBUTED_LOCK_FAILED.equals(exception.getErrorCode())) {
-                return;
-            }
-            log.error("Quartz 任务配置对账失败", exception);
+            periodicTaskExecutor.executeOncePerInterval(
+                    QuartzJobManager.LOCK_NAMESPACE,
+                    QuartzJobManager.RECONCILE_LOCK_KEY,
+                    RECONCILE_INTERVAL,
+                    () -> {
+                        quartzJobManager.reconcile(jobService.listAll());
+                        jobLogService.markInterruptedExecutions();
+                    });
         } catch (Exception exception) {
             log.error("Quartz 任务配置对账失败", exception);
         }

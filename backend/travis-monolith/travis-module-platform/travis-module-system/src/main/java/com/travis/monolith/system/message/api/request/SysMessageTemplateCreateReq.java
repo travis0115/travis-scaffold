@@ -5,6 +5,7 @@ import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.common.validation.annotation.JsonValue;
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.web.core.annotation.SanitizeHtml;
+import com.travis.infrastructure.framework.web.core.xss.HtmlSanitizer;
 import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.message.api.constant.SysMessageTemplatePattern;
 import com.travis.monolith.system.message.api.enums.SysMessageChannel;
@@ -70,6 +71,12 @@ public class SysMessageTemplateCreateReq {
     /** 备注。 */
     @Size(max = 255, message = "备注长度不能超过255个字符")
     private String remark;
+
+    /** 模板正文必须包含可见文字或图片。 */
+    @AssertTrue(message = "模板内容不能为空")
+    public boolean isContentValid() {
+        return HtmlSanitizer.hasContent(content);
+    }
 
     /** 校验要求标题的通道是否填写模板标题。 */
     @AssertTrue(message = "当前通道模板标题不能为空")

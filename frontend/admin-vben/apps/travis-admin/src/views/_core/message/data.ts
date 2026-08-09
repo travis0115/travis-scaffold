@@ -2,13 +2,19 @@ import type { VbenFormSchema } from '#/adapter/form';
 import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { SystemMessageApi } from '#/api';
 
+import { z } from '#/adapter/form';
 import {
   messageReadStatusOptions,
   messageTypeOptions,
 } from '#/utils/business-options';
 
 export const useGridFormSchema = (): VbenFormSchema[] => [
-  { component: 'Input', fieldName: 'title', label: '消息标题' },
+  {
+    component: 'Input',
+    fieldName: 'title',
+    label: '消息标题',
+    rules: z.string().max(255, '消息标题长度不能超过255个字符').optional(),
+  },
   {
     component: 'RangePicker',
     componentProps: { valueFormat: 'YYYY-MM-DD' },

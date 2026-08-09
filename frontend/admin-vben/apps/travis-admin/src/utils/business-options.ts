@@ -43,9 +43,8 @@ export const messageChannelOptions = getTranslatedOptions(
 
 export const messageTypeOptions = getTranslatedOptions('sys_message_type', [
   { label: '系统消息', value: 1 },
-  { label: '业务消息', value: 2 },
-  { label: '系统公告', value: 3 },
-  { label: '版本更新', value: 4 },
+  { label: '系统公告', value: 2 },
+  { label: '版本更新', value: 3 },
 ]);
 
 export const messageReadStatusOptions = getTranslatedOptions(

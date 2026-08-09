@@ -8,6 +8,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import java.util.Collection;
 import org.springframework.validation.annotation.Validated;
@@ -25,7 +27,11 @@ public interface SysMessageApi {
                     String title,
             @NotBlank(message = "消息内容不能为空") @Size(max = 5000, message = "消息内容长度不能超过5000个字符")
                     String content,
-            @NotEmpty(message = "非全部接收时必须选择接收对象") Collection<Long> userIds);
+            @NotEmpty(message = "非全部接收时必须选择接收对象") @Size(max = 1000, message = "接收对象数量不能超过1000个")
+                    Collection<
+                                    @NotNull(message = "接收对象ID不能为空")
+                                    @Positive(message = "接收对象ID必须为正数") Long>
+                            userIds);
 
     /** 按业务来源发布或更新一条消息。 */
     void publishSourceMessage(
@@ -35,6 +41,7 @@ public interface SysMessageApi {
     void revokeSourceMessage(
             @NotBlank(message = "来源类型不能为空")
                     @EnumValue(value = SysMessageSourceType.class, message = "来源类型错误")
+                    @Pattern(regexp = "NOTICE|VERSION", message = "来源类型仅支持NOTICE或VERSION")
                     String sourceType,
             @NotBlank(message = "来源ID不能为空") @Size(max = 64, message = "来源ID长度不能超过64个字符")
                     String sourceId,
@@ -46,6 +53,7 @@ public interface SysMessageApi {
     void deleteSourceMessage(
             @NotBlank(message = "来源类型不能为空")
                     @EnumValue(value = SysMessageSourceType.class, message = "来源类型错误")
+                    @Pattern(regexp = "NOTICE|VERSION", message = "来源类型仅支持NOTICE或VERSION")
                     String sourceType,
             @NotBlank(message = "来源ID不能为空") @Size(max = 64, message = "来源ID长度不能超过64个字符")
                     String sourceId,

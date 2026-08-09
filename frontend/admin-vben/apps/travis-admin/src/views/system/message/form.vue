@@ -7,7 +7,7 @@ import { computed, nextTick, ref } from 'vue';
 import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { BACKEND_DATETIME_FORMAT } from '@vben/utils';
 
-import { Divider } from 'antdv-next';
+import { Divider, message } from 'antdv-next';
 
 import { useVbenForm, z } from '#/adapter/form';
 import {
@@ -541,6 +541,10 @@ const [Drawer, drawerApi] = useVbenDrawer({
       if (!paramValid) return;
       values.templateId = selectedTemplateId.value;
       values.templateParams = await buildTemplateParamsForSubmit();
+      if (values.templateParams.length > 4000) {
+        message.error('模板参数长度不能超过4000个字符');
+        return;
+      }
     } else {
       values.templateId = undefined;
       values.templateParams = undefined;
@@ -581,9 +585,23 @@ const [Drawer, drawerApi] = useVbenDrawer({
       delete data.content;
       delete data.title;
     }
+    const request: SystemMessageApi.MessageSaveRequest = {
+      channel: data.channel,
+      content: data.content,
+      jumpUrl: data.jumpUrl,
+      publishTime: data.publishTime,
+      pushType: data.pushType as 0 | 1,
+      receiverScope: data.receiverScope,
+      receiverType: data.receiverType,
+      receiverValues: data.receiverValues,
+      remark: data.remark,
+      templateId: data.templateId,
+      templateParams: data.templateParams,
+      title: data.title,
+    };
     await (formData.value?.id
-      ? updateMessage(formData.value.id, data)
-      : createMessage(data));
+      ? updateMessage(formData.value.id, request)
+      : createMessage(request));
     emit('success');
     drawerApi.close();
   },

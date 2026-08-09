@@ -4,6 +4,7 @@ import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.common.validation.annotation.JsonValue;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.framework.web.core.annotation.SanitizeHtml;
+import com.travis.infrastructure.framework.web.core.xss.HtmlSanitizer;
 import com.travis.monolith.system.message.api.enums.*;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
@@ -26,10 +27,6 @@ public class SysMessageCreateReq {
     @Size(max = 5000, message = "消息内容长度不能超过5000个字符")
     private String content;
 
-    /** 消息类型。 */
-    @EnumValue(value = SysMessageType.class, message = "消息类型错误")
-    private Integer messageType;
-
     /** 推送方式。 */
     @NotNull(message = "推送方式不能为空")
     @EnumValue(value = SysMessagePushType.class, message = "推送方式错误")
@@ -45,6 +42,7 @@ public class SysMessageCreateReq {
     private String jumpUrl;
 
     /** 消息模板 ID。 */
+    @Positive(message = "消息模板ID必须为正数")
     private Long templateId;
 
     /** 消息模板渲染参数，使用 JSON 对象格式。 */
@@ -100,7 +98,7 @@ public class SysMessageCreateReq {
     /** 校验自定义消息是否填写内容。 */
     @AssertTrue(message = "消息内容不能为空")
     public boolean isContentValid() {
-        return templateId != null || (content != null && !content.isBlank());
+        return templateId != null || HtmlSanitizer.hasContent(content);
     }
 
     /** 校验模板消息的标题和内容只能由模板生成。 */
@@ -120,6 +118,22 @@ public class SysMessageCreateReq {
     @AssertTrue(message = "定时推送必须设置发布时间")
     public boolean isPublishTimeValid() {
         return !SysMessagePushType.SCHEDULED.getValue().equals(pushType) || publishTime != null;
+    }
+
+    /** 定时推送时间必须晚于当前时间。 */
+    @AssertTrue(message = "定时发布时间必须晚于当前时间")
+    public boolean isScheduledPublishTimeValid() {
+        return !SysMessagePushType.SCHEDULED.getValue().equals(pushType)
+                || publishTime == null
+                || publishTime.isAfter(LocalDateTime.now());
+    }
+
+    /** 后台表单只允许即时推送或定时推送。 */
+    @AssertTrue(message = "推送方式错误")
+    public boolean isManualPushTypeValid() {
+        return pushType == null
+                || SysMessagePushType.MANUAL.getValue().equals(pushType)
+                || SysMessagePushType.SCHEDULED.getValue().equals(pushType);
     }
 
     /** 校验跳转地址为站内绝对路径或 HTTP(S) 地址。 */

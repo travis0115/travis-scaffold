@@ -7,6 +7,7 @@ import com.travis.monolith.system.message.api.enums.SysMessagePushType;
 import com.travis.monolith.system.message.api.enums.SysMessageReceiverType;
 import com.travis.monolith.system.message.api.enums.SysMessageStatus;
 import com.travis.monolith.system.message.api.enums.SysMessageType;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import lombok.Data;
@@ -45,4 +46,20 @@ public class SysMessagePageReq extends PageRequest {
 
     /** 发布日期范围终点。 */
     private LocalDate publishEndDate;
+
+    /** 后台列表只查询即时推送或定时推送消息。 */
+    @AssertTrue(message = "推送方式错误")
+    public boolean isManualPushTypeValid() {
+        return pushType == null
+                || SysMessagePushType.MANUAL.getValue().equals(pushType)
+                || SysMessagePushType.SCHEDULED.getValue().equals(pushType);
+    }
+
+    /** 发布日期起点不能晚于终点。 */
+    @AssertTrue(message = "发布开始日期不能晚于结束日期")
+    public boolean isPublishDateRangeValid() {
+        return publishStartDate == null
+                || publishEndDate == null
+                || !publishStartDate.isAfter(publishEndDate);
+    }
 }

@@ -5,6 +5,7 @@ import type { SystemMessageApi } from '#/api';
 import { h } from 'vue';
 
 import { Button } from 'antdv-next';
+import dayjs from 'dayjs';
 
 import { z } from '#/adapter/form';
 import { uploadMessageImage } from '#/api';
@@ -24,11 +25,18 @@ const requiredNumber = (message: string) =>
 
 const requiredIdList = (message: string) =>
   z
-    .array(z.union([z.number(), z.string().regex(/^-?\d+$/)]), {
-      invalid_type_error: message,
-      required_error: message,
-    })
-    .min(1, message);
+    .array(
+      z.union([
+        z.number().int().positive(),
+        z.string().regex(/^[1-9]\d*$/, '接收对象ID必须为正整数'),
+      ]),
+      {
+        invalid_type_error: message,
+        required_error: message,
+      },
+    )
+    .min(1, message)
+    .max(1000, '接收对象数量不能超过1000个');
 
 const externalChannels = new Set(['SMS', 'WECHAT_MP', 'WECHAT_OA']);
 const redirectChannels = new Set(['WECHAT_MP', 'WECHAT_OA']);
@@ -59,6 +67,7 @@ function isValidJumpUrl(value: string) {
 function hasRichTextContent(value?: string) {
   if (!value) return false;
   return (
+    /<img\b[^>]*>/i.test(value) ||
     value
       .replaceAll('&nbsp;', ' ')
       .replaceAll(/<br\s*\/?>/gi, '')
@@ -104,7 +113,8 @@ export const useFormSchema = (
     label: '推送通道',
     rules: z
       .string({ required_error: '请选择推送通道' })
-      .min(1, '请选择推送通道'),
+      .min(1, '请选择推送通道')
+      .refine((value) => value === 'IN_APP', '推送通道暂仅支持站内信'),
   },
   {
     component: 'Input',
@@ -142,7 +152,8 @@ export const useFormSchema = (
     label: '接收端',
     rules: z
       .string({ required_error: '接收端不能为空' })
-      .min(1, '接收端不能为空'),
+      .min(1, '接收端不能为空')
+      .refine((value) => ['admin', 'app'].includes(value), '接收端错误'),
   },
   {
     component: 'RadioGroup',
@@ -247,7 +258,10 @@ export const useFormSchema = (
     fieldName: 'pushType',
     hideRequiredMark: true,
     label: '推送方式',
-    rules: requiredNumber('推送方式不能为空'),
+    rules: requiredNumber('推送方式不能为空').refine(
+      (value) => [0, 1].includes(Number(value)),
+      '推送方式错误',
+    ),
   },
   {
     component: 'DatePicker',
@@ -264,7 +278,11 @@ export const useFormSchema = (
     label: '推送时间',
     rules: z
       .string({ required_error: '推送时间不能为空' })
-      .min(1, '推送时间不能为空'),
+      .min(1, '推送时间不能为空')
+      .refine(
+        (value) => dayjs(value).isAfter(dayjs()),
+        '推送时间必须晚于当前时间',
+      ),
   },
   {
     component: 'Input',
@@ -276,6 +294,7 @@ export const useFormSchema = (
     label: '消息标题',
     rules: z
       .string({ required_error: '消息标题不能为空' })
+      .trim()
       .min(1, '消息标题不能为空')
       .max(255, '消息标题长度不能超过255个字符'),
   },
@@ -338,14 +357,25 @@ export const useFormSchema = (
     label: '消息内容',
     rules: z
       .string({ required_error: '消息内容不能为空' })
+      .trim()
       .min(1, '消息内容不能为空')
       .max(5000, '消息内容长度不能超过5000个字符'),
   },
-  { component: 'Textarea', fieldName: 'remark', label: '备注' },
+  {
+    component: 'Textarea',
+    fieldName: 'remark',
+    label: '备注',
+    rules: z.string().max(255, '备注长度不能超过255个字符').optional(),
+  },
 ];
 
 export const useGridFormSchema = (): VbenFormSchema[] => [
-  { component: 'Input', fieldName: 'title', label: '消息标题' },
+  {
+    component: 'Input',
+    fieldName: 'title',
+    label: '消息标题',
+    rules: z.string().max(255, '消息标题长度不能超过255个字符').optional(),
+  },
   {
     component: 'Select',
     componentProps: {

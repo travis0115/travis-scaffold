@@ -39,6 +39,21 @@ export namespace SystemMessageApi {
     title: string;
   }
 
+  export interface MessageSaveRequest {
+    channel: string;
+    content?: string;
+    jumpUrl?: string;
+    publishTime?: string;
+    pushType: 0 | 1;
+    receiverScope: number;
+    receiverType: string;
+    receiverValues?: Id[];
+    remark?: string;
+    templateId?: Id;
+    templateParams?: string;
+    title?: string;
+  }
+
   export interface MessageTemplate {
     channel: string;
     content?: string;
@@ -51,6 +66,19 @@ export namespace SystemMessageApi {
     remark?: string;
     status: number;
     templateCode: string;
+    templateName: string;
+    title?: string;
+  }
+
+  export interface MessageTemplateSaveRequest {
+    channel: string;
+    content: string;
+    contentSchema?: string;
+    platformTemplateId?: string;
+    redirectUrl?: string;
+    remark?: string;
+    status: number;
+    templateCode?: string;
     templateName: string;
     title?: string;
   }
@@ -81,13 +109,12 @@ const getMessagePage = (params: Recordable<any>) =>
   );
 const getMessageDetail = (id: SystemMessageApi.Id) =>
   requestClient.get<SystemMessageApi.Message>(`/system/message/${id}`);
-const createMessage = (data: Partial<SystemMessageApi.Message>) =>
+const createMessage = (data: SystemMessageApi.MessageSaveRequest) =>
   requestClient.post('/system/message', data);
 const updateMessage = (
   id: SystemMessageApi.Id,
-  data: Partial<SystemMessageApi.Message>,
-) =>
-  requestClient.put(`/system/message/${id}`, data);
+  data: SystemMessageApi.MessageSaveRequest,
+) => requestClient.put(`/system/message/${id}`, data);
 const deleteMessage = (id: SystemMessageApi.Id) =>
   requestClient.delete(`/system/message/${id}`);
 const pushMessage = (id: SystemMessageApi.Id) =>
@@ -120,11 +147,11 @@ const getMessageTemplateDetail = (id: SystemMessageApi.Id) =>
     `/system/message/template/${id}`,
   );
 const createMessageTemplate = (
-  data: Partial<SystemMessageApi.MessageTemplate>,
+  data: SystemMessageApi.MessageTemplateSaveRequest,
 ) => requestClient.post('/system/message/template', data);
 const updateMessageTemplate = (
   id: SystemMessageApi.Id,
-  data: Partial<SystemMessageApi.MessageTemplate>,
+  data: SystemMessageApi.MessageTemplateSaveRequest,
 ) => requestClient.put(`/system/message/template/${id}`, data);
 const deleteMessageTemplate = (id: SystemMessageApi.Id) =>
   requestClient.delete(`/system/message/template/${id}`);

@@ -1,7 +1,7 @@
 package com.travis.monolith.system.message.internal.event;
 
 import com.travis.infrastructure.common.web.constant.LoginType;
-import com.travis.monolith.system.message.internal.service.impl.SysMessageInboxCache;
+import com.travis.monolith.system.message.internal.service.SysMessageReceiverService;
 import com.travis.monolith.system.role.api.event.RoleMessageAudienceChangedEvent;
 import com.travis.monolith.system.user.api.event.UserMessageAudienceChangedEvent;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class MessageAudienceChangedEventListener {
-    private final SysMessageInboxCache inboxCache;
+    private final SysMessageReceiverService messageReceiverService;
 
     @EventListener
     public void onUserAudienceChanged(UserMessageAudienceChangedEvent event) {
@@ -26,9 +26,9 @@ public class MessageAudienceChangedEventListener {
 
     private void invalidate(Long userId) {
         if (userId == null) {
-            inboxCache.invalidateReceiver(LoginType.ADMIN);
+            messageReceiverService.evictUnreadCache(LoginType.ADMIN, null, null);
             return;
         }
-        inboxCache.invalidateUser(LoginType.ADMIN, userId);
+        messageReceiverService.evictUserUnreadCache(LoginType.ADMIN, userId);
     }
 }

@@ -21,6 +21,12 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- spring-tx -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-tx</artifactId>
+        </dependency>
+
         <!-- spring-web -->
         <dependency>
             <groupId>org.springframework</groupId>

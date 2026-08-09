@@ -11,7 +11,6 @@ import com.travis.infrastructure.framework.web.core.xss.HtmlSanitizer;
 import com.travis.monolith.system.message.api.enums.SysMessageChannel;
 import com.travis.monolith.system.message.api.enums.SysMessagePushType;
 import com.travis.monolith.system.message.api.enums.SysMessageReceiverScope;
-import com.travis.monolith.system.message.api.enums.SysMessageType;
 import com.travis.monolith.system.message.api.request.SysMessageCreateReq;
 import com.travis.monolith.system.message.internal.service.SysMessageService;
 import java.util.List;
@@ -37,8 +36,21 @@ class SysMessageApiImplTest {
         assertThat(request.getReceiverType()).isEqualTo(LoginType.APP);
         assertThat(request.getReceiverScope()).isEqualTo(SysMessageReceiverScope.USER.getValue());
         assertThat(request.getReceiverValues()).containsExactly(200L);
-        assertThat(request.getMessageType()).isEqualTo(SysMessageType.SYSTEM.getValue());
         assertThat(request.getPushType()).isEqualTo(SysMessagePushType.MANUAL.getValue());
         assertThat(request.getChannel()).isEqualTo(SysMessageChannel.IN_APP.getValue());
+    }
+
+    @Test
+    void shouldAllowImageOnlyContent() {
+        SysMessageService messageService = mock(SysMessageService.class);
+        HtmlSanitizer htmlSanitizer = mock(HtmlSanitizer.class);
+        var api = new SysMessageApiImpl(messageService, htmlSanitizer);
+        var content = "<img src=\"https://example.com/image.png\">";
+        when(htmlSanitizer.sanitize(content)).thenReturn(content);
+        when(messageService.createSystem(any())).thenReturn(100L);
+
+        api.publishToUsers(LoginType.APP, "图片消息", content, List.of(200L));
+
+        verify(messageService).pushAutomatic(100L);
     }
 }

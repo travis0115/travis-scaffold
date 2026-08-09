@@ -8,7 +8,7 @@ import { messageChannelOptions } from '#/utils/business-options';
 import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
 
 const requiredString = (message: string) =>
-  z.string({ required_error: message }).min(1, message);
+  z.string({ required_error: message }).trim().min(1, message);
 
 const optionalString = (max: number, message: string) =>
   z.string().max(max, message).optional().or(z.literal(''));
@@ -40,6 +40,7 @@ function needsRedirect(channel?: string) {
 function hasRichTextContent(value?: string) {
   if (!value) return false;
   return (
+    /<img\b[^>]*>/i.test(value) ||
     value
       .replaceAll('&nbsp;', ' ')
       .replaceAll(/<br\s*\/?>/gi, '')
@@ -182,12 +183,23 @@ export const useFormSchema = (
 ];
 
 export const useGridFormSchema = (): VbenFormSchema[] => [
-  { component: 'Input', fieldName: 'templateCode', label: '模板编码' },
-  { component: 'Input', fieldName: 'templateName', label: '模板名称' },
+  {
+    component: 'Input',
+    fieldName: 'templateCode',
+    label: '模板编码',
+    rules: z.string().max(64, '模板编码长度不能超过64个字符').optional(),
+  },
+  {
+    component: 'Input',
+    fieldName: 'templateName',
+    label: '模板名称',
+    rules: z.string().max(100, '模板名称长度不能超过100个字符').optional(),
+  },
   {
     component: 'Input',
     fieldName: 'platformTemplateId',
     label: '平台模板ID',
+    rules: z.string().max(128, '平台模板ID长度不能超过128个字符').optional(),
   },
   {
     component: 'Select',

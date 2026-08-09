@@ -332,6 +332,10 @@ const [Drawer, drawerApi] = useVbenDrawer({
     }
     const values = await formApi.getValues();
     values.contentSchema = buildContentSchema();
+    if (values.contentSchema && values.contentSchema.length > 4000) {
+      message.error('字段结构长度不能超过4000个字符');
+      return;
+    }
     values.remark = remark.value;
     values.status = status.value;
     if (values.channel === 'IN_APP') {
@@ -358,9 +362,21 @@ const [Drawer, drawerApi] = useVbenDrawer({
     if (formData.value?.id) {
       delete values.templateCode;
     }
+    const request: SystemMessageApi.MessageTemplateSaveRequest = {
+      channel: values.channel,
+      content: values.content,
+      contentSchema: values.contentSchema,
+      platformTemplateId: values.platformTemplateId,
+      redirectUrl: values.redirectUrl,
+      remark: values.remark,
+      status: values.status,
+      templateCode: values.templateCode,
+      templateName: values.templateName,
+      title: values.title,
+    };
     await (formData.value?.id
-      ? updateMessageTemplate(formData.value.id, values)
-      : createMessageTemplate(values));
+      ? updateMessageTemplate(formData.value.id, request)
+      : createMessageTemplate(request));
     emit('success');
     drawerApi.close();
   },
