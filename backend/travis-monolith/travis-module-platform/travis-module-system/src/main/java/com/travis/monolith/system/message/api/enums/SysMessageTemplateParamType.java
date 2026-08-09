@@ -1,58 +1,59 @@
 package com.travis.monolith.system.message.api.enums;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 
-/** 消息模板参数类型枚举。 */
+/** 消息模板参数类型枚举 */
 @Getter
 @AllArgsConstructor
 public enum SysMessageTemplateParamType {
-    /** 文本。 */
+    /** 文本 */
     TEXT("text"),
 
-    /** 数字。 */
+    /** 数字 */
     NUMBER("number"),
 
-    /** 金额。 */
+    /** 金额 */
     AMOUNT("amount"),
 
-    /** 日期。 */
+    /** 日期 */
     DATE("date"),
 
-    /** 日期时间。 */
+    /** 日期时间 */
     DATETIME("datetime"),
 
-    /** 手机号。 */
+    /** 手机号 */
     MOBILE("mobile"),
 
-    /** 邮箱。 */
+    /** 邮箱 */
     EMAIL("email"),
 
-    /** 链接。 */
+    /** 链接 */
     URL("url");
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    /** 金额参数格式，最多保留两位小数。 */
+    /** 金额参数格式，最多保留两位小数 */
     private static final String AMOUNT_PATTERN = "^-?\\d+(\\.\\d{1,2})?$";
 
-    /** 邮箱参数格式。 */
+    /** 邮箱参数格式 */
     private static final String EMAIL_PATTERN = "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$";
 
-    /** 中国大陆手机号参数格式。 */
+    /** 中国大陆手机号参数格式 */
     private static final String MOBILE_PATTERN = "^1[3-9]\\d{9}$";
 
-    /** 普通数字参数格式。 */
+    /** 普通数字参数格式 */
     private static final String NUMBER_PATTERN = "^-?\\d+(\\.\\d+)?$";
 
-    /** HTTP 或 HTTPS 地址参数格式。 */
+    /** HTTP 或 HTTPS 地址参数格式 */
     private static final String URL_PATTERN = "^https?://\\S+$";
 
     private static final Set<String> VALUES =
@@ -60,7 +61,7 @@ public enum SysMessageTemplateParamType {
                     .map(SysMessageTemplateParamType::getValue)
                     .collect(Collectors.toSet());
 
-    /** 参数类型值。 */
+    /** 参数类型值 */
     private final String value;
 
     public static boolean contains(String value) {

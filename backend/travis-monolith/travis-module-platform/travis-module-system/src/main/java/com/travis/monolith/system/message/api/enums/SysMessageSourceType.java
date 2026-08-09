@@ -10,12 +10,15 @@ public enum SysMessageSourceType {
     /** 后台人工推送。 */
     MANUAL("MANUAL"),
 
+    /** 系统自动推送。 */
+    SYSTEM("SYSTEM"),
+
     /** 系统公告。 */
     NOTICE("NOTICE"),
 
     /** 版本更新。 */
     VERSION("VERSION");
 
-    /** 业务来源类型值。 */
+    /** 消息来源类型值。 */
     private final String value;
 }

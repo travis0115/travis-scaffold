@@ -2,7 +2,6 @@ package com.travis.monolith.system.message.api.request;
 
 import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.common.web.constant.LoginType;
-import com.travis.monolith.system.message.api.constant.SysMessageConstraints;
 import com.travis.monolith.system.message.api.enums.SysMessageReceiverScope;
 import com.travis.monolith.system.message.api.enums.SysMessageReceiverType;
 import com.travis.monolith.system.message.api.enums.SysMessageSourceType;
@@ -36,7 +35,7 @@ public class SysSourceMessagePublishReq {
 
     /** 消息标题。 */
     @NotBlank(message = "消息标题不能为空")
-    @Size(max = SysMessageConstraints.TITLE_MAX_LENGTH, message = "消息标题长度不能超过255个字符")
+    @Size(max = 255, message = "消息标题长度不能超过255个字符")
     private String title;
 
     /** 接收端登录体系：admin/app。 */
@@ -50,7 +49,7 @@ public class SysSourceMessagePublishReq {
     private Integer receiverScope;
 
     /** 接收对象ID列表，全部用户时为空。 */
-    @Size(max = SysMessageConstraints.RECEIVER_VALUES_MAX_SIZE, message = "接收对象数量不能超过1000个")
+    @Size(max = 1000, message = "接收对象数量不能超过1000个")
     private List<@NotNull(message = "接收对象ID不能为空") @Positive(message = "接收对象ID必须为正数") Long>
             receiverValues;
 

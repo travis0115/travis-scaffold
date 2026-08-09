@@ -1,11 +1,9 @@
 package com.travis.monolith.system.message.internal.api;
 
-import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.web.core.xss.HtmlSanitizer;
 import com.travis.monolith.system.message.api.SysMessageApi;
-import com.travis.monolith.system.message.api.constant.SysMessageConstraints;
 import com.travis.monolith.system.message.api.enums.SysMessageChannel;
 import com.travis.monolith.system.message.api.enums.SysMessagePushType;
 import com.travis.monolith.system.message.api.enums.SysMessageReceiverScope;
@@ -28,7 +26,8 @@ public class SysMessageApiImpl implements SysMessageApi {
 
     @Override
     @Transactional
-    public void publishToUsers(String title, String content, Collection<Long> userIds) {
+    public void publishToUsers(
+            String receiverType, String title, String content, Collection<Long> userIds) {
         if (userIds == null || userIds.isEmpty()) {
             return;
         }
@@ -36,10 +35,8 @@ public class SysMessageApiImpl implements SysMessageApi {
         if (sanitizedContent == null || sanitizedContent.isBlank()) {
             throw new BizException(CommonErrorCode.VALIDATE_FAILED, "消息内容清洗后不能为空");
         }
-        if (sanitizedContent.length() > SysMessageConstraints.CONTENT_MAX_LENGTH) {
-            throw new BizException(
-                    CommonErrorCode.VALIDATE_FAILED,
-                    "消息内容清洗后长度不能超过" + SysMessageConstraints.CONTENT_MAX_LENGTH + "个字符");
+        if (sanitizedContent.length() > 5000) {
+            throw new BizException(CommonErrorCode.VALIDATE_FAILED, "消息内容清洗后长度不能超过5000个字符");
         }
         var request = new SysMessageCreateReq();
         request.setTitle(title);
@@ -47,10 +44,10 @@ public class SysMessageApiImpl implements SysMessageApi {
         request.setMessageType(SysMessageType.SYSTEM.getValue());
         request.setPushType(SysMessagePushType.MANUAL.getValue());
         request.setChannel(SysMessageChannel.IN_APP.getValue());
-        request.setReceiverType(LoginType.ADMIN);
+        request.setReceiverType(receiverType);
         request.setReceiverScope(SysMessageReceiverScope.USER.getValue());
         request.setReceiverValues(List.copyOf(userIds));
-        Long messageId = messageService.create(request);
+        Long messageId = messageService.createSystem(request);
         messageService.pushAutomatic(messageId);
     }
 

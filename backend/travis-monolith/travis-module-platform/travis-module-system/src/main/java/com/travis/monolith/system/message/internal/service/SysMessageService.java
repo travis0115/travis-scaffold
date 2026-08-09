@@ -20,13 +20,16 @@ public interface SysMessageService extends IService<SysMessage> {
     /** 创建消息并返回消息 ID。 */
     Long create(SysMessageCreateReq req);
 
+    /** 创建系统自动消息并返回消息 ID。 */
+    Long createSystem(SysMessageCreateReq req);
+
     /** 更新未发布消息。 */
     void update(Long id, SysMessageUpdateReq req);
 
     /** 手动推送指定消息。 */
     void push(Long id);
 
-    /** 由自动任务推送指定消息。 */
+    /** 推送指定的系统自动消息。 */
     void pushAutomatic(Long id);
 
     /** 撤回已发布消息。 */

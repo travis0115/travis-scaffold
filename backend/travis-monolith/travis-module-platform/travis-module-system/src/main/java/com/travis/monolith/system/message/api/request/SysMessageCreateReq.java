@@ -4,7 +4,6 @@ import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.common.validation.annotation.JsonValue;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.framework.web.core.annotation.SanitizeHtml;
-import com.travis.monolith.system.message.api.constant.SysMessageConstraints;
 import com.travis.monolith.system.message.api.enums.*;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
@@ -19,12 +18,12 @@ import lombok.Data;
 @Data
 public class SysMessageCreateReq {
     /** 消息标题。 */
-    @Size(max = SysMessageConstraints.TITLE_MAX_LENGTH, message = "消息标题长度不能超过255个字符")
+    @Size(max = 255, message = "消息标题长度不能超过255个字符")
     private String title;
 
     /** 消息 HTML 内容。 */
     @SanitizeHtml
-    @Size(max = SysMessageConstraints.CONTENT_MAX_LENGTH, message = "消息内容长度不能超过5000个字符")
+    @Size(max = 5000, message = "消息内容长度不能超过5000个字符")
     private String content;
 
     /** 消息类型。 */
@@ -42,14 +41,14 @@ public class SysMessageCreateReq {
     private String channel;
 
     /** 点击消息后的跳转地址。 */
-    @Size(max = SysMessageConstraints.JUMP_URL_MAX_LENGTH, message = "跳转链接长度不能超过500个字符")
+    @Size(max = 500, message = "跳转链接长度不能超过500个字符")
     private String jumpUrl;
 
     /** 消息模板 ID。 */
     private Long templateId;
 
     /** 消息模板渲染参数，使用 JSON 对象格式。 */
-    @Size(max = SysMessageConstraints.TEMPLATE_PARAMS_MAX_LENGTH, message = "模板参数长度不能超过4000个字符")
+    @Size(max = 4000, message = "模板参数长度不能超过4000个字符")
     @JsonValue(message = "模板参数必须是合法JSON对象")
     private String templateParams;
 
@@ -64,7 +63,7 @@ public class SysMessageCreateReq {
     private Integer receiverScope;
 
     /** 指定接收范围对应的用户、角色或部门 ID 列表。 */
-    @Size(max = SysMessageConstraints.RECEIVER_VALUES_MAX_SIZE, message = "接收对象数量不能超过1000个")
+    @Size(max = 1000, message = "接收对象数量不能超过1000个")
     private List<@NotNull(message = "接收对象ID不能为空") @Positive(message = "接收对象ID必须为正数") Long>
             receiverValues;
 
@@ -114,7 +113,7 @@ public class SysMessageCreateReq {
     /** 校验外部推送通道是否选择消息模板。 */
     @AssertTrue(message = "非站内信通道必须选择消息模板")
     public boolean isExternalChannelTemplateValid() {
-        return !SysMessageChannel.isExternal(channel) || templateId != null;
+        return SysMessageChannel.isInternal(channel) || templateId != null;
     }
 
     /** 校验定时推送是否设置发布时间。 */

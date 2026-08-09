@@ -10,14 +10,11 @@ public enum SysMessageType {
     /** 系统通知。 */
     SYSTEM(1),
 
-    /** 业务消息。 */
-    BUSINESS(2),
-
     /** 系统公告。 */
-    NOTICE(3),
+    NOTICE(2),
 
     /** 版本更新。 */
-    VERSION_UPDATE(4);
+    VERSION_UPDATE(3);
 
     /** 消息类型值。 */
     private final Integer value;

@@ -1,5 +1,6 @@
 package com.travis.monolith.ops.job.internal.quartz;
 
+import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.framework.quartz.core.QuartzDispatchJob;
 import com.travis.infrastructure.framework.quartz.core.QuartzJobExecutionObserver;
 import com.travis.monolith.ops.job.api.enums.OpsJobLogStatus;
@@ -119,6 +120,7 @@ public class OpsQuartzExecutionObserver implements QuartzJobExecutionObserver {
         }
         try {
             messageApi.publishToUsers(
+                    LoginType.ADMIN,
                     "任务执行失败：" + job.getJobName(),
                     "任务处理器："
                             + job.getHandlerName()

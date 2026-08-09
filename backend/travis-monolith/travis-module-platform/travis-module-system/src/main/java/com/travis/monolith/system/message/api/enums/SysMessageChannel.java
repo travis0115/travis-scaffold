@@ -1,10 +1,11 @@
 package com.travis.monolith.system.message.api.enums;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 
 /** 消息推送通道枚举。 */
 @Getter
@@ -32,8 +33,8 @@ public enum SysMessageChannel {
         return VALUES.contains(value);
     }
 
-    public static boolean isExternal(String value) {
-        return !IN_APP.value.equals(value);
+    public static boolean isInternal(String value) {
+        return IN_APP.value.equals(value);
     }
 
     /** 判断通道是否支持跳转地址。 */

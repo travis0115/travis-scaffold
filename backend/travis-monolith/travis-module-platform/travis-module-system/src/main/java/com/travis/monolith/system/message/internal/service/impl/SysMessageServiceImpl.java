@@ -15,7 +15,6 @@ import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.dept.api.SysDeptApi;
 import com.travis.monolith.system.file.api.SysFileApi;
 import com.travis.monolith.system.message.api.SysMessageReceiverTargetValidator;
-import com.travis.monolith.system.message.api.constant.SysMessageConstraints;
 import com.travis.monolith.system.message.api.constant.SysMessageTemplatePattern;
 import com.travis.monolith.system.message.api.enums.*;
 import com.travis.monolith.system.message.api.request.*;
@@ -113,6 +112,18 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     @Override
     @Transactional
     public Long create(SysMessageCreateReq req) {
+        return create(req, SysMessageSourceType.MANUAL);
+    }
+
+    /** 创建系统自动消息。 */
+    @Override
+    @Transactional
+    public Long createSystem(SysMessageCreateReq req) {
+        return create(req, SysMessageSourceType.SYSTEM);
+    }
+
+    /** 按指定独立消息来源创建消息。 */
+    private Long create(SysMessageCreateReq req, SysMessageSourceType sourceType) {
         req.setReceiverValues(
                 validateReceiver(
                         req.getReceiverType(), req.getReceiverScope(), req.getReceiverValues()));
@@ -120,7 +131,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         validatePush(req.getPushType(), req.getPublishTime());
         var entity = converter.toEntity(req);
         entity.setMessageType(SysMessageType.SYSTEM.getValue());
-        entity.setSourceType(SysMessageSourceType.MANUAL.getValue());
+        entity.setSourceType(sourceType.getValue());
         entity.setSourceId(null);
         entity.setStatus(SysMessageStatus.PENDING.getValue());
         if (SysMessagePushType.MANUAL.getValue().equals(req.getPushType())) {
@@ -196,7 +207,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     @Transactional
     public void pushAutomatic(Long id) {
         var entity = getByIdForUpdateOrThrow(id);
-        ensureManualMessage(entity);
+        ensureSystemMessage(entity);
         if (!SysMessageStatus.PENDING.getValue().equals(entity.getStatus())) {
             throw new BizException(CommonErrorCode.BAD_REQUEST);
         }
@@ -488,6 +499,13 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         }
     }
 
+    /** 校验消息是否为系统自动消息。 */
+    private void ensureSystemMessage(SysMessage message) {
+        if (!SysMessageSourceType.SYSTEM.getValue().equals(message.getSourceType())) {
+            throw new BizException(CommonErrorCode.BAD_REQUEST);
+        }
+    }
+
     /** 判断消息类型与业务来源类型是否匹配。 */
     private boolean isSourceTypeMatched(Integer messageType, String sourceType) {
         return (SysMessageSourceType.NOTICE.getValue().equals(sourceType)
@@ -516,7 +534,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         if (receiverValues == null || receiverValues.isEmpty()) {
             throw new BizException(CommonErrorCode.BAD_REQUEST);
         }
-        if (receiverValues.size() > SysMessageConstraints.RECEIVER_VALUES_MAX_SIZE) {
+        if (receiverValues.size() > 1000) {
             throw new BizException(CommonErrorCode.VALIDATE_FAILED, "接收对象ID不合法或数量超过1000个");
         }
         var normalized = receiverValues.stream().distinct().toList();
@@ -632,11 +650,9 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
 
     /** 校验模板渲染后的字段长度，避免数据库截断或外部通道收到超限内容。 */
     static void validateRenderedFields(SysMessage message) {
-        validateRenderedLength(message.getTitle(), SysMessageConstraints.TITLE_MAX_LENGTH, "消息标题");
-        validateRenderedLength(
-                message.getContent(), SysMessageConstraints.CONTENT_MAX_LENGTH, "消息内容");
-        validateRenderedLength(
-                message.getJumpUrl(), SysMessageConstraints.JUMP_URL_MAX_LENGTH, "跳转地址");
+        validateRenderedLength(message.getTitle(), 255, "消息标题");
+        validateRenderedLength(message.getContent(), 5000, "消息内容");
+        validateRenderedLength(message.getJumpUrl(), 500, "跳转地址");
     }
 
     private static void validateRenderedLength(String value, int maxLength, String fieldName) {
