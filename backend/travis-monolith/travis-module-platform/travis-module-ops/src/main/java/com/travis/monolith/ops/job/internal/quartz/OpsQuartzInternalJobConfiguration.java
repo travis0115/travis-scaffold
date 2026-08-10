@@ -11,11 +11,9 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.scheduling.annotation.EnableScheduling;
 
 /** 运维模块内部维护任务的 Quartz 配置。 */
 @Configuration(proxyBeanMethods = false)
-@EnableScheduling
 public class OpsQuartzInternalJobConfiguration {
 
     /** 过期日志清理任务的固定标识。 */

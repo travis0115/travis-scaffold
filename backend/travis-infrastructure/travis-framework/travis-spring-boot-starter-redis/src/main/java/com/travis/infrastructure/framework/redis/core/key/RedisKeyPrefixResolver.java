@@ -5,13 +5,11 @@ import lombok.Getter;
 import org.springframework.util.StringUtils;
 
 /** Redis 项目级 key 前缀解析器。 */
+@SuppressWarnings("ClassCanBeRecord")
 @Getter
 public class RedisKeyPrefixResolver {
 
-    /**
-     * -- GETTER --
-     * 获取规范化后的项目级 Redis 键前缀。
-     */
+    /** -- GETTER -- 获取规范化后的项目级 Redis 键前缀。 */
     private final String keyPrefix;
 
     public RedisKeyPrefixResolver(TravisRedisProperties properties) {

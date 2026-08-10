@@ -8,6 +8,7 @@ import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
+import com.travis.infrastructure.framework.quartz.core.QuartzSyncExecutor;
 import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
 import com.travis.infrastructure.framework.redis.core.annotation.DistributedLockNamespace;
 import com.travis.infrastructure.framework.web.core.xss.HtmlSanitizer;
@@ -27,7 +28,7 @@ import com.travis.monolith.system.message.internal.entity.SysMessage;
 import com.travis.monolith.system.message.internal.mapper.SysMessageMapper;
 import com.travis.monolith.system.message.internal.model.SysMessageAudience;
 import com.travis.monolith.system.message.internal.notification.SysMessageInboxNotifier;
-import com.travis.monolith.system.message.internal.quartz.SysMessageScheduleCoordinator;
+import com.travis.monolith.system.message.internal.quartz.SysMessageScheduledPushScheduler;
 import com.travis.monolith.system.message.internal.service.SysMessageReceiverService;
 import com.travis.monolith.system.message.internal.service.SysMessageService;
 import com.travis.monolith.system.message.internal.service.SysMessageTemplateService;
@@ -64,7 +65,8 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     private final SysMessageInboxNotifier inboxNotifier;
     private final SysFileApi fileApi;
     private final SysMessageChannelHandlerRegistry channelHandlerRegistry;
-    private final SysMessageScheduleCoordinator scheduleCoordinator;
+    private final SysMessageScheduledPushScheduler scheduledPushScheduler;
+    private final QuartzSyncExecutor quartzSyncExecutor;
     private final SysUserApi sysUserApi;
     private final SysRoleApi sysRoleApi;
     private final SysDeptApi sysDeptApi;
@@ -359,7 +361,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         boolean visible = SysMessageStatus.SENT.getValue().equals(entity.getStatus());
         messageReceiverService.deleteByMessageId(entity.getId());
         baseMapper.deletePhysicallyById(entity.getId());
-        deleteScheduledTriggerAfterCommit(entity.getId());
+        syncScheduledTriggerAfterCommit(entity.getId());
         if (visible) {
             evictUnreadCache(entity);
             notifyInboxChanged(SysMessageWebSocketEvent.DELETED, entity);
@@ -398,7 +400,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         boolean visible = SysMessageStatus.SENT.getValue().equals(entity.getStatus());
         messageReceiverService.deleteByMessageId(id);
         removeById(id);
-        deleteScheduledTriggerAfterCommit(id);
+        syncScheduledTriggerAfterCommit(id);
         if (visible) {
             evictUnreadCache(entity);
             notifyInboxChanged(SysMessageWebSocketEvent.DELETED, entity);
@@ -454,14 +456,10 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         syncScheduledTriggerAfterCommit(message.getId());
     }
 
-    /** 事务提交后删除指定消息的一次性任务。 */
-    private void deleteScheduledTriggerAfterCommit(Long messageId) {
-        syncScheduledTriggerAfterCommit(messageId);
-    }
-
     /** 事务提交后按消息最新数据库状态同步一次性任务。 */
     private void syncScheduledTriggerAfterCommit(Long messageId) {
-        scheduleCoordinator.syncAfterCommit(messageId);
+        quartzSyncExecutor.executeAfterCommit(
+                "system-message:" + messageId, () -> scheduledPushScheduler.sync(messageId));
     }
 
     /** 按消息当前及补充接收范围通知收件箱变化。 */
