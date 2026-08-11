@@ -48,6 +48,7 @@ const versionTagStyle = {
   color: 'hsl(var(--primary))',
 };
 let notificationSocket: undefined | WebSocket;
+let notificationSocketConnectionGeneration = 0;
 let notificationSocketReconnectTimer: ReturnType<typeof setTimeout> | undefined;
 let notificationSocketClosedByClient = false;
 let notificationSocketReconnectDelay = 5000;
@@ -199,13 +200,18 @@ async function buildNotificationSocketUrl() {
 
 async function connectNotificationSocket() {
   if (!accessStore.accessToken || notificationSocket) return;
+  const connectionGeneration = notificationSocketConnectionGeneration;
   let socketUrl: string;
   try {
     socketUrl = await buildNotificationSocketUrl();
   } catch {
+    if (connectionGeneration === notificationSocketConnectionGeneration) {
+      scheduleNotificationSocketReconnect();
+    }
     return;
   }
   if (
+    connectionGeneration !== notificationSocketConnectionGeneration ||
     notificationSocketClosedByClient ||
     !accessStore.accessToken ||
     notificationSocket
@@ -226,6 +232,7 @@ async function connectNotificationSocket() {
 
 function handleNotificationSocketOpen() {
   notificationSocketReconnectDelay = 5000;
+  void loadNotifications();
 }
 
 function handleNotificationSocketMessage(event: MessageEvent) {
@@ -247,11 +254,19 @@ function handleNotificationSocketClose(event: CloseEvent) {
   if (notificationSocket === event.currentTarget) {
     notificationSocket = undefined;
   }
+  scheduleNotificationSocketReconnect();
+}
+
+function scheduleNotificationSocketReconnect() {
   if (notificationSocketClosedByClient || !accessStore.accessToken) {
     return;
   }
+  if (notificationSocketReconnectTimer) return;
   notificationSocketReconnectTimer = setTimeout(
-    () => void connectNotificationSocket(),
+    () => {
+      notificationSocketReconnectTimer = undefined;
+      void connectNotificationSocket();
+    },
     notificationSocketReconnectDelay,
   );
   notificationSocketReconnectDelay = Math.min(
@@ -268,6 +283,7 @@ function handleNotificationSocketError(event: Event) {
 
 function closeNotificationSocket() {
   notificationSocketClosedByClient = true;
+  notificationSocketConnectionGeneration += 1;
   notificationSocketReconnectDelay = 5000;
   if (notificationSocketReconnectTimer) {
     clearTimeout(notificationSocketReconnectTimer);
@@ -376,7 +392,10 @@ watch(
   () => accessStore.accessToken,
   (token) => {
     closeNotificationSocket();
-    if (token) void connectNotificationSocket();
+    if (token) {
+      notificationSocketClosedByClient = false;
+      void connectNotificationSocket();
+    }
   },
 );
 </script>

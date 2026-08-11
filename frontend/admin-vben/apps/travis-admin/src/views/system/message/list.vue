@@ -5,7 +5,7 @@ import type {
 } from '#/adapter/vxe-table';
 import type { SystemMessageApi } from '#/api';
 
-import { ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 
 import {
   Page,
@@ -73,20 +73,36 @@ const [Grid, gridApi] = useVbenVxeGrid({
   } as VxeTableGridOptions<SystemMessageApi.Message>,
 });
 
+function refreshMessagePage() {
+  void gridApi.query();
+}
+
+onMounted(() => {
+  window.addEventListener('travis:message-inbox-changed', refreshMessagePage);
+});
+
+onUnmounted(() => {
+  window.removeEventListener(
+    'travis:message-inbox-changed',
+    refreshMessagePage,
+  );
+});
+
 async function onActionClick({
   code,
   row,
 }: OnActionClickParams<SystemMessageApi.Message>) {
   if (code === 'edit') formDrawerApi.setData(row).open();
-  if (code === 'delete') deleteMessage(row.id).then(() => gridApi.query());
-  if (code === 'push') {
-    if (row.status === 2) {
-      try {
-        await vbenConfirm(`确认重新推送消息“${row.title}”吗？`, '重新推送');
-      } catch {
-        return;
-      }
+  if (code === 'delete') {
+    try {
+      await vbenConfirm(`确认删除消息“${row.title}”吗？`, '删除消息');
+    } catch {
+      return;
     }
+    await deleteMessage(row.id);
+    await gridApi.query();
+  }
+  if (code === 'push') {
     await pushMessage(row.id);
     await gridApi.query();
   }

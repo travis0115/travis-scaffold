@@ -197,10 +197,6 @@ function toFormValues(detail: SystemMessageApi.Message) {
       !hasTemplate && channel === 'IN_APP' ? detail.content : undefined,
     plainContent:
       !hasTemplate && channel !== 'IN_APP' ? detail.content : undefined,
-    publishTime:
-      typeof detail.publishTime === 'string'
-        ? detail.publishTime.slice(0, 16)
-        : detail.publishTime,
     title: hasTemplate ? undefined : detail.title,
   };
 }
@@ -618,6 +614,19 @@ const [Drawer, drawerApi] = useVbenDrawer({
         hide: Boolean(data?.id),
       },
     ]);
+    if (data?.id) {
+      await formApi.setFieldValue('pushType', data.pushType, false);
+    } else {
+      formData.value = undefined;
+      templateParamRows.value = [];
+      selectedTemplateId.value = undefined;
+      await formApi.setValues({
+        channel: 'IN_APP',
+        pushType: 0,
+        receiverScope: 0,
+        receiverType: 'admin',
+      });
+    }
     const [roles, departments] = await Promise.all([
       getRoleList(),
       isDeptEnabled() ? getDeptTree() : Promise.resolve([]),
@@ -664,16 +673,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
         await setSelectedUsers(options);
       }
       updateTemplateParamRows(detail.templateId, detail.templateParams);
-    } else {
-      formData.value = undefined;
-      templateParamRows.value = [];
-      selectedTemplateId.value = undefined;
-      await formApi.setValues({
-        channel: 'IN_APP',
-        pushType: 0,
-        receiverScope: 0,
-        receiverType: 'admin',
-      });
     }
   },
 });

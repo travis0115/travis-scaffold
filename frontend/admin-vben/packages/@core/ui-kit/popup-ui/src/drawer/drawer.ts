@@ -170,7 +170,7 @@ export interface DrawerApiOptions extends DrawerState {
    * @param isOpen
    * @returns
    */
-  onOpenChange?: (isOpen: boolean) => void;
+  onOpenChange?: (isOpen: boolean) => MaybePromise<void>;
   /**
    * 弹窗打开动画结束的回调
    * @returns

@@ -300,7 +300,7 @@ setupVbenVxeTable({
             Button,
             {
               ...props,
-              ...opt,
+              ...objectOmit(opt, ['popconfirm']),
               icon: undefined,
               onClick: listen
                 ? () =>
@@ -327,6 +327,7 @@ setupVbenVxeTable({
 
         function renderConfirm(opt: Recordable<any>) {
           let viewportWrapper: HTMLElement | null = null;
+          const popconfirm = opt.popconfirm === true ? {} : opt.popconfirm;
           return h(
             Popconfirm,
             {
@@ -335,9 +336,11 @@ setupVbenVxeTable({
                 return document.body;
               },
               placement: 'topLeft',
-              title: $t('ui.actionTitle.delete', [attrs?.nameTitle || '']),
+              title:
+                popconfirm?.title ??
+                $t('ui.actionTitle.delete', [attrs?.nameTitle || '']),
               ...props,
-              ...opt,
+              ...objectOmit(opt, ['popconfirm']),
               icon: undefined,
               onOpenChange: (open: boolean) => {
                 if (open) {
@@ -359,16 +362,19 @@ setupVbenVxeTable({
                 h(
                   'div',
                   { class: 'truncate' },
-                  $t('ui.actionMessage.deleteConfirm', [
-                    row[attrs?.nameField || 'name'],
-                  ]),
+                  popconfirm?.description ??
+                    $t('ui.actionMessage.deleteConfirm', [
+                      row[attrs?.nameField || 'name'],
+                    ]),
                 ),
             },
           );
         }
 
         const btns = operations.map((opt) =>
-          opt.code === 'delete' ? renderConfirm(opt) : renderBtn(opt),
+          (opt.code === 'delete' && opt.popconfirm !== false) || opt.popconfirm
+            ? renderConfirm(opt)
+            : renderBtn(opt),
         );
         if (btns.length === 0) {
           return h('span', {}, '-');

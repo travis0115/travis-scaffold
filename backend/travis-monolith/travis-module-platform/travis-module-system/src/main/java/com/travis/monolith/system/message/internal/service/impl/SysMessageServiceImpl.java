@@ -165,7 +165,8 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
         entity.setMessageType(SysMessageType.SYSTEM.getValue());
         entity.setSourceType(SysMessageSourceType.MANUAL.getValue());
         entity.setSourceId(null);
-        if (!SysMessageStatus.REVOKED.getValue().equals(entity.getStatus())) {
+        if (SysMessagePushType.SCHEDULED.getValue().equals(req.getPushType())
+                || !SysMessageStatus.REVOKED.getValue().equals(entity.getStatus())) {
             entity.setStatus(SysMessageStatus.PENDING.getValue());
         }
         if (SysMessagePushType.MANUAL.getValue().equals(req.getPushType())) {
@@ -183,6 +184,9 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     public void push(Long id) {
         var entity = getByIdForUpdateOrThrow(id);
         ensureManualMessage(entity);
+        if (SysMessagePushType.SCHEDULED.getValue().equals(entity.getPushType())) {
+            throw new BizException(SystemErrorCode.MESSAGE_SCHEDULED_MANUAL_PUSH_NOT_SUPPORTED);
+        }
         if (SysMessageStatus.SENT.getValue().equals(entity.getStatus())) {
             return;
         }
@@ -387,6 +391,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
                 message.getPublishTime())) {
             return false;
         }
+        resetReceiverReadStatus(message.getId());
         evictUnreadCache(message);
         return true;
     }
@@ -397,14 +402,12 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     public void delete(Long id) {
         var entity = getByIdForUpdateOrThrow(id);
         ensureManualMessage(entity);
-        boolean visible = SysMessageStatus.SENT.getValue().equals(entity.getStatus());
+        if (SysMessageStatus.SENT.getValue().equals(entity.getStatus())) {
+            throw new BizException(SystemErrorCode.MESSAGE_SENT_DELETE_NOT_SUPPORTED);
+        }
         messageReceiverService.deleteByMessageId(id);
         removeById(id);
         syncScheduledTriggerAfterCommit(id);
-        if (visible) {
-            evictUnreadCache(entity);
-            notifyInboxChanged(SysMessageWebSocketEvent.DELETED, entity);
-        }
     }
 
     /** 原子占用待发送消息后执行通道发送，避免手动任务与 Quartz 并发重复推送。 */

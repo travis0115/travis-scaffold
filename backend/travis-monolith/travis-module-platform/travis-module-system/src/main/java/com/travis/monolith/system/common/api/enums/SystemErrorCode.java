@@ -42,6 +42,8 @@ public enum SystemErrorCode implements ErrorCode {
     MESSAGE_CHANNEL_UNAVAILABLE("SYS_901", "当前推送通道暂不可用"),
     MESSAGE_CHANNEL_REVOKE_NOT_SUPPORTED("SYS_902", "当前推送通道不支持撤回"),
     MESSAGE_NOT_FOUND("SYS_903", "未找到消息"),
+    MESSAGE_SCHEDULED_MANUAL_PUSH_NOT_SUPPORTED("SYS_904", "定时消息不支持手动推送"),
+    MESSAGE_SENT_DELETE_NOT_SUPPORTED("SYS_905", "已推送消息请先撤回"),
 
     /* file模块 1000-1099 */
     FILE_STORAGE_DEFAULT_REQUIRED("SYS_1000", "系统内必须存在默认存储配置"),

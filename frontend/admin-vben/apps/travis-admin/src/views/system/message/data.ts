@@ -254,7 +254,6 @@ export const useFormSchema = (
       optionType: 'button',
       options: manualMessagePushTypeOptions,
     },
-    defaultValue: 0,
     fieldName: 'pushType',
     hideRequiredMark: true,
     label: '推送方式',
@@ -504,14 +503,26 @@ export function useColumns<T>(
           [
             {
               code: 'push',
+              popconfirm: (row: SystemMessageApi.Message) => ({
+                description: `确认推送消息“${row.title}”吗？`,
+                title: '推送消息',
+              }),
               show: (row: SystemMessageApi.Message) =>
-                row.sourceType === 'MANUAL' && row.status === 0,
+                row.sourceType === 'MANUAL' &&
+                row.pushType === 0 &&
+                row.status === 0,
               text: '推送',
             },
             {
               code: 'push',
+              popconfirm: (row: SystemMessageApi.Message) => ({
+                description: `确认重新推送消息“${row.title}”吗？`,
+                title: '重新推送',
+              }),
               show: (row: SystemMessageApi.Message) =>
-                row.sourceType === 'MANUAL' && row.status === 2,
+                row.sourceType === 'MANUAL' &&
+                row.pushType === 0 &&
+                row.status === 2,
               text: '重新推送',
             },
             {
@@ -536,6 +547,7 @@ export function useColumns<T>(
             },
             {
               code: 'delete',
+              popconfirm: false,
               show: (row: SystemMessageApi.Message) =>
                 row.sourceType === 'MANUAL' && row.status !== 1,
             },

@@ -98,6 +98,24 @@ describe('drawerApi', () => {
     expect(onOpenChange).toHaveBeenCalledWith(true);
   });
 
+  it('should show loading while async open initialization is pending', async () => {
+    let finishInitialization!: () => void;
+    const initialization = new Promise<void>((resolve) => {
+      finishInitialization = resolve;
+    });
+    const drawerApiWithHook = new DrawerApi({
+      onOpenChange: () => initialization,
+    });
+
+    drawerApiWithHook.open();
+
+    expect(drawerApiWithHook.store.state.loading).toBe(true);
+    finishInitialization();
+    await initialization;
+    await Promise.resolve();
+    expect(drawerApiWithHook.store.state.loading).toBe(false);
+  });
+
   it('should call onClosed callback when provided', () => {
     const onClosed = vi.fn();
     const drawerApiWithHook = new DrawerApi({ onClosed });

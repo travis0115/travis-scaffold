@@ -20,6 +20,8 @@ export class DrawerApi {
     | 'onOpened'
   >;
 
+  private openChangeSequence = 0;
+
   // private prevState!: DrawerState;
   private state!: DrawerState;
 
@@ -65,7 +67,7 @@ export class DrawerApi {
       const prevIsOpen = this.state?.isOpen;
       this.state = state;
       if (state?.isOpen !== prevIsOpen) {
-        this.api.onOpenChange?.(!!state?.isOpen);
+        void this.handleOpenChange(!!state?.isOpen);
       }
     });
     this.state = this.store.state;
@@ -174,5 +176,19 @@ export class DrawerApi {
    */
   unlock() {
     return this.lock(false);
+  }
+
+  private async handleOpenChange(isOpen: boolean) {
+    const sequence = ++this.openChangeSequence;
+    if (isOpen) {
+      this.setState({ loading: true });
+    }
+    try {
+      await this.api.onOpenChange?.(isOpen);
+    } finally {
+      if (sequence === this.openChangeSequence) {
+        this.setState({ loading: false });
+      }
+    }
   }
 }

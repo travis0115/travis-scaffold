@@ -92,9 +92,11 @@ export function useVbenDrawer<
     ...defaultOptions,
   } as DrawerApiOptions;
 
-  mergedOptions.onOpenChange = (isOpen: boolean) => {
-    options.onOpenChange?.(isOpen);
-    injectData.options?.onOpenChange?.(isOpen);
+  mergedOptions.onOpenChange = async (isOpen: boolean) => {
+    await Promise.all([
+      options.onOpenChange?.(isOpen),
+      injectData.options?.onOpenChange?.(isOpen),
+    ]);
   };
 
   const onClosed = mergedOptions.onClosed;
