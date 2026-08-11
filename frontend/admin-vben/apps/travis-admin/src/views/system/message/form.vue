@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { VbenFormSchema } from '#/adapter/form';
 import type { SystemMessageApi, SystemUserApi } from '#/api';
+import type { Id } from '#/api/types';
 
 import { computed, nextTick, ref } from 'vue';
 
@@ -36,9 +37,9 @@ const emit = defineEmits(['success']);
 const formData = ref<SystemMessageApi.Message>();
 const templateOptions = ref<SystemMessageApi.MessageTemplate[]>([]);
 const templateParamRows = ref<TemplateParamRow[]>([]);
-const selectedTemplateId = ref<number | string>();
+const selectedTemplateId = ref<Id>();
 const deptTreeData = ref<any[]>([]);
-const selectedUserIds = ref<Array<number | string>>([]);
+const selectedUserIds = ref<Id[]>([]);
 const selectedUserOptions = ref<SystemUserApi.UserOption[]>([]);
 const paramFormOptions = {
   handleValuesChange: () => {
@@ -96,16 +97,16 @@ function trimDeptTree(departments: any[]): any[] {
   }));
 }
 
-function collectDescendantIds(node: any, ids: Set<number>) {
+function collectDescendantIds(node: any, ids: Set<Id>) {
   node.children?.forEach((child: any) => {
     ids.add(child.id);
     collectDescendantIds(child, ids);
   });
 }
 
-function normalizeDeptIds(ids: number[] = []) {
+function normalizeDeptIds(ids: Id[] = []) {
   const selected = new Set(ids);
-  const descendants = new Set<number>();
+  const descendants = new Set<Id>();
   const visit = (nodes: any[]) => {
     nodes.forEach((node) => {
       if (selected.has(node.id)) {
@@ -120,12 +121,13 @@ function normalizeDeptIds(ids: number[] = []) {
   return ids.filter((id) => !descendants.has(id));
 }
 
-function formatUserOption(item: SystemUserApi.UserOption, receiverType: string) {
+function formatUserOption(
+  item: SystemUserApi.UserOption,
+  receiverType: string,
+) {
   const name = item.nickname || item.username;
   const suffix =
-    receiverType === 'app'
-      ? item.username || item.mobile
-      : item.username;
+    receiverType === 'app' ? item.username || item.mobile : item.username;
   return {
     label: suffix && suffix !== name ? `${name}（${suffix}）` : name,
     value: item.id,
@@ -134,7 +136,7 @@ function formatUserOption(item: SystemUserApi.UserOption, receiverType: string) 
 
 async function setSelectedUsers(
   options: SystemUserApi.UserOption[],
-  selectedIds?: Array<number | string>,
+  selectedIds?: Id[],
 ) {
   const values = await formApi.getValues();
   selectedUserOptions.value = options;
@@ -250,10 +252,7 @@ function schemaToParamRows(
   });
 }
 
-function updateTemplateParamRows(
-  templateId?: number | string,
-  params?: string,
-) {
+function updateTemplateParamRows(templateId?: Id, params?: string) {
   selectedTemplateId.value = templateId;
   const template = templateOptions.value.find(
     (item) => String(item.id) === String(templateId),
@@ -504,10 +503,9 @@ async function handleTemplateSelected(
   await formApi.setValues(
     {
       inAppContent: undefined,
-      jumpUrl:
-        ['WECHAT_MP', 'WECHAT_OA'].includes(template.channel)
-          ? template.redirectUrl
-          : undefined,
+      jumpUrl: ['WECHAT_MP', 'WECHAT_OA'].includes(template.channel)
+        ? template.redirectUrl
+        : undefined,
       plainContent: undefined,
       templateId: template.id,
       templateName: `${template.templateName}（${template.templateCode}）`,
@@ -552,7 +550,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
         ? 0
         : selectedReceiverScope;
     const receiverField = receiverScopeFieldMap[receiverScope];
-    let receiverValues: number[] = [];
+    let receiverValues: Id[] = [];
     if (receiverField === 'deptIds') {
       receiverValues = normalizeDeptIds(values.deptIds);
     } else if (receiverField) {
@@ -561,9 +559,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
     const data: Record<string, any> = {
       ...values,
       content:
-        values.channel === 'IN_APP'
-          ? values.inAppContent
-          : values.plainContent,
+        values.channel === 'IN_APP' ? values.inAppContent : values.plainContent,
       receiverScope,
       receiverType,
       receiverValues: receiverField ? receiverValues : [],
@@ -573,7 +569,10 @@ const [Drawer, drawerApi] = useVbenDrawer({
     }
     if (values.pushType === 0) {
       delete data.publishTime;
-    } else if (typeof data.publishTime === 'string' && data.publishTime.length === 16) {
+    } else if (
+      typeof data.publishTime === 'string' &&
+      data.publishTime.length === 16
+    ) {
       data.publishTime = `${data.publishTime}:00`;
     }
     cleanFormOnlyFields(data);

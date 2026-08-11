@@ -3,12 +3,12 @@ import type { Recordable } from '@vben/types';
 
 import type { FileUploadResult } from './file';
 
-import type { PageResp } from '#/api/types';
+import type { Id as ApiId, PageResp } from '#/api/types';
 
 import { requestClient } from '#/api/request';
 
 export namespace SystemMessageApi {
-  export type Id = number | string;
+  export type Id = ApiId;
 
   export enum WebSocketEvent {
     Deleted = 'SYSTEM_MESSAGE_DELETED',
@@ -107,19 +107,17 @@ const getMessagePage = (params: Recordable<any>) =>
     '/system/message/page',
     { params },
   );
-const getMessageDetail = (id: SystemMessageApi.Id) =>
+const getMessageDetail = (id: ApiId) =>
   requestClient.get<SystemMessageApi.Message>(`/system/message/${id}`);
 const createMessage = (data: SystemMessageApi.MessageSaveRequest) =>
   requestClient.post('/system/message', data);
-const updateMessage = (
-  id: SystemMessageApi.Id,
-  data: SystemMessageApi.MessageSaveRequest,
-) => requestClient.put(`/system/message/${id}`, data);
-const deleteMessage = (id: SystemMessageApi.Id) =>
+const updateMessage = (id: ApiId, data: SystemMessageApi.MessageSaveRequest) =>
+  requestClient.put(`/system/message/${id}`, data);
+const deleteMessage = (id: ApiId) =>
   requestClient.delete(`/system/message/${id}`);
-const pushMessage = (id: SystemMessageApi.Id) =>
+const pushMessage = (id: ApiId) =>
   requestClient.put(`/system/message/${id}/push`);
-const revokeMessage = (id: SystemMessageApi.Id) =>
+const revokeMessage = (id: ApiId) =>
   requestClient.put(`/system/message/${id}/revoke`);
 const uploadMessageImage = (
   file: File,
@@ -142,7 +140,7 @@ const getMessageTemplatePage = (params: Recordable<any>) =>
     '/system/message/template/page',
     { params },
   );
-const getMessageTemplateDetail = (id: SystemMessageApi.Id) =>
+const getMessageTemplateDetail = (id: ApiId) =>
   requestClient.get<SystemMessageApi.MessageTemplate>(
     `/system/message/template/${id}`,
   );
@@ -150,10 +148,10 @@ const createMessageTemplate = (
   data: SystemMessageApi.MessageTemplateSaveRequest,
 ) => requestClient.post('/system/message/template', data);
 const updateMessageTemplate = (
-  id: SystemMessageApi.Id,
+  id: ApiId,
   data: SystemMessageApi.MessageTemplateSaveRequest,
 ) => requestClient.put(`/system/message/template/${id}`, data);
-const deleteMessageTemplate = (id: SystemMessageApi.Id) =>
+const deleteMessageTemplate = (id: ApiId) =>
   requestClient.delete(`/system/message/template/${id}`);
 
 const getRecentMessages = (limit = 10) =>
@@ -171,15 +169,15 @@ const getInboxMessagePage = (params: Recordable<any>) =>
       params,
     },
   );
-const getInboxMessageDetail = (id: number | string) =>
+const getInboxMessageDetail = (id: ApiId) =>
   requestClient.get<SystemMessageApi.UserMessageDetail>(
     `/system/message/inbox/${id}`,
   );
-const markMessageRead = (id: number | string) =>
+const markMessageRead = (id: ApiId) =>
   requestClient.put(`/system/message/inbox/${id}/read`);
 const markAllMessagesRead = () =>
   requestClient.put('/system/message/inbox/read-all');
-const deleteInboxMessage = (id: number | string) =>
+const deleteInboxMessage = (id: ApiId) =>
   requestClient.delete(`/system/message/inbox/${id}`);
 
 export {

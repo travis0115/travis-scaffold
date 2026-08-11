@@ -5,6 +5,7 @@ import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
+import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
 import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.dict.api.request.SysDictCreateReq;
@@ -102,6 +103,7 @@ public class SysDictServiceImpl extends ServiceImplX<SysDictMapper, SysDict>
     /** 新增字典类型 */
     @Override
     @Transactional
+    @DistributedLock(namespace = "system-dict", key = "'mutation'", waitTime = 5000)
     @CacheEvict(key = "'tree:enabled'")
     public void create(SysDictCreateReq req) {
         // 检查字典编码唯一性
@@ -118,6 +120,7 @@ public class SysDictServiceImpl extends ServiceImplX<SysDictMapper, SysDict>
     /** 更新字典类型 */
     @Override
     @Transactional
+    @DistributedLock(namespace = "system-dict", key = "'mutation'", waitTime = 5000)
     @Caching(evict = {@CacheEvict(key = "'tree:enabled'"), @CacheEvict(key = "'detail:'+#id")})
     public void update(Long id, SysDictUpdateReq req) {
         var dict = getByIdOrThrow(id);
@@ -137,6 +140,7 @@ public class SysDictServiceImpl extends ServiceImplX<SysDictMapper, SysDict>
     /** 修改字典类型状态 */
     @Override
     @Transactional
+    @DistributedLock(namespace = "system-dict", key = "'mutation'", waitTime = 5000)
     @Caching(evict = {@CacheEvict(key = "'tree:enabled'"), @CacheEvict(key = "'detail:'+#id")})
     public void updateStatus(Long id, Integer status) {
         var dict = getByIdOrThrow(id);
@@ -147,6 +151,7 @@ public class SysDictServiceImpl extends ServiceImplX<SysDictMapper, SysDict>
     /** 删除字典类型（同时删除其下所有字典数据项） */
     @Override
     @Transactional
+    @DistributedLock(namespace = "system-dict", key = "'mutation'", waitTime = 5000)
     @Caching(
             evict = {
                 @CacheEvict(key = "'tree:enabled'"),

@@ -5,6 +5,7 @@ import com.travis.monolith.system.file.api.response.FileUploadResp;
 import com.travis.monolith.system.file.internal.service.RichTextFileReferenceService;
 import com.travis.monolith.system.file.internal.service.SysFileService;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -46,5 +47,10 @@ public class SysFileApiImpl implements SysFileApi {
     @Override
     public String resolveManagedImageSources(String html) {
         return richTextFileReferenceService.resolveManagedImageSources(html);
+    }
+
+    @Override
+    public List<String> resolveManagedImageSources(List<String> htmlList) {
+        return richTextFileReferenceService.resolveManagedImageSources(htmlList);
     }
 }

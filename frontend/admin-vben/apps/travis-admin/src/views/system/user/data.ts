@@ -1,8 +1,5 @@
 import type { VbenFormSchema } from '#/adapter/form';
-import type {
-  OnActionClickFn,
-  VxeTableGridColumns,
-} from '#/adapter/vxe-table';
+import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { SystemUserApi } from '#/api';
 
 import { h } from 'vue';
@@ -37,6 +34,11 @@ function pickChar(chars: string) {
 
 export function useFormSchema(deptTreeData?: any[]): VbenFormSchema[] {
   const schemas: VbenFormSchema[] = [
+    {
+      component: 'Input',
+      fieldName: 'version',
+      hide: true,
+    },
     {
       component: 'Input',
       fieldName: 'username',
@@ -141,7 +143,11 @@ export function useFormSchema(deptTreeData?: any[]): VbenFormSchema[] {
       component: 'Input',
       fieldName: 'email',
       label: $t('system.user.email'),
-      rules: z.string().email('请输入有效的邮箱地址').or(z.literal('')).optional(),
+      rules: z
+        .string()
+        .email('请输入有效的邮箱地址')
+        .or(z.literal(''))
+        .optional(),
     },
     {
       component: 'RadioGroup',
@@ -185,10 +191,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
 
 export function useColumns<T = SystemUserApi.SysUser>(
   onActionClick: OnActionClickFn<T>,
-  onStatusChange?: (
-    newStatus: any,
-    row: T,
-  ) => PromiseLike<boolean | undefined>,
+  onStatusChange?: (newStatus: any, row: T) => PromiseLike<boolean | undefined>,
 ): VxeTableGridColumns {
   return [
     {

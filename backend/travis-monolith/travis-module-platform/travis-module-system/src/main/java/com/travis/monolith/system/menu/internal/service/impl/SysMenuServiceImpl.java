@@ -5,6 +5,8 @@ import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
+import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
+import com.travis.infrastructure.framework.redis.core.annotation.DistributedLockNamespace;
 import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.menu.api.enums.MenuType;
@@ -36,6 +38,7 @@ import tools.jackson.core.type.TypeReference;
 @Service
 @RequiredArgsConstructor
 @CacheConfig(cacheNames = "system:menu")
+@DistributedLockNamespace("system-menu-tree")
 public class SysMenuServiceImpl extends ServiceImplX<SysMenuMapper, SysMenu>
         implements SysMenuService {
 
@@ -65,6 +68,7 @@ public class SysMenuServiceImpl extends ServiceImplX<SysMenuMapper, SysMenu>
     /** 新增菜单 新增后自动关联到所有 admin 角色 */
     @Override
     @Transactional
+    @DistributedLock(key = "'mutation'", waitTime = 5000)
     @Caching(
             evict = {
                 @CacheEvict(key = "'tree:all'"),
@@ -89,8 +93,9 @@ public class SysMenuServiceImpl extends ServiceImplX<SysMenuMapper, SysMenu>
                 @CacheEvict(value = "system:menu:tree:vben", allEntries = true)
             })
     @Transactional
+    @DistributedLock(key = "'mutation'", waitTime = 5000)
     public void update(Long id, SysMenuUpdateReq req) {
-        var menu = baseMapper.selectByIdForUpdate(id);
+        var menu = getById(id);
         if (menu == null) {
             throw new BizException(CommonErrorCode.DATABASE_RECORD_NOT_FOUND);
         }
@@ -103,6 +108,7 @@ public class SysMenuServiceImpl extends ServiceImplX<SysMenuMapper, SysMenu>
     /** 修改菜单状态 */
     @Override
     @Transactional
+    @DistributedLock(key = "'mutation'", waitTime = 5000)
     @Caching(
             evict = {
                 @CacheEvict(key = "'permission:'+#id"),
@@ -138,7 +144,7 @@ public class SysMenuServiceImpl extends ServiceImplX<SysMenuMapper, SysMenu>
             }
             return;
         }
-        var parent = parentId == null ? null : baseMapper.selectByIdForUpdate(parentId);
+        var parent = parentId == null ? null : getById(parentId);
         if (parent == null
                 || Objects.equals(parent.getMenuType(), MenuType.BUTTON.getValue())
                 || (id != null && getMenuAndDescendantIds(id).contains(parentId))) {
@@ -149,9 +155,10 @@ public class SysMenuServiceImpl extends ServiceImplX<SysMenuMapper, SysMenu>
     /** 删除菜单及其所有子菜单，并清理角色菜单关联 */
     @Override
     @Transactional
+    @DistributedLock(key = "'mutation'", waitTime = 5000)
     @CacheEvict(allEntries = true)
     public void deleteById(Long id) {
-        if (baseMapper.selectByIdForUpdate(id) == null) {
+        if (getById(id) == null) {
             throw new BizException(CommonErrorCode.DATABASE_RECORD_NOT_FOUND);
         }
         var menuIds = getMenuAndDescendantIds(id);
@@ -182,6 +189,7 @@ public class SysMenuServiceImpl extends ServiceImplX<SysMenuMapper, SysMenu>
     /** 上移菜单，与同级上一个菜单交换排序号 */
     @Override
     @Transactional
+    @DistributedLock(key = "'mutation'", waitTime = 5000)
     @CacheEvict(allEntries = true)
     public void moveUp(Long id) {
         var current = getByIdOrThrow(id);
@@ -201,6 +209,7 @@ public class SysMenuServiceImpl extends ServiceImplX<SysMenuMapper, SysMenu>
     /** 下移菜单，与同级下一个菜单交换排序号 */
     @Override
     @Transactional
+    @DistributedLock(key = "'mutation'", waitTime = 5000)
     @CacheEvict(allEntries = true)
     public void moveDown(Long id) {
         var current = getByIdOrThrow(id);

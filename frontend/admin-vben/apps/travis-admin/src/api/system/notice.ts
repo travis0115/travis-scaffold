@@ -3,7 +3,7 @@ import type { Recordable } from '@vben/types';
 
 import type { FileUploadResult } from './file';
 
-import type { PageResp } from '#/api/types';
+import type { Id, PageResp } from '#/api/types';
 
 import { requestClient } from '#/api/request';
 
@@ -11,7 +11,7 @@ export namespace SystemNoticeApi {
   export interface Notice {
     content: string;
     createTime?: string;
-    id: number;
+    id: Id;
     isPinned?: number;
     publishTime?: string;
     remark?: string;
@@ -32,22 +32,21 @@ const getPublishedNoticePage = (params: Recordable<any>) =>
       params,
     },
   );
-const getNoticeDetail = (id: number) =>
+const getNoticeDetail = (id: Id) =>
   requestClient.get<SystemNoticeApi.Notice>(`/system/notice/${id}`);
 const createNotice = (data: Partial<SystemNoticeApi.Notice>) =>
   requestClient.post('/system/notice', data);
-const updateNotice = (id: number, data: Partial<SystemNoticeApi.Notice>) =>
+const updateNotice = (id: Id, data: Partial<SystemNoticeApi.Notice>) =>
   requestClient.put(`/system/notice/${id}`, data);
-const updateNoticeStatus = (id: number, status: number) =>
+const updateNoticeStatus = (id: Id, status: number) =>
   requestClient.put(`/system/notice/${id}/status`, undefined, {
     params: { status },
   });
-const updateNoticePinned = (id: number, isPinned: number) =>
+const updateNoticePinned = (id: Id, isPinned: number) =>
   requestClient.put(`/system/notice/${id}/pinned`, undefined, {
     params: { isPinned },
   });
-const deleteNotice = (id: number) =>
-  requestClient.delete(`/system/notice/${id}`);
+const deleteNotice = (id: Id) => requestClient.delete(`/system/notice/${id}`);
 const uploadNoticeImage = (
   file: File,
   onUploadProgress?: (progressEvent: AxiosProgressEvent) => void,

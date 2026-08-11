@@ -6,6 +6,7 @@ import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
+import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
 import com.travis.infrastructure.framework.web.core.event.TransactionalApplicationEventPublisher;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.file.api.SysFileReferenceChecker;
@@ -18,6 +19,7 @@ import com.travis.monolith.system.file.api.response.SysFileStorageConfigResp;
 import com.travis.monolith.system.file.internal.converter.SysFileConverter;
 import com.travis.monolith.system.file.internal.entity.SysFile;
 import com.travis.monolith.system.file.internal.mapper.SysFileMapper;
+import com.travis.monolith.system.file.internal.service.SysFileMetadataService;
 import com.travis.monolith.system.file.internal.service.SysFileService;
 import com.travis.monolith.system.file.internal.service.SysFileStorageConfigService;
 import com.travis.monolith.system.file.internal.strategy.FileStorageStrategy;
@@ -47,6 +49,7 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
 
     private final List<FileStorageStrategy> storageStrategies;
     private final SysFileStorageConfigService sysFileStorageConfigService;
+    private final SysFileMetadataService metadataService;
     private final SysFileConverter converter;
     private final ObjectProvider<SysFileReferenceChecker> referenceCheckers;
     private final ObjectProvider<SysFileUploaderNameResolver> uploaderNameResolvers;
@@ -86,9 +89,7 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
                         .extension(extension(file.getOriginalFilename()))
                         .build();
         try {
-            if (!save(entity)) {
-                throw new BizException(SystemErrorCode.FILE_UPLOAD_FAILED);
-            }
+            metadataService.save(entity, config);
         } catch (RuntimeException exception) {
             try {
                 strategy.delete(result.path(), config);
@@ -188,6 +189,7 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
 
     @Override
     @Transactional
+    @DistributedLock(namespace = "system-file-reference", key = "'mutation'", waitTime = 5000)
     public void deleteById(Long id) {
         var file = getByIdOrThrow(id);
         if (referenceCheckers.orderedStream().anyMatch(checker -> checker.isReferenced(id))) {

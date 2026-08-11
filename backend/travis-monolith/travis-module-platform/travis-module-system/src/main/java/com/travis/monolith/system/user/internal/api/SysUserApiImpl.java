@@ -75,7 +75,7 @@ public class SysUserApiImpl implements SysUserApi {
         var wrapper =
                 new LambdaQueryWrapperX<SysUser>()
                         .eq(SysUser::getStatus, Status.ENABLED.getValue());
-        if (currentUser.getDeptId() == null) {
+        if (currentUser.getDeptId() == null || currentUser.getDeptId() == 0L) {
             return wrapper.eq(SysUser::getId, currentUserId);
         }
         return wrapper.in(

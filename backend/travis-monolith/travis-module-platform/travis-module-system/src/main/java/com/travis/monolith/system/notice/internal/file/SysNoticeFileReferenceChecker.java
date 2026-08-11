@@ -1,5 +1,6 @@
 package com.travis.monolith.system.notice.internal.file;
 
+import com.travis.monolith.system.file.api.ManagedFileReferenceParser;
 import com.travis.monolith.system.file.api.SysFileReferenceChecker;
 import com.travis.monolith.system.notice.internal.entity.SysNotice;
 import com.travis.monolith.system.notice.internal.service.SysNoticeService;
@@ -15,15 +16,15 @@ public class SysNoticeFileReferenceChecker implements SysFileReferenceChecker {
 
     @Override
     public boolean isReferenced(Long fileId) {
-        var reference = "data-file-id=\"" + fileId + "\"";
-        var singleQuoteReference = "data-file-id='" + fileId + "'";
         return noticeService
                 .lambdaQuery()
-                .and(
-                        query ->
-                                query.like(SysNotice::getContent, reference)
-                                        .or()
-                                        .like(SysNotice::getContent, singleQuoteReference))
-                .exists();
+                .select(SysNotice::getContent)
+                .like(SysNotice::getContent, fileId.toString())
+                .list()
+                .stream()
+                .anyMatch(
+                        item ->
+                                ManagedFileReferenceParser.containsFileId(
+                                        item.getContent(), fileId));
     }
 }

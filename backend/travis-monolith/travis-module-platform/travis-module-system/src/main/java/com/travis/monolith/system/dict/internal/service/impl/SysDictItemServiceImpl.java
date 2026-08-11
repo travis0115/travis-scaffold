@@ -1,9 +1,12 @@
 package com.travis.monolith.system.dict.internal.service.impl;
 
 import com.travis.infrastructure.common.mapstruct.PageConverter;
+import com.travis.infrastructure.common.web.exception.BizException;
+import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
+import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
 import com.travis.infrastructure.framework.redis.core.util.RedisUtil;
 import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.dict.api.request.SysDictItemCreateReq;
@@ -12,6 +15,7 @@ import com.travis.monolith.system.dict.api.response.SysDictItemResp;
 import com.travis.monolith.system.dict.internal.converter.SysDictItemConverter;
 import com.travis.monolith.system.dict.internal.entity.SysDictItem;
 import com.travis.monolith.system.dict.internal.mapper.SysDictItemMapper;
+import com.travis.monolith.system.dict.internal.mapper.SysDictMapper;
 import com.travis.monolith.system.dict.internal.service.SysDictItemService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +38,7 @@ public class SysDictItemServiceImpl extends ServiceImplX<SysDictItemMapper, SysD
         implements SysDictItemService {
 
     private final SysDictItemConverter converter;
+    private final SysDictMapper dictMapper;
 
     /** 分页查询字典数据项，按排序号升序 */
     @Override
@@ -72,6 +77,7 @@ public class SysDictItemServiceImpl extends ServiceImplX<SysDictItemMapper, SysD
     /** 新增字典数据项 */
     @Override
     @Transactional
+    @DistributedLock(namespace = "system-dict", key = "'mutation'", waitTime = 5000)
     @Caching(
             evict = {
                 @CacheEvict(key = "'list:enabled'"),
@@ -79,6 +85,9 @@ public class SysDictItemServiceImpl extends ServiceImplX<SysDictItemMapper, SysD
                 @CacheEvict(cacheNames = "system:dict", key = "'tree:enabled'")
             })
     public void create(SysDictItemCreateReq req) {
+        if (dictMapper.selectById(req.getDictId()) == null) {
+            throw new BizException(CommonErrorCode.DATABASE_RECORD_NOT_FOUND);
+        }
         save(converter.toEntity(req));
     }
 

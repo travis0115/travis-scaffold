@@ -1,11 +1,11 @@
-import type { PageResp } from '#/api/types';
+import type { Id, PageResp } from '#/api/types';
 
 import { requestClient } from '#/api/request';
 
 export namespace SystemDictApi {
   export interface SysDict {
     [key: string]: any;
-    id: number;
+    id: Id;
     dictName: string;
     dictCode: string;
     status: 0 | 1;
@@ -17,8 +17,8 @@ export namespace SystemDictApi {
 
   export interface SysDictItem {
     [key: string]: any;
-    id: number;
-    dictId: number;
+    id: Id;
+    dictId: Id;
     label: string;
     value: string;
     tagStyle?: string;
@@ -54,7 +54,7 @@ async function getDictPage(params: {
 /**
  * 获取字典类型详情
  */
-async function getDictDetail(id: number) {
+async function getDictDetail(id: Id) {
   return requestClient.get<SystemDictApi.SysDict>(`/system/dict/${id}`);
 }
 
@@ -68,11 +68,11 @@ async function createDict(data: Partial<SystemDictApi.SysDict>) {
 /**
  * 更新字典类型
  */
-async function updateDict(id: number, data: Partial<SystemDictApi.SysDict>) {
+async function updateDict(id: Id, data: Partial<SystemDictApi.SysDict>) {
   return requestClient.put(`/system/dict/${id}`, data);
 }
 
-async function updateDictStatus(id: number, status: 0 | 1) {
+async function updateDictStatus(id: Id, status: 0 | 1) {
   return requestClient.put(`/system/dict/${id}/status`, undefined, {
     params: { status },
   });
@@ -81,16 +81,16 @@ async function updateDictStatus(id: number, status: 0 | 1) {
 /**
  * 删除字典类型
  */
-async function deleteDict(id: number) {
+async function deleteDict(id: Id) {
   return requestClient.delete(`/system/dict/${id}`);
 }
 
 /**
  * 查询指定字典类型下的所有数据项
  */
-async function getDictItems(dictId: number) {
+async function getDictItems(dictId: Id) {
   return requestClient.get<SystemDictApi.SysDictItem[]>(
-    `/system/dict/items/${dictId}`
+    `/system/dict/items/${dictId}`,
   );
 }
 
@@ -105,13 +105,13 @@ async function createDictItem(data: Partial<SystemDictApi.SysDictItem>) {
  * 更新字典数据项
  */
 async function updateDictItem(
-  id: number,
+  id: Id,
   data: Partial<SystemDictApi.SysDictItem>,
 ) {
   return requestClient.put(`/system/dict/item/${id}`, data);
 }
 
-async function updateDictItemStatus(id: number, status: 0 | 1) {
+async function updateDictItemStatus(id: Id, status: 0 | 1) {
   return requestClient.put(`/system/dict/item/${id}/status`, undefined, {
     params: { status },
   });
@@ -120,7 +120,7 @@ async function updateDictItemStatus(id: number, status: 0 | 1) {
 /**
  * 删除字典数据项
  */
-async function deleteDictItem(id: number) {
+async function deleteDictItem(id: Id) {
   return requestClient.delete(`/system/dict/item/${id}`);
 }
 

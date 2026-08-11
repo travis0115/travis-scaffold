@@ -4,6 +4,7 @@ import type { DataNode } from 'antdv-next/dist/tree';
 import type { Recordable } from '@vben/types';
 
 import type { SystemRoleApi } from '#/api';
+import type { Id } from '#/api/types';
 
 import { computed, nextTick, ref } from 'vue';
 import { useRouter } from 'vue-router';
@@ -15,7 +16,13 @@ import { useAccessStore, useUserStore } from '@vben/stores';
 import { Checkbox, Spin } from 'antdv-next';
 
 import { useVbenForm } from '#/adapter/form';
-import { assignRoleMenus, createRole, getMenuTree, getRoleDetail, updateRole } from '#/api';
+import {
+  assignRoleMenus,
+  createRole,
+  getMenuTree,
+  getRoleDetail,
+  updateRole,
+} from '#/api';
 import { $t } from '#/locales';
 import { generateAccess } from '#/router/access';
 import { accessRoutes } from '#/router/routes';
@@ -36,7 +43,7 @@ const menuTree = ref<DataNode[]>([]);
 const loadingMenuTree = ref(false);
 const permissionAllChecked = ref(false);
 const permissionExpanded = ref(false);
-const permissionExpandedKeys = ref<Array<number | string>>([]);
+const permissionExpandedKeys = ref<Id[]>([]);
 const permissionParentLinked = ref(true);
 const treeRenderKey = ref(0);
 const router = useRouter();
@@ -44,7 +51,7 @@ const accessStore = useAccessStore();
 const authStore = useAuthStore();
 const userStore = useUserStore();
 
-const id = ref<number>();
+const id = ref<Id>();
 const [Drawer, drawerApi] = useVbenDrawer({
   async onConfirm() {
     const { valid } = await formApi.validate();
@@ -130,12 +137,12 @@ function getNodeClass(node: Recordable<any>) {
 }
 
 function collectMenuIds(nodes: DataNode[], onlyParents = false) {
-  const ids: Array<number | string> = [];
+  const ids: Id[] = [];
   const walk = (items: DataNode[]) => {
     items.forEach((item) => {
       const children = item.children as DataNode[] | undefined;
       if (!onlyParents || children?.length) {
-        ids.push(item.id as number | string);
+        ids.push(item.id as Id);
       }
       if (children?.length) {
         walk(children);
@@ -172,7 +179,9 @@ async function refreshCurrentUserAccess() {
 
 function onPermissionExpandChange(checked: boolean) {
   permissionExpanded.value = checked;
-  permissionExpandedKeys.value = checked ? collectMenuIds(menuTree.value, true) : [];
+  permissionExpandedKeys.value = checked
+    ? collectMenuIds(menuTree.value, true)
+    : [];
   treeRenderKey.value += 1;
 }
 
@@ -203,7 +212,9 @@ function onPermissionAllChange(checked: boolean) {
             icon-field="icon"
           >
             <template #header>
-              <div class="flex flex-wrap items-center gap-4 px-1 py-0.5 text-sm">
+              <div
+                class="flex flex-wrap items-center gap-4 px-1 py-0.5 text-sm"
+              >
                 <span class="text-muted-foreground">菜单权限</span>
                 <Checkbox
                   :checked="permissionExpanded"

@@ -1,20 +1,20 @@
 import type { Recordable } from '@vben/types';
 
-import type { PageResp } from '#/api/types';
+import type { Id, PageResp } from '#/api/types';
 
 import { requestClient } from '#/api/request';
 
 export namespace SystemRoleApi {
   export interface SysRole {
     [key: string]: any;
-    id: number;
+    id: Id;
     roleName: string;
     roleCode: string;
     remark?: string;
     modifiable: 0 | 1;
     isBuiltin: 0 | 1;
     status: 0 | 1;
-    menuIds?: number[];
+    menuIds?: Id[];
     createTime?: string;
   }
 }
@@ -32,7 +32,7 @@ async function getRolePage(params: Recordable<any>) {
 /**
  * 获取角色详情
  */
-async function getRoleDetail(id: number) {
+async function getRoleDetail(id: Id) {
   return requestClient.get<SystemRoleApi.SysRole>(`/system/role/${id}`);
 }
 
@@ -46,11 +46,11 @@ async function createRole(data: Partial<SystemRoleApi.SysRole>) {
 /**
  * 更新角色
  */
-async function updateRole(id: number, data: Partial<SystemRoleApi.SysRole>) {
+async function updateRole(id: Id, data: Partial<SystemRoleApi.SysRole>) {
   return requestClient.put(`/system/role/${id}`, data);
 }
 
-async function updateRoleStatus(id: number, status: 0 | 1) {
+async function updateRoleStatus(id: Id, status: 0 | 1) {
   return requestClient.put(`/system/role/${id}/status`, undefined, {
     params: { status },
   });
@@ -59,14 +59,14 @@ async function updateRoleStatus(id: number, status: 0 | 1) {
 /**
  * 删除角色
  */
-async function deleteRole(id: number) {
+async function deleteRole(id: Id) {
   return requestClient.delete(`/system/role/${id}`);
 }
 
 /**
  * 为角色分配菜单权限
  */
-async function assignRoleMenus(data: { menuIds: number[]; roleId: number }) {
+async function assignRoleMenus(data: { menuIds: Id[]; roleId: Id }) {
   return requestClient.post('/system/role/menus', data);
 }
 

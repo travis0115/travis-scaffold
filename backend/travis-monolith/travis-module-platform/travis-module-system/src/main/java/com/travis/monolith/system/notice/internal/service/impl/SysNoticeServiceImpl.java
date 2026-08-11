@@ -7,6 +7,7 @@ import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
+import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
 import com.travis.monolith.system.common.api.enums.PublishStatus;
 import com.travis.monolith.system.file.api.SysFileApi;
 import com.travis.monolith.system.message.api.SysMessageApi;
@@ -18,15 +19,16 @@ import com.travis.monolith.system.notice.api.request.SysNoticeCreateReq;
 import com.travis.monolith.system.notice.api.request.SysNoticePageReq;
 import com.travis.monolith.system.notice.api.request.SysNoticeUpdateReq;
 import com.travis.monolith.system.notice.api.response.SysNoticeResp;
+import com.travis.monolith.system.notice.internal.cache.SysNoticeDetailCache;
 import com.travis.monolith.system.notice.internal.converter.SysNoticeConverter;
 import com.travis.monolith.system.notice.internal.entity.SysNotice;
 import com.travis.monolith.system.notice.internal.mapper.SysNoticeMapper;
 import com.travis.monolith.system.notice.internal.service.SysNoticeService;
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +45,7 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
     private final SysFileApi fileApi;
 
     private final SysMessageApi messageApi;
+    private final SysNoticeDetailCache detailCache;
 
     /** 分页查询系统公告。 */
     @Override
@@ -66,7 +69,9 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
                         .orderByDesc(SysNotice::getPublishTime)
                         .orderByDesc(SysNotice::getCreateTime);
         var page = page(req.getPageNum(), req.getPageSize(), wrapper);
-        return PageConverter.toResp(page.convert(this::toResp));
+        var response = PageConverter.toResp(page.convert(converter::toResp));
+        resolveContents(response.getRecords());
+        return response;
     }
 
     /** 分页查询已发布的系统公告。 */
@@ -91,19 +96,23 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
                 .orderByDesc(SysNotice::getPublishTime)
                 .orderByDesc(SysNotice::getCreateTime);
         var page = page(req.getPageNum(), req.getPageSize(), wrapper);
-        return PageConverter.toResp(page.convert(this::toResp));
+        var response = PageConverter.toResp(page.convert(converter::toResp));
+        resolveContents(response.getRecords());
+        return response;
     }
 
     /** 查询指定系统公告，不存在时抛出业务异常。 */
     @Override
-    @Cacheable(key = "'detail:'+#id")
     public SysNoticeResp getOrThrow(Long id) {
-        return toResp(getByIdOrThrow(id));
+        var response = converter.toResp(detailCache.getOrThrow(id));
+        resolveContents(List.of(response));
+        return response;
     }
 
     /** 创建系统公告。 */
     @Override
     @Transactional
+    @DistributedLock(namespace = "system-file-reference", key = "'mutation'", waitTime = 5000)
     public void create(SysNoticeCreateReq req) {
         if (PublishStatus.REVOKED.getValue().equals(req.getStatus())) {
             throw new BizException(CommonErrorCode.BAD_REQUEST, "新建公告不能设置为已撤回");
@@ -123,6 +132,7 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
     /** 更新指定系统公告。 */
     @Override
     @Transactional
+    @DistributedLock(namespace = "system-file-reference", key = "'mutation'", waitTime = 5000)
     @CacheEvict(key = "'detail:'+#id")
     public void update(Long id, SysNoticeUpdateReq req) {
         var entity = getByIdOrThrow(id);
@@ -196,10 +206,13 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
         return req;
     }
 
-    /** 将系统公告实体转换并补充为响应对象。 */
-    private SysNoticeResp toResp(SysNotice entity) {
-        var resp = converter.toResp(entity);
-        resp.setContent(fileApi.resolveManagedImageSources(resp.getContent()));
-        return resp;
+    /** 批量补充公告正文中的动态文件访问地址。 */
+    private void resolveContents(List<SysNoticeResp> records) {
+        var contents =
+                fileApi.resolveManagedImageSources(
+                        records.stream().map(SysNoticeResp::getContent).toList());
+        for (int index = 0; index < records.size(); index++) {
+            records.get(index).setContent(contents.get(index));
+        }
     }
 }

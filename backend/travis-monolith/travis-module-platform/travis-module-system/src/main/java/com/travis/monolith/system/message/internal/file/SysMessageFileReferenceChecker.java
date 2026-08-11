@@ -1,5 +1,6 @@
 package com.travis.monolith.system.message.internal.file;
 
+import com.travis.monolith.system.file.api.ManagedFileReferenceParser;
 import com.travis.monolith.system.file.api.SysFileReferenceChecker;
 import com.travis.monolith.system.message.internal.entity.SysMessage;
 import com.travis.monolith.system.message.internal.entity.SysMessageTemplate;
@@ -18,27 +19,27 @@ public class SysMessageFileReferenceChecker implements SysFileReferenceChecker {
 
     @Override
     public boolean isReferenced(Long fileId) {
-        var reference = "data-file-id=\"" + fileId + "\"";
-        var singleQuoteReference = "data-file-id='" + fileId + "'";
         boolean referencedByMessage =
                 messageService
                         .lambdaQuery()
-                        .and(
-                                query ->
-                                        query.like(SysMessage::getContent, reference)
-                                                .or()
-                                                .like(SysMessage::getContent, singleQuoteReference))
-                        .exists();
+                        .select(SysMessage::getContent)
+                        .like(SysMessage::getContent, fileId.toString())
+                        .list()
+                        .stream()
+                        .anyMatch(
+                                item ->
+                                        ManagedFileReferenceParser.containsFileId(
+                                                item.getContent(), fileId));
         return referencedByMessage
                 || messageTemplateService
                         .lambdaQuery()
-                        .and(
-                                query ->
-                                        query.like(SysMessageTemplate::getContent, reference)
-                                                .or()
-                                                .like(
-                                                        SysMessageTemplate::getContent,
-                                                        singleQuoteReference))
-                        .exists();
+                        .select(SysMessageTemplate::getContent)
+                        .like(SysMessageTemplate::getContent, fileId.toString())
+                        .list()
+                        .stream()
+                        .anyMatch(
+                                item ->
+                                        ManagedFileReferenceParser.containsFileId(
+                                                item.getContent(), fileId));
     }
 }

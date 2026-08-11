@@ -5,6 +5,8 @@ import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
+import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
+import com.travis.infrastructure.framework.redis.core.annotation.DistributedLockNamespace;
 import com.travis.monolith.system.common.api.BuiltinResourceGuard;
 import com.travis.monolith.system.common.api.enums.IsBuiltin;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
@@ -29,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @CacheConfig(cacheNames = "system:file:folder")
+@DistributedLockNamespace("system-file-metadata")
 public class SysFileFolderServiceImpl extends ServiceImplX<SysFileFolderMapper, SysFileFolder>
         implements SysFileFolderService {
 
@@ -49,10 +52,11 @@ public class SysFileFolderServiceImpl extends ServiceImplX<SysFileFolderMapper, 
 
     /** 创建文件夹。 */
     @Override
+    @Transactional
+    @DistributedLock(key = "'mutation'", waitTime = 5000)
     @CacheEvict(key = "'list:all'")
     public void create(SysFileFolderCreateReq req) {
-        if (!Long.valueOf(0L).equals(req.getParentId())
-                && baseMapper.selectByIdForUpdate(req.getParentId()) == null) {
+        if (!Long.valueOf(0L).equals(req.getParentId()) && getById(req.getParentId()) == null) {
             throw new BizException(SystemErrorCode.FILE_FOLDER_PARENT_INVALID);
         }
         save(converter.toEntity(req));
@@ -60,6 +64,8 @@ public class SysFileFolderServiceImpl extends ServiceImplX<SysFileFolderMapper, 
 
     /** 更新指定文件夹。 */
     @Override
+    @Transactional
+    @DistributedLock(key = "'mutation'", waitTime = 5000)
     @CacheEvict(key = "'list:all'")
     public void update(Long id, SysFileFolderUpdateReq req) {
         var folder = getByIdOrThrow(id);
@@ -71,9 +77,10 @@ public class SysFileFolderServiceImpl extends ServiceImplX<SysFileFolderMapper, 
     /** 根据 ID 删除指定文件夹。 */
     @Override
     @Transactional
+    @DistributedLock(key = "'mutation'", waitTime = 5000)
     @CacheEvict(key = "'list:all'")
     public void deleteById(Long id) {
-        var folder = baseMapper.selectByIdForUpdate(id);
+        var folder = getById(id);
         if (folder == null) {
             throw new BizException(CommonErrorCode.DATABASE_RECORD_NOT_FOUND);
         }

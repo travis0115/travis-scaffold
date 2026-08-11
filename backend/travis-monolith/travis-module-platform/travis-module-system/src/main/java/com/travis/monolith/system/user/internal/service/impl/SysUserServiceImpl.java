@@ -10,6 +10,7 @@ import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
+import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
 import com.travis.infrastructure.framework.redis.core.util.RedisUtil;
 import com.travis.infrastructure.framework.satoken.core.LoginSubjectSessionKey;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
@@ -133,8 +134,10 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     /** 新增用户，密码使用 BCrypt 加密存储 */
     @Override
     @Transactional
+    @DistributedLock(namespace = "system-dept-tree", key = "'mutation'", waitTime = 5000)
     @Caching(evict = {@CacheEvict(key = "'list:id:dept:'+#req.deptId")})
     public Long create(SysUserCreateReq req) {
+        validateDeptId(req.getDeptId());
         // 检查用户名唯一性
         var count =
                 count(
@@ -152,9 +155,11 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     /** 更新用户信息，密码为空时保持原密码不变 */
     @Override
     @Transactional
+    @DistributedLock(namespace = "system-dept-tree", key = "'mutation'", waitTime = 5000)
     @Caching(evict = {@CacheEvict(key = "'detail:'+#id")})
     public void update(Long id, SysUserUpdateReq req) {
         var user = getByIdOrThrow(id);
+        validateDeptId(req.getDeptId());
         var oldUsername = user.getUsername();
         var oldDeptId = user.getDeptId();
         // 检查用户名唯一性（排除自身）
@@ -172,7 +177,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
                     "system:user:list:id", "dept:" + user.getDeptId(), "dept:" + req.getDeptId());
         }
         converter.update(req, user);
-        updateById(user);
+        updateUserOrThrow(user);
         if (!Objects.equals(oldDeptId, user.getDeptId())) {
             eventPublisher.publishEvent(new UserMessageAudienceChangedEvent(id));
         }
@@ -189,7 +194,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     public void updateStatus(Long id, Integer status) {
         var user = getByIdOrThrow(id);
         user.setStatus(status);
-        updateById(user);
+        updateUserOrThrow(user);
         if (Status.DISABLED.getValue().equals(status)) {
             StpKit.of(LoginType.ADMIN).logout(id);
         }
@@ -198,6 +203,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     /** 删除用户，同时清除用户-角色关联并使其会话失效 */
     @Override
     @Transactional
+    @DistributedLock(namespace = "system-user-role", key = "#id", waitTime = 5000)
     @Caching(evict = {@CacheEvict(key = "'username:'+#id"), @CacheEvict(key = "'detail:'+#id")})
     public void deleteById(Long id) {
         var user = getByIdOrThrow(id);
@@ -212,11 +218,16 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     /** 批量重置指定部门下的用户部门归属 */
     @Override
     @Transactional
+    @DistributedLock(namespace = "system-dept-tree", key = "'mutation'", waitTime = 5000)
     public void resetDeptByDeptIds(Collection<Long> deptIds) {
         if (deptIds == null || deptIds.isEmpty()) {
             return;
         }
-        lambdaUpdate().in(SysUser::getDeptId, deptIds).set(SysUser::getDeptId, 0L).update();
+        lambdaUpdate()
+                .in(SysUser::getDeptId, deptIds)
+                .set(SysUser::getDeptId, 0L)
+                .setSql("version = version + 1")
+                .update();
         RedisUtil.deleteCacheKeyByPattern("system:user", "detail:*");
         var cacheKeys = new ArrayList<String>();
         for (Long deptId : deptIds) {
@@ -240,6 +251,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
                 .set(SysUser::getLastOnlineTime, LocalDateTime.now())
                 .set(SysUser::getLastOnlineIp, ip)
                 .set(SysUser::getLastOnlineLocation, Ip2RegionUtil.getRegionByIP(ip))
+                .setSql("version = version + 1")
                 .update();
     }
 
@@ -254,6 +266,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         lambdaUpdate()
                 .eq(SysUser::getId, userId)
                 .set(SysUser::getLastOfflineTime, LocalDateTime.now())
+                .setSql("version = version + 1")
                 .update();
     }
 
@@ -266,8 +279,9 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     /** 分配用户角色：委托给角色服务 */
     @Override
     @Transactional
+    @DistributedLock(namespace = "system-user-role", key = "#req.userId", waitTime = 5000)
     public void assignRoles(SysUserRoleReq req) {
-        if (baseMapper.selectByIdForUpdate(req.getUserId()) == null) {
+        if (getById(req.getUserId()) == null) {
             throw new BizException(CommonErrorCode.DATABASE_RECORD_NOT_FOUND);
         }
         roleApi.assignUserRoles(req.getUserId(), req.getRoleIds());
@@ -317,12 +331,13 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         var userId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
         var user = getByIdOrThrow(userId);
         converter.update(req, user);
-        updateById(user);
+        updateUserOrThrow(user);
     }
 
     /** 当前登录用户更新头像 */
     @Override
     @Transactional
+    @DistributedLock(namespace = "system-file-reference", key = "'mutation'", waitTime = 5000)
     @CacheEvict(
             key =
                     "'detail:' + T(com.travis.infrastructure.framework.satoken.core.StpKit).getLoginIdAsLong(T(com.travis.infrastructure.common.web.constant.LoginType).ADMIN)")
@@ -333,7 +348,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         var userId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
         var user = getByIdOrThrow(userId);
         user.setAvatarFileId(avatarFileId);
-        updateById(user);
+        updateUserOrThrow(user);
     }
 
     /** 当前登录用户修改密码：校验原密码，加密新密码后更新 */
@@ -345,7 +360,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         var user =
                 lambdaQuery()
                         .eq(SysUser::getId, userId)
-                        .select(SysUser::getId, SysUser::getPassword)
+                        .select(SysUser::getId, SysUser::getPassword, SysUser::getVersion)
                         .one();
         if (user == null) {
             throw new BizException(CommonErrorCode.DATABASE_RECORD_NOT_FOUND);
@@ -356,7 +371,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         }
         // 加密新密码并更新
         user.setPassword(BCrypt.hashpw(req.getNewPassword()));
-        updateById(user);
+        updateUserOrThrow(user);
         // 修改密码后踢出当前登录，需重新登录
         StpKit.of(LoginType.ADMIN).logout(userId);
     }
@@ -376,10 +391,24 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
             newPassword = RandomUtil.randomString(8);
         }
         user.setPassword(BCrypt.hashpw(newPassword));
-        updateById(user);
+        updateUserOrThrow(user);
         // 重置密码后踢出该用户，需重新登录
         StpKit.of(LoginType.ADMIN).logout(id);
         return newPassword;
+    }
+
+    /** 校验用户所属部门存在，0 表示未分配部门。 */
+    private void validateDeptId(Long deptId) {
+        if (deptId != null && deptId != 0L && !deptApi.existsAnyByIds(List.of(deptId))) {
+            throw new BizException(SystemErrorCode.USER_DEPT_INVALID);
+        }
+    }
+
+    /** 使用版本号更新用户，版本冲突时提示调用方刷新后重试。 */
+    private void updateUserOrThrow(SysUser user) {
+        if (!updateById(user)) {
+            throw new BizException(SystemErrorCode.USER_CONCURRENT_UPDATE);
+        }
     }
 
     /** 将系统用户实体转换并补充为响应对象。 */

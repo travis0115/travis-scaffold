@@ -3,17 +3,24 @@ package com.travis.monolith.ops.job.internal.controller.admin;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.travis.infrastructure.common.logging.annotation.OperationLog;
 import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
+import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
 import com.travis.monolith.ops.common.api.OpsPermission;
+import com.travis.monolith.ops.job.api.enums.OpsJobStatus;
 import com.travis.monolith.ops.job.api.request.*;
 import com.travis.monolith.ops.job.api.response.*;
 import com.travis.monolith.ops.job.internal.service.OpsJobLogService;
 import com.travis.monolith.ops.job.internal.service.OpsJobService;
 import com.travis.monolith.system.user.api.response.SysUserOptionResp;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -35,14 +42,15 @@ public class OpsJobController {
     /** 分页查询定时任务。 */
     @SaCheckPermission(value = OpsPermission.OPS_JOB_QUERY, type = LoginType.ADMIN)
     @GetMapping("/page")
-    public ApiResponse<PageResp<OpsJobPageResp>> page(OpsJobPageReq req) {
+    public ApiResponse<PageResp<OpsJobPageResp>> page(@Valid OpsJobPageReq req) {
         return ApiResponse.success(jobService.page(req));
     }
 
     /** 查询定时任务详情。 */
     @SaCheckPermission(value = OpsPermission.OPS_JOB_QUERY, type = LoginType.ADMIN)
     @GetMapping("/{id:\\d+}")
-    public ApiResponse<OpsJobDetailResp> get(@PathVariable Long id) {
+    public ApiResponse<OpsJobDetailResp> get(
+            @PathVariable @Positive(message = "任务ID必须为正数") Long id) {
         return ApiResponse.success(jobService.getOrThrow(id));
     }
 
@@ -62,7 +70,8 @@ public class OpsJobController {
     @NoRepeatSubmit
     @PutMapping("/{id}")
     public ApiResponse<Void> update(
-            @PathVariable Long id, @RequestBody @Valid OpsJobUpdateReq req) {
+            @PathVariable @Positive(message = "任务ID必须为正数") Long id,
+            @RequestBody @Valid OpsJobUpdateReq req) {
         jobService.update(id, req);
         return ApiResponse.success();
     }
@@ -72,7 +81,7 @@ public class OpsJobController {
     @OperationLog(action = "删除任务")
     @NoRepeatSubmit
     @DeleteMapping("/{id}")
-    public ApiResponse<Void> delete(@PathVariable Long id) {
+    public ApiResponse<Void> delete(@PathVariable @Positive(message = "任务ID必须为正数") Long id) {
         jobService.delete(id);
         return ApiResponse.success();
     }
@@ -82,7 +91,10 @@ public class OpsJobController {
     @OperationLog(action = "启停任务")
     @NoRepeatSubmit
     @PutMapping("/{id}/status")
-    public ApiResponse<Void> changeStatus(@PathVariable Long id, @RequestParam Integer status) {
+    public ApiResponse<Void> changeStatus(
+            @PathVariable @Positive(message = "任务ID必须为正数") Long id,
+            @RequestParam @EnumValue(value = OpsJobStatus.class, message = "任务状态值错误")
+                    Integer status) {
         jobService.changeStatus(id, status);
         return ApiResponse.success();
     }
@@ -93,7 +105,8 @@ public class OpsJobController {
     @NoRepeatSubmit
     @PostMapping("/{id}/run")
     public ApiResponse<Void> runNow(
-            @PathVariable Long id, @RequestBody(required = false) OpsJobRunReq req) {
+            @PathVariable @Positive(message = "任务ID必须为正数") Long id,
+            @RequestBody(required = false) OpsJobRunReq req) {
         jobService.runNow(id, req == null ? null : req.getParams());
         return ApiResponse.success();
     }
@@ -103,7 +116,7 @@ public class OpsJobController {
     @OperationLog(action = "复制任务")
     @NoRepeatSubmit
     @PostMapping("/{id}/copy")
-    public ApiResponse<Void> copy(@PathVariable Long id) {
+    public ApiResponse<Void> copy(@PathVariable @Positive(message = "任务ID必须为正数") Long id) {
         jobService.copy(id);
         return ApiResponse.success();
     }
@@ -113,7 +126,10 @@ public class OpsJobController {
     @PostMapping("/preview")
     public ApiResponse<List<LocalDateTime>> preview(
             @RequestBody @Valid OpsJobPreviewReq req,
-            @RequestParam(defaultValue = "5") Integer count) {
+            @RequestParam(defaultValue = "5")
+                    @Min(value = 1, message = "预览数量不能小于1")
+                    @Max(value = 100, message = "预览数量不能大于100")
+                    Integer count) {
         return ApiResponse.success(jobService.preview(req, count));
     }
 
@@ -128,8 +144,9 @@ public class OpsJobController {
     @SaCheckPermission(value = OpsPermission.OPS_JOB_QUERY, type = LoginType.ADMIN)
     @GetMapping("/user-options")
     public ApiResponse<List<SysUserOptionResp>> userOptions(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) List<Long> userIds) {
+            @RequestParam(required = false) @Size(max = 64, message = "搜索关键字长度不能超过64个字符")
+                    String keyword,
+            @RequestParam(required = false) List<@Positive(message = "用户ID必须为正数") Long> userIds) {
         return ApiResponse.success(jobService.listUserOptions(keyword, userIds));
     }
 
@@ -145,7 +162,9 @@ public class OpsJobController {
     @OperationLog(action = "导入任务")
     @NoRepeatSubmit
     @PostMapping("/import")
-    public ApiResponse<Void> importJobs(@RequestBody List<@Valid OpsJobImportReq> jobs) {
+    public ApiResponse<Void> importJobs(
+            @RequestBody @NotEmpty(message = "导入任务不能为空") @Size(max = 100, message = "单次最多导入100个任务")
+                    List<@Valid OpsJobImportReq> jobs) {
         jobService.importJobs(jobs);
         return ApiResponse.success();
     }
@@ -153,7 +172,8 @@ public class OpsJobController {
     /** 查询指定任务的执行统计。 */
     @SaCheckPermission(value = OpsPermission.OPS_JOB_QUERY, type = LoginType.ADMIN)
     @GetMapping("/{id}/stats")
-    public ApiResponse<OpsJobStatsResp> stats(@PathVariable Long id) {
+    public ApiResponse<OpsJobStatsResp> stats(
+            @PathVariable @Positive(message = "任务ID必须为正数") Long id) {
         return ApiResponse.success(logService.stats(id));
     }
 

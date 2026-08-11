@@ -4,6 +4,7 @@ import com.travis.infrastructure.common.validation.annotation.Mobile;
 import com.travis.infrastructure.common.validation.annotation.Username;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -33,4 +34,8 @@ public class SysUserUpdateReq {
 
     /** 所属部门ID */
     private Long deptId;
+
+    /** 乐观锁版本号 */
+    @NotNull(message = "版本号不能为空")
+    private Integer version;
 }

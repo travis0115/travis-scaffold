@@ -9,6 +9,7 @@ import com.travis.infrastructure.common.web.model.PageRequest;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
+import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
 import com.travis.monolith.system.common.api.enums.PublishStatus;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.file.api.SysFileApi;
@@ -21,16 +22,17 @@ import com.travis.monolith.system.version.api.request.SysVersionCreateReq;
 import com.travis.monolith.system.version.api.request.SysVersionPageReq;
 import com.travis.monolith.system.version.api.request.SysVersionUpdateReq;
 import com.travis.monolith.system.version.api.response.SysVersionResp;
+import com.travis.monolith.system.version.internal.cache.SysVersionDetailCache;
 import com.travis.monolith.system.version.internal.converter.SysVersionConverter;
 import com.travis.monolith.system.version.internal.entity.SysVersion;
 import com.travis.monolith.system.version.internal.mapper.SysVersionMapper;
 import com.travis.monolith.system.version.internal.service.SysVersionService;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,6 +52,7 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
     private final SysFileApi fileApi;
 
     private final SysMessageApi messageApi;
+    private final SysVersionDetailCache detailCache;
 
     private static final Map<String, SFunction<SysVersion, ?>> SORT_COLUMNS =
             Map.of(
@@ -83,19 +86,23 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
                                 false,
                                 SysVersion::getCreateTime);
         var page = page(req.getPageNum(), req.getPageSize(), wrapper);
-        return PageConverter.toResp(page.convert(this::toResp));
+        var response = PageConverter.toResp(page.convert(converter::toResp));
+        resolveContents(response.getRecords());
+        return response;
     }
 
     /** 查询指定版本详情，不存在时抛出业务异常。 */
     @Override
-    @Cacheable(key = "'detail:'+#id")
     public SysVersionResp getDetailByIdOrThrow(Long id) {
-        return toResp(getByIdOrThrow(id));
+        var response = converter.toResp(detailCache.getOrThrow(id));
+        resolveContents(List.of(response));
+        return response;
     }
 
     /** 创建版本。 */
     @Override
     @Transactional
+    @DistributedLock(namespace = "system-file-reference", key = "'mutation'", waitTime = 5000)
     public void create(SysVersionCreateReq req) {
         if (PublishStatus.REVOKED.getValue().equals(req.getStatus())) {
             throw new BizException(CommonErrorCode.BAD_REQUEST, "新建版本不能设置为已撤回");
@@ -122,6 +129,7 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
     /** 更新指定版本。 */
     @Override
     @Transactional
+    @DistributedLock(namespace = "system-file-reference", key = "'mutation'", waitTime = 5000)
     @CacheEvict(key = "'detail:'+#id")
     public void update(Long id, SysVersionUpdateReq req) {
         var entity = getByIdOrThrow(id);
@@ -170,7 +178,9 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
                 .orderByDesc(SysVersion::getPublishTime)
                 .orderByDesc(SysVersion::getCreateTime);
         var page = page(req.getPageNum(), req.getPageSize(), wrapper);
-        return PageConverter.toResp(page.convert(this::toResp));
+        var response = PageConverter.toResp(page.convert(converter::toResp));
+        resolveContents(response.getRecords());
+        return response;
     }
 
     /** 根据 ID 删除指定版本。 */
@@ -197,10 +207,13 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
         return req;
     }
 
-    /** 将版本实体转换并补充为响应对象。 */
-    private SysVersionResp toResp(SysVersion entity) {
-        var resp = converter.toResp(entity);
-        resp.setContent(fileApi.resolveManagedImageSources(resp.getContent()));
-        return resp;
+    /** 批量补充版本正文中的动态文件访问地址。 */
+    private void resolveContents(List<SysVersionResp> records) {
+        var contents =
+                fileApi.resolveManagedImageSources(
+                        records.stream().map(SysVersionResp::getContent).toList());
+        for (int index = 0; index < records.size(); index++) {
+            records.get(index).setContent(contents.get(index));
+        }
     }
 }

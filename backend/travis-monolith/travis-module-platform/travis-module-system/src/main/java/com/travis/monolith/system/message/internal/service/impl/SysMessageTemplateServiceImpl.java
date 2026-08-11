@@ -7,9 +7,11 @@ import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
+import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
 import com.travis.monolith.system.common.api.BuiltinResourceGuard;
 import com.travis.monolith.system.common.api.enums.IsBuiltin;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
+import com.travis.monolith.system.file.api.SysFileApi;
 import com.travis.monolith.system.message.api.enums.SysMessageChannel;
 import com.travis.monolith.system.message.api.request.SysMessageTemplateCreateReq;
 import com.travis.monolith.system.message.api.request.SysMessageTemplatePageReq;
@@ -38,6 +40,7 @@ public class SysMessageTemplateServiceImpl
         extends ServiceImplX<SysMessageTemplateMapper, SysMessageTemplate>
         implements SysMessageTemplateService {
     private final SysMessageTemplateConverter converter;
+    private final SysFileApi fileApi;
     private final BuiltinResourceGuard builtinResourceGuard;
 
     /** 分页查询消息模板。 */
@@ -74,6 +77,7 @@ public class SysMessageTemplateServiceImpl
     /** 创建消息模板。 */
     @Override
     @Transactional
+    @DistributedLock(namespace = "system-file-reference", key = "'mutation'", waitTime = 5000)
     public void create(SysMessageTemplateCreateReq req) {
         normalizeContent(req);
         validateUnique(req.getTemplateCode(), req.getChannel(), null);
@@ -83,6 +87,7 @@ public class SysMessageTemplateServiceImpl
     /** 更新指定消息模板。 */
     @Override
     @Transactional
+    @DistributedLock(namespace = "system-file-reference", key = "'mutation'", waitTime = 5000)
     @CacheEvict(key = "'detail:'+#id")
     public void update(Long id, SysMessageTemplateUpdateReq req) {
         var entity = getByIdOrThrow(id);
@@ -121,6 +126,7 @@ public class SysMessageTemplateServiceImpl
     private void normalizeContent(SysMessageTemplateCreateReq req) {
         if (SysMessageChannel.IN_APP.getValue().equals(req.getChannel())) {
             req.setPlatformTemplateId(null);
+            req.setContent(fileApi.stripManagedImageSources(req.getContent()));
         } else if (SysMessageChannel.SMS.getValue().equals(req.getChannel())) {
             req.setTitle(null);
         }
@@ -134,6 +140,7 @@ public class SysMessageTemplateServiceImpl
     private void normalizeContent(SysMessageTemplateUpdateReq req) {
         if (SysMessageChannel.IN_APP.getValue().equals(req.getChannel())) {
             req.setPlatformTemplateId(null);
+            req.setContent(fileApi.stripManagedImageSources(req.getContent()));
         } else if (SysMessageChannel.SMS.getValue().equals(req.getChannel())) {
             req.setTitle(null);
         }

@@ -4,6 +4,8 @@ import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
+import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
+import com.travis.infrastructure.framework.redis.core.annotation.DistributedLockNamespace;
 import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.dept.api.event.DeptDeletedEvent;
@@ -33,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @CacheConfig(cacheNames = "system:dept")
+@DistributedLockNamespace("system-dept-tree")
 public class SysDeptServiceImpl extends ServiceImplX<SysDeptMapper, SysDept>
         implements SysDeptService {
 
@@ -136,6 +139,7 @@ public class SysDeptServiceImpl extends ServiceImplX<SysDeptMapper, SysDept>
     /** 新增部门 */
     @Override
     @Transactional
+    @DistributedLock(key = "'mutation'", waitTime = 5000)
     @Caching(evict = {@CacheEvict(key = "'tree:all'"), @CacheEvict(key = "'tree:enabled'")})
     public void create(SysDeptCreateReq req) {
         validateParent(null, req.getParentId());
@@ -154,8 +158,9 @@ public class SysDeptServiceImpl extends ServiceImplX<SysDeptMapper, SysDept>
                 @CacheEvict(value = "system:user:detail", allEntries = true)
             })
     @Transactional
+    @DistributedLock(key = "'mutation'", waitTime = 5000)
     public void update(Long id, SysDeptUpdateReq req) {
-        var dept = baseMapper.selectByIdForUpdate(id);
+        var dept = getById(id);
         if (dept == null) {
             throw new BizException(CommonErrorCode.DATABASE_RECORD_NOT_FOUND);
         }
@@ -167,6 +172,7 @@ public class SysDeptServiceImpl extends ServiceImplX<SysDeptMapper, SysDept>
     /** 修改部门状态 */
     @Override
     @Transactional
+    @DistributedLock(key = "'mutation'", waitTime = 5000)
     @Caching(
             evict = {
                 @CacheEvict(key = "'tree:all'"),
@@ -183,9 +189,10 @@ public class SysDeptServiceImpl extends ServiceImplX<SysDeptMapper, SysDept>
     /** 删除部门（递归删除所有下级部门），通过事件通知用户模块清除关联 */
     @Override
     @Transactional
+    @DistributedLock(key = "'mutation'", waitTime = 5000)
     @CacheEvict(allEntries = true)
     public void deleteById(Long id) {
-        if (baseMapper.selectByIdForUpdate(id) == null) {
+        if (getById(id) == null) {
             throw new BizException(CommonErrorCode.DATABASE_RECORD_NOT_FOUND);
         }
         var ids = listSelfAndDescendantIds(id);
@@ -198,7 +205,7 @@ public class SysDeptServiceImpl extends ServiceImplX<SysDeptMapper, SysDept>
             return;
         }
         if (parentId == null
-                || baseMapper.selectByIdForUpdate(parentId) == null
+                || getById(parentId) == null
                 || (id != null && listSelfAndDescendantIds(id).contains(parentId))) {
             throw new BizException(SystemErrorCode.DEPT_PARENT_INVALID);
         }

@@ -1,22 +1,23 @@
 <script lang="ts" setup>
-import type {VbenFormSchema} from '#/adapter/form';
-import type {SystemMenuApi} from '#/api';
+import type { VbenFormSchema } from '#/adapter/form';
+import type { SystemMenuApi } from '#/api';
+import type { Id } from '#/api/types';
 
-import {computed, h, ref} from 'vue';
+import { computed, h, ref } from 'vue';
 
-import {useVbenDrawer} from '@vben/common-ui';
-import {getPopupContainer} from '@vben/utils';
+import { useVbenDrawer } from '@vben/common-ui';
+import { getPopupContainer } from '@vben/utils';
 
-import {breakpointsTailwind, useBreakpoints} from '@vueuse/core';
+import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
 
-import {useVbenForm, z} from '#/adapter/form';
-import {createMenu, getMenuDetail, getMenuTree, updateMenu} from '#/api';
-import {$t} from '#/locales';
-import {componentKeys} from '#/router/routes';
-import {enableStatusOptions} from '#/utils/business-options';
-import {disableTreeNodeAndDescendants} from '#/utils/tree';
+import { useVbenForm, z } from '#/adapter/form';
+import { createMenu, getMenuDetail, getMenuTree, updateMenu } from '#/api';
+import { $t } from '#/locales';
+import { componentKeys } from '#/router/routes';
+import { enableStatusOptions } from '#/utils/business-options';
+import { disableTreeNodeAndDescendants } from '#/utils/tree';
 
-import {getMenuTypeOptions} from '../data';
+import { getMenuTypeOptions } from '../data';
 
 const emit = defineEmits<{
   success: [];
@@ -26,16 +27,16 @@ const emit = defineEmits<{
 // 应用到选中项容器上（SingleContent 读取 option.data.class），导致选中后输入框
 // 出现背景色块。改用 `dotClass` 仅供圆点渲染读取。
 const badgeVariantOptions = [
-  {dotClass: 'bg-green-500', label: 'default', value: 'default'},
-  {dotClass: 'bg-destructive', label: 'destructive', value: 'destructive'},
-  {dotClass: 'bg-primary', label: 'primary', value: 'primary'},
-  {dotClass: 'bg-green-500', label: 'success', value: 'success'},
-  {dotClass: 'bg-yellow-500', label: 'warning', value: 'warning'},
+  { dotClass: 'bg-green-500', label: 'default', value: 'default' },
+  { dotClass: 'bg-destructive', label: 'destructive', value: 'destructive' },
+  { dotClass: 'bg-primary', label: 'primary', value: 'primary' },
+  { dotClass: 'bg-green-500', label: 'success', value: 'success' },
+  { dotClass: 'bg-yellow-500', label: 'warning', value: 'warning' },
 ];
 
 function renderBadgeVariant(value?: string, label?: string) {
   const option = badgeVariantOptions.find((item) => item.value === value);
-  return h('span', {class: 'flex items-center gap-2'}, [
+  return h('span', { class: 'flex items-center gap-2' }, [
     h('span', {
       class: ['inline-block size-3 rounded-full', option?.dotClass],
     }),
@@ -68,7 +69,7 @@ function flattenMenus(menus: SystemMenuApi.SysMenu[]) {
   return result;
 }
 
-async function isMenuPathExists(path: string, excludeId?: number) {
+async function isMenuPathExists(path: string, excludeId?: Id) {
   const menus = await getMenuTree();
   return flattenMenus(menus).some(
     (menu) => menu.path === path && menu.id !== excludeId,
@@ -113,7 +114,9 @@ const schema: VbenFormSchema[] = [
           return true;
         }
         return [node.menuName, node.label, node.title].some((item) =>
-          String(item ?? '').toLowerCase().includes(keyword),
+          String(item ?? '')
+            .toLowerCase()
+            .includes(keyword),
         );
       },
       getPopupContainer,
@@ -127,11 +130,11 @@ const schema: VbenFormSchema[] = [
     label: $t('system.menu.parent'),
     renderComponentContent() {
       return {
-        title({label, menuName}: { label: string; menuName: string }) {
+        title({ label, menuName }: { label: string; menuName: string }) {
           const coms = [];
           if (!label && !menuName) return '';
-          coms.push(h('span', {class: ''}, menuName || label));
-          return h('div', {class: 'flex items-center gap-1'}, coms);
+          coms.push(h('span', { class: '' }, menuName || label));
+          return h('div', { class: 'flex items-center gap-1' }, coms);
         },
       };
     },
@@ -145,27 +148,27 @@ const schema: VbenFormSchema[] = [
       rules: (values) => {
         return [0, 1].includes(values.menuType)
           ? z
-            .string()
-            .min(1, $t('ui.formRules.required', [$t('system.menu.path')]))
-            .max(
-              255,
-              $t('ui.formRules.maxLength', [$t('system.menu.path'), 255]),
-            )
-            .refine(
-              (value: string) => value.startsWith('/'),
-              $t('ui.formRules.startWith', [$t('system.menu.path'), '/']),
-            )
-            .refine(
-              async (value: string) => {
-                return !(await isMenuPathExists(value, formData.value?.id));
-              },
-              (value) => ({
-                message: $t('ui.formRules.alreadyExists', [
-                  $t('system.menu.path'),
-                  value,
-                ]),
-              }),
-            )
+              .string()
+              .min(1, $t('ui.formRules.required', [$t('system.menu.path')]))
+              .max(
+                255,
+                $t('ui.formRules.maxLength', [$t('system.menu.path'), 255]),
+              )
+              .refine(
+                (value: string) => value.startsWith('/'),
+                $t('ui.formRules.startWith', [$t('system.menu.path'), '/']),
+              )
+              .refine(
+                async (value: string) => {
+                  return !(await isMenuPathExists(value, formData.value?.id));
+                },
+                (value) => ({
+                  message: $t('ui.formRules.alreadyExists', [
+                    $t('system.menu.path'),
+                    value,
+                  ]),
+                }),
+              )
           : null;
       },
       show: (values) => [0, 1].includes(values.menuType),
@@ -183,15 +186,18 @@ const schema: VbenFormSchema[] = [
       filterOption(input: string, option: { value: string }) {
         return option.value.toLowerCase().includes(input.toLowerCase());
       },
-      options: componentKeys.map((v) => ({value: v})),
+      options: componentKeys.map((v) => ({ value: v })),
     }),
     dependencies: {
       rules: (values) => {
         return values.menuType === 1 && values.isExternal !== 1
           ? z
-            .string()
-            .min(1, $t('ui.formRules.required', [$t('system.menu.component')]))
-            .max(255, '组件路径长度不能超过255个字符')
+              .string()
+              .min(
+                1,
+                $t('ui.formRules.required', [$t('system.menu.component')]),
+              )
+              .max(255, '组件路径长度不能超过255个字符')
           : null;
       },
       show: (values) => values.menuType === 1,
@@ -207,9 +213,9 @@ const schema: VbenFormSchema[] = [
       rules: (values) => {
         return values.menuType === 2
           ? z
-            .string()
-            .min(1, $t('ui.formRules.required', [$t('system.menu.perms')]))
-            .max(255, '权限标识长度不能超过255个字符')
+              .string()
+              .min(1, $t('ui.formRules.required', [$t('system.menu.perms')]))
+              .max(255, '权限标识长度不能超过255个字符')
           : null;
       },
       triggerFields: ['menuType'],
@@ -246,8 +252,8 @@ const schema: VbenFormSchema[] = [
     component: 'RadioGroup',
     componentProps: {
       options: [
-        {label: '否', value: 0},
-        {label: '是', value: 1},
+        { label: '否', value: 0 },
+        { label: '是', value: 1 },
       ],
     },
     defaultValue: 0,
@@ -267,9 +273,9 @@ const schema: VbenFormSchema[] = [
       rules: (values) =>
         values.menuType === 1 && values.isExternal === 1
           ? z
-            .string()
-            .min(1, $t('ui.formRules.required', [$t('system.menu.linkSrc')]))
-            .url($t('ui.formRules.invalidURL'))
+              .string()
+              .min(1, $t('ui.formRules.required', [$t('system.menu.linkSrc')]))
+              .url($t('ui.formRules.invalidURL'))
           : null,
       show: (values) => values.menuType === 1,
       triggerFields: ['menuType', 'isExternal'],
@@ -282,8 +288,8 @@ const schema: VbenFormSchema[] = [
     componentProps: (values) => ({
       disabled: values.isExternal !== 1,
       options: [
-        {label: '内嵌', value: 'iframe'},
-        {label: '新窗口', value: 'newWindow'},
+        { label: '内嵌', value: 'iframe' },
+        { label: '新窗口', value: 'newWindow' },
       ],
     }),
     defaultValue: 'iframe',
@@ -323,11 +329,11 @@ const schema: VbenFormSchema[] = [
       class: 'w-full',
       disabled: !values._badgeType,
       options: badgeVariantOptions,
-      labelRender: ({label, value}: { label?: string; value?: string }) =>
+      labelRender: ({ label, value }: { label?: string; value?: string }) =>
         renderBadgeVariant(value, label),
       optionRender: ({
-                       option,
-                     }: {
+        option,
+      }: {
         option: { data: { label: string; value: string } };
       }) => renderBadgeVariant(option.data.value, option.data.label),
     }),
@@ -514,12 +520,11 @@ const [Drawer, drawerApi] = useVbenDrawer({
 });
 
 async function onSubmit() {
-  const {valid} = await formApi.validate();
+  const { valid } = await formApi.validate();
   if (valid) {
     drawerApi.lock();
-    const values =
-      await formApi.getValues<
-        Omit<SystemMenuApi.SysMenu, 'children' | 'createTime'> & {
+    const values = await formApi.getValues<
+      Omit<SystemMenuApi.SysMenu, 'children' | 'createTime'> & {
         _activeIcon?: string;
         _affixTab?: boolean;
         _badge?: string;
@@ -532,7 +537,7 @@ async function onSubmit() {
         isExternal?: number;
         linkSrc?: string;
       }
-      >();
+    >();
 
     // 构建 meta JSON
     const metaObj: Record<string, any> = parseMeta(values.meta);

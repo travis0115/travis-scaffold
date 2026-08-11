@@ -6,8 +6,9 @@ import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.ops.common.api.OpsPermission;
 import com.travis.monolith.ops.errorlog.api.request.SysErrorLogPageReq;
-import com.travis.monolith.ops.errorlog.internal.entity.SysErrorLog;
+import com.travis.monolith.ops.errorlog.api.response.SysErrorLogResp;
 import com.travis.monolith.ops.errorlog.internal.service.SysErrorLogService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,7 +24,7 @@ public class SysErrorLogController {
     /** 分页查询系统异常日志。 */
     @GetMapping("/page")
     @SaCheckPermission(value = OpsPermission.OPS_ERROR_LOG_QUERY, type = LoginType.ADMIN)
-    public ApiResponse<PageResp<SysErrorLog>> page(SysErrorLogPageReq req) {
+    public ApiResponse<PageResp<SysErrorLogResp>> page(@Valid SysErrorLogPageReq req) {
         return ApiResponse.success(errorLogService.page(req));
     }
 }

@@ -3,6 +3,7 @@ package com.travis.monolith.system.file.api;
 import com.travis.monolith.system.file.api.response.FileUploadResp;
 import jakarta.validation.constraints.NotNull;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.multipart.MultipartFile;
@@ -56,4 +57,7 @@ public interface SysFileApi {
      * @return 处理后的富文本内容
      */
     String resolveManagedImageSources(String html);
+
+    /** 批量为富文本中的系统文件图片补充当前访问地址。 */
+    List<String> resolveManagedImageSources(List<String> htmlList);
 }

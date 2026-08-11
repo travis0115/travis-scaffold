@@ -12,14 +12,18 @@ import com.travis.monolith.ops.job.api.response.OpsJobLogDetailResp;
 import com.travis.monolith.ops.job.api.response.OpsJobLogExportResp;
 import com.travis.monolith.ops.job.api.response.OpsJobLogPageResp;
 import com.travis.monolith.ops.job.internal.service.OpsJobLogService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 /** 定时任务执行日志管理接口。 */
 @RestController
 @RequestMapping("/ops/job-log")
 @RequiredArgsConstructor
+@Validated
 @OperationLogModule("JobLog")
 public class OpsJobLogController {
 
@@ -28,21 +32,22 @@ public class OpsJobLogController {
     /** 分页查询任务执行日志。 */
     @SaCheckPermission(value = OpsPermission.OPS_JOB_LOG_QUERY, type = LoginType.ADMIN)
     @GetMapping("/page")
-    public ApiResponse<PageResp<OpsJobLogPageResp>> page(OpsJobLogPageReq req) {
+    public ApiResponse<PageResp<OpsJobLogPageResp>> page(@Valid OpsJobLogPageReq req) {
         return ApiResponse.success(logService.page(req));
     }
 
     /** 查询任务执行日志详情。 */
     @SaCheckPermission(value = OpsPermission.OPS_JOB_LOG_QUERY, type = LoginType.ADMIN)
     @GetMapping("/{id}")
-    public ApiResponse<OpsJobLogDetailResp> detail(@PathVariable Long id) {
+    public ApiResponse<OpsJobLogDetailResp> detail(
+            @PathVariable @Positive(message = "任务日志ID必须为正数") Long id) {
         return ApiResponse.success(logService.getOrThrow(id));
     }
 
     /** 按查询条件导出任务执行日志。 */
     @SaCheckPermission(value = OpsPermission.OPS_JOB_LOG_QUERY, type = LoginType.ADMIN)
     @GetMapping("/export")
-    public ApiResponse<List<OpsJobLogExportResp>> export(OpsJobLogPageReq req) {
+    public ApiResponse<List<OpsJobLogExportResp>> export(@Valid OpsJobLogPageReq req) {
         return ApiResponse.success(logService.exportLogs(req));
     }
 
@@ -50,7 +55,8 @@ public class OpsJobLogController {
     @SaCheckPermission(value = OpsPermission.OPS_JOB_OPERATION, type = LoginType.ADMIN)
     @OperationLog(action = "清理任务日志")
     @DeleteMapping("/clean")
-    public ApiResponse<Void> clean(@RequestParam(required = false) Long jobId) {
+    public ApiResponse<Void> clean(
+            @RequestParam(required = false) @Positive(message = "任务ID必须为正数") Long jobId) {
         logService.clean(jobId);
         return ApiResponse.success();
     }

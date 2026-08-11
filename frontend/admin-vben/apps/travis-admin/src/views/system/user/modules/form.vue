@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import type { SystemUserApi } from '#/api';
+import type { Id } from '#/api/types';
 
 import { computed, nextTick, ref } from 'vue';
 
@@ -28,7 +29,7 @@ const [Form, formApi] = useVbenForm({
   showDefaultActions: false,
 });
 
-const id = ref<number>();
+const id = ref<Id>();
 
 function isEmptyDeptId(value: unknown) {
   return value === 0 || value === '0' || value == null;
@@ -60,7 +61,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
         }
       } else {
         // 新增：先创建用户获取ID，再分配角色
-        const newUserId = await createUser(userData) as unknown as number;
+        const newUserId = await createUser(userData);
         if (roleIds !== undefined && roleIds.length > 0) {
           await assignUserRoles({ userId: newUserId, roleIds });
         }

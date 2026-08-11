@@ -114,6 +114,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     /** 创建消息。 */
     @Override
     @Transactional
+    @DistributedLock(namespace = "system-file-reference", key = "'mutation'", waitTime = 5000)
     public Long create(SysMessageCreateReq req) {
         return create(req, SysMessageSourceType.MANUAL);
     }
@@ -121,6 +122,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     /** 创建系统自动消息。 */
     @Override
     @Transactional
+    @DistributedLock(namespace = "system-file-reference", key = "'mutation'", waitTime = 5000)
     public Long createSystem(SysMessageCreateReq req) {
         return create(req, SysMessageSourceType.SYSTEM);
     }
@@ -150,6 +152,7 @@ public class SysMessageServiceImpl extends ServiceImplX<SysMessageMapper, SysMes
     /** 更新指定消息。 */
     @Override
     @Transactional
+    @DistributedLock(namespace = "system-file-reference", key = "'mutation'", waitTime = 5000)
     public void update(Long id, SysMessageUpdateReq req) {
         req.setReceiverValues(
                 validateReceiver(

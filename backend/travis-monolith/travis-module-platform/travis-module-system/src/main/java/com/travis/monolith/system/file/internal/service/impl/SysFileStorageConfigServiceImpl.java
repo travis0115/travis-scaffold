@@ -5,6 +5,7 @@ import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
+import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
 import com.travis.monolith.system.common.api.enums.IsDefault;
 import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
@@ -18,6 +19,7 @@ import com.travis.monolith.system.file.internal.entity.SysFileStorageConfig;
 import com.travis.monolith.system.file.internal.mapper.SysFileStorageConfigMapper;
 import com.travis.monolith.system.file.internal.service.SysFileStorageConfigService;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -91,6 +93,7 @@ public class SysFileStorageConfigServiceImpl
     /** 创建文件存储配置。 */
     @Override
     @Transactional
+    @DistributedLock(namespace = "system-file-metadata", key = "'mutation'", waitTime = 5000)
     @Caching(
             evict = {
                 @CacheEvict(allEntries = true),
@@ -105,6 +108,7 @@ public class SysFileStorageConfigServiceImpl
     /** 更新指定文件存储配置。 */
     @Override
     @Transactional
+    @DistributedLock(namespace = "system-file-metadata", key = "'mutation'", waitTime = 5000)
     @Caching(
             evict = {
                 @CacheEvict(allEntries = true),
@@ -113,6 +117,9 @@ public class SysFileStorageConfigServiceImpl
     public void update(Long id, SysFileStorageConfigUpdateReq req) {
         var old = getByIdOrThrow(id);
         validateDefaultEnabled(req.getIsDefault(), req.getStatus());
+        if (baseMapper.existsFile(id) && isStorageLocationChanged(old, req)) {
+            throw new BizException(SystemErrorCode.FILE_STORAGE_LOCATION_IMMUTABLE);
+        }
         if (IsDefault.YES.getValue().equals(old.getIsDefault())
                 && IsDefault.NO.getValue().equals(req.getIsDefault())) {
             throw new BizException(SystemErrorCode.FILE_STORAGE_DEFAULT_REQUIRED);
@@ -159,6 +166,7 @@ public class SysFileStorageConfigServiceImpl
     /** 根据 ID 删除指定文件存储配置。 */
     @Override
     @Transactional
+    @DistributedLock(namespace = "system-file-metadata", key = "'mutation'", waitTime = 5000)
     @Caching(
             evict = {
                 @CacheEvict(allEntries = true),
@@ -191,5 +199,17 @@ public class SysFileStorageConfigServiceImpl
                 && Status.DISABLED.getValue().equals(status)) {
             throw new BizException(SystemErrorCode.FILE_STORAGE_DEFAULT_NOT_DELETABLE);
         }
+    }
+
+    /** 判断会改变已有文件物理定位方式的配置是否发生变化。 */
+    private boolean isStorageLocationChanged(
+            SysFileStorageConfig old, SysFileStorageConfigUpdateReq req) {
+        return !Objects.equals(old.getStorageType(), req.getStorageType())
+                || !Objects.equals(old.getStoragePath(), req.getStoragePath())
+                || !Objects.equals(old.getEndpoint(), req.getEndpoint())
+                || !Objects.equals(old.getRegion(), req.getRegion())
+                || !Objects.equals(old.getBucketId(), req.getBucketId())
+                || !Objects.equals(old.getBucketName(), req.getBucketName())
+                || !Objects.equals(old.getMeta(), req.getMeta());
     }
 }

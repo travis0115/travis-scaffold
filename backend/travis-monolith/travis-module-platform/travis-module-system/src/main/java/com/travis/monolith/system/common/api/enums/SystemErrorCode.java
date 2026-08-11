@@ -14,6 +14,8 @@ public enum SystemErrorCode implements ErrorCode {
     /* user模块 000-099 */
     USER_OLD_PASSWORD_ERROR("SYS_000", "原密码错误"),
     USER_USERNAME_EXISTS("SYS_001", "用户名已存在"),
+    USER_CONCURRENT_UPDATE("SYS_002", "用户信息已被其他请求修改，请刷新后重试"),
+    USER_DEPT_INVALID("SYS_003", "所属部门不存在"),
 
     /* role模块 100-199 */
     ROLE_BUILTIN_NOT_DELETABLE("SYS_100", "系统内置角色不允许删除"),
@@ -56,6 +58,7 @@ public enum SystemErrorCode implements ErrorCode {
     FILE_UPLOAD_EXTENSION_NOT_ALLOWED("SYS_1007", "不支持上传该文件类型"),
     FILE_IN_USE("SYS_1008", "文件仍被业务数据引用，不允许删除"),
     FILE_NOT_FOUND("SYS_1009", "未找到文件"),
+    FILE_STORAGE_LOCATION_IMMUTABLE("SYS_1010", "存储配置已被文件使用，不允许修改存储位置"),
 
     /* config模块 1100-1199 */
     CONFIG_BUILTIN_NOT_DELETABLE("SYS_1100", "系统内置配置不允许删除"),

@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { computed, h, ref } from 'vue';
+import type { Id } from '#/api/types';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
@@ -15,7 +16,7 @@ import { tagStyleOptions } from './tag-style-options';
 
 const emit = defineEmits(['success']);
 const formData = ref<Record<string, any>>({});
-const dictId = ref(0);
+const dictId = ref<Id>(0);
 const dictName = ref('');
 
 const getTitle = computed(() => {
@@ -115,7 +116,17 @@ const [Drawer, drawerApi] = useVbenDrawer({
   },
   onOpenChange(isOpen) {
     if (isOpen) {
-      const data = drawerApi.getData<{ dictId: number; dictName: string; itemId?: number; label?: string; remark?: string; sort?: number; status?: number; tagStyle?: string; value?: string }>();
+      const data = drawerApi.getData<{
+        dictId: Id;
+        dictName: string;
+        itemId?: Id;
+        label?: string;
+        remark?: string;
+        sort?: number;
+        status?: number;
+        tagStyle?: string;
+        value?: string;
+      }>();
       formApi.resetForm();
       formApi.updateSchema([
         {

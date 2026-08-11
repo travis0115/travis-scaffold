@@ -70,4 +70,7 @@ public class SysUserResp {
 
     /** 已分配的角色名称列表 */
     private List<String> roleNames;
+
+    /** 乐观锁版本号 */
+    private Integer version;
 }

@@ -1,3 +1,5 @@
+export type Id = number | string;
+
 export interface PageResp<T> {
   pageNum: number;
   pageSize: number;

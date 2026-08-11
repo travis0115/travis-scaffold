@@ -1,23 +1,23 @@
 import type { Recordable } from '@vben/types';
 
-import type { PageResp } from '#/api/types';
+import type { Id, PageResp } from '#/api/types';
 
 import { requestClient } from '#/api/request';
 
 export namespace SystemUserApi {
   export interface SysUser {
     [key: string]: any;
-    id: number;
+    id: Id;
     username: string;
     nickname: string;
     avatar?: string;
-    avatarFileId?: number | string;
+    avatarFileId?: Id;
     email?: string;
     mobile?: string;
-    deptId?: number;
+    deptId?: Id;
     deptName?: string;
     status: 0 | 1;
-    roleIds?: number[];
+    roleIds?: Id[];
     roleNames?: string[];
     lastOfflineTime?: string;
     lastOnlineIp?: string;
@@ -26,11 +26,12 @@ export namespace SystemUserApi {
     online?: boolean;
     onlineStatus?: 0 | 1;
     createTime?: string;
+    version?: number;
   }
 
   export interface UserOption {
     deptName?: string;
-    id: number;
+    id: Id;
     mobile?: string;
     nickname?: string;
     username: string;
@@ -58,7 +59,7 @@ async function getAppUserPage(params: Recordable<any>) {
   );
 }
 
-async function getUserOptionsByIds(ids: Array<number | string>) {
+async function getUserOptionsByIds(ids: Id[]) {
   return requestClient.get<SystemUserApi.UserOption[]>(
     '/system/user/options/by-ids',
     {
@@ -68,7 +69,7 @@ async function getUserOptionsByIds(ids: Array<number | string>) {
   );
 }
 
-async function getAppUserOptionsByIds(ids: Array<number | string>) {
+async function getAppUserOptionsByIds(ids: Id[]) {
   return requestClient.get<SystemUserApi.UserOption[]>(
     '/app/user/options/by-ids',
     {
@@ -81,7 +82,7 @@ async function getAppUserOptionsByIds(ids: Array<number | string>) {
 /**
  * 获取用户详情
  */
-async function getUserDetail(id: number) {
+async function getUserDetail(id: Id) {
   return requestClient.get<SystemUserApi.SysUser>(`/system/user/${id}`);
 }
 
@@ -89,17 +90,17 @@ async function getUserDetail(id: number) {
  * 新增用户
  */
 async function createUser(data: Partial<SystemUserApi.SysUser>) {
-  return requestClient.post('/system/user', data);
+  return requestClient.post<Id>('/system/user', data);
 }
 
 /**
  * 更新用户
  */
-async function updateUser(id: number, data: Partial<SystemUserApi.SysUser>) {
+async function updateUser(id: Id, data: Partial<SystemUserApi.SysUser>) {
   return requestClient.put(`/system/user/${id}`, data);
 }
 
-async function updateUserStatus(id: number, status: 0 | 1) {
+async function updateUserStatus(id: Id, status: 0 | 1) {
   return requestClient.put(`/system/user/${id}/status`, undefined, {
     params: { status },
   });
@@ -108,14 +109,14 @@ async function updateUserStatus(id: number, status: 0 | 1) {
 /**
  * 删除用户
  */
-async function deleteUser(id: number) {
+async function deleteUser(id: Id) {
   return requestClient.delete(`/system/user/${id}`);
 }
 
 /**
  * 为用户分配角色
  */
-async function assignUserRoles(data: { roleIds: number[]; userId: number }) {
+async function assignUserRoles(data: { roleIds: Id[]; userId: Id }) {
   return requestClient.post('/system/user/roles', data);
 }
 
@@ -123,7 +124,7 @@ async function assignUserRoles(data: { roleIds: number[]; userId: number }) {
  * 重置用户密码（可选指定新密码，不指定则自动生成随机密码）
  * @returns 最终使用的密码（明文）
  */
-async function resetUserPassword(id: number, newPassword?: string) {
+async function resetUserPassword(id: Id, newPassword?: string) {
   return requestClient.put<string>(`/system/user/${id}/reset-password`, {
     newPassword: newPassword || undefined,
   });

@@ -2,21 +2,21 @@ import type { AxiosProgressEvent } from '@vben/request';
 
 import type { FileUploadResult } from './file';
 
-import type { PageResp } from '#/api/types';
+import type { Id, PageResp } from '#/api/types';
 
 import { requestClient } from '#/api/request';
 
 export namespace SystemVersionLogApi {
   export interface VersionLog {
     [key: string]: any;
-    id: number;
+    id: Id;
     version: string;
     title: string;
     content: string;
     publishTime?: string;
     status: 0 | 1;
     createTime?: string;
-    createBy?: number;
+    createBy?: Id;
   }
 }
 
@@ -39,7 +39,7 @@ async function getVersionLogPage(params: {
 /**
  * 获取版本日志详情
  */
-async function getVersionLogDetail(id: number) {
+async function getVersionLogDetail(id: Id) {
   return requestClient.get<SystemVersionLogApi.VersionLog>(
     `/system/version/${id}`,
   );
@@ -56,13 +56,13 @@ async function createVersionLog(data: Partial<SystemVersionLogApi.VersionLog>) {
  * 更新版本日志
  */
 async function updateVersionLog(
-  id: number,
+  id: Id,
   data: Partial<SystemVersionLogApi.VersionLog>,
 ) {
   return requestClient.put(`/system/version/${id}`, data);
 }
 
-async function updateVersionLogStatus(id: number, status: 0 | 1) {
+async function updateVersionLogStatus(id: Id, status: 0 | 1) {
   return requestClient.put(`/system/version/${id}/status`, undefined, {
     params: { status },
   });
@@ -71,7 +71,7 @@ async function updateVersionLogStatus(id: number, status: 0 | 1) {
 /**
  * 删除版本日志
  */
-async function deleteVersionLog(id: number) {
+async function deleteVersionLog(id: Id) {
   return requestClient.delete(`/system/version/${id}`);
 }
 

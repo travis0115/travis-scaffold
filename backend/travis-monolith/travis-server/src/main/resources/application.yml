@@ -17,6 +17,7 @@ spring:
     redis:
       key-prefix: ${travis.redis.key-prefix}
       time-to-live: 1d # 默认缓存时间
+      cache-null-values: true # 缓存空值，防止不存在的数据反复穿透到数据库
 
   data:
     redis:

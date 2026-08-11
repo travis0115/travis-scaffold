@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { h, ref } from 'vue';
+import type { Id } from '#/api/types';
 
 import { useVbenModal, alert as vbenAlert } from '@vben/common-ui';
 
@@ -15,7 +16,7 @@ const emit = defineEmits(['success']);
 const { copy } = useClipboard({ legacy: true });
 const { message } = App.useApp();
 
-const userId = ref<number>();
+const userId = ref<Id>();
 const nicknameVal = ref('');
 const passwordVisible = ref(true);
 
@@ -132,7 +133,7 @@ const [Modal, modalApi] = useVbenModal({
   },
   onOpenChange(isOpen) {
     if (isOpen) {
-      const data = modalApi.getData<{ id: number; nickname: string }>();
+      const data = modalApi.getData<{ id: Id; nickname: string }>();
       userId.value = data?.id;
       nicknameVal.value = data?.nickname ?? '';
       formApi.resetForm();

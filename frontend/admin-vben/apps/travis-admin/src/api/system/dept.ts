@@ -1,10 +1,12 @@
+import type { Id } from '#/api/types';
+
 import { requestClient } from '#/api/request';
 
 export namespace SystemDeptApi {
   export interface SysDept {
     [key: string]: any;
-    id: number;
-    parentId: number | string;
+    id: Id;
+    parentId: Id;
     deptName: string;
     sort?: number;
     leader?: string;
@@ -19,9 +21,7 @@ export namespace SystemDeptApi {
  * 获取部门树形列表
  */
 async function getDeptTree() {
-  return requestClient.get<SystemDeptApi.SysDept[]>(
-    '/system/dept/list',
-  );
+  return requestClient.get<SystemDeptApi.SysDept[]>('/system/dept/list');
 }
 
 /**
@@ -36,7 +36,7 @@ async function getEnabledDeptTree() {
 /**
  * 获取部门详情
  */
-async function getDeptDetail(id: number) {
+async function getDeptDetail(id: Id) {
   return requestClient.get<SystemDeptApi.SysDept>(`/system/dept/${id}`);
 }
 
@@ -50,11 +50,11 @@ async function createDept(data: Partial<SystemDeptApi.SysDept>) {
 /**
  * 更新部门
  */
-async function updateDept(id: number, data: Partial<SystemDeptApi.SysDept>) {
+async function updateDept(id: Id, data: Partial<SystemDeptApi.SysDept>) {
   return requestClient.put(`/system/dept/${id}`, data);
 }
 
-async function updateDeptStatus(id: number, status: 0 | 1) {
+async function updateDeptStatus(id: Id, status: 0 | 1) {
   return requestClient.put(`/system/dept/${id}/status`, undefined, {
     params: { status },
   });
@@ -63,7 +63,7 @@ async function updateDeptStatus(id: number, status: 0 | 1) {
 /**
  * 删除部门
  */
-async function deleteDept(id: number) {
+async function deleteDept(id: Id) {
   return requestClient.delete(`/system/dept/${id}`);
 }
 

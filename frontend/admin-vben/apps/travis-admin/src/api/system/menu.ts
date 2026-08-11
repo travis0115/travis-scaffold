@@ -1,3 +1,5 @@
+import type { Id } from '#/api/types';
+
 import { requestClient } from '#/api/request';
 
 export namespace SystemMenuApi {
@@ -10,8 +12,8 @@ export namespace SystemMenuApi {
 
   export interface SysMenu {
     [key: string]: any;
-    id: number;
-    parentId: number;
+    id: Id;
+    parentId: Id;
     menuName: string;
     path?: string;
     component?: string;
@@ -30,15 +32,13 @@ export namespace SystemMenuApi {
  * 获取菜单树形列表
  */
 async function getMenuTree() {
-  return requestClient.get<SystemMenuApi.SysMenu[]>(
-    '/system/menu/list',
-  );
+  return requestClient.get<SystemMenuApi.SysMenu[]>('/system/menu/list');
 }
 
 /**
  * 获取菜单详情
  */
-async function getMenuDetail(id: number) {
+async function getMenuDetail(id: Id) {
   return requestClient.get<SystemMenuApi.SysMenu>(`/system/menu/${id}`);
 }
 
@@ -52,11 +52,11 @@ async function createMenu(data: Partial<SystemMenuApi.SysMenu>) {
 /**
  * 更新菜单
  */
-async function updateMenu(id: number, data: Partial<SystemMenuApi.SysMenu>) {
+async function updateMenu(id: Id, data: Partial<SystemMenuApi.SysMenu>) {
   return requestClient.put(`/system/menu/${id}`, data);
 }
 
-async function updateMenuStatus(id: number, status: 0 | 1) {
+async function updateMenuStatus(id: Id, status: 0 | 1) {
   return requestClient.put(`/system/menu/${id}/status`, undefined, {
     params: { status },
   });
@@ -65,21 +65,21 @@ async function updateMenuStatus(id: number, status: 0 | 1) {
 /**
  * 删除菜单
  */
-async function deleteMenu(id: number) {
+async function deleteMenu(id: Id) {
   return requestClient.delete(`/system/menu/${id}`);
 }
 
 /**
  * 上移菜单
  */
-async function moveUpMenu(id: number) {
+async function moveUpMenu(id: Id) {
   return requestClient.put(`/system/menu/${id}/move-up`);
 }
 
 /**
  * 下移菜单
  */
-async function moveDownMenu(id: number) {
+async function moveDownMenu(id: Id) {
   return requestClient.put(`/system/menu/${id}/move-down`);
 }
 

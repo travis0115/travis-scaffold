@@ -17,7 +17,10 @@ import com.travis.monolith.system.file.api.response.SysFileResp;
 import com.travis.monolith.system.file.api.response.SysFileStorageConfigResp;
 import com.travis.monolith.system.file.internal.converter.SysFileConverter;
 import com.travis.monolith.system.file.internal.entity.SysFile;
+import com.travis.monolith.system.file.internal.entity.SysFileStorageConfig;
+import com.travis.monolith.system.file.internal.mapper.SysFileFolderMapper;
 import com.travis.monolith.system.file.internal.mapper.SysFileMapper;
+import com.travis.monolith.system.file.internal.mapper.SysFileStorageConfigMapper;
 import com.travis.monolith.system.file.internal.service.impl.SysFileServiceImpl;
 import com.travis.monolith.system.file.internal.strategy.FileStorageStrategy;
 import com.travis.monolith.system.file.internal.strategy.StorageResult;
@@ -67,7 +70,7 @@ class SysFileServiceImplTest {
         var service = service(mapper, List.of(strategy), provider(), configService);
         var file = new MockMultipartFile("file", "a.png", "image/png", new byte[] {1});
 
-        assertThatThrownBy(() -> service.upload(file, 1L, "admin", 2L))
+        assertThatThrownBy(() -> service.upload(file, 0L, "admin", 2L))
                 .isInstanceOf(IllegalStateException.class);
 
         verify(strategy).delete("/files/a.png", config);
@@ -105,6 +108,7 @@ class SysFileServiceImplTest {
                 new SysFileServiceImpl(
                         List.of(),
                         configService,
+                        metadataService(mapper),
                         converter,
                         provider(),
                         resolvers,
@@ -128,12 +132,22 @@ class SysFileServiceImplTest {
                 new SysFileServiceImpl(
                         strategies,
                         configService,
+                        metadataService(mapper),
                         mock(SysFileConverter.class),
                         checkers,
                         emptyUploaderNameResolvers(),
                         mock(TransactionalApplicationEventPublisher.class));
         ReflectionTestUtils.setField(service, "baseMapper", mapper);
         return service;
+    }
+
+    private SysFileMetadataService metadataService(SysFileMapper mapper) {
+        var storageConfigMapper = mock(SysFileStorageConfigMapper.class);
+        var config = new SysFileStorageConfig();
+        config.setStorageType("LOCAL");
+        when(storageConfigMapper.selectById(any())).thenReturn(config);
+        return new SysFileMetadataService(
+                mapper, mock(SysFileFolderMapper.class), storageConfigMapper);
     }
 
     @SafeVarargs
