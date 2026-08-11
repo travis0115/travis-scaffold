@@ -10,6 +10,7 @@ export namespace SystemVersionLogApi {
   export interface VersionLog {
     [key: string]: any;
     id: Id;
+    lockVersion?: number;
     version: string;
     title: string;
     content: string;

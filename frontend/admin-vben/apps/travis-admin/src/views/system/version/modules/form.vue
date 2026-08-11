@@ -30,7 +30,10 @@ const [Drawer, drawerApi] = useVbenDrawer({
     const { valid } = await formApi.validate();
     if (!valid) return;
     const values = await formApi.getValues();
-    if (formData.value?.id) delete values.status;
+    if (formData.value?.id) {
+      values.lockVersion = formData.value.lockVersion;
+      delete values.status;
+    }
     drawerApi.lock();
     try {
       await (formData.value?.id

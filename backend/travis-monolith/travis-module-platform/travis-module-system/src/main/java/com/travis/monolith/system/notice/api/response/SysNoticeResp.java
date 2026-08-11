@@ -9,6 +9,9 @@ public class SysNoticeResp {
     /** 公告 ID。 */
     private Long id;
 
+    /** 乐观锁版本号。 */
+    private Integer lockVersion;
+
     /** 公告标题。 */
     private String title;
 

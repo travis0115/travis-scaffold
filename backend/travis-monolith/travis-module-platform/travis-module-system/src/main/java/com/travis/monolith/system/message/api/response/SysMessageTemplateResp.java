@@ -9,6 +9,9 @@ public class SysMessageTemplateResp {
     /** 模板 ID。 */
     private Long id;
 
+    /** 乐观锁版本号。 */
+    private Integer lockVersion;
+
     /** 模板编码。 */
     private String templateCode;
 

@@ -26,7 +26,7 @@ export namespace SystemUserApi {
     online?: boolean;
     onlineStatus?: 0 | 1;
     createTime?: string;
-    version?: number;
+    lockVersion?: number;
   }
 
   export interface UserOption {

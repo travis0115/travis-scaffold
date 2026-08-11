@@ -53,6 +53,7 @@ public interface OpsJobConverter {
     @Mapping(target = "updateTime", ignore = true)
     @Mapping(target = "updateBy", ignore = true)
     @Mapping(target = "isDeleted", ignore = true)
+    @Mapping(target = "lockVersion", ignore = true)
     OpsJob copy(OpsJob source);
 
     /** 将任务实体转换为分页响应。 */

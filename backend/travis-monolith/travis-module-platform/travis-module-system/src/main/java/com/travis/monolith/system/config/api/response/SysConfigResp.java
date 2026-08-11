@@ -20,6 +20,9 @@ public class SysConfigResp {
     /** 主键ID */
     private Long id;
 
+    /** 乐观锁版本号。 */
+    private Integer lockVersion;
+
     /** 配置键 */
     private String configKey;
 

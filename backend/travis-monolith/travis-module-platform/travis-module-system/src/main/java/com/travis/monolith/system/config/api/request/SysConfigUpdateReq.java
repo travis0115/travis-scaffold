@@ -1,5 +1,6 @@
 package com.travis.monolith.system.config.api.request;
 
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -10,6 +11,10 @@ import lombok.Data;
  */
 @Data
 public class SysConfigUpdateReq {
+
+    /** 乐观锁版本号。 */
+    @NotNull(message = "版本号不能为空")
+    private Integer lockVersion;
 
     /** 配置值 */
     @Size(max = 1000, message = "配置值长度不能超过1000个字符")

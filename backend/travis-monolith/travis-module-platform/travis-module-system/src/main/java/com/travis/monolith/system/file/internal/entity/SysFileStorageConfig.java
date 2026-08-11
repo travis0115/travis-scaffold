@@ -1,5 +1,6 @@
 package com.travis.monolith.system.file.internal.entity;
 
+import com.baomidou.mybatisplus.annotation.Version;
 import com.travis.infrastructure.framework.mybatis.core.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -8,6 +9,9 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class SysFileStorageConfig extends BaseEntity {
+    /** 乐观锁版本号。 */
+    @Version private Integer lockVersion;
+
     /** 配置名称。 */
     private String configName;
 

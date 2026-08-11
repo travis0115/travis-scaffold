@@ -22,6 +22,7 @@ export namespace OpsJobApi {
     id: number;
     intervalMillis?: number;
     jobName: string;
+    lockVersion?: number;
     logRetentionDays: number;
     misfirePolicy: number;
     nextFireTime?: string;

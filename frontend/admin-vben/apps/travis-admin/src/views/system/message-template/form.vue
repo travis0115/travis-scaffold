@@ -65,14 +65,24 @@ let variableRowSequence = 0;
 const [ParamGrid, paramGridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: [
-      { field: 'key', minWidth: 150, slots: { default: 'key' }, title: '参数名' },
+      {
+        field: 'key',
+        minWidth: 150,
+        slots: { default: 'key' },
+        title: '参数名',
+      },
       {
         field: 'label',
         minWidth: 150,
         slots: { default: 'label' },
         title: '显示名称',
       },
-      { field: 'type', minWidth: 140, slots: { default: 'type' }, title: '类型' },
+      {
+        field: 'type',
+        minWidth: 140,
+        slots: { default: 'type' },
+        title: '类型',
+      },
       {
         align: 'center',
         field: 'required',
@@ -96,7 +106,8 @@ const [ParamGrid, paramGridApi] = useVbenVxeGrid({
       },
     ],
     height: '100%',
-    pagerConfig: false as unknown as VxeTableGridOptions<VariableRow>['pagerConfig'],
+    pagerConfig:
+      false as unknown as VxeTableGridOptions<VariableRow>['pagerConfig'],
     rowConfig: { keyField: '_rowId' },
     toolbarConfig: { enabled: false },
   } as VxeTableGridOptions<VariableRow>,
@@ -366,6 +377,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
       channel: values.channel,
       content: values.content,
       contentSchema: values.contentSchema,
+      lockVersion: formData.value?.lockVersion,
       platformTemplateId: values.platformTemplateId,
       redirectUrl: values.redirectUrl,
       remark: values.remark,
@@ -498,7 +510,11 @@ const [Drawer, drawerApi] = useVbenDrawer({
       </template>
       <ParamGrid>
         <template #key="{ row }">
-          <Input v-model:value="row.key" placeholder="请输入参数名" size="small" />
+          <Input
+            v-model:value="row.key"
+            placeholder="请输入参数名"
+            size="small"
+          />
         </template>
         <template #label="{ row }">
           <Input
@@ -528,7 +544,12 @@ const [Drawer, drawerApi] = useVbenDrawer({
           />
         </template>
         <template #action="{ row }">
-          <Button danger size="small" type="link" @click="removeVariableRow(row)">
+          <Button
+            danger
+            size="small"
+            type="link"
+            @click="removeVariableRow(row)"
+          >
             删除
           </Button>
         </template>

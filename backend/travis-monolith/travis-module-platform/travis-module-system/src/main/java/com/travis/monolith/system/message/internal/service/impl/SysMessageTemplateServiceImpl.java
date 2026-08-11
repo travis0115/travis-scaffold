@@ -95,7 +95,10 @@ public class SysMessageTemplateServiceImpl
         normalizeContent(req);
         validateUnique(entity.getTemplateCode(), req.getChannel(), id);
         converter.update(req, entity);
-        updateById(entity);
+        entity.setLockVersion(req.getLockVersion());
+        if (!updateById(entity)) {
+            throw new BizException(SystemErrorCode.MESSAGE_TEMPLATE_CONCURRENT_UPDATE);
+        }
     }
 
     /** 删除指定消息模板。 */

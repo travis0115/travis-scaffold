@@ -143,10 +143,11 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         OpsJob job = getRequired(id);
         validateUserScope(req);
         converter.update(req, job);
+        job.setLockVersion(req.getLockVersion());
         if (OpsJobStatus.ENABLED.getValue().equals(job.getStatus())) {
             ensureHandlerExists(job.getHandlerName());
         }
-        updateById(job);
+        updateOrThrow(job);
         synchronizeAfterCommit(job);
     }
 
@@ -172,7 +173,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         } else {
             job.setStatus(OpsJobStatus.DISABLED.getValue());
         }
-        updateById(job);
+        updateOrThrow(job);
         synchronizeAfterCommit(job);
     }
 
@@ -332,6 +333,13 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
             throw new BizException(OpsJobErrorCode.JOB_NOT_FOUND);
         }
         return job;
+    }
+
+    /** 更新调度任务，检测并发覆盖。 */
+    private void updateOrThrow(OpsJob job) {
+        if (!updateById(job)) {
+            throw new BizException(OpsJobErrorCode.CONCURRENT_UPDATE);
+        }
     }
 
     /** 补充定时任务响应中的展示信息。 */

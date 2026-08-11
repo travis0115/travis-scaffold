@@ -9,6 +9,7 @@ import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
 import com.travis.monolith.system.common.api.enums.PublishStatus;
+import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.file.api.SysFileApi;
 import com.travis.monolith.system.message.api.SysMessageApi;
 import com.travis.monolith.system.message.api.enums.SysMessageReceiverScope;
@@ -141,8 +142,9 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
         }
         var normalizedContent = fileApi.stripManagedImageSources(req.getContent());
         converter.update(req, entity);
+        entity.setLockVersion(req.getLockVersion());
         entity.setContent(normalizedContent);
-        updateById(entity);
+        updateOrThrow(entity);
     }
 
     /** 更新指定系统公告的状态。 */
@@ -157,12 +159,12 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
         if (PublishStatus.PUBLISHED.getValue().equals(status)) {
             entity.setStatus(status);
             entity.setPublishTime(LocalDateTime.now());
-            updateById(entity);
+            updateOrThrow(entity);
             messageApi.publishSourceMessage(toMessageRequest(entity));
         } else if (PublishStatus.REVOKED.getValue().equals(status)
                 && PublishStatus.PUBLISHED.getValue().equals(entity.getStatus())) {
             entity.setStatus(status);
-            updateById(entity);
+            updateOrThrow(entity);
             messageApi.revokeSourceMessage(
                     SysMessageSourceType.NOTICE.getValue(), id.toString(), LoginType.ADMIN);
         } else {
@@ -176,7 +178,7 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
     public void updatePinned(Long id, Integer isPinned) {
         var entity = getByIdOrThrow(id);
         entity.setIsPinned(isPinned);
-        updateById(entity);
+        updateOrThrow(entity);
     }
 
     /** 删除指定系统公告。 */
@@ -213,6 +215,13 @@ public class SysNoticeServiceImpl extends ServiceImplX<SysNoticeMapper, SysNotic
                         records.stream().map(SysNoticeResp::getContent).toList());
         for (int index = 0; index < records.size(); index++) {
             records.get(index).setContent(contents.get(index));
+        }
+    }
+
+    /** 更新公告，检测并发覆盖。 */
+    private void updateOrThrow(SysNotice entity) {
+        if (!updateById(entity)) {
+            throw new BizException(SystemErrorCode.NOTICE_CONCURRENT_UPDATE);
         }
     }
 }

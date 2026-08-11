@@ -101,7 +101,7 @@ public class SysFileStorageConfigServiceImpl
             })
     public void create(SysFileStorageConfigCreateReq req) {
         validateDefaultEnabled(req.getIsDefault(), req.getStatus());
-        resetDefault(req.getIsDefault());
+        resetDefault(req.getIsDefault(), null);
         save(converter.toEntity(req));
     }
 
@@ -124,9 +124,10 @@ public class SysFileStorageConfigServiceImpl
                 && IsDefault.NO.getValue().equals(req.getIsDefault())) {
             throw new BizException(SystemErrorCode.FILE_STORAGE_DEFAULT_REQUIRED);
         }
-        resetDefault(req.getIsDefault());
+        resetDefault(req.getIsDefault(), id);
         var entity = converter.update(req, old);
-        updateById(entity);
+        entity.setLockVersion(req.getLockVersion());
+        updateOrThrow(entity);
     }
 
     /** 更新指定文件存储配置的状态。 */
@@ -144,7 +145,7 @@ public class SysFileStorageConfigServiceImpl
             throw new BizException(SystemErrorCode.FILE_STORAGE_DEFAULT_NOT_DELETABLE);
         }
         entity.setStatus(status);
-        updateById(entity);
+        updateOrThrow(entity);
     }
 
     /** 将指定文件存储配置设为默认配置。 */
@@ -157,10 +158,10 @@ public class SysFileStorageConfigServiceImpl
             })
     public void setDefault(Long id) {
         var entity = getByIdOrThrow(id);
-        resetDefault(IsDefault.YES.getValue());
+        resetDefault(IsDefault.YES.getValue(), id);
         entity.setIsDefault(IsDefault.YES.getValue());
         entity.setStatus(Status.ENABLED.getValue());
-        updateById(entity);
+        updateOrThrow(entity);
     }
 
     /** 根据 ID 删除指定文件存储配置。 */
@@ -184,12 +185,21 @@ public class SysFileStorageConfigServiceImpl
     }
 
     /** 按需取消原默认文件存储配置。 */
-    private void resetDefault(Integer isDefault) {
+    private void resetDefault(Integer isDefault, Long excludeId) {
         if (IsDefault.YES.getValue().equals(isDefault)) {
             lambdaUpdate()
                     .eq(SysFileStorageConfig::getIsDefault, IsDefault.YES.getValue())
+                    .ne(excludeId != null, SysFileStorageConfig::getId, excludeId)
                     .set(SysFileStorageConfig::getIsDefault, IsDefault.NO.getValue())
+                    .setSql("lock_version = lock_version + 1")
                     .update();
+        }
+    }
+
+    /** 更新存储配置，检测并发覆盖。 */
+    private void updateOrThrow(SysFileStorageConfig entity) {
+        if (!updateById(entity)) {
+            throw new BizException(SystemErrorCode.FILE_STORAGE_CONCURRENT_UPDATE);
         }
     }
 

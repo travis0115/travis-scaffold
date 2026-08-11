@@ -269,17 +269,10 @@ function onModalCancel() {
         <div class="flex flex-1 flex-col items-center justify-center gap-3">
           <span class="text-sm text-gray-500">预览头像</span>
           <img
-            v-if="previewUrl || selectedFileUrl"
-            :src="previewUrl || selectedFileUrl || ''"
+            :src="previewUrl || selectedFileUrl || avatarUrl"
             alt="头像预览"
             class="size-[120px] rounded-full object-cover ring-2 ring-gray-200"
           />
-          <div
-            v-else
-            class="flex size-[120px] items-center justify-center rounded-full bg-gray-100 ring-2 ring-gray-200"
-          >
-            <span class="text-xs text-gray-400">暂无预览</span>
-          </div>
         </div>
       </div>
 

@@ -53,5 +53,5 @@ public class SysUser extends BaseEntity {
     private LocalDateTime lastOfflineTime;
 
     /** 乐观锁版本号 */
-    @Version private Integer version;
+    @Version private Integer lockVersion;
 }

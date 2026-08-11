@@ -19,6 +19,10 @@ import lombok.Data;
 /** 定时任务更新参数。 */
 @Data
 public class OpsJobUpdateReq implements OpsJobWriteReq {
+    /** 乐观锁版本号。 */
+    @NotNull(message = "版本号不能为空")
+    private Integer lockVersion;
+
     /** 任务名称。 */
     @NotBlank(message = "任务名称不能为空")
     @Size(max = 120, message = "任务名称长度不能超过120个字符")

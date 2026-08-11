@@ -12,7 +12,8 @@ public enum OpsJobErrorCode implements ErrorCode {
     INVALID_PARAMS("OPS_JOB_004", "任务参数不正确：{0}"),
     SCHEDULER_ERROR("OPS_JOB_005", "Quartz 调度操作失败：{0}"),
     LOG_NOT_FOUND("OPS_JOB_006", "任务执行日志不存在"),
-    USER_OUT_OF_SCOPE("OPS_JOB_007", "负责人或告警接收人不在当前用户可选范围内");
+    USER_OUT_OF_SCOPE("OPS_JOB_007", "负责人或告警接收人不在当前用户可选范围内"),
+    CONCURRENT_UPDATE("OPS_JOB_008", "调度任务已被其他请求修改，请刷新后重试");
 
     /** 错误码。 */
     private final String code;

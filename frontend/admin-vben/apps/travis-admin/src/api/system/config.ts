@@ -1,6 +1,6 @@
 import type { Recordable } from '@vben/types';
 
-import type { PageResp } from '#/api/types';
+import type { Id, PageResp } from '#/api/types';
 
 import { requestClient } from '#/api/request';
 
@@ -10,8 +10,9 @@ export namespace SystemConfigApi {
     configKey: string;
     configValue?: string;
     createTime?: string;
-    id: string;
+    id: Id;
     isBuiltin: 0 | 1;
+    lockVersion?: number;
     remark?: string;
     updateTime?: string;
   }
@@ -30,9 +31,7 @@ async function getConfigList(params: Recordable<any>) {
 /**
  * 创建配置
  */
-async function createConfig(
-  data: Omit<SystemConfigApi.SystemConfig, 'id'>,
-) {
+async function createConfig(data: Omit<SystemConfigApi.SystemConfig, 'id'>) {
   return requestClient.post('/system/config', data);
 }
 
@@ -40,7 +39,7 @@ async function createConfig(
  * 更新配置
  */
 async function updateConfig(
-  id: string,
+  id: Id,
   data: Omit<SystemConfigApi.SystemConfig, 'id'>,
 ) {
   return requestClient.put(`/system/config/${id}`, data);
@@ -49,13 +48,8 @@ async function updateConfig(
 /**
  * 删除配置
  */
-async function deleteConfig(id: string) {
+async function deleteConfig(id: Id) {
   return requestClient.delete(`/system/config/${id}`);
 }
 
-export {
-  createConfig,
-  deleteConfig,
-  getConfigList,
-  updateConfig,
-};
+export { createConfig, deleteConfig, getConfigList, updateConfig };

@@ -13,6 +13,7 @@ export namespace SystemNoticeApi {
     createTime?: string;
     id: Id;
     isPinned?: number;
+    lockVersion?: number;
     publishTime?: string;
     remark?: string;
     sort?: number;

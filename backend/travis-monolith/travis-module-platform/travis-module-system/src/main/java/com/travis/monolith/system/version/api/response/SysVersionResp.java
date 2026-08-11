@@ -19,6 +19,9 @@ public class SysVersionResp {
     /** 版本记录 ID。 */
     private Long id;
 
+    /** 乐观锁版本号。 */
+    private Integer lockVersion;
+
     /** 版本号。 */
     private String version;
 

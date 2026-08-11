@@ -1,5 +1,6 @@
 package com.travis.monolith.system.message.internal.entity;
 
+import com.baomidou.mybatisplus.annotation.Version;
 import com.travis.infrastructure.framework.mybatis.core.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -8,6 +9,9 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class SysMessageTemplate extends BaseEntity {
+    /** 乐观锁版本号。 */
+    @Version private Integer lockVersion;
+
     /** 模板编码。 */
     private String templateCode;
 

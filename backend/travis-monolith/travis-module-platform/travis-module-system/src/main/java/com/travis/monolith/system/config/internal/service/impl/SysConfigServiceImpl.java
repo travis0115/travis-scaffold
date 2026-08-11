@@ -98,7 +98,10 @@ public class SysConfigServiceImpl extends ServiceImplX<SysConfigMapper, SysConfi
         var entity = getByIdOrThrow(id);
         builtinResourceGuard.checkUpdate(entity.getIsBuiltin());
         converter.update(req, entity);
-        updateById(entity);
+        entity.setLockVersion(req.getLockVersion());
+        if (!updateById(entity)) {
+            throw new BizException(SystemErrorCode.CONFIG_CONCURRENT_UPDATE);
+        }
         RedisUtil.deleteCacheKey("system:config", "detail:key:" + entity.getConfigKey());
     }
 

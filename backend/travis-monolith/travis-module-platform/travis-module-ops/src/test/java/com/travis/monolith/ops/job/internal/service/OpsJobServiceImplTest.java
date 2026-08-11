@@ -22,6 +22,7 @@ class OpsJobServiceImplTest {
 
     @AfterEach
     void clearSynchronization() {
+        TransactionSynchronizationManager.setActualTransactionActive(false);
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.clearSynchronization();
         }
@@ -35,16 +36,18 @@ class OpsJobServiceImplTest {
         var service = service(manager, mapper);
         when(mapper.selectById(1001L)).thenReturn(job);
         when(mapper.updateById(job)).thenReturn(1);
-        TransactionSynchronizationManager.initSynchronization();
+        initTransactionSynchronization();
 
         service.changeStatus(1001L, OpsJobStatus.ENABLED.getValue());
 
         verify(manager, never()).schedule(job);
         TransactionSynchronizationManager.getSynchronizations()
                 .forEach(
-                        synchronization ->
-                                synchronization.afterCompletion(
-                                        TransactionSynchronization.STATUS_COMMITTED));
+                        synchronization -> {
+                            synchronization.afterCommit();
+                            synchronization.afterCompletion(
+                                    TransactionSynchronization.STATUS_COMMITTED);
+                        });
         verify(manager).schedule(job);
     }
 
@@ -56,7 +59,7 @@ class OpsJobServiceImplTest {
         var service = service(manager, mapper);
         when(mapper.selectById(1001L)).thenReturn(job);
         when(mapper.updateById(job)).thenReturn(1);
-        TransactionSynchronizationManager.initSynchronization();
+        initTransactionSynchronization();
 
         service.changeStatus(1001L, OpsJobStatus.ENABLED.getValue());
         TransactionSynchronizationManager.getSynchronizations()
@@ -92,6 +95,11 @@ class OpsJobServiceImplTest {
                         manager, registry, mock(SysUserApi.class), mock(OpsJobConverter.class));
         ReflectionTestUtils.setField(service, "baseMapper", mapper);
         return service;
+    }
+
+    private void initTransactionSynchronization() {
+        TransactionSynchronizationManager.setActualTransactionActive(true);
+        TransactionSynchronizationManager.initSynchronization();
     }
 
     private OpsJob job() {

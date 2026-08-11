@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.Version;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -21,6 +22,9 @@ public class SysVersion implements Serializable {
     /** 主键ID（雪花算法生成） */
     @TableId(type = IdType.ASSIGN_ID)
     private Long id;
+
+    /** 乐观锁版本号。 */
+    @Version private Integer lockVersion;
 
     /** 版本号（如 v1.0） */
     private String version;

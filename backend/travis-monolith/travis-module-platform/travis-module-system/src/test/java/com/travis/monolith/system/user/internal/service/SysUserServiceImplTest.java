@@ -31,7 +31,7 @@ class SysUserServiceImplTest {
 
     @Test
     void shouldEnableOptimisticLockOnUserVersion() throws NoSuchFieldException {
-        assertThat(SysUser.class.getDeclaredField("version").isAnnotationPresent(Version.class))
+        assertThat(SysUser.class.getDeclaredField("lockVersion").isAnnotationPresent(Version.class))
                 .isTrue();
     }
 
@@ -52,7 +52,7 @@ class SysUserServiceImplTest {
         var mapper = mock(SysUserMapper.class);
         var user = new SysUser();
         user.setId(1L);
-        user.setVersion(2);
+        user.setLockVersion(2);
         when(mapper.selectById(1L)).thenReturn(user);
         when(mapper.updateById(user)).thenReturn(0);
         var service = service(mapper, mock(SysDeptApi.class));

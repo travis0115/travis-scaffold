@@ -16,6 +16,10 @@ import lombok.Data;
 /** 文件存储配置更新参数。 */
 @Data
 public class SysFileStorageConfigUpdateReq {
+    /** 乐观锁版本号。 */
+    @NotNull(message = "版本号不能为空")
+    private Integer lockVersion;
+
     /** 配置名称。 */
     @NotBlank(message = "配置名称不能为空")
     @Size(max = 100, message = "配置名称长度不能超过100")

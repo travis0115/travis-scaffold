@@ -1,5 +1,6 @@
 package com.travis.monolith.system.notice.internal.entity;
 
+import com.baomidou.mybatisplus.annotation.Version;
 import com.travis.infrastructure.framework.mybatis.core.BaseEntity;
 import java.time.LocalDateTime;
 import lombok.Data;
@@ -9,6 +10,9 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class SysNotice extends BaseEntity {
+    /** 乐观锁版本号。 */
+    @Version private Integer lockVersion;
+
     /** 公告标题。 */
     private String title;
 

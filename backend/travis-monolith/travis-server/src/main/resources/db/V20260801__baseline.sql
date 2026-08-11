@@ -11,7 +11,7 @@
  Target Server Version : 90701 (9.7.1)
  File Encoding         : 65001
 
- Date: 11/08/2026 18:17:02
+ Date: 11/08/2026 21:21:48
 */
 
 SET NAMES utf8mb4;
@@ -33,7 +33,7 @@ CREATE TABLE `app_user` (
   `last_online_time` datetime DEFAULT NULL COMMENT '最近上线时间',
   `last_online_ip` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '最近上线IP',
   `last_offline_time` datetime DEFAULT NULL COMMENT '最近下线时间',
-  `version` int NOT NULL DEFAULT '0' COMMENT '乐观锁版本号',
+  `lock_version` int NOT NULL DEFAULT '0' COMMENT '乐观锁版本号',
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
   `create_by` bigint DEFAULT NULL COMMENT '创建人ID',
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
@@ -49,8 +49,8 @@ CREATE TABLE `app_user` (
 -- Records of app_user
 -- ----------------------------
 BEGIN;
-INSERT INTO `app_user` (`id`, `username`, `password`, `nickname`, `avatar_file_id`, `email`, `mobile`, `status`, `last_online_time`, `last_online_ip`, `last_offline_time`, `version`, `create_time`, `create_by`, `update_time`, `update_by`, `is_deleted`) VALUES (1, 'user1', '3', '用户1', NULL, '6', '17777777777', 1, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, 0);
-INSERT INTO `app_user` (`id`, `username`, `password`, `nickname`, `avatar_file_id`, `email`, `mobile`, `status`, `last_online_time`, `last_online_ip`, `last_offline_time`, `version`, `create_time`, `create_by`, `update_time`, `update_by`, `is_deleted`) VALUES (2, 'user2', '3', '用户2', NULL, '6', '132222222222', 1, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, 0);
+INSERT INTO `app_user` (`id`, `username`, `password`, `nickname`, `avatar_file_id`, `email`, `mobile`, `status`, `last_online_time`, `last_online_ip`, `last_offline_time`, `lock_version`, `create_time`, `create_by`, `update_time`, `update_by`, `is_deleted`) VALUES (1, 'user1', '3', '用户1', NULL, '6', '17777777777', 1, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, 0);
+INSERT INTO `app_user` (`id`, `username`, `password`, `nickname`, `avatar_file_id`, `email`, `mobile`, `status`, `last_online_time`, `last_online_ip`, `last_offline_time`, `lock_version`, `create_time`, `create_by`, `update_time`, `update_by`, `is_deleted`) VALUES (2, 'user2', '3', '用户2', NULL, '6', '132222222222', 1, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, 0);
 COMMIT;
 
 -- ----------------------------
@@ -105,6 +105,7 @@ CREATE TABLE `ops_job` (
   `update_time` datetime DEFAULT NULL,
   `update_by` bigint DEFAULT NULL,
   `is_deleted` tinyint NOT NULL DEFAULT '0',
+  `lock_version` int unsigned NOT NULL DEFAULT '0' COMMENT '乐观锁版本号',
   PRIMARY KEY (`id`),
   KEY `idx_ops_job_handler_name` (`handler_name`),
   KEY `idx_ops_job_status` (`status`),
@@ -324,7 +325,7 @@ CREATE TABLE `qrtz_scheduler_state` (
 -- Records of qrtz_scheduler_state
 -- ----------------------------
 BEGIN;
-INSERT INTO `qrtz_scheduler_state` (`sched_name`, `instance_name`, `last_checkin_time`, `checkin_interval`) VALUES ('travisScheduler', 'MacBook-Pro.local1786441910201', 1786443412530, 10000);
+INSERT INTO `qrtz_scheduler_state` (`sched_name`, `instance_name`, `last_checkin_time`, `checkin_interval`) VALUES ('travisScheduler', 'Mac1786450908357', 1786454502073, 10000);
 COMMIT;
 
 -- ----------------------------
@@ -418,7 +419,7 @@ CREATE TABLE `qrtz_triggers` (
 -- Records of qrtz_triggers
 -- ----------------------------
 BEGIN;
-INSERT INTO `qrtz_triggers` (`sched_name`, `trigger_name`, `trigger_group`, `job_name`, `job_group`, `description`, `next_fire_time`, `prev_fire_time`, `priority`, `trigger_state`, `trigger_type`, `start_time`, `end_time`, `calendar_name`, `misfire_instr`, `job_data`) VALUES ('travisScheduler', 'log-cleanup-trigger', 'ops-internal', 'log-cleanup', 'ops-internal', NULL, 1786503600000, -1, 5, 'WAITING', 'CRON', 1786441911000, 0, NULL, 0, '');
+INSERT INTO `qrtz_triggers` (`sched_name`, `trigger_name`, `trigger_group`, `job_name`, `job_group`, `description`, `next_fire_time`, `prev_fire_time`, `priority`, `trigger_state`, `trigger_type`, `start_time`, `end_time`, `calendar_name`, `misfire_instr`, `job_data`) VALUES ('travisScheduler', 'log-cleanup-trigger', 'ops-internal', 'log-cleanup', 'ops-internal', NULL, 1786503600000, -1, 5, 'WAITING', 'CRON', 1786450909000, 0, NULL, 0, '');
 COMMIT;
 
 -- ----------------------------
@@ -436,6 +437,7 @@ CREATE TABLE `sys_config` (
   `update_by` bigint DEFAULT NULL COMMENT '更新人ID',
   `is_builtin` tinyint unsigned NOT NULL DEFAULT '0' COMMENT '是否系统内置 0-否 1-是',
   `is_deleted` tinyint(1) DEFAULT '0' COMMENT '逻辑删除（0=未删除 1=已删除）',
+  `lock_version` int unsigned NOT NULL DEFAULT '0' COMMENT '乐观锁版本号',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_config_key` (`config_key`,`is_deleted`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='系统配置表';
@@ -729,6 +731,7 @@ CREATE TABLE `sys_file_storage_config` (
   `create_by` bigint NOT NULL COMMENT '创建人ID',
   `update_time` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `update_by` bigint DEFAULT NULL COMMENT '更新人ID',
+  `lock_version` int unsigned NOT NULL DEFAULT '0' COMMENT '乐观锁版本号',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_file_storage_default` (((case when ((`is_default` = 1) and (`is_deleted` = 0)) then 1 else NULL end))),
   KEY `idx_file_storage_type` (`storage_type`),
@@ -740,7 +743,7 @@ CREATE TABLE `sys_file_storage_config` (
 -- Records of sys_file_storage_config
 -- ----------------------------
 BEGIN;
-INSERT INTO `sys_file_storage_config` (`id`, `config_name`, `storage_type`, `storage_path`, `domain`, `endpoint`, `region`, `bucket_id`, `bucket_name`, `access_key`, `secret_key`, `meta`, `is_default`, `status`, `remark`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (1930000000001000, '本地存储', 'LOCAL', '${user.home}/data/uploads', 'http://127.0.0.1', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '', 0, '2026-06-11 16:38:41', 1, '2026-06-27 23:43:39', 1);
+INSERT INTO `sys_file_storage_config` (`id`, `config_name`, `storage_type`, `storage_path`, `domain`, `endpoint`, `region`, `bucket_id`, `bucket_name`, `access_key`, `secret_key`, `meta`, `is_default`, `status`, `remark`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`, `lock_version`) VALUES (1930000000001000, '本地存储', 'LOCAL', '${user.home}/data/uploads', 'http://127.0.0.1', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '', 0, '2026-06-11 16:38:41', 1, '2026-06-27 23:43:39', 1, 0);
 COMMIT;
 
 -- ----------------------------
@@ -992,6 +995,7 @@ CREATE TABLE `sys_message_template` (
   `update_by` bigint DEFAULT NULL COMMENT '更新人ID',
   `is_deleted` tinyint NOT NULL DEFAULT '0' COMMENT '逻辑删除：0-未删除 1-已删除',
   `is_builtin` tinyint unsigned NOT NULL DEFAULT '0' COMMENT '是否系统内置 0-否 1-是',
+  `lock_version` int unsigned NOT NULL DEFAULT '0' COMMENT '乐观锁版本号',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_sys_message_template_code_channel` (`template_code`,`channel`),
   KEY `idx_sys_message_template_channel` (`channel`,`status`,`is_deleted`)
@@ -1001,12 +1005,12 @@ CREATE TABLE `sys_message_template` (
 -- Records of sys_message_template
 -- ----------------------------
 BEGIN;
-INSERT INTO `sys_message_template` (`id`, `template_code`, `template_name`, `channel`, `title`, `platform_template_id`, `content_schema`, `content`, `redirect_url`, `status`, `remark`, `create_time`, `create_by`, `update_time`, `update_by`, `is_deleted`, `is_builtin`) VALUES (2073627783451779074, 'test', '测试', 'IN_APP', '测试', NULL, '{\n\"orderNo\": \"\",\n\"amount\":\"\"\n\n}', '<pre><code>您的订单 {{orderNo}} 已支付，金额 {{amount}} 元。</code></pre><p></p>', NULL, 1, NULL, '2026-07-05 04:39:24', 1, '2026-07-05 08:48:11', 1, 1, 0);
-INSERT INTO `sys_message_template` (`id`, `template_code`, `template_name`, `channel`, `title`, `platform_template_id`, `content_schema`, `content`, `redirect_url`, `status`, `remark`, `create_time`, `create_by`, `update_time`, `update_by`, `is_deleted`, `is_builtin`) VALUES (2073912309088485378, 'template', '注册成功', 'IN_APP', '注册成功', NULL, '{\"username\":{\"label\":\"用户名\",\"required\":true,\"type\":\"text\"}}', '<p>欢迎你，{{username}}</p><p>你已成功注册，注册时间</p><p>1</p><p>2</p><p>3</p><p>4</p><p>5</p>', NULL, 1, '这是备注', '2026-07-05 23:30:01', 1, '2026-07-05 23:36:29', 1, 0, 0);
-INSERT INTO `sys_message_template` (`id`, `template_code`, `template_name`, `channel`, `title`, `platform_template_id`, `content_schema`, `content`, `redirect_url`, `status`, `remark`, `create_time`, `create_by`, `update_time`, `update_by`, `is_deleted`, `is_builtin`) VALUES (2073919388771643394, '1', '2', 'IN_APP', '3', NULL, NULL, '<p>4</p>', NULL, 1, '', '2026-07-05 23:58:09', 1, '2026-07-05 23:58:13', 1, 1, 0);
-INSERT INTO `sys_message_template` (`id`, `template_code`, `template_name`, `channel`, `title`, `platform_template_id`, `content_schema`, `content`, `redirect_url`, `status`, `remark`, `create_time`, `create_by`, `update_time`, `update_by`, `is_deleted`, `is_builtin`) VALUES (2075980302329049089, 'test2', '测试模板', 'IN_APP', '测试模板标题', NULL, '{\"test\":{\"label\":\"\",\"required\":true,\"type\":\"text\"}}', '<p>测试模板正文</p><p>{{test}}</p>', NULL, 1, '', '2026-07-11 16:27:29', 1, NULL, NULL, 0, 0);
-INSERT INTO `sys_message_template` (`id`, `template_code`, `template_name`, `channel`, `title`, `platform_template_id`, `content_schema`, `content`, `redirect_url`, `status`, `remark`, `create_time`, `create_by`, `update_time`, `update_by`, `is_deleted`, `is_builtin`) VALUES (2075980483904663553, 'test3', '测试模板3', 'IN_APP', '测试模板3', NULL, '{\"name\":{\"label\":\"\",\"required\":true,\"type\":\"text\"}}', '<p>你好啊，{{name}}</p><p>今天天气真不错！</p>', NULL, 1, '', '2026-07-11 16:28:12', 1, NULL, NULL, 0, 0);
-INSERT INTO `sys_message_template` (`id`, `template_code`, `template_name`, `channel`, `title`, `platform_template_id`, `content_schema`, `content`, `redirect_url`, `status`, `remark`, `create_time`, `create_by`, `update_time`, `update_by`, `is_deleted`, `is_builtin`) VALUES (2076806103525314561, 'testsms', 'testsms', 'SMS', NULL, 'testsms', '{\"test\":{\"label\":\"\",\"required\":true,\"type\":\"text\"}}', 'testsms {{test}}', NULL, 1, '', '2026-07-13 23:08:55', 1, NULL, NULL, 0, 0);
+INSERT INTO `sys_message_template` (`id`, `template_code`, `template_name`, `channel`, `title`, `platform_template_id`, `content_schema`, `content`, `redirect_url`, `status`, `remark`, `create_time`, `create_by`, `update_time`, `update_by`, `is_deleted`, `is_builtin`, `lock_version`) VALUES (2073627783451779074, 'test', '测试', 'IN_APP', '测试', NULL, '{\n\"orderNo\": \"\",\n\"amount\":\"\"\n\n}', '<pre><code>您的订单 {{orderNo}} 已支付，金额 {{amount}} 元。</code></pre><p></p>', NULL, 1, NULL, '2026-07-05 04:39:24', 1, '2026-07-05 08:48:11', 1, 1, 0, 0);
+INSERT INTO `sys_message_template` (`id`, `template_code`, `template_name`, `channel`, `title`, `platform_template_id`, `content_schema`, `content`, `redirect_url`, `status`, `remark`, `create_time`, `create_by`, `update_time`, `update_by`, `is_deleted`, `is_builtin`, `lock_version`) VALUES (2073912309088485378, 'template', '注册成功', 'IN_APP', '注册成功', NULL, '{\"username\":{\"label\":\"用户名\",\"required\":true,\"type\":\"text\"}}', '<p>欢迎你，{{username}}</p><p>你已成功注册，注册时间</p><p>1</p><p>2</p><p>3</p><p>4</p><p>5</p>', NULL, 1, '这是备注', '2026-07-05 23:30:01', 1, '2026-07-05 23:36:29', 1, 0, 0, 0);
+INSERT INTO `sys_message_template` (`id`, `template_code`, `template_name`, `channel`, `title`, `platform_template_id`, `content_schema`, `content`, `redirect_url`, `status`, `remark`, `create_time`, `create_by`, `update_time`, `update_by`, `is_deleted`, `is_builtin`, `lock_version`) VALUES (2073919388771643394, '1', '2', 'IN_APP', '3', NULL, NULL, '<p>4</p>', NULL, 1, '', '2026-07-05 23:58:09', 1, '2026-07-05 23:58:13', 1, 1, 0, 0);
+INSERT INTO `sys_message_template` (`id`, `template_code`, `template_name`, `channel`, `title`, `platform_template_id`, `content_schema`, `content`, `redirect_url`, `status`, `remark`, `create_time`, `create_by`, `update_time`, `update_by`, `is_deleted`, `is_builtin`, `lock_version`) VALUES (2075980302329049089, 'test2', '测试模板', 'IN_APP', '测试模板标题', NULL, '{\"test\":{\"label\":\"\",\"required\":true,\"type\":\"text\"}}', '<p>测试模板正文</p><p>{{test}}</p>', NULL, 1, '', '2026-07-11 16:27:29', 1, NULL, NULL, 0, 0, 0);
+INSERT INTO `sys_message_template` (`id`, `template_code`, `template_name`, `channel`, `title`, `platform_template_id`, `content_schema`, `content`, `redirect_url`, `status`, `remark`, `create_time`, `create_by`, `update_time`, `update_by`, `is_deleted`, `is_builtin`, `lock_version`) VALUES (2075980483904663553, 'test3', '测试模板3', 'IN_APP', '测试模板3', NULL, '{\"name\":{\"label\":\"\",\"required\":true,\"type\":\"text\"}}', '<p>你好啊，{{name}}</p><p>今天天气真不错！</p>', NULL, 1, '', '2026-07-11 16:28:12', 1, NULL, NULL, 0, 0, 0);
+INSERT INTO `sys_message_template` (`id`, `template_code`, `template_name`, `channel`, `title`, `platform_template_id`, `content_schema`, `content`, `redirect_url`, `status`, `remark`, `create_time`, `create_by`, `update_time`, `update_by`, `is_deleted`, `is_builtin`, `lock_version`) VALUES (2076806103525314561, 'testsms', 'testsms', 'SMS', NULL, 'testsms', '{\"test\":{\"label\":\"\",\"required\":true,\"type\":\"text\"}}', 'testsms {{test}}', NULL, 1, '', '2026-07-13 23:08:55', 1, NULL, NULL, 0, 0, 0);
 COMMIT;
 
 -- ----------------------------
@@ -1027,6 +1031,7 @@ CREATE TABLE `sys_notice` (
   `create_by` bigint NOT NULL COMMENT '创建人ID',
   `update_time` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `update_by` bigint DEFAULT NULL COMMENT '更新人ID',
+  `lock_version` int unsigned NOT NULL DEFAULT '0' COMMENT '乐观锁版本号',
   PRIMARY KEY (`id`),
   KEY `idx_notice_status` (`status`),
   KEY `idx_notice_publish_time` (`publish_time`),
@@ -1037,9 +1042,9 @@ CREATE TABLE `sys_notice` (
 -- Records of sys_notice
 -- ----------------------------
 BEGIN;
-INSERT INTO `sys_notice` (`id`, `title`, `content`, `status`, `publish_time`, `is_pinned`, `sort`, `remark`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (2070374879949410305, '这是第一条公告', '<p>234</p>', 1, '2026-07-26 10:05:29', 1, 1, NULL, 0, '2026-06-26 05:13:32', 1, '2026-06-26 06:09:59', 1);
-INSERT INTO `sys_notice` (`id`, `title`, `content`, `status`, `publish_time`, `is_pinned`, `sort`, `remark`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (2070418841322033153, '恭喜你，获得618大额券🎉', '<p>234阿萨德发生的</p>', 1, '2026-07-13 14:41:06', 0, 2, NULL, 0, '2026-06-26 08:08:13', 1, '2026-06-26 08:10:51', 1);
-INSERT INTO `sys_notice` (`id`, `title`, `content`, `status`, `publish_time`, `is_pinned`, `sort`, `remark`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (2076670349138460674, '234', '<p>234234</p>', 2, '2026-07-13 14:09:35', 0, 999, NULL, 1, '2026-07-13 14:09:29', 1, '2026-07-13 14:09:42', 1);
+INSERT INTO `sys_notice` (`id`, `title`, `content`, `status`, `publish_time`, `is_pinned`, `sort`, `remark`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`, `lock_version`) VALUES (2070374879949410305, '这是第一条公告', '<p>234</p>', 1, '2026-07-26 10:05:29', 1, 1, NULL, 0, '2026-06-26 05:13:32', 1, '2026-06-26 06:09:59', 1, 0);
+INSERT INTO `sys_notice` (`id`, `title`, `content`, `status`, `publish_time`, `is_pinned`, `sort`, `remark`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`, `lock_version`) VALUES (2070418841322033153, '恭喜你，获得618大额券🎉', '<p>234阿萨德发生的</p>', 1, '2026-07-13 14:41:06', 0, 2, NULL, 0, '2026-06-26 08:08:13', 1, '2026-06-26 08:10:51', 1, 0);
+INSERT INTO `sys_notice` (`id`, `title`, `content`, `status`, `publish_time`, `is_pinned`, `sort`, `remark`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`, `lock_version`) VALUES (2076670349138460674, '234', '<p>234234</p>', 2, '2026-07-13 14:09:35', 0, 999, NULL, 1, '2026-07-13 14:09:29', 1, '2026-07-13 14:09:42', 1, 0);
 COMMIT;
 
 -- ----------------------------
@@ -1429,7 +1434,7 @@ CREATE TABLE `sys_user` (
   `create_by` bigint NOT NULL COMMENT '创建人ID',
   `update_time` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `update_by` bigint DEFAULT NULL COMMENT '更新人ID',
-  `version` int unsigned NOT NULL DEFAULT '0' COMMENT '乐观锁版本号',
+  `lock_version` int unsigned NOT NULL DEFAULT '0' COMMENT '乐观锁版本号',
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE KEY `uk_username` (`username`),
   KEY `idx_dept_id` (`dept_id`),
@@ -1440,8 +1445,8 @@ CREATE TABLE `sys_user` (
 -- Records of sys_user
 -- ----------------------------
 BEGIN;
-INSERT INTO `sys_user` (`id`, `username`, `password`, `nickname`, `avatar_file_id`, `email`, `mobile`, `dept_id`, `status`, `last_online_time`, `last_online_ip`, `last_online_location`, `last_offline_time`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`, `version`) VALUES (1, 'travis0115', '$2a$10$0iPJdkb53DEVol1Un/cOYOV8vKU1Hfwpfhq913/yqvRD.fjSGlxxi', '鸭腿儿', 2087110856591372289, 'travis0115@163.com', '15700070718', 0, 1, '2026-08-11 04:36:45', '127.0.0.1', '内网', '2026-08-11 02:02:51', 0, '2026-05-01 00:00:00', 1, '2026-08-11 12:36:45', 1, 0);
-INSERT INTO `sys_user` (`id`, `username`, `password`, `nickname`, `avatar_file_id`, `email`, `mobile`, `dept_id`, `status`, `last_online_time`, `last_online_ip`, `last_online_location`, `last_offline_time`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`, `version`) VALUES (2067566320808062977, 'test123456', '$2a$10$US8a8euq7Y7BY3P7oSPlWOXQtton1rQLB./qrwbOWv15cSPfj41mq', 'test123456', NULL, NULL, NULL, 0, 1, NULL, NULL, NULL, NULL, 0, '2026-06-18 11:13:19', 1, '2026-06-26 17:28:16', 1, 0);
+INSERT INTO `sys_user` (`id`, `username`, `password`, `nickname`, `avatar_file_id`, `email`, `mobile`, `dept_id`, `status`, `last_online_time`, `last_online_ip`, `last_online_location`, `last_offline_time`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`, `lock_version`) VALUES (1, 'travis0115', '$2a$10$0iPJdkb53DEVol1Un/cOYOV8vKU1Hfwpfhq913/yqvRD.fjSGlxxi', '鸭腿儿', 2087110856591372289, 'travis0115@163.com', '15700070718', 0, 1, '2026-08-11 12:45:11', '127.0.0.1', '内网', '2026-08-11 02:02:51', 0, '2026-05-01 00:00:00', 1, '2026-08-11 20:45:11', 1, 1);
+INSERT INTO `sys_user` (`id`, `username`, `password`, `nickname`, `avatar_file_id`, `email`, `mobile`, `dept_id`, `status`, `last_online_time`, `last_online_ip`, `last_online_location`, `last_offline_time`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`, `lock_version`) VALUES (2067566320808062977, 'test123456', '$2a$10$US8a8euq7Y7BY3P7oSPlWOXQtton1rQLB./qrwbOWv15cSPfj41mq', 'test123456', NULL, NULL, NULL, 0, 1, NULL, NULL, NULL, NULL, 0, '2026-06-18 11:13:19', 1, '2026-06-26 17:28:16', 1, 0);
 COMMIT;
 
 -- ----------------------------
@@ -1481,6 +1486,7 @@ CREATE TABLE `sys_version` (
   `create_by` bigint DEFAULT NULL COMMENT '创建人ID',
   `update_time` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `update_by` bigint DEFAULT NULL COMMENT '更新人ID',
+  `lock_version` int unsigned NOT NULL DEFAULT '0' COMMENT '乐观锁版本号',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='系统版本日志表';
 
@@ -1488,8 +1494,8 @@ CREATE TABLE `sys_version` (
 -- Records of sys_version
 -- ----------------------------
 BEGIN;
-INSERT INTO `sys_version` (`id`, `title`, `content`, `publish_time`, `status`, `version`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (2069841152907317249, '正式发布', '<p>这是第一个正式发布版本。</p><img class=\"vben-tiptap__image\" src=\"https://ai8.rcouyi.com/api/draw/proxy/dd/aHR0cHM6Ly9haTgucmNvdXlpLmNvbS9maWxlL2RyYXcvZ29vZ2xlLWRyYXcvb3JpZ2luLzIwNjkyMTQ1NjI5NjM0MjczMjgucG5n.png\" width=\"313\" style=\"width: 313px; height: auto;\"><p></p>', '2026-06-25 01:52:39', 1, '1.0', '2026-06-24 17:52:41', 1, '2026-06-24 18:11:58', 1);
-INSERT INTO `sys_version` (`id`, `title`, `content`, `publish_time`, `status`, `version`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (2076670962987433986, '测试版本', '<p>这是一个测试</p>', '2026-07-13 14:11:55', 1, '1.1', '2026-07-13 14:11:55', 1, NULL, NULL);
+INSERT INTO `sys_version` (`id`, `title`, `content`, `publish_time`, `status`, `version`, `create_time`, `create_by`, `update_time`, `update_by`, `lock_version`) VALUES (2069841152907317249, '正式发布', '<p>这是第一个正式发布版本。</p><img class=\"vben-tiptap__image\" src=\"https://ai8.rcouyi.com/api/draw/proxy/dd/aHR0cHM6Ly9haTgucmNvdXlpLmNvbS9maWxlL2RyYXcvZ29vZ2xlLWRyYXcvb3JpZ2luLzIwNjkyMTQ1NjI5NjM0MjczMjgucG5n.png\" width=\"313\" style=\"width: 313px; height: auto;\"><p></p>', '2026-06-25 01:52:39', 1, '1.0', '2026-06-24 17:52:41', 1, '2026-06-24 18:11:58', 1, 0);
+INSERT INTO `sys_version` (`id`, `title`, `content`, `publish_time`, `status`, `version`, `create_time`, `create_by`, `update_time`, `update_by`, `lock_version`) VALUES (2076670962987433986, '测试版本', '<p>这是一个测试</p>', '2026-07-13 14:11:55', 1, '1.1', '2026-07-13 14:11:55', 1, NULL, NULL, 0);
 COMMIT;
 
 SET FOREIGN_KEY_CHECKS = 1;

@@ -24,7 +24,7 @@ public class SystemMetaObjectHandler implements MetaObjectHandler {
         this.strictInsertFill(metaObject, "createTime", LocalDateTime.class, LocalDateTime.now());
         this.strictInsertFill(metaObject, "createBy", Long.class, userId);
         this.strictInsertFill(metaObject, "isDeleted", Integer.class, 0);
-        this.strictInsertFill(metaObject, "version", Integer.class, 0);
+        this.strictInsertFill(metaObject, "lockVersion", Integer.class, 0);
     }
 
     @Override

@@ -12,6 +12,9 @@ public class OpsJobBaseResp {
     /** 任务 ID。 */
     private Long id;
 
+    /** 乐观锁版本号。 */
+    private Integer lockVersion;
+
     /** 任务名称。 */
     private String jobName;
 

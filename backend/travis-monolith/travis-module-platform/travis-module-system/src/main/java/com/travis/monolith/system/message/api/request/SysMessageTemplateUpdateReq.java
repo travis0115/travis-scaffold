@@ -24,6 +24,10 @@ import tools.jackson.core.type.TypeReference;
 /** 更新消息模板请求参数。 */
 @Data
 public class SysMessageTemplateUpdateReq {
+    /** 乐观锁版本号。 */
+    @NotNull(message = "版本号不能为空")
+    private Integer lockVersion;
+
     /** 模板名称。 */
     @NotBlank(message = "模板名称不能为空")
     @Size(max = 100, message = "模板名称长度不能超过100个字符")

@@ -226,7 +226,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         lambdaUpdate()
                 .in(SysUser::getDeptId, deptIds)
                 .set(SysUser::getDeptId, 0L)
-                .setSql("version = version + 1")
+                .setSql("lock_version = lock_version + 1")
                 .update();
         RedisUtil.deleteCacheKeyByPattern("system:user", "detail:*");
         var cacheKeys = new ArrayList<String>();
@@ -251,7 +251,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
                 .set(SysUser::getLastOnlineTime, LocalDateTime.now())
                 .set(SysUser::getLastOnlineIp, ip)
                 .set(SysUser::getLastOnlineLocation, Ip2RegionUtil.getRegionByIP(ip))
-                .setSql("version = version + 1")
+                .setSql("lock_version = lock_version + 1")
                 .update();
     }
 
@@ -266,7 +266,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         lambdaUpdate()
                 .eq(SysUser::getId, userId)
                 .set(SysUser::getLastOfflineTime, LocalDateTime.now())
-                .setSql("version = version + 1")
+                .setSql("lock_version = lock_version + 1")
                 .update();
     }
 
@@ -360,7 +360,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         var user =
                 lambdaQuery()
                         .eq(SysUser::getId, userId)
-                        .select(SysUser::getId, SysUser::getPassword, SysUser::getVersion)
+                        .select(SysUser::getId, SysUser::getPassword, SysUser::getLockVersion)
                         .one();
         if (user == null) {
             throw new BizException(CommonErrorCode.DATABASE_RECORD_NOT_FOUND);

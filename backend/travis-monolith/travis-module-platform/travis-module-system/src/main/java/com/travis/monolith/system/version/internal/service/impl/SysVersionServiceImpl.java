@@ -143,8 +143,9 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
         }
         var normalizedContent = fileApi.stripManagedImageSources(req.getContent());
         converter.update(req, entity);
+        entity.setLockVersion(req.getLockVersion());
         entity.setContent(normalizedContent);
-        updateById(entity);
+        updateOrThrow(entity);
         if (PublishStatus.PUBLISHED.getValue().equals(entity.getStatus())) {
             messageApi.publishSourceMessage(toMessageRequest(entity));
         }
@@ -162,7 +163,7 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
         if (PublishStatus.PUBLISHED.getValue().equals(status)) {
             entity.setStatus(status);
             entity.setPublishTime(LocalDateTime.now());
-            updateById(entity);
+            updateOrThrow(entity);
             messageApi.publishSourceMessage(toMessageRequest(entity));
         } else {
             throw new BizException(CommonErrorCode.BAD_REQUEST, "版本发布状态流转不合法");
@@ -214,6 +215,13 @@ public class SysVersionServiceImpl extends ServiceImplX<SysVersionMapper, SysVer
                         records.stream().map(SysVersionResp::getContent).toList());
         for (int index = 0; index < records.size(); index++) {
             records.get(index).setContent(contents.get(index));
+        }
+    }
+
+    /** 更新版本信息，检测并发覆盖。 */
+    private void updateOrThrow(SysVersion entity) {
+        if (!updateById(entity)) {
+            throw new BizException(SystemErrorCode.VERSION_CONCURRENT_UPDATE);
         }
     }
 }

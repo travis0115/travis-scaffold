@@ -59,6 +59,9 @@ const [Drawer, drawerApi] = useVbenDrawer({
     const { valid } = await formApi.validate();
     if (!valid) return;
     const payload = normalize(await formApi.getValues());
+    if (formData.value?.id) {
+      payload.lockVersion = formData.value.lockVersion;
+    }
     try {
       validateJson(payload.params, 'JSON 参数');
       validateJson(payload.paramSchema, 'JSON Schema', true);

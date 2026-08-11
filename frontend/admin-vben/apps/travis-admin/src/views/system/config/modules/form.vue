@@ -35,6 +35,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
     try {
       if (formData.value?.id) {
         const submitValues = { ...values };
+        submitValues.lockVersion = formData.value.lockVersion;
         delete submitValues.configKey;
         await updateConfig(formData.value.id, submitValues);
       } else {

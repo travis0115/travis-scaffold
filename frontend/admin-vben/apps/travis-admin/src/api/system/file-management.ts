@@ -42,6 +42,7 @@ export namespace SystemFileApi {
     endpoint?: string;
     id: Id;
     isDefault: number;
+    lockVersion?: number;
     meta?: string;
     region?: string;
     remark?: string;

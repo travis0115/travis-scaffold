@@ -1069,7 +1069,10 @@ async function saveStorage() {
   storageModalApi.lock();
   try {
     if (storageModalMode.value === 'edit' && editingStorageConfig.value) {
-      await updateStorageConfig(editingStorageConfig.value.id, values);
+      await updateStorageConfig(editingStorageConfig.value.id, {
+        ...values,
+        lockVersion: editingStorageConfig.value.lockVersion,
+      });
       message.success('存储配置已更新');
     } else {
       await createStorageConfig(values);

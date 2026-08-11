@@ -2,6 +2,7 @@ package com.travis.monolith.system.version.api.request;
 
 import com.travis.infrastructure.framework.web.core.annotation.SanitizeHtml;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -12,6 +13,10 @@ import lombok.Data;
  */
 @Data
 public class SysVersionUpdateReq {
+    /** 乐观锁版本号。 */
+    @NotNull(message = "版本号不能为空")
+    private Integer lockVersion;
+
     /** 版本号（如 v1.0） */
     @NotBlank(message = "版本号不能为空")
     @Size(max = 50, message = "版本号长度不能超过50个字符")

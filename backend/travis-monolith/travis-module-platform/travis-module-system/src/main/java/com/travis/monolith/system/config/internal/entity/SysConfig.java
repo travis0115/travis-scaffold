@@ -1,5 +1,6 @@
 package com.travis.monolith.system.config.internal.entity;
 
+import com.baomidou.mybatisplus.annotation.Version;
 import com.travis.infrastructure.framework.mybatis.core.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -12,6 +13,9 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class SysConfig extends BaseEntity {
+    /** 乐观锁版本号。 */
+    @Version private Integer lockVersion;
+
     /** 配置键（唯一标识） */
     private String configKey;
 

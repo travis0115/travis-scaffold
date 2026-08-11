@@ -61,6 +61,7 @@ export namespace SystemMessageApi {
     createTime?: string;
     id: Id;
     isBuiltin: 0 | 1;
+    lockVersion?: number;
     platformTemplateId?: string;
     redirectUrl?: string;
     remark?: string;
@@ -74,6 +75,7 @@ export namespace SystemMessageApi {
     channel: string;
     content: string;
     contentSchema?: string;
+    lockVersion?: number;
     platformTemplateId?: string;
     redirectUrl?: string;
     remark?: string;

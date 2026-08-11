@@ -72,5 +72,5 @@ public class SysUserResp {
     private List<String> roleNames;
 
     /** 乐观锁版本号 */
-    private Integer version;
+    private Integer lockVersion;
 }

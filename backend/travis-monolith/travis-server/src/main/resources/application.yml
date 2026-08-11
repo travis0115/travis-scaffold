@@ -80,7 +80,8 @@ spring:
       enabled: false
   flyway:
     enabled: false
-    locations: classpath:db/migration
+    locations: classpath:db
+    out-of-order: true  #允许后来拉取的旧日期脚本补充执行
     validate-on-migrate: true # 检查已经执行过的 SQL 是否被修改
     clean-disabled: true  # 禁止 Flyway 清空数据库
     baseline-on-migrate: false # 禁止 Flyway 基线

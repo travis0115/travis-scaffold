@@ -37,5 +37,5 @@ public class SysUserUpdateReq {
 
     /** 乐观锁版本号 */
     @NotNull(message = "版本号不能为空")
-    private Integer version;
+    private Integer lockVersion;
 }

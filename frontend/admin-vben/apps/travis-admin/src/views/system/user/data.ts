@@ -36,7 +36,7 @@ export function useFormSchema(deptTreeData?: any[]): VbenFormSchema[] {
   const schemas: VbenFormSchema[] = [
     {
       component: 'Input',
-      fieldName: 'version',
+      fieldName: 'lockVersion',
       hide: true,
     },
     {

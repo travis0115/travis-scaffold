@@ -38,6 +38,7 @@ public enum SystemErrorCode implements ErrorCode {
     /* operationlog模块 700-799 */
     /* versionlog模块 800-899 */
     VERSION_EXISTS("SYS_800", "版本号已存在"),
+    VERSION_CONCURRENT_UPDATE("SYS_801", "版本信息已被其他请求修改，请刷新后重试"),
 
     /* message模块 900-999 */
     MESSAGE_TEMPLATE_BUILTIN_NOT_DELETABLE("SYS_900", "系统内置消息模板不允许删除"),
@@ -46,6 +47,7 @@ public enum SystemErrorCode implements ErrorCode {
     MESSAGE_NOT_FOUND("SYS_903", "未找到消息"),
     MESSAGE_SCHEDULED_MANUAL_PUSH_NOT_SUPPORTED("SYS_904", "定时消息不支持手动推送"),
     MESSAGE_SENT_DELETE_NOT_SUPPORTED("SYS_905", "已推送消息请先撤回"),
+    MESSAGE_TEMPLATE_CONCURRENT_UPDATE("SYS_906", "消息模板已被其他请求修改，请刷新后重试"),
 
     /* file模块 1000-1099 */
     FILE_STORAGE_DEFAULT_REQUIRED("SYS_1000", "系统内必须存在默认存储配置"),
@@ -59,10 +61,15 @@ public enum SystemErrorCode implements ErrorCode {
     FILE_IN_USE("SYS_1008", "文件仍被业务数据引用，不允许删除"),
     FILE_NOT_FOUND("SYS_1009", "未找到文件"),
     FILE_STORAGE_LOCATION_IMMUTABLE("SYS_1010", "存储配置已被文件使用，不允许修改存储位置"),
+    FILE_STORAGE_CONCURRENT_UPDATE("SYS_1011", "存储配置已被其他请求修改，请刷新后重试"),
 
     /* config模块 1100-1199 */
     CONFIG_BUILTIN_NOT_DELETABLE("SYS_1100", "系统内置配置不允许删除"),
     CONFIG_KEY_EXISTS("SYS_1101", "配置键已存在"),
+    CONFIG_CONCURRENT_UPDATE("SYS_1102", "系统配置已被其他请求修改，请刷新后重试"),
+
+    /* notice模块 1200-1299 */
+    NOTICE_CONCURRENT_UPDATE("SYS_1200", "公告信息已被其他请求修改，请刷新后重试"),
     ;
 
     /** 错误码。 */

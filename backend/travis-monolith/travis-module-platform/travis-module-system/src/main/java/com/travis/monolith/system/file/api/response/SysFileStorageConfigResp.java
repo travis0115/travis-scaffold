@@ -9,6 +9,9 @@ public class SysFileStorageConfigResp {
     /** 配置 ID。 */
     private Long id;
 
+    /** 乐观锁版本号。 */
+    private Integer lockVersion;
+
     /** 配置名称。 */
     private String configName;
 

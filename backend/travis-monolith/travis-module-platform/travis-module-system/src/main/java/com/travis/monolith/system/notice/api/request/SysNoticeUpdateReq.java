@@ -9,6 +9,10 @@ import lombok.Data;
 /** 公告更新参数。 */
 @Data
 public class SysNoticeUpdateReq {
+    /** 乐观锁版本号。 */
+    @NotNull(message = "版本号不能为空")
+    private Integer lockVersion;
+
     /** 公告标题。 */
     @NotBlank(message = "公告标题不能为空")
     @Size(max = 255, message = "公告标题长度不能超过255个字符")
