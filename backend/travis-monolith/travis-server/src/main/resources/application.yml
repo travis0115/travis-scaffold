@@ -80,11 +80,12 @@ spring:
       enabled: false
   flyway:
     enabled: false
-    locations: classpath:db
-    out-of-order: true  #允许后来拉取的旧日期脚本补充执行
+    locations: classpath:db/migration
+    out-of-order: true # 允许补充执行后来拉取的低版本迁移
     validate-on-migrate: true # 检查已经执行过的 SQL 是否被修改
-    clean-disabled: true  # 禁止 Flyway 清空数据库
-    baseline-on-migrate: false # 禁止 Flyway 基线
+    validate-migration-naming: true # 校验迁移脚本命名
+    clean-disabled: true # 禁止 Flyway 清空数据库
+    baseline-on-migrate: false # 禁止自动接管非空数据库
   jackson:
     locale: ${travis.web.locale:zh_CN}
     time-zone: ${travis.web.time-zone:UTC}

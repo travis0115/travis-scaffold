@@ -3,6 +3,7 @@ package com.travis.monolith.system.version.api.request;
 import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.common.web.model.PageRequest;
 import com.travis.monolith.system.common.api.enums.PublishStatus;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import lombok.Data;
@@ -34,4 +35,12 @@ public class SysVersionPageReq extends PageRequest {
 
     /** 发布日期范围终点。 */
     private LocalDate publishEndDate;
+
+    /** 发布日期起点不能晚于终点。 */
+    @AssertTrue(message = "发布开始日期不能晚于结束日期")
+    public boolean isPublishDateRangeValid() {
+        return publishStartDate == null
+                || publishEndDate == null
+                || !publishStartDate.isAfter(publishEndDate);
+    }
 }

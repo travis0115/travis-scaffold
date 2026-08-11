@@ -3,6 +3,7 @@ package com.travis.monolith.system.log.loginlog.api.request;
 import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.infrastructure.common.web.model.PageRequest;
 import com.travis.monolith.system.common.api.enums.Status;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import lombok.Data;
@@ -34,4 +35,10 @@ public class SysLoginLogPageReq extends PageRequest {
 
     /** 登录结束时间 */
     private LocalDateTime endTime;
+
+    /** 起始时间不得晚于结束时间。 */
+    @AssertTrue(message = "开始时间不能晚于结束时间")
+    public boolean isTimeRangeValid() {
+        return startTime == null || endTime == null || !startTime.isAfter(endTime);
+    }
 }

@@ -41,13 +41,13 @@ public class SysNoticeController {
     /** 分页查询全部公告。 */
     @GetMapping("/page")
     @SaCheckPermission(value = SystemPermission.NOTICE_QUERY, type = LoginType.ADMIN)
-    public ApiResponse<PageResp<SysNoticeResp>> page(SysNoticePageReq req) {
+    public ApiResponse<PageResp<SysNoticeResp>> page(@Valid SysNoticePageReq req) {
         return ApiResponse.success(noticeService.page(req));
     }
 
     /** 分页查询当前已发布公告。 */
     @GetMapping("/published")
-    public ApiResponse<PageResp<SysNoticeResp>> pagePublished(SysNoticePageReq req) {
+    public ApiResponse<PageResp<SysNoticeResp>> pagePublished(@Valid SysNoticePageReq req) {
         return ApiResponse.success(noticeService.pagePublished(req));
     }
 

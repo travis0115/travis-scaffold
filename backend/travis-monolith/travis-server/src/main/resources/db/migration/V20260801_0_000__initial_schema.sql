@@ -1,3 +1,4 @@
+-- 脚手架与业务系统初始数据库结构
 /*
  Navicat Premium Dump SQL
 

@@ -43,7 +43,7 @@ public class SysVersionController {
     /** 分页查询版本日志 */
     @GetMapping("/page")
     @SaCheckPermission(value = SystemPermission.VERSION_QUERY, type = LoginType.ADMIN)
-    public ApiResponse<PageResp<SysVersionResp>> page(SysVersionPageReq req) {
+    public ApiResponse<PageResp<SysVersionResp>> page(@Valid SysVersionPageReq req) {
         return ApiResponse.success(versionService.page(req));
     }
 
