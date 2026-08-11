@@ -9,6 +9,7 @@ import com.travis.monolith.system.role.api.request.SysRoleUpdateReq;
 import com.travis.monolith.system.role.api.response.SysRoleResp;
 import com.travis.monolith.system.role.internal.entity.SysRole;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 角色管理服务接口，提供角色的增删改查、菜单分配及角色信息查询
@@ -120,6 +121,12 @@ public interface SysRoleService extends IService<SysRole> {
      * @return 角色ID列表
      */
     List<Long> getRoleIdsByUserId(Long userId);
+
+    /** 根据用户ID查询其启用角色ID列表。 */
+    List<Long> getEnabledRoleIdsByUserId(Long userId);
+
+    /** 批量查询用户与角色名称列表。 */
+    Map<Long, List<String>> getRoleNameMapByUserIds(List<Long> userIds);
 
     /**
      * 删除指定用户的所有角色关联

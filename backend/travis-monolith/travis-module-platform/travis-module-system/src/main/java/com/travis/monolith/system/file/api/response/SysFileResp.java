@@ -21,13 +21,16 @@ public class SysFileResp {
     /** 存储类型。 */
     private String storageType;
 
-    /** 上传人 ID。 */
+    /** 审计创建人 ID。 */
     private Long createBy;
 
     /** 上传主体类型。 */
     private String uploaderType;
 
-    /** 上传主体展示名称。 */
+    /** 上传主体 ID。 */
+    private Long uploaderId;
+
+    /** 上传主体当前展示名称。 */
     private String uploaderName;
 
     /** 存储后的文件名。 */

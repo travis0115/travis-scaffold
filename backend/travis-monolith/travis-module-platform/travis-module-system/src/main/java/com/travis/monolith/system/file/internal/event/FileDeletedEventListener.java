@@ -1,21 +1,20 @@
 package com.travis.monolith.system.file.internal.event;
 
-import com.travis.monolith.system.file.api.event.UploaderNameChangedEvent;
+import com.travis.monolith.system.file.api.event.FileDeletedEvent;
 import com.travis.monolith.system.file.internal.service.SysFileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.stereotype.Component;
 
-/** 同步文件上传人名称 */
+/** 在文件元数据事务提交后清理存储对象。 */
 @Component
 @RequiredArgsConstructor
-public class UploaderNameChangedEventListener {
+public class FileDeletedEventListener {
 
     private final SysFileService fileService;
 
     @ApplicationModuleListener
-    void onUploaderNameChanged(UploaderNameChangedEvent event) {
-        fileService.updateUploaderName(
-                event.uploaderType(), event.uploaderId(), event.uploaderName());
+    void onFileDeleted(FileDeletedEvent event) {
+        fileService.deleteStorageObject(event.storageType(), event.storagePath(), event.path());
     }
 }

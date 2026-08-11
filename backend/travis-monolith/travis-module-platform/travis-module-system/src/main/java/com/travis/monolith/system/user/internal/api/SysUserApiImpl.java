@@ -7,7 +7,6 @@ import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.dept.api.SysDeptApi;
 import com.travis.monolith.system.user.api.SysUserApi;
 import com.travis.monolith.system.user.api.response.SysUserOptionResp;
-import com.travis.monolith.system.user.api.response.SysUserResp;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.service.SysUserService;
 import java.util.*;
@@ -22,22 +21,12 @@ public class SysUserApiImpl implements SysUserApi {
     private final SysDeptApi deptApi;
 
     @Override
-    public List<Long> listUserIds() {
-        return userService.listUserIds();
-    }
-
-    @Override
     public Long getDeptIdByUserId(Long userId) {
         if (userId == null) {
             return null;
         }
-        SysUserResp user;
-        try {
-            user = userService.getDetailByIdOrThrow(userId);
-        } catch (Exception e) {
-            return null;
-        }
-        return user.getDeptId();
+        var user = userService.getById(userId);
+        return user == null ? null : user.getDeptId();
     }
 
     @Override
@@ -45,7 +34,6 @@ public class SysUserApiImpl implements SysUserApi {
         return userService.getUsernameById(userId);
     }
 
-    // TODO 调整API
     @Override
     public Map<Long, String> getUsernameMapByIds(Collection<Long> userIds) {
         if (userIds == null || userIds.isEmpty()) {

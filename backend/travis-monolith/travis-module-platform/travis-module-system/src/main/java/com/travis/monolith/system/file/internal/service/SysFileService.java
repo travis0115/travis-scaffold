@@ -6,6 +6,8 @@ import com.travis.monolith.system.file.api.request.SysFilePageReq;
 import com.travis.monolith.system.file.api.response.FileUploadResp;
 import com.travis.monolith.system.file.api.response.SysFileResp;
 import com.travis.monolith.system.file.internal.entity.SysFile;
+import java.util.Collection;
+import java.util.Map;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -21,8 +23,7 @@ public interface SysFileService extends IService<SysFile> {
      * @param file 文件
      * @return 文件相对路径，如 /files/2026-06-02/abc.jpg
      */
-    FileUploadResp upload(
-            MultipartFile file, Long folderId, String uploaderType, String uploaderName);
+    FileUploadResp upload(MultipartFile file, Long folderId, String uploaderType, Long uploaderId);
 
     /** 分页查询文件。 */
     PageResp<SysFileResp> page(SysFilePageReq req);
@@ -35,6 +36,12 @@ public interface SysFileService extends IService<SysFile> {
      */
     String getFileUrlById(Long fileId);
 
-    /** 更新指定上传主体的文件上传人名称。 */
-    void updateUploaderName(String uploaderType, Long uploaderId, String uploaderName);
+    /** 批量查询文件访问地址。 */
+    Map<Long, String> getFileUrlMapByIds(Collection<Long> fileIds);
+
+    /** 删除文件元数据，并在提交后清理存储对象。 */
+    void deleteById(Long id);
+
+    /** 清理已删除文件对应的存储对象。 */
+    void deleteStorageObject(String storageType, String storagePath, String path);
 }

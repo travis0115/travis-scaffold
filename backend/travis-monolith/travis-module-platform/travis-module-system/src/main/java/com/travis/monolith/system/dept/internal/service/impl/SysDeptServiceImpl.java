@@ -1,6 +1,7 @@
 package com.travis.monolith.system.dept.internal.service.impl;
 
 import com.travis.infrastructure.common.web.exception.BizException;
+import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.monolith.system.common.api.enums.Status;
@@ -137,6 +138,7 @@ public class SysDeptServiceImpl extends ServiceImplX<SysDeptMapper, SysDept>
     @Transactional
     @Caching(evict = {@CacheEvict(key = "'tree:all'"), @CacheEvict(key = "'tree:enabled'")})
     public void create(SysDeptCreateReq req) {
+        validateParent(null, req.getParentId());
         var dept = converter.toEntity(req);
         save(dept);
     }
@@ -153,11 +155,11 @@ public class SysDeptServiceImpl extends ServiceImplX<SysDeptMapper, SysDept>
             })
     @Transactional
     public void update(Long id, SysDeptUpdateReq req) {
-        var dept = getByIdOrThrow(id);
-        var parentId = req.getParentId();
-        if (parentId != null && parentId != 0 && listSelfAndDescendantIds(id).contains(parentId)) {
-            throw new BizException(SystemErrorCode.DEPT_PARENT_INVALID);
+        var dept = baseMapper.selectByIdForUpdate(id);
+        if (dept == null) {
+            throw new BizException(CommonErrorCode.DATABASE_RECORD_NOT_FOUND);
         }
+        validateParent(id, req.getParentId());
         converter.update(req, dept);
         updateById(dept);
     }
@@ -183,25 +185,22 @@ public class SysDeptServiceImpl extends ServiceImplX<SysDeptMapper, SysDept>
     @Transactional
     @CacheEvict(allEntries = true)
     public void deleteById(Long id) {
-        var ids = new ArrayList<Long>();
-        collectAllDescendantIds(id, ids);
-        ids.add(id);
+        if (baseMapper.selectByIdForUpdate(id) == null) {
+            throw new BizException(CommonErrorCode.DATABASE_RECORD_NOT_FOUND);
+        }
+        var ids = listSelfAndDescendantIds(id);
         removeBatchByIds(ids);
         eventPublisher.publishEvent(new DeptDeletedEvent(ids));
     }
 
-    /**
-     * 递归收集所有下级部门ID
-     *
-     * @param parentId 父部门ID
-     * @param ids 收集结果
-     */
-    private void collectAllDescendantIds(Long parentId, List<Long> ids) {
-        var childrenList =
-                list(new LambdaQueryWrapperX<SysDept>().eq(SysDept::getParentId, parentId));
-        for (SysDept child : childrenList) {
-            ids.add(child.getId());
-            collectAllDescendantIds(child.getId(), ids);
+    private void validateParent(Long id, Long parentId) {
+        if (Objects.equals(parentId, 0L)) {
+            return;
+        }
+        if (parentId == null
+                || baseMapper.selectByIdForUpdate(parentId) == null
+                || (id != null && listSelfAndDescendantIds(id).contains(parentId))) {
+            throw new BizException(SystemErrorCode.DEPT_PARENT_INVALID);
         }
     }
 

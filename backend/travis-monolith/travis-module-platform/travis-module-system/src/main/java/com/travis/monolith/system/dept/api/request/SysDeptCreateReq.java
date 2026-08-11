@@ -14,6 +14,7 @@ import lombok.Data;
 @Data
 public class SysDeptCreateReq {
     /** 父部门ID（0 表示顶级部门） */
+    @NotNull(message = "父部门ID不能为空")
     private Long parentId;
 
     /** 部门名称 */

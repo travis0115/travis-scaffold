@@ -6,7 +6,6 @@ import com.travis.monolith.system.user.api.request.*;
 import com.travis.monolith.system.user.api.response.SysUserResp;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -31,9 +30,6 @@ public interface SysUserService extends IService<SysUser> {
      * @return 用户详情视图
      */
     SysUserResp getDetailByIdOrThrow(Long id);
-
-    /** 获取所有启用用户列表（不分页） */
-    List<Long> listUserIds();
 
     /**
      * 新增用户

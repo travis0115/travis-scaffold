@@ -20,7 +20,7 @@ public class SysUserPageReq extends PageRequest {
     private String username;
 
     /** 昵称（模糊匹配） */
-    @Size(max = 20, message = "昵称长度不能超过50个字符")
+    @Size(max = 20, message = "昵称长度不能超过20个字符")
     private String nickname;
 
     /** 手机号（模糊匹配） */

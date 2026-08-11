@@ -54,6 +54,7 @@ public class StpInterfaceImpl implements StpInterface {
             }
             return Collections.emptyList();
         } catch (Exception e) {
+            log.error("获取用户角色列表异常, loginId={}, loginType={}", loginId, loginType, e);
             return Collections.emptyList();
         }
     }

@@ -2,6 +2,7 @@ package com.travis.monolith.system.role.internal.service.impl;
 
 import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.exception.BizException;
+import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
@@ -25,6 +26,8 @@ import com.travis.monolith.system.role.internal.mapper.SysRoleMapper;
 import com.travis.monolith.system.role.internal.mapper.SysRoleMenuMapper;
 import com.travis.monolith.system.role.internal.mapper.SysUserRoleMapper;
 import com.travis.monolith.system.role.internal.service.SysRoleService;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -145,7 +148,9 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
     @Caching(
             evict = {
                 @CacheEvict(key = "'detail:'+#id"),
+                @CacheEvict(key = "'code:'+#id"),
                 @CacheEvict(key = "'list:enabled'"),
+                @CacheEvict(value = "system:user-role", allEntries = true),
                 @CacheEvict(value = "system:menu:tree:vben", allEntries = true)
             })
     public void updateStatus(Long id, Integer status) {
@@ -154,6 +159,7 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
         checkModifiable(role);
         role.setStatus(status);
         updateById(role);
+        eventPublisher.publishEvent(new RoleMessageAudienceChangedEvent(null));
     }
 
     /** 删除角色，同时清除角色-菜单和用户-角色关联 */
@@ -193,14 +199,23 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
                 @CacheEvict(value = "system:menu:tree:vben", allEntries = true)
             })
     public void assignMenus(SysRoleMenuReq req) {
-        var role = getByIdOrThrow(req.getRoleId());
+        var role = baseMapper.selectByIdForUpdate(req.getRoleId());
+        if (role == null) {
+            throw new BizException(CommonErrorCode.DATABASE_RECORD_NOT_FOUND);
+        }
         builtinResourceGuard.checkUpdate(role.getIsBuiltin());
         checkModifiable(role);
+        List<Long> menuIds = normalizeIds(req.getMenuIds());
+        if (!menuIds.isEmpty()
+                && roleMenuMapper.selectExistingMenuIdsForUpdate(menuIds).size()
+                        != menuIds.size()) {
+            throw new BizException(CommonErrorCode.VALIDATE_FAILED, "存在无效的菜单ID");
+        }
         roleMenuMapper.delete(
                 new LambdaQueryWrapperX<SysRoleMenu>().eq(SysRoleMenu::getRoleId, req.getRoleId()));
-        if (req.getMenuIds() != null && !req.getMenuIds().isEmpty()) {
+        if (!menuIds.isEmpty()) {
             List<SysRoleMenu> list =
-                    req.getMenuIds().stream()
+                    menuIds.stream()
                             .map(
                                     menuId -> {
                                         SysRoleMenu rm = new SysRoleMenu();
@@ -221,7 +236,9 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
             return null;
         }
         var role = super.getById(roleId);
-        return role == null ? null : role.getRoleCode();
+        return role == null || !Status.ENABLED.getValue().equals(role.getStatus())
+                ? null
+                : role.getRoleCode();
     }
 
     /** 根据角色ID获取角色名称 */
@@ -339,6 +356,61 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
                 .collect(Collectors.toList());
     }
 
+    /** 根据用户ID查询其启用角色ID列表 */
+    @Override
+    @Cacheable(value = "system:user-role", key = "'enabled-role-ids:'+#userId")
+    public List<Long> getEnabledRoleIdsByUserId(Long userId) {
+        List<Long> roleIds = getRoleIdsByUserId(userId);
+        if (roleIds.isEmpty()) {
+            return List.of();
+        }
+        return list(
+                        new LambdaQueryWrapperX<SysRole>()
+                                .select(SysRole::getId)
+                                .in(SysRole::getId, roleIds)
+                                .eq(SysRole::getStatus, Status.ENABLED.getValue()))
+                .stream()
+                .map(SysRole::getId)
+                .toList();
+    }
+
+    @Override
+    public Map<Long, List<String>> getRoleNameMapByUserIds(List<Long> userIds) {
+        List<Long> normalizedUserIds = normalizeIds(userIds);
+        if (normalizedUserIds.isEmpty()) {
+            return Map.of();
+        }
+        var userRoles =
+                userRoleMapper.selectList(
+                        new LambdaQueryWrapperX<SysUserRole>()
+                                .select(SysUserRole::getUserId, SysUserRole::getRoleId)
+                                .in(SysUserRole::getUserId, normalizedUserIds));
+        var roleIds = userRoles.stream().map(SysUserRole::getRoleId).distinct().toList();
+        Map<Long, String> roleNames =
+                roleIds.isEmpty()
+                        ? Map.of()
+                        : list(
+                                        new LambdaQueryWrapperX<SysRole>()
+                                                .select(SysRole::getId, SysRole::getRoleName)
+                                                .in(SysRole::getId, roleIds))
+                                .stream()
+                                .collect(
+                                        Collectors.toMap(
+                                                SysRole::getId,
+                                                SysRole::getRoleName,
+                                                (left, right) -> left));
+        Map<Long, List<String>> result = new LinkedHashMap<>();
+        normalizedUserIds.forEach(userId -> result.put(userId, new java.util.ArrayList<>()));
+        userRoles.forEach(
+                userRole -> {
+                    var roleName = roleNames.get(userRole.getRoleId());
+                    if (roleName != null) {
+                        result.get(userRole.getUserId()).add(roleName);
+                    }
+                });
+        return result;
+    }
+
     /** 删除指定用户的所有角色关联 */
     @Override
     @Transactional
@@ -364,11 +436,17 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
                 @CacheEvict(value = "system:user", key = "'detail:'+#userId")
             })
     public void assignUserRoles(Long userId, List<Long> roleIds) {
+        List<Long> normalizedRoleIds = normalizeIds(roleIds);
+        if (!normalizedRoleIds.isEmpty()
+                && baseMapper.selectByIdsForUpdate(normalizedRoleIds).size()
+                        != normalizedRoleIds.size()) {
+            throw new BizException(CommonErrorCode.VALIDATE_FAILED, "存在无效的角色ID");
+        }
         userRoleMapper.delete(
                 new LambdaQueryWrapperX<SysUserRole>().eq(SysUserRole::getUserId, userId));
-        if (roleIds != null && !roleIds.isEmpty()) {
+        if (!normalizedRoleIds.isEmpty()) {
             List<SysUserRole> list =
-                    roleIds.stream()
+                    normalizedRoleIds.stream()
                             .map(
                                     roleId -> {
                                         SysUserRole ur = new SysUserRole();
@@ -377,7 +455,7 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
                                         return ur;
                                     })
                             .toList();
-            list.forEach(userRoleMapper::insert);
+            userRoleMapper.insert(list);
         }
         eventPublisher.publishEvent(new RoleMessageAudienceChangedEvent(userId));
     }
@@ -395,5 +473,12 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
         if (IsBuiltin.YES.getValue().equals(role.getIsBuiltin())) {
             throw new BizException(SystemErrorCode.ROLE_BUILTIN_NOT_DELETABLE);
         }
+    }
+
+    private List<Long> normalizeIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        return new LinkedHashSet<>(ids).stream().filter(java.util.Objects::nonNull).toList();
     }
 }

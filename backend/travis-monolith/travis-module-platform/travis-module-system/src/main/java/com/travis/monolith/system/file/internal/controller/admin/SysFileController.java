@@ -6,7 +6,6 @@ import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
-import com.travis.infrastructure.framework.satoken.core.LoginSubjectSessionKey;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
 import com.travis.monolith.system.common.api.constant.SystemPermission;
@@ -64,14 +63,13 @@ public class SysFileController {
     public ApiResponse<FileUploadResp> upload(
             @RequestParam("file") MultipartFile file,
             @RequestParam(required = false) Long folderId) {
-        var username =
-                StpKit.of(LoginType.ADMIN).getSession().getString(LoginSubjectSessionKey.USERNAME);
+        var uploaderId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
         return ApiResponse.success(
                 fileService.upload(
                         file,
                         folderId == null ? FileFolderId.MANUAL_UPLOAD : folderId,
                         LoginType.ADMIN,
-                        username));
+                        uploaderId));
     }
 
     /** 分页查询文件。 */
@@ -87,7 +85,7 @@ public class SysFileController {
     @NoRepeatSubmit
     @OperationLog(action = "删除文件")
     public ApiResponse<Void> delete(@PathVariable Long id) {
-        fileService.removeById(id);
+        fileService.deleteById(id);
         return ApiResponse.success();
     }
 }

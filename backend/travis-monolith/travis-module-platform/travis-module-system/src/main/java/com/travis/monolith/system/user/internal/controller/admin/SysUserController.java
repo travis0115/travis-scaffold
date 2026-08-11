@@ -8,7 +8,6 @@ import com.travis.infrastructure.common.validation.annotation.ImageFile;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
-import com.travis.infrastructure.framework.satoken.core.LoginSubjectSessionKey;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
 import com.travis.monolith.system.common.api.constant.SystemPermission;
@@ -189,10 +188,9 @@ public class SysUserController {
     @PostMapping("/avatar/upload")
     public ApiResponse<FileUploadResp> uploadAvatar(
             @RequestParam("file") @ImageFile MultipartFile file) {
-        var username =
-                StpKit.of(LoginType.ADMIN).getSession().getString(LoginSubjectSessionKey.USERNAME);
+        var uploaderId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
         return ApiResponse.success(
-                fileApi.upload(file, FileFolderId.AVATAR, LoginType.ADMIN, username));
+                fileApi.upload(file, FileFolderId.AVATAR, LoginType.ADMIN, uploaderId));
     }
 
     /**

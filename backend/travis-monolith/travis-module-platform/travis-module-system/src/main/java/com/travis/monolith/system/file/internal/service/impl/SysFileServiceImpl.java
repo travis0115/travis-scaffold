@@ -6,7 +6,11 @@ import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
+import com.travis.infrastructure.framework.web.core.event.TransactionalApplicationEventPublisher;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
+import com.travis.monolith.system.file.api.SysFileReferenceChecker;
+import com.travis.monolith.system.file.api.SysFileUploaderNameResolver;
+import com.travis.monolith.system.file.api.event.FileDeletedEvent;
 import com.travis.monolith.system.file.api.request.SysFilePageReq;
 import com.travis.monolith.system.file.api.response.FileUploadResp;
 import com.travis.monolith.system.file.api.response.SysFileResp;
@@ -17,12 +21,17 @@ import com.travis.monolith.system.file.internal.mapper.SysFileMapper;
 import com.travis.monolith.system.file.internal.service.SysFileService;
 import com.travis.monolith.system.file.internal.service.SysFileStorageConfigService;
 import com.travis.monolith.system.file.internal.strategy.FileStorageStrategy;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -32,12 +41,16 @@ import org.springframework.web.multipart.MultipartFile;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
         implements SysFileService {
 
     private final List<FileStorageStrategy> storageStrategies;
     private final SysFileStorageConfigService sysFileStorageConfigService;
     private final SysFileConverter converter;
+    private final ObjectProvider<SysFileReferenceChecker> referenceCheckers;
+    private final ObjectProvider<SysFileUploaderNameResolver> uploaderNameResolvers;
+    private final TransactionalApplicationEventPublisher eventPublisher;
     private static final Map<String, SFunction<SysFile, ?>> SORT_COLUMNS =
             Map.ofEntries(
                     Map.entry("size", SysFile::getSize),
@@ -46,7 +59,7 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
     /** 上传文件并保存文件元数据。 */
     @Override
     public FileUploadResp upload(
-            MultipartFile file, Long folderId, String uploaderType, String uploaderName) {
+            MultipartFile file, Long folderId, String uploaderType, Long uploaderId) {
         var config = sysFileStorageConfigService.getDefaultOrThrow();
         var strategy =
                 storageStrategies.stream()
@@ -64,7 +77,7 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
                         .folderId(folderId)
                         .storageConfigId(config.getId())
                         .uploaderType(uploaderType)
-                        .uploaderName(uploaderName)
+                        .uploaderId(uploaderId)
                         .fileName(result.fileName())
                         .originalName(file.getOriginalFilename())
                         .path(result.path())
@@ -72,7 +85,19 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
                         .size(file.getSize())
                         .extension(extension(file.getOriginalFilename()))
                         .build();
-        save(entity);
+        try {
+            if (!save(entity)) {
+                throw new BizException(SystemErrorCode.FILE_UPLOAD_FAILED);
+            }
+        } catch (RuntimeException exception) {
+            try {
+                strategy.delete(result.path(), config);
+            } catch (RuntimeException cleanupException) {
+                exception.addSuppressed(cleanupException);
+                log.error("文件元数据保存失败后的存储对象补偿删除失败, path={}", result.path(), cleanupException);
+            }
+            throw exception;
+        }
         return FileUploadResp.builder()
                 .id(entity.getId())
                 .path(entity.getPath())
@@ -109,9 +134,15 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
                         .collect(
                                 Collectors.toMap(
                                         SysFileStorageConfigResp::getId, Function.identity()));
-        return PageConverter.toResp(
-                page.convert(
-                        file -> toResp(file, storageConfigMap.get(file.getStorageConfigId()))));
+        var response =
+                PageConverter.toResp(
+                        page.convert(
+                                file ->
+                                        toResp(
+                                                file,
+                                                storageConfigMap.get(file.getStorageConfigId()))));
+        fillUploaderNames(response.getRecords());
+        return response;
     }
 
     /** 根据文件 ID 生成可访问地址。 */
@@ -129,17 +160,52 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
         return buildUrl(config, file.getPath());
     }
 
-    /** 更新指定上传主体的文件展示名称。 */
     @Override
-    public void updateUploaderName(String uploaderType, Long uploaderId, String uploaderName) {
-        if (uploaderType == null || uploaderType.isBlank() || uploaderId == null) {
-            return;
+    public Map<Long, String> getFileUrlMapByIds(Collection<Long> fileIds) {
+        if (fileIds == null || fileIds.isEmpty()) {
+            return Map.of();
         }
-        lambdaUpdate()
-                .eq(SysFile::getUploaderType, uploaderType)
-                .eq(SysFile::getCreateBy, uploaderId)
-                .set(SysFile::getUploaderName, uploaderName)
-                .update();
+        var files = listByIds(fileIds);
+        if (files.isEmpty()) {
+            return Map.of();
+        }
+        var configMap =
+                sysFileStorageConfigService.listAll().stream()
+                        .collect(
+                                Collectors.toMap(
+                                        SysFileStorageConfigResp::getId, Function.identity()));
+        return files.stream()
+                .collect(
+                        Collectors.toMap(
+                                SysFile::getId,
+                                file ->
+                                        buildUrl(
+                                                configMap.get(file.getStorageConfigId()),
+                                                file.getPath()),
+                                (left, right) -> left,
+                                LinkedHashMap::new));
+    }
+
+    @Override
+    @Transactional
+    public void deleteById(Long id) {
+        var file = getByIdOrThrow(id);
+        if (referenceCheckers.orderedStream().anyMatch(checker -> checker.isReferenced(id))) {
+            throw new BizException(SystemErrorCode.FILE_IN_USE);
+        }
+        var config = sysFileStorageConfigService.getOrThrow(file.getStorageConfigId());
+        removeById(id);
+        eventPublisher.publishEvent(
+                new FileDeletedEvent(
+                        config.getStorageType(), config.getStoragePath(), file.getPath()));
+    }
+
+    @Override
+    public void deleteStorageObject(String storageType, String storagePath, String path) {
+        var config = new SysFileStorageConfigResp();
+        config.setStorageType(storageType);
+        config.setStoragePath(storagePath);
+        findStorageStrategy(config).delete(path, config);
     }
 
     /** 拼接文件访问地址。 */
@@ -170,5 +236,48 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
     /** 拼接文件访问地址。 */
     private String buildUrl(SysFileStorageConfigResp config, String path) {
         return config == null ? path : buildUrl(config.getDomain(), path);
+    }
+
+    private FileStorageStrategy findStorageStrategy(SysFileStorageConfigResp config) {
+        return storageStrategies.stream()
+                .filter(item -> item.getStorageType().equalsIgnoreCase(config.getStorageType()))
+                .findFirst()
+                .orElseThrow(() -> new BizException(SystemErrorCode.FILE_STORAGE_NOT_FOUND));
+    }
+
+    private void fillUploaderNames(List<SysFileResp> records) {
+        if (records == null || records.isEmpty()) {
+            return;
+        }
+        var resolvers =
+                uploaderNameResolvers
+                        .orderedStream()
+                        .collect(
+                                Collectors.toMap(
+                                        SysFileUploaderNameResolver::getUploaderType,
+                                        Function.identity(),
+                                        (left, right) -> left));
+        records.stream()
+                .filter(
+                        record ->
+                                record.getUploaderType() != null && record.getUploaderId() != null)
+                .collect(Collectors.groupingBy(SysFileResp::getUploaderType))
+                .forEach(
+                        (uploaderType, typedRecords) -> {
+                            var resolver = resolvers.get(uploaderType);
+                            if (resolver == null) {
+                                return;
+                            }
+                            var uploaderIds =
+                                    typedRecords.stream()
+                                            .map(SysFileResp::getUploaderId)
+                                            .distinct()
+                                            .toList();
+                            var names = resolver.resolveNames(uploaderIds);
+                            typedRecords.forEach(
+                                    record ->
+                                            record.setUploaderName(
+                                                    names.get(record.getUploaderId())));
+                        });
     }
 }

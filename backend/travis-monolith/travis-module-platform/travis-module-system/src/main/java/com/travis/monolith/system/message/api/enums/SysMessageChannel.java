@@ -1,11 +1,10 @@
 package com.travis.monolith.system.message.api.enums;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 /** 消息推送通道枚举。 */
 @Getter

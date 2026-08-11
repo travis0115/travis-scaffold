@@ -4,6 +4,8 @@ import com.travis.monolith.system.file.api.SysFileApi;
 import com.travis.monolith.system.file.api.response.FileUploadResp;
 import com.travis.monolith.system.file.internal.service.RichTextFileReferenceService;
 import com.travis.monolith.system.file.internal.service.SysFileService;
+import java.util.Collection;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,13 +24,18 @@ public class SysFileApiImpl implements SysFileApi {
 
     @Override
     public FileUploadResp upload(
-            MultipartFile file, Long folderId, String uploaderType, String uploaderName) {
-        return fileService.upload(file, folderId, uploaderType, uploaderName);
+            MultipartFile file, Long folderId, String uploaderType, Long uploaderId) {
+        return fileService.upload(file, folderId, uploaderType, uploaderId);
     }
 
     @Override
     public String getFileUrlById(Long fileId) {
         return fileService.getFileUrlById(fileId);
+    }
+
+    @Override
+    public Map<Long, String> getFileUrlMapByIds(Collection<Long> fileIds) {
+        return fileService.getFileUrlMapByIds(fileIds);
     }
 
     @Override

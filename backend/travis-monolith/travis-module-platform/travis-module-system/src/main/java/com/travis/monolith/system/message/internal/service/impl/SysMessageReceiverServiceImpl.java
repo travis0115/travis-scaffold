@@ -302,7 +302,7 @@ public class SysMessageReceiverServiceImpl
                                     case ALL -> true;
                                     case USER -> receiverValues.contains(userId);
                                     case ROLE ->
-                                            roleApi.getRoleIdsByUserId(userId).stream()
+                                            roleApi.getEnabledRoleIdsByUserId(userId).stream()
                                                     .anyMatch(receiverValues::contains);
                                     case DEPT ->
                                             receiverValues.contains(
@@ -418,7 +418,7 @@ public class SysMessageReceiverServiceImpl
             return new AudienceContext(List.of(), null);
         }
         return new AudienceContext(
-                roleApi.getRoleIdsByUserId(userId), userApi.getDeptIdByUserId(userId));
+                roleApi.getEnabledRoleIdsByUserId(userId), userApi.getDeptIdByUserId(userId));
     }
 
     /** 解析消息接收对象 ID 列表。 */

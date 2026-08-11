@@ -19,8 +19,8 @@ public class SysFile extends BaseEntity {
     /** 上传主体类型。 */
     private String uploaderType;
 
-    /** 上传主体展示名称快照。 */
-    private String uploaderName;
+    /** 上传主体 ID。 */
+    private Long uploaderId;
 
     /** 存储后的文件名。 */
     private String fileName;

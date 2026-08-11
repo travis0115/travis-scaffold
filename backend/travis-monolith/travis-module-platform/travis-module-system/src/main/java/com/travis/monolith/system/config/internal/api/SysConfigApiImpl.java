@@ -1,5 +1,7 @@
 package com.travis.monolith.system.config.internal.api;
 
+import com.travis.infrastructure.common.web.exception.BizException;
+import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.monolith.system.config.api.SysConfigApi;
 import com.travis.monolith.system.config.api.response.SysConfigResp;
 import com.travis.monolith.system.config.internal.service.SysConfigService;
@@ -19,9 +21,12 @@ public class SysConfigApiImpl implements SysConfigApi {
         SysConfigResp config;
         try {
             config = configService.getByKeyOrThrow(configKey);
-        } catch (Exception e) {
-            log.warn("SysConfig is not found, configKey={}", configKey, e);
-            return "";
+        } catch (BizException exception) {
+            if (exception.getErrorCode() == CommonErrorCode.DATABASE_RECORD_NOT_FOUND) {
+                log.warn("SysConfig is not found, configKey={}", configKey);
+                return "";
+            }
+            throw exception;
         }
         return config.getConfigValue();
     }

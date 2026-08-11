@@ -71,6 +71,7 @@ public class SysMenuServiceImpl extends ServiceImplX<SysMenuMapper, SysMenu>
                 @CacheEvict(value = "system:menu:tree:vben", allEntries = true)
             })
     public void create(SysMenuCreateReq req) {
+        validateParent(null, req.getParentId(), req.getMenuType());
         validatePathUnique(req.getPath(), null);
         var menu = converter.toEntity(req);
         save(menu);
@@ -89,8 +90,11 @@ public class SysMenuServiceImpl extends ServiceImplX<SysMenuMapper, SysMenu>
             })
     @Transactional
     public void update(Long id, SysMenuUpdateReq req) {
-        var menu = getByIdOrThrow(id);
-        validateParent(id, req.getParentId());
+        var menu = baseMapper.selectByIdForUpdate(id);
+        if (menu == null) {
+            throw new BizException(CommonErrorCode.DATABASE_RECORD_NOT_FOUND);
+        }
+        validateParent(id, req.getParentId(), req.getMenuType());
         validatePathUnique(req.getPath(), id);
         converter.update(req, menu);
         updateById(menu);
@@ -126,11 +130,18 @@ public class SysMenuServiceImpl extends ServiceImplX<SysMenuMapper, SysMenu>
         }
     }
 
-    /** 校验上级菜单不能指向当前菜单或其后代菜单 */
-    private void validateParent(Long id, Long parentId) {
-        if (parentId != null
-                && !Objects.equals(parentId, 0L)
-                && getMenuAndDescendantIds(id).contains(parentId)) {
+    /** 校验上级菜单存在、类型正确且不指向当前菜单或其后代菜单。 */
+    private void validateParent(Long id, Long parentId, Integer menuType) {
+        if (Objects.equals(parentId, 0L)) {
+            if (Objects.equals(menuType, MenuType.BUTTON.getValue())) {
+                throw new BizException(SystemErrorCode.MENU_PARENT_INVALID);
+            }
+            return;
+        }
+        var parent = parentId == null ? null : baseMapper.selectByIdForUpdate(parentId);
+        if (parent == null
+                || Objects.equals(parent.getMenuType(), MenuType.BUTTON.getValue())
+                || (id != null && getMenuAndDescendantIds(id).contains(parentId))) {
             throw new BizException(SystemErrorCode.MENU_PARENT_INVALID);
         }
     }
@@ -140,8 +151,8 @@ public class SysMenuServiceImpl extends ServiceImplX<SysMenuMapper, SysMenu>
     @Transactional
     @CacheEvict(allEntries = true)
     public void deleteById(Long id) {
-        if (super.getById(id) == null) {
-            throw new BizException(CommonErrorCode.NOT_FOUND);
+        if (baseMapper.selectByIdForUpdate(id) == null) {
+            throw new BizException(CommonErrorCode.DATABASE_RECORD_NOT_FOUND);
         }
         var menuIds = getMenuAndDescendantIds(id);
         removeByIds(menuIds);
@@ -229,7 +240,7 @@ public class SysMenuServiceImpl extends ServiceImplX<SysMenuMapper, SysMenu>
     @Override
     @Cacheable(value = "system:menu:tree:vben", key = "#userId")
     public List<VbenMenuResp> getVbenMenuTree(Long userId) {
-        var roleIds = roleApi.getRoleIdsByUserId(userId);
+        var roleIds = roleApi.getEnabledRoleIdsByUserId(userId);
         if (roleIds == null || roleIds.isEmpty()) {
             return Collections.emptyList();
         }

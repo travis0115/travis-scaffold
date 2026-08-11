@@ -1,6 +1,7 @@
 package com.travis.monolith.system.role.api.request;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import java.util.List;
 import lombok.Data;
 
@@ -16,5 +17,5 @@ public class SysRoleMenuReq {
     private Long roleId;
 
     /** 待分配的菜单ID列表 */
-    private List<Long> menuIds;
+    private List<@NotNull(message = "菜单ID不能为空") @Positive(message = "菜单ID必须为正数") Long> menuIds;
 }

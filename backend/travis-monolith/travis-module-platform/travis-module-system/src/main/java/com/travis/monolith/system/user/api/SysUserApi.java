@@ -11,9 +11,6 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 public interface SysUserApi {
 
-    /** 查询所有用户ID。 */
-    List<Long> listUserIds();
-
     /** 根据用户ID查询部门ID，不存在则返回 null。 */
     Long getDeptIdByUserId(Long userId);
 

@@ -3,6 +3,7 @@ package com.travis.monolith.system.role.internal.api;
 import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.role.internal.service.SysRoleService;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -24,13 +25,23 @@ public class SysRoleApiImpl implements SysRoleApi {
     }
 
     @Override
+    public List<Long> getEnabledRoleIdsByUserId(Long userId) {
+        return roleService.getEnabledRoleIdsByUserId(userId);
+    }
+
+    @Override
     public List<String> getRoleCodesByUserId(Long userId) {
-        return getRoleCodesByRoleIds(roleService.getRoleIdsByUserId(userId));
+        return getRoleCodesByRoleIds(roleService.getEnabledRoleIdsByUserId(userId));
     }
 
     @Override
     public List<String> getRoleNamesByUserId(Long userId) {
         return getRoleNamesByRoleIds(roleService.getRoleIdsByUserId(userId));
+    }
+
+    @Override
+    public Map<Long, List<String>> getRoleNameMapByUserIds(List<Long> userIds) {
+        return roleService.getRoleNameMapByUserIds(userIds);
     }
 
     @Override

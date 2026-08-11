@@ -7,7 +7,7 @@ import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
-import com.travis.monolith.ops.common.api.OpsPermsConstant;
+import com.travis.monolith.ops.common.api.OpsPermission;
 import com.travis.monolith.ops.job.api.request.*;
 import com.travis.monolith.ops.job.api.response.*;
 import com.travis.monolith.ops.job.internal.service.OpsJobLogService;
@@ -33,21 +33,21 @@ public class OpsJobController {
     private final OpsJobLogService logService;
 
     /** 分页查询定时任务。 */
-    @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_QUERY, type = LoginType.ADMIN)
+    @SaCheckPermission(value = OpsPermission.OPS_JOB_QUERY, type = LoginType.ADMIN)
     @GetMapping("/page")
     public ApiResponse<PageResp<OpsJobPageResp>> page(OpsJobPageReq req) {
         return ApiResponse.success(jobService.page(req));
     }
 
     /** 查询定时任务详情。 */
-    @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_QUERY, type = LoginType.ADMIN)
+    @SaCheckPermission(value = OpsPermission.OPS_JOB_QUERY, type = LoginType.ADMIN)
     @GetMapping("/{id:\\d+}")
     public ApiResponse<OpsJobDetailResp> get(@PathVariable Long id) {
         return ApiResponse.success(jobService.getOrThrow(id));
     }
 
     /** 创建定时任务。 */
-    @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_UPDATE, type = LoginType.ADMIN)
+    @SaCheckPermission(value = OpsPermission.OPS_JOB_UPDATE, type = LoginType.ADMIN)
     @OperationLog(action = "新增任务")
     @NoRepeatSubmit
     @PostMapping
@@ -57,7 +57,7 @@ public class OpsJobController {
     }
 
     /** 更新定时任务。 */
-    @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_UPDATE, type = LoginType.ADMIN)
+    @SaCheckPermission(value = OpsPermission.OPS_JOB_UPDATE, type = LoginType.ADMIN)
     @OperationLog(action = "修改任务")
     @NoRepeatSubmit
     @PutMapping("/{id}")
@@ -68,7 +68,7 @@ public class OpsJobController {
     }
 
     /** 删除定时任务。 */
-    @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_UPDATE, type = LoginType.ADMIN)
+    @SaCheckPermission(value = OpsPermission.OPS_JOB_UPDATE, type = LoginType.ADMIN)
     @OperationLog(action = "删除任务")
     @NoRepeatSubmit
     @DeleteMapping("/{id}")
@@ -78,7 +78,7 @@ public class OpsJobController {
     }
 
     /** 启用或停用定时任务。 */
-    @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_OPERATION, type = LoginType.ADMIN)
+    @SaCheckPermission(value = OpsPermission.OPS_JOB_OPERATION, type = LoginType.ADMIN)
     @OperationLog(action = "启停任务")
     @NoRepeatSubmit
     @PutMapping("/{id}/status")
@@ -88,7 +88,7 @@ public class OpsJobController {
     }
 
     /** 立即触发一次任务执行。 */
-    @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_OPERATION, type = LoginType.ADMIN)
+    @SaCheckPermission(value = OpsPermission.OPS_JOB_OPERATION, type = LoginType.ADMIN)
     @OperationLog(action = "立即执行任务")
     @NoRepeatSubmit
     @PostMapping("/{id}/run")
@@ -99,7 +99,7 @@ public class OpsJobController {
     }
 
     /** 复制定时任务。 */
-    @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_UPDATE, type = LoginType.ADMIN)
+    @SaCheckPermission(value = OpsPermission.OPS_JOB_UPDATE, type = LoginType.ADMIN)
     @OperationLog(action = "复制任务")
     @NoRepeatSubmit
     @PostMapping("/{id}/copy")
@@ -109,7 +109,7 @@ public class OpsJobController {
     }
 
     /** 预览任务后续计划执行时间。 */
-    @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_QUERY, type = LoginType.ADMIN)
+    @SaCheckPermission(value = OpsPermission.OPS_JOB_QUERY, type = LoginType.ADMIN)
     @PostMapping("/preview")
     public ApiResponse<List<LocalDateTime>> preview(
             @RequestBody @Valid OpsJobPreviewReq req,
@@ -118,14 +118,14 @@ public class OpsJobController {
     }
 
     /** 查询已注册的任务处理器。 */
-    @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_QUERY, type = LoginType.ADMIN)
+    @SaCheckPermission(value = OpsPermission.OPS_JOB_QUERY, type = LoginType.ADMIN)
     @GetMapping("/handlers")
     public ApiResponse<Collection<String>> handlers() {
         return ApiResponse.success(jobService.listHandlers());
     }
 
     /** 查询任务负责人及告警接收人的用户选项。 */
-    @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_QUERY, type = LoginType.ADMIN)
+    @SaCheckPermission(value = OpsPermission.OPS_JOB_QUERY, type = LoginType.ADMIN)
     @GetMapping("/user-options")
     public ApiResponse<List<SysUserOptionResp>> userOptions(
             @RequestParam(required = false) String keyword,
@@ -134,14 +134,14 @@ public class OpsJobController {
     }
 
     /** 导出全部定时任务。 */
-    @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_QUERY, type = LoginType.ADMIN)
+    @SaCheckPermission(value = OpsPermission.OPS_JOB_QUERY, type = LoginType.ADMIN)
     @GetMapping("/export")
     public ApiResponse<List<OpsJobExportResp>> exportJobs() {
         return ApiResponse.success(jobService.exportJobs());
     }
 
     /** 批量导入定时任务。 */
-    @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_UPDATE, type = LoginType.ADMIN)
+    @SaCheckPermission(value = OpsPermission.OPS_JOB_UPDATE, type = LoginType.ADMIN)
     @OperationLog(action = "导入任务")
     @NoRepeatSubmit
     @PostMapping("/import")
@@ -151,14 +151,14 @@ public class OpsJobController {
     }
 
     /** 查询指定任务的执行统计。 */
-    @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_QUERY, type = LoginType.ADMIN)
+    @SaCheckPermission(value = OpsPermission.OPS_JOB_QUERY, type = LoginType.ADMIN)
     @GetMapping("/{id}/stats")
     public ApiResponse<OpsJobStatsResp> stats(@PathVariable Long id) {
         return ApiResponse.success(logService.stats(id));
     }
 
     /** 查询任务调度看板汇总数据。 */
-    @SaCheckPermission(value = OpsPermsConstant.OPS_JOB_QUERY, type = LoginType.ADMIN)
+    @SaCheckPermission(value = OpsPermission.OPS_JOB_QUERY, type = LoginType.ADMIN)
     @GetMapping("/dashboard")
     public ApiResponse<OpsJobDashboardResp> dashboard() {
         return ApiResponse.success(logService.dashboard());

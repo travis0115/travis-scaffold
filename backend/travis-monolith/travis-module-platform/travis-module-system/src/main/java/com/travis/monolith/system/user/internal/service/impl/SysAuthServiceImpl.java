@@ -207,7 +207,7 @@ public class SysAuthServiceImpl implements SysAuthService {
      * @return 权限标识列表（去重）
      */
     private List<String> getPermissionsByUserId(Long userId) {
-        var roleIds = roleApi.getRoleIdsByUserId(userId);
+        var roleIds = roleApi.getEnabledRoleIdsByUserId(userId);
         if (roleIds.isEmpty()) {
             return Collections.emptyList();
         }

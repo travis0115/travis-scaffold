@@ -9,6 +9,7 @@ import lombok.Data;
 public class SysDeptUpdateReq {
 
     /** 父部门 ID。 */
+    @NotNull(message = "父部门ID不能为空")
     private Long parentId;
 
     /** 部门名称。 */

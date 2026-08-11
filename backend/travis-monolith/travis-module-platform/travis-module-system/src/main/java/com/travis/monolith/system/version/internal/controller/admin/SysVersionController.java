@@ -8,7 +8,6 @@ import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageRequest;
 import com.travis.infrastructure.common.web.model.PageResp;
-import com.travis.infrastructure.framework.satoken.core.LoginSubjectSessionKey;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
 import com.travis.monolith.system.common.api.constant.SystemPermission;
@@ -81,10 +80,9 @@ public class SysVersionController {
             type = LoginType.ADMIN)
     public ApiResponse<FileUploadResp> uploadImage(
             @RequestParam("file") @ImageFile MultipartFile file) {
-        var username =
-                StpKit.of(LoginType.ADMIN).getSession().getString(LoginSubjectSessionKey.USERNAME);
+        var uploaderId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
         return ApiResponse.success(
-                fileApi.upload(file, FileFolderId.VERSION, LoginType.ADMIN, username));
+                fileApi.upload(file, FileFolderId.VERSION, LoginType.ADMIN, uploaderId));
     }
 
     /** 修改版本日志状态 */

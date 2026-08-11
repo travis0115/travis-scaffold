@@ -7,7 +7,6 @@ import { requestClient } from '#/api/request';
 export namespace SystemFileApi {
   export interface FileInfo {
     [key: string]: any;
-    createBy?: number | string;
     createTime: string;
     extension?: string;
     fileName: string;
@@ -19,6 +18,7 @@ export namespace SystemFileApi {
     storageConfigId: number;
     storageConfigName?: string;
     storageType?: string;
+    uploaderId?: number | string;
     uploaderName?: string;
     uploaderType?: string;
     url: string;

@@ -5,8 +5,8 @@ package com.travis.monolith.ops.common.api;
  *
  * @author travis
  */
-public class OpsPermsConstant {
-    private OpsPermsConstant() {}
+public class OpsPermission {
+    private OpsPermission() {}
 
     /*
      ──────────────────────────────────────────────────────────────── *

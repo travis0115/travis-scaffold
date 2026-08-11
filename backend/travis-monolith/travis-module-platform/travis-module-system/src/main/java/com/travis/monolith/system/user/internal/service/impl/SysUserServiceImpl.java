@@ -20,7 +20,6 @@ import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.dept.api.SysDeptApi;
 import com.travis.monolith.system.file.api.SysFileApi;
-import com.travis.monolith.system.file.api.event.UploaderNameChangedEvent;
 import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.api.event.UserMessageAudienceChangedEvent;
 import com.travis.monolith.system.user.api.request.*;
@@ -33,6 +32,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -50,6 +50,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @CacheConfig(cacheNames = "system:user")
 @RequiredArgsConstructor
+@Slf4j
 public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         implements SysUserService {
 
@@ -109,7 +110,9 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
             wrapper.in(SysUser::getId, connectedAdminUserIds);
         }
         var page = page(req.getPageNum(), req.getPageSize(), wrapper);
-        var resp = PageConverter.toResp(page.convert(this::toResp));
+        var users = List.copyOf(page.getRecords());
+        var resp = PageConverter.toResp(page.convert(converter::toResp));
+        fillPageAssociations(users, resp.getRecords());
         fillOnlineStatus(resp.getRecords(), connectedAdminUserIds);
         return resp;
     }
@@ -127,21 +130,10 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         return resp;
     }
 
-    /** 获取所有启用用户列表（不分页） */
-    @Override
-    @Cacheable(key = "'list:id:all'")
-    public List<Long> listUserIds() {
-        return list().stream().map(SysUser::getId).toList();
-    }
-
     /** 新增用户，密码使用 BCrypt 加密存储 */
     @Override
     @Transactional
-    @Caching(
-            evict = {
-                @CacheEvict(key = "'list:id:all'"),
-                @CacheEvict(key = "'list:id:dept:'+#req.deptId")
-            })
+    @Caching(evict = {@CacheEvict(key = "'list:id:dept:'+#req.deptId")})
     public Long create(SysUserCreateReq req) {
         // 检查用户名唯一性
         var count =
@@ -187,8 +179,6 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         if (!user.getUsername().equals(oldUsername)) {
             RedisUtil.deleteCacheKey("system:user:username", String.valueOf(user.getId()));
             syncCurrentSessionUsername(id, user.getUsername());
-            eventPublisher.publishEvent(
-                    new UploaderNameChangedEvent(LoginType.ADMIN, id, user.getUsername()));
         }
     }
 
@@ -208,12 +198,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     /** 删除用户，同时清除用户-角色关联并使其会话失效 */
     @Override
     @Transactional
-    @Caching(
-            evict = {
-                @CacheEvict(key = "'username:'+#id"),
-                @CacheEvict(key = "'detail:'+#id"),
-                @CacheEvict(key = "'list:id:all'")
-            })
+    @Caching(evict = {@CacheEvict(key = "'username:'+#id"), @CacheEvict(key = "'detail:'+#id")})
     public void deleteById(Long id) {
         var user = getByIdOrThrow(id);
         removeById(id);
@@ -282,6 +267,9 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     @Override
     @Transactional
     public void assignRoles(SysUserRoleReq req) {
+        if (baseMapper.selectByIdForUpdate(req.getUserId()) == null) {
+            throw new BizException(CommonErrorCode.DATABASE_RECORD_NOT_FOUND);
+        }
         roleApi.assignUserRoles(req.getUserId(), req.getRoleIds());
     }
 
@@ -339,6 +327,9 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
             key =
                     "'detail:' + T(com.travis.infrastructure.framework.satoken.core.StpKit).getLoginIdAsLong(T(com.travis.infrastructure.common.web.constant.LoginType).ADMIN)")
     public void updateAvatar(Long avatarFileId) {
+        if (fileApi.getFileUrlById(avatarFileId) == null) {
+            throw new BizException(SystemErrorCode.FILE_NOT_FOUND);
+        }
         var userId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
         var user = getByIdOrThrow(userId);
         user.setAvatarFileId(avatarFileId);
@@ -403,6 +394,38 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         return resp;
     }
 
+    /** 批量补充分页结果的部门、角色和头像信息，避免逐行查询。 */
+    private void fillPageAssociations(List<SysUser> users, List<SysUserResp> records) {
+        if (users == null || users.isEmpty()) {
+            return;
+        }
+        var userIds = users.stream().map(SysUser::getId).toList();
+        var deptIds =
+                users.stream()
+                        .map(SysUser::getDeptId)
+                        .filter(id -> id != null && id != 0)
+                        .collect(Collectors.toSet());
+        var avatarFileIds =
+                users.stream()
+                        .map(SysUser::getAvatarFileId)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toSet());
+        var deptNames = deptApi.getDeptNameMapByIds(deptIds);
+        var roleNames = roleApi.getRoleNameMapByUserIds(userIds);
+        var avatarUrls = fileApi.getFileUrlMapByIds(avatarFileIds);
+        var usersById = users.stream().collect(Collectors.toMap(SysUser::getId, user -> user));
+        records.forEach(
+                record -> {
+                    var user = usersById.get(record.getId());
+                    if (user == null) {
+                        return;
+                    }
+                    record.setDeptName(deptNames.get(user.getDeptId()));
+                    record.setRoleNames(roleNames.getOrDefault(user.getId(), List.of()));
+                    record.setAvatar(avatarUrls.get(user.getAvatarFileId()));
+                });
+    }
+
     /** 查询当前已建立 WebSocket 连接的后台用户 ID。 */
     private Set<Long> getConnectedAdminUserIds() {
         var webSocketSessionManager = webSocketSessionManagerProvider.getIfAvailable();
@@ -453,10 +476,11 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     private void syncCurrentSessionUsername(Long userId, String username) {
         try {
             var logic = StpKit.of(LoginType.ADMIN);
-            if (logic.isLogin() && logic.getLoginIdAsLong() == userId) {
+            if (logic.isLogin() && Objects.equals(logic.getLoginIdAsLong(), userId)) {
                 logic.getSession().set(LoginSubjectSessionKey.USERNAME, username);
             }
-        } catch (Exception ignored) {
+        } catch (RuntimeException exception) {
+            log.warn("同步当前登录会话用户名失败, userId={}", userId, exception);
         }
     }
 }

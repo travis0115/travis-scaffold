@@ -9,12 +9,11 @@ import com.travis.monolith.system.message.api.enums.SysMessagePushType;
 import com.travis.monolith.system.message.api.enums.SysMessageStatus;
 import com.travis.monolith.system.message.internal.entity.SysMessage;
 import com.travis.monolith.system.message.internal.mapper.SysMessageMapper;
-import org.springframework.stereotype.Component;
-
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import org.springframework.stereotype.Component;
 
 /** 将消息定时发布状态投影为一次性 Quartz 任务。 */
 @Component

@@ -2,6 +2,7 @@ package com.travis.monolith.system.file.internal.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.travis.infrastructure.common.web.exception.BizException;
+import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.monolith.system.common.api.BuiltinResourceGuard;
@@ -50,6 +51,10 @@ public class SysFileFolderServiceImpl extends ServiceImplX<SysFileFolderMapper, 
     @Override
     @CacheEvict(key = "'list:all'")
     public void create(SysFileFolderCreateReq req) {
+        if (!Long.valueOf(0L).equals(req.getParentId())
+                && baseMapper.selectByIdForUpdate(req.getParentId()) == null) {
+            throw new BizException(SystemErrorCode.FILE_FOLDER_PARENT_INVALID);
+        }
         save(converter.toEntity(req));
     }
 
@@ -68,7 +73,10 @@ public class SysFileFolderServiceImpl extends ServiceImplX<SysFileFolderMapper, 
     @Transactional
     @CacheEvict(key = "'list:all'")
     public void deleteById(Long id) {
-        var folder = getByIdOrThrow(id);
+        var folder = baseMapper.selectByIdForUpdate(id);
+        if (folder == null) {
+            throw new BizException(CommonErrorCode.DATABASE_RECORD_NOT_FOUND);
+        }
         var folders = list();
         var folderIds = collectFolderIds(folders, id);
         boolean hasBuiltin =

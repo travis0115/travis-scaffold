@@ -8,6 +8,7 @@ import com.travis.monolith.system.file.api.response.SysFileStorageConfigResp;
 import com.travis.monolith.system.file.internal.config.properties.FileUploadProperties;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -82,6 +83,36 @@ public class LocalFileStorageStrategy implements FileStorageStrategy {
         }
         String urlPrefix = resourceHandler.replaceAll("/\\*\\*$", "").replaceAll("/+$", "");
         return new StorageResult(urlPrefix + "/" + datePath + "/" + filename, filename);
+    }
+
+    @Override
+    public void delete(String path, SysFileStorageConfigResp config) {
+        if (StrUtil.isBlank(path) || config == null || StrUtil.isBlank(config.getStoragePath())) {
+            return;
+        }
+        var resourceHandler = fileUploadProperties.getResourceHandler();
+        var urlPrefix =
+                StrUtil.blankToDefault(resourceHandler, "")
+                        .replaceAll("/\\*\\*$", "")
+                        .replaceAll("^/+|/+$", "");
+        var normalizedPath = path.replaceFirst("^/+", "");
+        if (!urlPrefix.isBlank() && normalizedPath.startsWith(urlPrefix + "/")) {
+            normalizedPath = normalizedPath.substring(urlPrefix.length() + 1);
+        }
+        Path storageRoot =
+                Paths.get(environment.resolvePlaceholders(config.getStoragePath()))
+                        .toAbsolutePath()
+                        .normalize();
+        Path filePath = storageRoot.resolve(normalizedPath).normalize();
+        if (!filePath.startsWith(storageRoot)) {
+            throw new BizException(SystemErrorCode.FILE_UPLOAD_FAILED);
+        }
+        try {
+            Files.deleteIfExists(filePath);
+        } catch (IOException exception) {
+            log.error("删除存储文件失败: {}", filePath, exception);
+            throw new BizException(SystemErrorCode.FILE_UPLOAD_FAILED, exception);
+        }
     }
 
     private String generateFilename(String originalFilename) {

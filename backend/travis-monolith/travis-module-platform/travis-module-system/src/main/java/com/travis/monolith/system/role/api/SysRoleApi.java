@@ -2,6 +2,7 @@ package com.travis.monolith.system.role.api;
 
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
+import java.util.Map;
 import org.springframework.validation.annotation.Validated;
 
 /**
@@ -21,6 +22,14 @@ public interface SysRoleApi {
     List<Long> getRoleIdsByUserId(@NotNull(message = "用户ID不能为空") Long userId);
 
     /**
+     * 根据用户ID查询其启用角色ID列表
+     *
+     * @param userId 用户ID
+     * @return 启用角色ID列表
+     */
+    List<Long> getEnabledRoleIdsByUserId(@NotNull(message = "用户ID不能为空") Long userId);
+
+    /**
      * 根据用户ID查询角色编码列表
      *
      * @param userId 用户ID
@@ -35,6 +44,9 @@ public interface SysRoleApi {
      * @return 角色名称列表
      */
     List<String> getRoleNamesByUserId(@NotNull(message = "用户ID不能为空") Long userId);
+
+    /** 批量查询用户与角色名称列表。 */
+    Map<Long, List<String>> getRoleNameMapByUserIds(List<Long> userIds);
 
     /**
      * 根据角色ID列表获取角色编码列表

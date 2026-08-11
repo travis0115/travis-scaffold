@@ -94,7 +94,7 @@ public class SysFileStorageConfigServiceImpl
     @Caching(
             evict = {
                 @CacheEvict(allEntries = true),
-                @CacheEvict(cacheNames = "system:user", allEntries = true)
+                @CacheEvict(cacheNames = "system:user:detail", allEntries = true)
             })
     public void create(SysFileStorageConfigCreateReq req) {
         validateDefaultEnabled(req.getIsDefault(), req.getStatus());
@@ -108,7 +108,7 @@ public class SysFileStorageConfigServiceImpl
     @Caching(
             evict = {
                 @CacheEvict(allEntries = true),
-                @CacheEvict(cacheNames = "system:user", allEntries = true)
+                @CacheEvict(cacheNames = "system:user:detail", allEntries = true)
             })
     public void update(Long id, SysFileStorageConfigUpdateReq req) {
         var old = getByIdOrThrow(id);
@@ -128,7 +128,7 @@ public class SysFileStorageConfigServiceImpl
     @Caching(
             evict = {
                 @CacheEvict(allEntries = true),
-                @CacheEvict(cacheNames = "system:user", allEntries = true)
+                @CacheEvict(cacheNames = "system:user:detail", allEntries = true)
             })
     public void updateStatus(Long id, Integer status) {
         var entity = getByIdOrThrow(id);
@@ -146,7 +146,7 @@ public class SysFileStorageConfigServiceImpl
     @Caching(
             evict = {
                 @CacheEvict(allEntries = true),
-                @CacheEvict(cacheNames = "system:user", allEntries = true)
+                @CacheEvict(cacheNames = "system:user:detail", allEntries = true)
             })
     public void setDefault(Long id) {
         var entity = getByIdOrThrow(id);
@@ -162,7 +162,7 @@ public class SysFileStorageConfigServiceImpl
     @Caching(
             evict = {
                 @CacheEvict(allEntries = true),
-                @CacheEvict(cacheNames = "system:user", allEntries = true)
+                @CacheEvict(cacheNames = "system:user:detail", allEntries = true)
             })
     public void deleteById(Long id) {
         var entity = getByIdOrThrow(id);

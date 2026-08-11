@@ -4,7 +4,7 @@ import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
-import com.travis.monolith.ops.common.api.OpsPermsConstant;
+import com.travis.monolith.ops.common.api.OpsPermission;
 import com.travis.monolith.ops.errorlog.api.request.SysErrorLogPageReq;
 import com.travis.monolith.ops.errorlog.internal.entity.SysErrorLog;
 import com.travis.monolith.ops.errorlog.internal.service.SysErrorLogService;
@@ -22,7 +22,7 @@ public class SysErrorLogController {
 
     /** 分页查询系统异常日志。 */
     @GetMapping("/page")
-    @SaCheckPermission(value = OpsPermsConstant.OPS_ERROR_LOG_QUERY, type = LoginType.ADMIN)
+    @SaCheckPermission(value = OpsPermission.OPS_ERROR_LOG_QUERY, type = LoginType.ADMIN)
     public ApiResponse<PageResp<SysErrorLog>> page(SysErrorLogPageReq req) {
         return ApiResponse.success(errorLogService.page(req));
     }

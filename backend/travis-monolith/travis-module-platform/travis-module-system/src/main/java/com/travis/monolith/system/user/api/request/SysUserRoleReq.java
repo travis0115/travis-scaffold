@@ -1,6 +1,7 @@
 package com.travis.monolith.system.user.api.request;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import java.util.List;
 import lombok.Data;
 
@@ -16,5 +17,5 @@ public class SysUserRoleReq {
     private Long userId;
 
     /** 待分配的角色ID列表 */
-    private List<Long> roleIds;
+    private List<@NotNull(message = "角色ID不能为空") @Positive(message = "角色ID必须为正数") Long> roleIds;
 }

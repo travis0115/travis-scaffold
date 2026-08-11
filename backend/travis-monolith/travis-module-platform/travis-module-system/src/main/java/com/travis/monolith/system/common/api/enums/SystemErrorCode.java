@@ -22,11 +22,11 @@ public enum SystemErrorCode implements ErrorCode {
     ROLE_ADMIN_BUILTIN_MODIFIABLE_ONLY("SYS_103", "系统内置数据不允许修改"),
 
     /* dept模块 200-299 */
-    DEPT_PARENT_INVALID("SYS_200", "上级部门不能是当前部门或其下级部门"),
+    DEPT_PARENT_INVALID("SYS_200", "上级部门不存在，或为当前部门及其下级部门"),
 
     /* menu模块 300-399 */
     MENU_PATH_EXISTS("SYS_300", "菜单路由路径已存在"),
-    MENU_PARENT_INVALID("SYS_301", "上级菜单不能是当前菜单或其下级菜单"),
+    MENU_PARENT_INVALID("SYS_301", "上级菜单不存在、类型不正确，或为当前菜单及其下级菜单"),
 
     /* dict模块 400-499 */
     DICT_CODE_EXISTS("SYS_400", "字典编码已存在"),
@@ -50,9 +50,12 @@ public enum SystemErrorCode implements ErrorCode {
     FILE_STORAGE_DEFAULT_NOT_DELETABLE("SYS_1001", "默认存储配置不允许删除或禁用"),
     FILE_STORAGE_IN_USE("SYS_1002", "存储配置已被文件使用，不允许删除"),
     FILE_STORAGE_NOT_FOUND("SYS_1003", "未找到存储配置"),
-    FILE_FOLDER_BUILTIN_NOT_DELETABLE("SYS_1100", "系统内置文件夹不允许删除"),
-    FILE_UPLOAD_FAILED("SYS_1200", "文件上传失败"),
-    FILE_UPLOAD_EXTENSION_NOT_ALLOWED("SYS_1201", "不支持上传该文件类型"),
+    FILE_FOLDER_BUILTIN_NOT_DELETABLE("SYS_1004", "系统内置文件夹不允许删除"),
+    FILE_FOLDER_PARENT_INVALID("SYS_1005", "上级文件夹不存在"),
+    FILE_UPLOAD_FAILED("SYS_1006", "文件上传失败"),
+    FILE_UPLOAD_EXTENSION_NOT_ALLOWED("SYS_1007", "不支持上传该文件类型"),
+    FILE_IN_USE("SYS_1008", "文件仍被业务数据引用，不允许删除"),
+    FILE_NOT_FOUND("SYS_1009", "未找到文件"),
 
     /* config模块 1100-1199 */
     CONFIG_BUILTIN_NOT_DELETABLE("SYS_1100", "系统内置配置不允许删除"),

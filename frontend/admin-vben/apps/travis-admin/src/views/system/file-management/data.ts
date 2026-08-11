@@ -50,22 +50,36 @@ function formatUploader(row: any) {
   if (row.uploaderName) {
     return row.uploaderName;
   }
-  if (row.uploaderType && row.createBy) {
-    return `${row.uploaderType}:${row.createBy}`;
+  if (row.uploaderType && row.uploaderId) {
+    return `${row.uploaderType}:${row.uploaderId}`;
   }
   return '-';
 }
 
-export function useColumns<T>(onActionClick: OnActionClickFn<T>): VxeTableGridColumns {
+export function useColumns<T>(
+  onActionClick: OnActionClickFn<T>,
+): VxeTableGridColumns {
   return [
     { field: 'fileName', minWidth: 220, title: '文件名' },
     { field: 'originalName', minWidth: 220, title: '原始文件名' },
     { field: 'extension', title: '文件后缀', width: 100 },
-    { field: 'preview', slots: { default: 'preview' }, title: '文件预览', width: 110 },
-    { field: 'size', formatter: ({ cellValue }: any) => formatFileSize(cellValue), sortable: true, title: '大小', width: 110 },
+    {
+      field: 'preview',
+      slots: { default: 'preview' },
+      title: '文件预览',
+      width: 110,
+    },
+    {
+      field: 'size',
+      formatter: ({ cellValue }: any) => formatFileSize(cellValue),
+      sortable: true,
+      title: '大小',
+      width: 110,
+    },
     {
       field: 'storageConfigName',
-      formatter: ({ row }: any) => row.storageConfigName || row.storageType || '-',
+      formatter: ({ row }: any) =>
+        row.storageConfigName || row.storageType || '-',
       title: '服务商',
       width: 150,
     },
@@ -75,7 +89,13 @@ export function useColumns<T>(onActionClick: OnActionClickFn<T>): VxeTableGridCo
       title: '上传人',
       width: 140,
     },
-    { field: 'createTime', formatter: 'formatDateTime', sortable: true, title: '上传时间', width: 180 },
+    {
+      field: 'createTime',
+      formatter: 'formatDateTime',
+      sortable: true,
+      title: '上传时间',
+      width: 180,
+    },
     {
       cellRender: {
         attrs: {

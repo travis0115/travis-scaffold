@@ -15,4 +15,7 @@ public interface FileStorageStrategy {
 
     /** 上传文件 */
     StorageResult upload(MultipartFile file, SysFileStorageConfigResp config);
+
+    /** 删除存储对象。 */
+    void delete(String path, SysFileStorageConfigResp config);
 }

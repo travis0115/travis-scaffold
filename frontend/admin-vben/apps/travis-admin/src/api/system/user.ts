@@ -59,17 +59,23 @@ async function getAppUserPage(params: Recordable<any>) {
 }
 
 async function getUserOptionsByIds(ids: Array<number | string>) {
-  return requestClient.get<SystemUserApi.UserOption[]>('/system/user/options/by-ids', {
-    params: { ids },
-    paramsSerializer: 'repeat',
-  });
+  return requestClient.get<SystemUserApi.UserOption[]>(
+    '/system/user/options/by-ids',
+    {
+      params: { ids },
+      paramsSerializer: 'repeat',
+    },
+  );
 }
 
 async function getAppUserOptionsByIds(ids: Array<number | string>) {
-  return requestClient.get<SystemUserApi.UserOption[]>('/app/user/options/by-ids', {
-    params: { ids },
-    paramsSerializer: 'repeat',
-  });
+  return requestClient.get<SystemUserApi.UserOption[]>(
+    '/app/user/options/by-ids',
+    {
+      params: { ids },
+      paramsSerializer: 'repeat',
+    },
+  );
 }
 
 /**
@@ -118,12 +124,9 @@ async function assignUserRoles(data: { roleIds: number[]; userId: number }) {
  * @returns 最终使用的密码（明文）
  */
 async function resetUserPassword(id: number, newPassword?: string) {
-  return requestClient.put<string>(
-    `/system/user/${id}/reset-password`,
-    {
-      newPassword: newPassword || undefined,
-    },
-  );
+  return requestClient.put<string>(`/system/user/${id}/reset-password`, {
+    newPassword: newPassword || undefined,
+  });
 }
 
 export {

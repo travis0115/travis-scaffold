@@ -1,5 +1,7 @@
 package com.travis.monolith.system.file.internal.service;
 
+import com.travis.infrastructure.common.web.exception.BizException;
+import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
@@ -63,6 +65,9 @@ public class RichTextFileReferenceService {
 
     /** 移除图片标签中的 src 属性。 */
     private String stripSource(String tag, Long fileId) {
+        if (fileService.getById(fileId) == null) {
+            throw new BizException(SystemErrorCode.FILE_NOT_FOUND);
+        }
         return SRC_PATTERN.matcher(tag).replaceFirst("");
     }
 

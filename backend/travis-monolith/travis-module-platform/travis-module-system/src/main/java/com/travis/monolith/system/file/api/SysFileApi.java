@@ -2,6 +2,8 @@ package com.travis.monolith.system.file.api;
 
 import com.travis.monolith.system.file.api.response.FileUploadResp;
 import jakarta.validation.constraints.NotNull;
+import java.util.Collection;
+import java.util.Map;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,14 +21,14 @@ public interface SysFileApi {
      * @param file 文件
      * @param folderId 文件夹ID
      * @param uploaderType 上传主体类型
-     * @param uploaderName 上传主体名称
+     * @param uploaderId 上传主体ID
      * @return 文件上传结果
      */
     FileUploadResp upload(
             @NotNull(message = "上传文件不能为空") MultipartFile file,
             Long folderId,
             String uploaderType,
-            String uploaderName);
+            Long uploaderId);
 
     /**
      * 根据文件ID拼接完整访问URL
@@ -35,6 +37,9 @@ public interface SysFileApi {
      * @return 完整访问URL
      */
     String getFileUrlById(Long fileId);
+
+    /** 批量查询文件访问地址。 */
+    Map<Long, String> getFileUrlMapByIds(Collection<Long> fileIds);
 
     /**
      * 移除富文本中系统文件图片的访问地址，保留文件ID引用
