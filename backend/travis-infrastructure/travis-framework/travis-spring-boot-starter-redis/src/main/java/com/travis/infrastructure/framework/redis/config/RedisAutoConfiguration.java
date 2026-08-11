@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.cache.CacheKeyPrefix;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import tools.jackson.databind.DefaultTyping;
@@ -131,10 +132,11 @@ public class RedisAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public RedisPubSubClient redisPubSubClient(
-            RedisTemplate<String, Object> redisTemplate,
+            StringRedisTemplate stringRedisTemplate,
             RedisMessageListenerContainer listenerContainer,
             RedisKeyPrefixResolver redisKeyPrefixResolver) {
-        return new RedisPubSubClient(redisTemplate, listenerContainer, redisKeyPrefixResolver);
+        return new RedisPubSubClient(
+                stringRedisTemplate, listenerContainer, redisKeyPrefixResolver);
     }
 
     /** 集群周期任务执行器。 */

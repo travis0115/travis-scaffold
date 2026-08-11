@@ -3,7 +3,7 @@ package com.travis.infrastructure.framework.redis.core.pubsub;
 import com.travis.infrastructure.framework.redis.core.key.RedisKeyPrefixResolver;
 import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 
@@ -11,7 +11,7 @@ import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 @RequiredArgsConstructor
 public class RedisPubSubClient {
 
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final StringRedisTemplate redisTemplate;
     private final RedisMessageListenerContainer listenerContainer;
     private final RedisKeyPrefixResolver redisKeyPrefixResolver;
 
