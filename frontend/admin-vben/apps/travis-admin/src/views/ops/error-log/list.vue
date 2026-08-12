@@ -10,14 +10,21 @@ import { getErrorLogPage } from '#/api';
 import { useColumns, useGridFormSchema } from './data';
 
 const [Grid] = useVbenVxeGrid({
-  formOptions: { schema: useGridFormSchema() },
+  formOptions: {
+    fieldMappingTime: [['exceptionTimeRange', ['startTime', 'endTime']]],
+    schema: useGridFormSchema(),
+  },
   gridOptions: {
     columns: useColumns(),
     height: 'auto',
     proxyConfig: {
       ajax: {
         query: ({ page }, values) =>
-          getErrorLogPage({ pageNum: page.currentPage, pageSize: page.pageSize, ...values }),
+          getErrorLogPage({
+            pageNum: page.currentPage,
+            pageSize: page.pageSize,
+            ...values,
+          }),
       },
     },
     rowConfig: { keyField: 'id' },

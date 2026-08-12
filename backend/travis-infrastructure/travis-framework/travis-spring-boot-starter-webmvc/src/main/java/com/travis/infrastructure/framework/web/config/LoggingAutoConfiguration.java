@@ -1,6 +1,7 @@
 package com.travis.infrastructure.framework.web.config;
 
 import com.travis.infrastructure.common.web.constant.WebFilterOrder;
+import com.travis.infrastructure.framework.desensitize.core.Desensitizer;
 import com.travis.infrastructure.framework.web.core.filter.AccessLogFilter;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
@@ -24,11 +25,7 @@ public class LoggingAutoConfiguration implements WebMvcConfigurer {
     /** 注册 MDC 脱敏规则。 按需为每个需要脱敏的 MDC key 绑定规则。 */
     @PostConstruct
     public void postConstruct() {
-        // 示例1：如果 trace_id 实际上是手机号等敏感数据，按 MobileDesensitize 默认规则脱敏
-        //        DesensitizeMdcJsonProvider.registerRule(MdcKeys.TRACE_ID,
-        //                DesensitizeUtils.resolveDefaultRule(MobileDesensitize.class)::apply);
-
-        // 示例2：直接用 SliderRule，保留前2后2
+        // 示例：直接用 SliderRule，保留前2后2
         //        DesensitizeMdcJsonProvider.registerRule(MdcKeys.TRACE_ID,
         //                new SliderDesensitizeRule(2, 2, '*')::apply);
 
@@ -40,11 +37,14 @@ public class LoggingAutoConfiguration implements WebMvcConfigurer {
             @Qualifier("handlerExceptionResolver")
                     HandlerExceptionResolver handlerExceptionResolver,
             @Qualifier("requestMappingHandlerMapping")
-                    RequestMappingHandlerMapping requestMappingHandlerMapping) {
+                    RequestMappingHandlerMapping requestMappingHandlerMapping,
+            Desensitizer desensitizer) {
         FilterRegistrationBean<AccessLogFilter> bean =
                 new FilterRegistrationBean<>(
                         new AccessLogFilter(
-                                handlerExceptionResolver, requestMappingHandlerMapping));
+                                handlerExceptionResolver,
+                                requestMappingHandlerMapping,
+                                desensitizer));
         bean.setOrder(WebFilterOrder.ACCESS_LOG);
         return bean;
     }

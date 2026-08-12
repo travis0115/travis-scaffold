@@ -15,6 +15,7 @@ import com.travis.infrastructure.framework.redis.core.util.RedisUtil;
 import com.travis.infrastructure.framework.satoken.core.LoginSubjectSessionKey;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.satoken.core.websocket.SaTokenWebSocketPrincipal;
+import com.travis.infrastructure.framework.event.core.TransactionalApplicationEventPublisher;
 import com.travis.infrastructure.framework.web.core.util.Ip2RegionUtil;
 import com.travis.infrastructure.framework.websocket.core.session.WebSocketSessionManager;
 import com.travis.monolith.system.common.api.enums.Status;
@@ -39,7 +40,6 @@ import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,7 +70,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     /** 文件 API */
     private final SysFileApi fileApi;
 
-    private final ApplicationEventPublisher eventPublisher;
+    private final TransactionalApplicationEventPublisher eventPublisher;
 
     private final ObjectProvider<WebSocketSessionManager> webSocketSessionManagerProvider;
 

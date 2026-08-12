@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.travis.infrastructure.common.monitor.error.ErrorReporter;
 import com.travis.infrastructure.framework.redis.core.task.ClusterPeriodicTaskExecutor;
 import com.travis.monolith.ops.job.internal.service.OpsJobLogService;
 import com.travis.monolith.ops.job.internal.service.OpsJobService;
@@ -23,7 +24,11 @@ class OpsJobQuartzReconcileTaskTest {
         ClusterPeriodicTaskExecutor periodicTaskExecutor = mock(ClusterPeriodicTaskExecutor.class);
         var task =
                 new OpsJobQuartzReconcileTask(
-                        jobService, jobLogService, quartzJobManager, periodicTaskExecutor);
+                        jobService,
+                        jobLogService,
+                        quartzJobManager,
+                        periodicTaskExecutor,
+                        mock(ErrorReporter.class));
         when(jobService.listAll()).thenReturn(List.of());
         doAnswer(
                         invocation -> {

@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import com.baomidou.mybatisplus.annotation.Version;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.travis.infrastructure.framework.event.core.TransactionalApplicationEventPublisher;
 import com.travis.monolith.system.dept.api.SysDeptApi;
 import com.travis.monolith.system.file.api.SysFileApi;
 import com.travis.monolith.system.role.api.SysRoleApi;
@@ -24,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
 class SysUserServiceImplTest {
@@ -77,7 +77,7 @@ class SysUserServiceImplTest {
                         deptApi,
                         roleApi,
                         fileApi,
-                        mock(ApplicationEventPublisher.class),
+                        mock(TransactionalApplicationEventPublisher.class),
                         sessionManagers,
                         converter);
         ReflectionTestUtils.setField(service, "baseMapper", mapper);
@@ -120,7 +120,7 @@ class SysUserServiceImplTest {
                         deptApi,
                         mock(SysRoleApi.class),
                         mock(SysFileApi.class),
-                        mock(ApplicationEventPublisher.class),
+                        mock(TransactionalApplicationEventPublisher.class),
                         sessionManagers,
                         mock(SysUserConverter.class));
         ReflectionTestUtils.setField(service, "baseMapper", mapper);

@@ -23,8 +23,10 @@
 
     <modules>
         <module>travis-spring-boot-starter-desensitize</module>
+        <module>travis-spring-boot-starter-event</module>
         <module>travis-spring-boot-starter-jackson</module>
         <module>travis-spring-boot-starter-logging</module>
+        <module>travis-spring-boot-starter-monitor</module>
         <module>travis-spring-boot-starter-mybatis</module>
         <module>travis-spring-boot-starter-quartz</module>
         <module>travis-spring-boot-starter-redis</module>

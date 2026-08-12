@@ -9,7 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.travis.infrastructure.framework.web.core.event.TransactionalApplicationEventPublisher;
+import com.travis.infrastructure.framework.event.core.TransactionalApplicationEventPublisher;
 import com.travis.monolith.system.file.api.SysFileReferenceChecker;
 import com.travis.monolith.system.file.api.SysFileUploaderNameResolver;
 import com.travis.monolith.system.file.api.request.SysFilePageReq;

@@ -1,5 +1,6 @@
 package com.travis.infrastructure.framework.websocket.config;
 
+import com.travis.infrastructure.common.monitor.error.ErrorReporter;
 import com.travis.infrastructure.framework.redis.core.key.RedisKeyPrefixResolver;
 import com.travis.infrastructure.framework.redis.core.pubsub.RedisPubSubClient;
 import com.travis.infrastructure.framework.web.config.properties.WebProperties;
@@ -64,7 +65,8 @@ public class WebSocketAutoConfiguration {
             WebSocketProperties properties,
             ObjectProvider<RedisWebSocketMessageDispatcher> dispatcherProvider,
             ObjectProvider<WebSocketAuthService> authServiceProvider,
-            ObjectProvider<WebSocketSessionListener> listenerProvider) {
+            ObjectProvider<WebSocketSessionListener> listenerProvider,
+            ErrorReporter errorReporter) {
         var dispatcher = dispatcherProvider.getIfAvailable();
         var authService = authServiceProvider.getIfAvailable();
         var listeners = listenerProvider.orderedStream().toList();
@@ -78,7 +80,8 @@ public class WebSocketAutoConfiguration {
         }
 
         var manager =
-                new LocalWebSocketSessionManager(properties, dispatcher, authService, listeners);
+                new LocalWebSocketSessionManager(
+                        properties, dispatcher, authService, listeners, errorReporter);
         if (dispatcher != null) {
             dispatcher.setSessionManager(manager);
         }
@@ -116,10 +119,15 @@ public class WebSocketAutoConfiguration {
                 RedisPubSubClient redisPubSubClient,
                 RedisTemplate<String, Object> redisTemplate,
                 RedisKeyPrefixResolver redisKeyPrefixResolver,
-                WebSocketProperties properties) {
+                WebSocketProperties properties,
+                ErrorReporter errorReporter) {
             var dispatcher =
                     new RedisWebSocketMessageDispatcher(
-                            redisPubSubClient, redisTemplate, redisKeyPrefixResolver, properties);
+                            redisPubSubClient,
+                            redisTemplate,
+                            redisKeyPrefixResolver,
+                            properties,
+                            errorReporter);
             dispatcher.subscribe();
             return dispatcher;
         }
@@ -135,8 +143,9 @@ public class WebSocketAutoConfiguration {
     /** 消息发送工具 */
     @Bean
     @ConditionalOnMissingBean
-    public WebSocketMessageSender webSocketMessageSender(WebSocketSessionManager sessionManager) {
-        return new WebSocketMessageSender(sessionManager);
+    public WebSocketMessageSender webSocketMessageSender(
+            WebSocketSessionManager sessionManager, ErrorReporter errorReporter) {
+        return new WebSocketMessageSender(sessionManager, errorReporter);
     }
 
     // ==================== WebSocket 端点注册 ====================

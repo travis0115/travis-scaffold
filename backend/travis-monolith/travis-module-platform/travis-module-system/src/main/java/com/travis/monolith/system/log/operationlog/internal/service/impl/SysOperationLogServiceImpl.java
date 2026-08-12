@@ -13,6 +13,7 @@ import com.travis.monolith.system.log.operationlog.internal.mapper.SysOperationL
 import com.travis.monolith.system.log.operationlog.internal.service.SysOperationLogService;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -38,7 +39,11 @@ public class SysOperationLogServiceImpl extends ServiceImplX<SysOperationLogMapp
     /** 分页查询操作日志，支持多条件筛选，按创建时间倒序排列 */
     @Override
     public PageResp<SysOperationLogResp> page(SysOperationLogPageReq req) {
-        var requestMethod = normalizeRequestMethod(req.getRequestMethod());
+        var requestMethod =
+                Optional.ofNullable(req.getRequestMethod())
+                        .map(String::trim)
+                        .map(value -> value.toUpperCase(Locale.ROOT))
+                        .orElse(null);
         var wrapper =
                 new LambdaQueryWrapperX<SysOperationLog>()
                         .likeIfPresent(SysOperationLog::getUsername, req.getUsername())
@@ -59,11 +64,6 @@ public class SysOperationLogServiceImpl extends ServiceImplX<SysOperationLogMapp
                                 SysOperationLog::getCreateTime);
         var page = page(req.getPageNum(), req.getPageSize(), wrapper);
         return PageConverter.toResp(page.convert(converter::toResp));
-    }
-
-    /** 规范化 HTTP 请求方法。 */
-    private String normalizeRequestMethod(String requestMethod) {
-        return requestMethod == null ? null : requestMethod.trim().toUpperCase(Locale.ROOT);
     }
 
     /** 创建操作日志。 */

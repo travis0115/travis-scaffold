@@ -6,6 +6,7 @@ import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
 import com.travis.infrastructure.framework.redis.core.annotation.DistributedLockNamespace;
+import com.travis.infrastructure.framework.event.core.TransactionalApplicationEventPublisher;
 import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.dept.api.event.DeptDeletedEvent;
@@ -23,7 +24,6 @@ import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,7 +42,7 @@ public class SysDeptServiceImpl extends ServiceImplX<SysDeptMapper, SysDept>
     /** 对象转换器 */
     private final SysDeptConverter converter;
 
-    private final ApplicationEventPublisher eventPublisher;
+    private final TransactionalApplicationEventPublisher eventPublisher;
 
     /** 获取部门树形列表 */
     @Override

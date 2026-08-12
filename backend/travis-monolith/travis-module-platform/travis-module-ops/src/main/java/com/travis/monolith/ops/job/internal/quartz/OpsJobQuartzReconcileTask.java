@@ -1,5 +1,7 @@
 package com.travis.monolith.ops.job.internal.quartz;
 
+import com.travis.infrastructure.common.monitor.error.ErrorReporter;
+import com.travis.infrastructure.common.monitor.error.ErrorSource;
 import com.travis.infrastructure.framework.redis.core.task.ClusterPeriodicTaskExecutor;
 import com.travis.monolith.ops.job.internal.service.OpsJobLogService;
 import com.travis.monolith.ops.job.internal.service.OpsJobService;
@@ -23,6 +25,7 @@ public class OpsJobQuartzReconcileTask {
     private final OpsJobLogService jobLogService;
     private final QuartzJobManager quartzJobManager;
     private final ClusterPeriodicTaskExecutor periodicTaskExecutor;
+    private final ErrorReporter errorReporter;
 
     /** 在集群内按分钟限频执行对账。 */
     @Scheduled(initialDelay = RECONCILE_INTERVAL_MILLIS, fixedDelay = RECONCILE_INTERVAL_MILLIS)
@@ -38,6 +41,11 @@ public class OpsJobQuartzReconcileTask {
                     });
         } catch (Exception exception) {
             log.error("Quartz 任务配置对账失败", exception);
+            errorReporter.report(
+                    ErrorSource.SCHEDULING,
+                    getClass().getName() + "#run",
+                    QuartzJobManager.RECONCILE_LOCK_KEY,
+                    exception);
         }
     }
 }

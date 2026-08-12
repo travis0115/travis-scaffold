@@ -5,9 +5,9 @@ import com.travis.infrastructure.common.logging.annotation.OperationLogModule;
 import com.travis.infrastructure.common.logging.enums.OperationBusinessType;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.constant.MdcKey;
-import com.travis.infrastructure.framework.desensitize.core.util.DesensitizeUtil;
+import com.travis.infrastructure.framework.desensitize.core.Desensitizer;
+import com.travis.infrastructure.framework.event.core.TransactionalApplicationEventPublisher;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
-import com.travis.infrastructure.framework.web.core.event.TransactionalApplicationEventPublisher;
 import com.travis.infrastructure.framework.web.core.util.IpUtil;
 import com.travis.infrastructure.framework.web.core.util.ServletUtil;
 import com.travis.infrastructure.framework.web.core.util.UserAgentUtil;
@@ -40,6 +40,7 @@ public class OperationLogAspect {
     private static final int MAX_CONTENT_LENGTH = 16000;
 
     private final TransactionalApplicationEventPublisher eventPublisher;
+    private final Desensitizer desensitizer;
 
     @Around("@annotation(operationLog)")
     public Object around(ProceedingJoinPoint joinPoint, OperationLog operationLog)
@@ -173,11 +174,8 @@ public class OperationLogAspect {
         if (value == null) {
             return null;
         }
-        try {
-            return truncate(DesensitizeUtil.toDesensitizedJson(value));
-        } catch (RuntimeException ignored) {
-            return "[无法序列化]";
-        }
+        var serialized = desensitizer.desensitizeObject(value);
+        return serialized == null ? "[无法序列化]" : truncate(serialized);
     }
 
     private String truncate(String value) {

@@ -4,6 +4,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import com.travis.infrastructure.common.monitor.error.ErrorReporter;
 import com.travis.infrastructure.framework.websocket.core.message.WebSocketMessage;
 import com.travis.infrastructure.framework.websocket.core.session.WebSocketSessionManager;
 import org.junit.jupiter.api.AfterEach;
@@ -14,7 +15,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 class WebSocketMessageSenderTest {
 
     private final WebSocketSessionManager sessionManager = mock(WebSocketSessionManager.class);
-    private final WebSocketMessageSender sender = new WebSocketMessageSender(sessionManager);
+    private final WebSocketMessageSender sender =
+            new WebSocketMessageSender(sessionManager, mock(ErrorReporter.class));
 
     @AfterEach
     void clearTransactionSynchronization() {

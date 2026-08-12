@@ -7,7 +7,7 @@ import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
-import com.travis.infrastructure.framework.web.core.event.TransactionalApplicationEventPublisher;
+import com.travis.infrastructure.framework.event.core.TransactionalApplicationEventPublisher;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.file.api.SysFileReferenceChecker;
 import com.travis.monolith.system.file.api.SysFileUploaderNameResolver;

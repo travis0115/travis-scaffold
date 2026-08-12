@@ -1,5 +1,7 @@
 package com.travis.infrastructure.framework.websocket.core.session;
 
+import com.travis.infrastructure.common.monitor.error.ErrorReporter;
+import com.travis.infrastructure.common.monitor.error.ErrorSource;
 import com.travis.infrastructure.common.web.constant.HttpHeader;
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.websocket.config.properties.WebSocketProperties;
@@ -63,6 +65,8 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
 
     private final ThreadPoolTaskScheduler heartbeatScheduler;
     private ScheduledFuture<?> heartbeatTask;
+    private final ErrorReporter errorReporter;
+
     private final ConcurrentMap<String, ScheduledFuture<?>> pendingDisconnectTasks =
             new ConcurrentHashMap<>();
     private static final String[] CLIENT_IP_HEADERS = {
@@ -78,12 +82,14 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
             WebSocketProperties properties,
             @Nullable RedisWebSocketMessageDispatcher dispatcher,
             @Nullable WebSocketAuthService authService,
-            @Nullable List<WebSocketSessionListener> listeners) {
+            @Nullable List<WebSocketSessionListener> listeners,
+            ErrorReporter errorReporter) {
         this.properties = properties;
         this.instanceId = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
         this.dispatcher = dispatcher;
         this.authService = authService;
         this.listeners = listeners != null ? listeners : Collections.emptyList();
+        this.errorReporter = errorReporter;
         this.heartbeatScheduler = createHeartbeatScheduler();
     }
 
@@ -307,6 +313,7 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
             json = JsonUtil.toJsonString(message);
         } catch (Exception e) {
             log.error("[WebSocket] 消息序列化失败: principal={}", principal, e);
+            report("serialize", principal, e);
             return;
         }
 
@@ -324,6 +331,14 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
                 }
             }
         }
+    }
+
+    private void report(String sourceName, String businessKey, Throwable throwable) {
+        errorReporter.report(
+                ErrorSource.WEBSOCKET,
+                getClass().getName() + "#" + sourceName,
+                businessKey,
+                throwable);
     }
 
     /**

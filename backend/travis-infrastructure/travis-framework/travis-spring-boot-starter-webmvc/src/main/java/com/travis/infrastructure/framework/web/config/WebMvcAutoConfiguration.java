@@ -1,31 +1,29 @@
 package com.travis.infrastructure.framework.web.config;
 
+import com.travis.infrastructure.common.monitor.error.ErrorReporter;
 import com.travis.infrastructure.common.web.constant.WebFilterOrder;
+import com.travis.infrastructure.framework.desensitize.core.Desensitizer;
 import com.travis.infrastructure.framework.web.config.properties.WebProperties;
 import com.travis.infrastructure.framework.web.core.advice.ApiResponseBodyAdvice;
 import com.travis.infrastructure.framework.web.core.advice.I18nResponseBodyAdvice;
 import com.travis.infrastructure.framework.web.core.convert.StringToLocalDateTimeConverter;
-import com.travis.infrastructure.framework.web.core.event.TransactionalApplicationEventPublisher;
 import com.travis.infrastructure.framework.web.core.exception.handler.BizExceptionHandler;
 import com.travis.infrastructure.framework.web.core.exception.handler.ServerExceptionHandler;
 import com.travis.infrastructure.framework.web.core.exception.handler.ValidationExceptionHandler;
 import com.travis.infrastructure.framework.web.core.filter.MdcFilter;
 import com.travis.infrastructure.framework.web.core.filter.RequestContextFilter;
+import com.travis.infrastructure.framework.web.core.util.ErrorRequestSnapshotter;
 import jakarta.servlet.Filter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.jackson.autoconfigure.JacksonProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.format.FormatterRegistry;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
@@ -36,11 +34,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  *
  * @author travis
  */
-@AutoConfiguration(
-        afterName = {
-            "org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration",
-            "org.springframework.boot.transaction.autoconfigure.TransactionAutoConfiguration"
-        })
+@AutoConfiguration
 @EnableConfigurationProperties(WebProperties.class)
 @RequiredArgsConstructor
 public class WebMvcAutoConfiguration implements WebMvcConfigurer {
@@ -115,8 +109,9 @@ public class WebMvcAutoConfiguration implements WebMvcConfigurer {
     /** 配置全局服务端异常处理器 */
     @Bean
     @ConditionalOnMissingBean
-    public ServerExceptionHandler serverExceptionHandler() {
-        return new ServerExceptionHandler();
+    public ServerExceptionHandler serverExceptionHandler(
+            ErrorReporter errorReporter, ErrorRequestSnapshotter requestSnapshotter) {
+        return new ServerExceptionHandler(errorReporter, requestSnapshotter);
     }
 
     /** 配置全局参数校验异常处理器 */
@@ -126,13 +121,11 @@ public class WebMvcAutoConfiguration implements WebMvcConfigurer {
         return new ValidationExceptionHandler();
     }
 
-    /** 配置事务事件发布器。 */
+    /** 配置系统错误日志请求快照采集器。 */
     @Bean
-    @ConditionalOnBean(PlatformTransactionManager.class)
     @ConditionalOnMissingBean
-    public TransactionalApplicationEventPublisher transactionalApplicationEventPublisher(
-            ApplicationEventPublisher eventPublisher, TransactionTemplate transactionTemplate) {
-        return new TransactionalApplicationEventPublisher(eventPublisher, transactionTemplate);
+    public ErrorRequestSnapshotter errorRequestSnapshotter(Desensitizer desensitizer) {
+        return new ErrorRequestSnapshotter(desensitizer);
     }
 
     /** 配置请求上下文过滤器 */

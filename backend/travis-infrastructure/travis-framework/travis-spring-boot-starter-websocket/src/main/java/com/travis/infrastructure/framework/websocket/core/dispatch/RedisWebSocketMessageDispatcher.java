@@ -1,5 +1,7 @@
 package com.travis.infrastructure.framework.websocket.core.dispatch;
 
+import com.travis.infrastructure.common.monitor.error.ErrorReporter;
+import com.travis.infrastructure.common.monitor.error.ErrorSource;
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.redis.core.key.RedisKeyPrefixResolver;
 import com.travis.infrastructure.framework.redis.core.pubsub.RedisPubSubClient;
@@ -53,6 +55,8 @@ public class RedisWebSocketMessageDispatcher {
      * LocalWebSocketSessionManager（由 AutoConfiguration 调用）
      */
     @Setter private LocalWebSocketSessionManager sessionManager;
+
+    private final ErrorReporter errorReporter;
 
     /** 标记 Redis 是否可用，不可用时降级为单实例模式 */
     private volatile boolean redisAvailable = true;
@@ -144,6 +148,11 @@ public class RedisWebSocketMessageDispatcher {
             }
         } catch (Exception e) {
             log.error("[WebSocket] Redis 消息处理失败", e);
+            errorReporter.report(
+                    ErrorSource.WEBSOCKET,
+                    getClass().getName() + "#onMessage",
+                    properties.getRedis().getChannel(),
+                    e);
         }
     }
 

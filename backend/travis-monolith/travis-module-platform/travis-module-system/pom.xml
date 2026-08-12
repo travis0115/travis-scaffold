@@ -27,6 +27,10 @@
         </dependency>
         <dependency>
             <groupId>com.travis</groupId>
+            <artifactId>travis-spring-boot-starter-event</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.travis</groupId>
             <artifactId>travis-spring-boot-starter-redis</artifactId>
         </dependency>
         <dependency>

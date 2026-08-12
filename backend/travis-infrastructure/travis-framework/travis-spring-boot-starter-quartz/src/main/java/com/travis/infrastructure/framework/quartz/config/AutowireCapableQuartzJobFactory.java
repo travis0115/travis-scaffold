@@ -1,6 +1,7 @@
 package com.travis.infrastructure.framework.quartz.config;
 
 import lombok.AllArgsConstructor;
+import org.jspecify.annotations.NullMarked;
 import org.quartz.spi.TriggerFiredBundle;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.scheduling.quartz.SpringBeanJobFactory;
@@ -12,7 +13,8 @@ public class AutowireCapableQuartzJobFactory extends SpringBeanJobFactory {
     private final AutowireCapableBeanFactory beanFactory;
 
     @Override
-    protected Object createJobInstance(TriggerFiredBundle bundle) throws Exception {
+    @NullMarked
+    protected Object createJobInstance(TriggerFiredBundle bundle) {
         return beanFactory.createBean(bundle.getJobDetail().getJobClass());
     }
 }

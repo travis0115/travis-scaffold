@@ -8,7 +8,7 @@ import com.travis.infrastructure.framework.satoken.core.LoginSubjectSessionKey;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.satoken.core.websocket.SaTokenWebSocketAuthService;
 import com.travis.infrastructure.framework.satoken.core.websocket.SaTokenWebSocketPrincipal;
-import com.travis.infrastructure.framework.web.core.event.TransactionalApplicationEventPublisher;
+import com.travis.infrastructure.framework.event.core.TransactionalApplicationEventPublisher;
 import com.travis.infrastructure.framework.web.core.util.IpUtil;
 import com.travis.infrastructure.framework.web.core.util.UserAgentUtil;
 import com.travis.infrastructure.framework.websocket.core.session.WebSocketSessionManager;

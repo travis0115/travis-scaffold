@@ -1,11 +1,19 @@
 package com.travis.infrastructure.framework.web.core.exception.handler;
 
+import cn.hutool.core.convert.Convert;
+import com.travis.infrastructure.common.monitor.error.ErrorEvent;
+import com.travis.infrastructure.common.monitor.error.ErrorReporter;
+import com.travis.infrastructure.common.monitor.error.ErrorSource;
 import com.travis.infrastructure.common.web.constant.ExceptionHandlerOrder;
+import com.travis.infrastructure.common.web.constant.MdcKey;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.ApiResponse;
-import java.io.FileNotFoundException;
-import lombok.NoArgsConstructor;
+import com.travis.infrastructure.framework.web.core.util.ErrorRequestSnapshotter;
+import com.travis.infrastructure.framework.web.core.util.IpUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
@@ -16,6 +24,8 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import java.io.FileNotFoundException;
+
 /**
  * Server 异常处理器
  *
@@ -24,19 +34,26 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @RestControllerAdvice
 @Slf4j
 @Order(ExceptionHandlerOrder.SERVER_EXCEPTION)
-@NoArgsConstructor
+@RequiredArgsConstructor
 public class ServerExceptionHandler {
+    private final ErrorReporter errorReporter;
+    private final ErrorRequestSnapshotter requestSnapshotter;
+
     /** 算数异常 */
     @ExceptionHandler(IllegalStateException.class)
-    public ApiResponse<?> handleIllegalStateException(IllegalStateException ex) {
+    public ApiResponse<?> handleIllegalStateException(
+            IllegalStateException ex, HttpServletRequest request) {
         log.error("状态异常：", ex);
+        report(ex, request);
         return ApiResponse.error(CommonErrorCode.ILLEGALSTATE_EXCEPTION);
     }
 
     /** 算数异常 */
     @ExceptionHandler(ArithmeticException.class)
-    public ApiResponse<?> handleArithmeticException(ArithmeticException ex) {
+    public ApiResponse<?> handleArithmeticException(
+            ArithmeticException ex, HttpServletRequest request) {
         log.error("算数异常：", ex);
+        report(ex, request);
         return ApiResponse.error(CommonErrorCode.ARITHMETIC_EXCEPTION);
     }
 
@@ -105,8 +122,9 @@ public class ServerExceptionHandler {
      */
     @ExceptionHandler(HttpMessageNotWritableException.class)
     public ApiResponse<?> handleHttpMessageNotWritableException(
-            HttpMessageNotWritableException ex) {
+            HttpMessageNotWritableException ex, HttpServletRequest request) {
         log.error("响应序列化失败：", ex);
+        report(ex, request);
         return ApiResponse.error(CommonErrorCode.INTERNAL_SERVER_ERROR);
     }
 
@@ -125,8 +143,31 @@ public class ServerExceptionHandler {
 
     /** 兜底 */
     @ExceptionHandler(Exception.class)
-    public ApiResponse<?> handleException(Exception ex) {
+    public ApiResponse<?> handleException(Exception ex, HttpServletRequest request) {
         log.error("系统异常: ", ex);
+        report(ex, request);
         return ApiResponse.error(CommonErrorCode.INTERNAL_SERVER_ERROR);
+    }
+
+    private void report(Throwable throwable, HttpServletRequest request) {
+        var snapshot = requestSnapshotter.snapshot(request);
+        errorReporter.report(
+                ErrorEvent.builder()
+                          .sourceType(ErrorSource.WEB)
+                          .sourceName(snapshot.controllerMethod())
+                          .userId(Convert.toLong(MDC.get(MdcKey.USER_ID)))
+                          .requestId(MDC.get(MdcKey.REQUEST_ID))
+                          .traceId(MDC.get(MdcKey.TRACE_ID))
+                          .requestUrl(ErrorReporter.truncate(request.getRequestURI(), 500))
+                          .requestMethod(request.getMethod())
+                          .requestParams(snapshot.requestParams())
+                          .exceptionClass(throwable.getClass().getName())
+                          .message(
+                                  ErrorReporter.truncate(
+                                          throwable.getMessage(),
+                                          ErrorReporter.MAX_MESSAGE_LENGTH))
+                          .stackTrace(ErrorReporter.stackTrace(throwable))
+                          .ip(IpUtil.getClientIp(request))
+                          .build());
     }
 }

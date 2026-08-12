@@ -6,6 +6,7 @@ import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
+import com.travis.infrastructure.framework.event.core.TransactionalApplicationEventPublisher;
 import com.travis.monolith.system.common.api.BuiltinResourceGuard;
 import com.travis.monolith.system.common.api.enums.IsBuiltin;
 import com.travis.monolith.system.common.api.enums.Modifiable;
@@ -36,7 +37,6 @@ import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,7 +62,7 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
 
     private final BuiltinResourceGuard builtinResourceGuard;
 
-    private final ApplicationEventPublisher eventPublisher;
+    private final TransactionalApplicationEventPublisher eventPublisher;
 
     /** 分页查询角色列表，支持按角色名称、编码、状态筛选 */
     @Override

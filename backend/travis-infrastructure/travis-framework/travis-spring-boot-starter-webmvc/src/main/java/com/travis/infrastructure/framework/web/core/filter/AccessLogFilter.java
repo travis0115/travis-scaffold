@@ -8,10 +8,7 @@ import cn.hutool.json.JSONObject;
 import com.travis.infrastructure.common.web.constant.HttpHeader;
 import com.travis.infrastructure.common.web.constant.MdcKey;
 import com.travis.infrastructure.common.web.enums.ClientType;
-import com.travis.infrastructure.framework.desensitize.core.resolver.DesensitizeResolver;
-import com.travis.infrastructure.framework.desensitize.core.rule.DesensitizeRule;
-import com.travis.infrastructure.framework.desensitize.core.util.DesensitizeUtil;
-import com.travis.infrastructure.framework.jackson.core.JsonUtil;
+import com.travis.infrastructure.framework.desensitize.core.Desensitizer;
 import com.travis.infrastructure.framework.logging.core.constant.LogKeys;
 import com.travis.infrastructure.framework.logging.core.enums.AccessLogger;
 import com.travis.infrastructure.framework.logging.core.enums.LogType;
@@ -21,9 +18,9 @@ import com.travis.infrastructure.framework.web.core.util.UserAgentUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,8 +28,6 @@ import net.logstash.logback.argument.StructuredArgument;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-import org.springframework.beans.BeanUtils;
-import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -50,6 +45,7 @@ public class AccessLogFilter extends OncePerRequestFilter {
 
     private final HandlerExceptionResolver handlerExceptionResolver;
     private final RequestMappingHandlerMapping requestMappingHandlerMapping;
+    private final Desensitizer desensitizer;
     private final boolean enabledAccessLog =
             Boolean.parseBoolean(SpringUtil.getProperty("logging.access.enabled", "true"));
     private final String logOutput =
@@ -162,30 +158,19 @@ public class AccessLogFilter extends OncePerRequestFilter {
         if (StrUtil.isBlank(rawBody) || "{}".equals(rawBody)) {
             return null;
         }
+        return desensitizer.desensitizeJson(rawBody, resolveRequestBodyType(handlerMethod));
+    }
 
+    private Type resolveRequestBodyType(HandlerMethod handlerMethod) {
         if (handlerMethod == null) {
-            return rawBody;
+            return null;
         }
-
-        // 有 @RequestBody 参数：反序列化后重序列化，触发脱敏
-        try {
-            for (var param : handlerMethod.getMethodParameters()) {
-                if (param.hasParameterAnnotation(RequestBody.class)) {
-                    var genericType = param.getGenericParameterType();
-                    var obj = JsonUtil.parseObject(rawBody, genericType);
-                    if (obj != null) {
-                        return JsonUtil.toJsonString(obj);
-                    }
-                    break;
-                }
+        for (var parameter : handlerMethod.getMethodParameters()) {
+            if (parameter.hasParameterAnnotation(RequestBody.class)) {
+                return parameter.getGenericParameterType();
             }
-        } catch (Exception e) {
-            // 脱敏失败：记录原始请求体
-            log.warn("Access log body 脱敏失败, requestUrl={}", request.getRequestURI(), e);
         }
-
-        // 没有 @RequestBody 或脱敏失败：原样记录 body（有数据就记，别吞掉）
-        return rawBody;
+        return null;
     }
 
     /**
@@ -195,50 +180,8 @@ public class AccessLogFilter extends OncePerRequestFilter {
     private Map<String, String> desensitizeRequestParams(
             HttpServletRequest request, HandlerMethod handlerMethod) {
         var rawParams = ServletUtil.getParamMap(request);
-        if (rawParams.isEmpty() || handlerMethod == null) {
-            return rawParams;
-        }
-        try {
-            var result = new LinkedHashMap<>(rawParams);
-
-            for (var param : handlerMethod.getMethodParameters()) {
-                var paramType = param.getParameterType();
-
-                if (BeanUtils.isSimpleValueType(paramType)) {
-                    desensitizeSimpleRequestParam(param, result);
-                } else if (isUserDefinedType(paramType)) {
-                    desensitizeDtoRequestParams(paramType, result);
-                }
-            }
-
-            return result;
-        } catch (Exception e) {
-            log.warn("Access log params 脱敏失败, requestUrl={}", request.getRequestURI(), e);
-            return rawParams;
-        }
-    }
-
-    /** 散参数脱敏：检查方法参数上直接标注的脱敏注解 */
-    private void desensitizeSimpleRequestParam(MethodParameter param, Map<String, String> result) {
-        var paramName = param.getParameterName();
-        if (paramName == null || !result.containsKey(paramName)) {
-            return;
-        }
-        for (var annotation : param.getParameterAnnotations()) {
-            var rule = DesensitizeResolver.resolveRule(annotation);
-            if (rule != null) {
-                applyRule(result, paramName, rule);
-                break;
-            }
-        }
-    }
-
-    /** DTO 参数脱敏：遍历类字段（含父类），按字段名匹配请求参数，应用字段上的脱敏注解 */
-    private void desensitizeDtoRequestParams(Class<?> dtoType, Map<String, String> result) {
-        var fieldRules = DesensitizeUtil.resolveFieldRules(dtoType);
-        for (var entry : fieldRules.entrySet()) {
-            applyRule(result, entry.getKey(), entry.getValue());
-        }
+        return desensitizer.desensitizeParameters(
+                rawParams, handlerMethod == null ? null : handlerMethod.getMethodParameters());
     }
 
     /** 返回体脱敏：尝试从 response 中获取 body 内容 Jackson 已脱敏,直接返回 */
@@ -257,19 +200,5 @@ public class AccessLogFilter extends OncePerRequestFilter {
         }
 
         return null;
-    }
-
-    /** 对参数值应用脱敏规则 */
-    private void applyRule(Map<String, String> params, String key, DesensitizeRule rule) {
-        params.computeIfPresent(key, (_, v) -> rule.apply(v));
-    }
-
-    /** 判断是否为用户自定义类型 */
-    private boolean isUserDefinedType(Class<?> type) {
-        String name = type.getName();
-        return !name.startsWith("java.")
-                && !name.startsWith("javax.")
-                && !name.startsWith("jakarta.")
-                && !name.startsWith("org.springframework.");
     }
 }

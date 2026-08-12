@@ -63,4 +63,20 @@ class OpsRequestValidationTest {
                     .anyMatch(violation -> "开始时间不能晚于结束时间".equals(violation.getMessage()));
         }
     }
+
+    @Test
+    void shouldRejectOversizedErrorLogQueryFields() {
+        var request = new SysErrorLogPageReq();
+        request.setRequestMethod("X".repeat(11));
+        request.setIp("X".repeat(51));
+
+        try (var factory = Validation.buildDefaultValidatorFactory()) {
+            var messages =
+                    factory.getValidator().validate(request).stream()
+                            .map(violation -> violation.getMessage())
+                            .toList();
+
+            assertThat(messages).contains("请求方式长度不能超过10个字符", "IP地址长度不能超过50个字符");
+        }
+    }
 }

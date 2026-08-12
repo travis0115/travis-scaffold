@@ -9,13 +9,19 @@ export namespace OpsErrorLogApi {
     [key: string]: any;
     controllerMethod: string;
     createTime: string;
+    businessKey?: string;
     exceptionClass: string;
     id: number;
     ip: string;
     message?: string;
+    requestId?: string;
     requestMethod: string;
+    requestParams?: string;
     requestUrl: string;
+    sourceName?: string;
+    sourceType: string;
     stackTrace: string;
+    traceId?: string;
   }
 }
 

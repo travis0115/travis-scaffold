@@ -13,6 +13,7 @@ import com.travis.infrastructure.framework.desensitize.core.rule.SliderDesensiti
 import com.travis.infrastructure.framework.desensitize.core.spel.EvaluationContextProvider;
 import java.lang.annotation.Annotation;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -31,6 +32,10 @@ public class DesensitizeResolver {
 
     /** 规则缓存（支持字段参数覆盖） */
     private static final Map<DesensitizeRuleCacheKey, DesensitizeRule> RULE_CACHE =
+            new ConcurrentHashMap<>();
+
+    /** 类字段脱敏规则缓存。 */
+    private static final Map<Class<?>, Map<String, DesensitizeRule>> FIELD_RULE_CACHE =
             new ConcurrentHashMap<>();
 
     /** SpEL 缓存 */
@@ -70,6 +75,32 @@ public class DesensitizeResolver {
                 _ ->
                         resolveRuleDeep(
                                 annotation, Collections.newSetFromMap(new IdentityHashMap<>())));
+    }
+
+    /** 扫描类及父类字段的脱敏注解，返回字段名和规则的映射。 */
+    public static Map<String, DesensitizeRule> resolveFieldRules(Class<?> type) {
+        return FIELD_RULE_CACHE.computeIfAbsent(type, DesensitizeResolver::doResolveFieldRules);
+    }
+
+    private static Map<String, DesensitizeRule> doResolveFieldRules(Class<?> type) {
+        var rules = new HashMap<String, DesensitizeRule>();
+        var current = type;
+        while (current != null && current != Object.class) {
+            for (var field : current.getDeclaredFields()) {
+                if (rules.containsKey(field.getName())) {
+                    continue;
+                }
+                for (var annotation : field.getAnnotations()) {
+                    var rule = resolveRule(annotation);
+                    if (rule != null) {
+                        rules.put(field.getName(), rule);
+                        break;
+                    }
+                }
+            }
+            current = current.getSuperclass();
+        }
+        return rules.isEmpty() ? Collections.emptyMap() : Collections.unmodifiableMap(rules);
     }
 
     /** 深度递归解析注解链，支持： 1. 直接策略注解 2. 业务注解使用策略注解作为元注解 3. 多层元注解 */

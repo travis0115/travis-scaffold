@@ -5,7 +5,7 @@ import com.travis.monolith.system.message.internal.service.SysMessageReceiverSer
 import com.travis.monolith.system.role.api.event.RoleMessageAudienceChangedEvent;
 import com.travis.monolith.system.user.api.event.UserMessageAudienceChangedEvent;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.event.EventListener;
+import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.stereotype.Component;
 
 /** 用户部门或角色变化后使相关后台用户未读数缓存失效。 */
@@ -14,12 +14,12 @@ import org.springframework.stereotype.Component;
 public class MessageAudienceChangedEventListener {
     private final SysMessageReceiverService messageReceiverService;
 
-    @EventListener
+    @ApplicationModuleListener
     public void onUserAudienceChanged(UserMessageAudienceChangedEvent event) {
         invalidate(event.userId());
     }
 
-    @EventListener
+    @ApplicationModuleListener
     public void onRoleAudienceChanged(RoleMessageAudienceChangedEvent event) {
         invalidate(event.userId());
     }

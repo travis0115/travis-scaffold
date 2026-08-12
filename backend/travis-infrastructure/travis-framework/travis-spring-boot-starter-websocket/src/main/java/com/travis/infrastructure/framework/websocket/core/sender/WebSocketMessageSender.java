@@ -1,12 +1,13 @@
 package com.travis.infrastructure.framework.websocket.core.sender;
 
+import com.travis.infrastructure.common.monitor.error.ErrorReporter;
+import com.travis.infrastructure.common.monitor.error.ErrorSource;
 import com.travis.infrastructure.common.transaction.AfterCommitExecutor;
 import com.travis.infrastructure.framework.websocket.core.message.WebSocketMessage;
 import com.travis.infrastructure.framework.websocket.core.session.WebSocketSessionManager;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
 import java.util.Set;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * WebSocket 消息发送工具类，供业务层直接注入使用。
@@ -36,11 +37,12 @@ import java.util.Set;
  *
  * @author travis
  */
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Slf4j
 public class WebSocketMessageSender {
 
     private final WebSocketSessionManager sessionManager;
+    private final ErrorReporter errorReporter;
 
     /**
      * 发送消息给指定连接主体
@@ -93,6 +95,11 @@ public class WebSocketMessageSender {
                         sender.run();
                     } catch (RuntimeException exception) {
                         log.error("[WebSocket] 消息发送失败", exception);
+                        errorReporter.report(
+                                ErrorSource.WEBSOCKET,
+                                getClass().getName() + "#sendAfterCommit",
+                                null,
+                                exception);
                     }
                 });
     }

@@ -1,17 +1,15 @@
 package com.travis.infrastructure.framework.quartz.config;
 
-import com.travis.infrastructure.framework.quartz.core.QuartzJobExecutionObserver;
-import com.travis.infrastructure.framework.quartz.core.QuartzJobHandler;
-import com.travis.infrastructure.framework.quartz.core.QuartzJobHandlerRegistry;
-import com.travis.infrastructure.framework.quartz.core.QuartzOneShotManager;
-import com.travis.infrastructure.framework.quartz.core.QuartzSyncExecutor;
-import java.util.List;
+import com.travis.infrastructure.common.monitor.error.ErrorReporter;
+import com.travis.infrastructure.framework.quartz.core.*;
 import org.quartz.Scheduler;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.quartz.autoconfigure.SchedulerFactoryBeanCustomizer;
 import org.springframework.context.annotation.Bean;
+
+import java.util.List;
 
 /** Quartz 任务处理器与 Spring JobFactory 自动配置。 */
 @AutoConfiguration
@@ -42,10 +40,19 @@ public class QuartzAutoConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean
+    public ErrorQuartzJobListener errorQuartzJobListener(
+            ErrorReporter errorReporter) {
+        return new ErrorQuartzJobListener(errorReporter);
+    }
+
+    @Bean
     public SchedulerFactoryBeanCustomizer travisQuartzJobFactoryCustomizer(
-            AutowireCapableBeanFactory beanFactory) {
-        return schedulerFactoryBean ->
-                schedulerFactoryBean.setJobFactory(
-                        new AutowireCapableQuartzJobFactory(beanFactory));
+            AutowireCapableBeanFactory beanFactory,
+            ErrorQuartzJobListener systemErrorJobListener) {
+        return schedulerFactoryBean -> {
+            schedulerFactoryBean.setJobFactory(new AutowireCapableQuartzJobFactory(beanFactory));
+            schedulerFactoryBean.setGlobalJobListeners(systemErrorJobListener);
+        };
     }
 }

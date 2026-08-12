@@ -97,12 +97,22 @@
             </dependency>
             <dependency>
                 <groupId>com.travis</groupId>
+                <artifactId>travis-spring-boot-starter-event</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.travis</groupId>
                 <artifactId>travis-spring-boot-starter-jackson</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>
                 <groupId>com.travis</groupId>
                 <artifactId>travis-spring-boot-starter-logging</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.travis</groupId>
+                <artifactId>travis-spring-boot-starter-monitor</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>
