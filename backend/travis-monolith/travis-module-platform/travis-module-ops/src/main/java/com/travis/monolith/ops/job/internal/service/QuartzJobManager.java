@@ -1,7 +1,6 @@
 package com.travis.monolith.ops.job.internal.service;
 
 import com.travis.infrastructure.common.web.exception.BizException;
-import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.quartz.core.NonConcurrentQuartzDispatchJob;
 import com.travis.infrastructure.framework.quartz.core.QuartzDispatchJob;
 import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
@@ -11,7 +10,6 @@ import com.travis.monolith.ops.job.api.enums.OpsJobConcurrentPolicy;
 import com.travis.monolith.ops.job.api.enums.OpsJobMisfirePolicy;
 import com.travis.monolith.ops.job.api.enums.OpsJobStatus;
 import com.travis.monolith.ops.job.internal.entity.OpsJob;
-import com.travis.monolith.ops.job.internal.model.OpsJobCalendarConfig;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -23,9 +21,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import lombok.AllArgsConstructor;
 import org.quartz.*;
-import org.quartz.impl.calendar.DailyCalendar;
-import org.quartz.impl.calendar.HolidayCalendar;
-import org.quartz.impl.calendar.WeeklyCalendar;
 import org.quartz.impl.matchers.GroupMatcher;
 import org.springframework.stereotype.Component;
 
@@ -60,15 +55,12 @@ public class QuartzJobManager {
                 deleteCalendar(job.getId());
                 return;
             }
-            String calendarName = registerCalendar(job);
-            Trigger trigger = buildTrigger(job, calendarName, fingerprint);
+            Trigger trigger = buildTrigger(job, fingerprint);
             scheduler.addJob(detail, true);
             if (scheduler.rescheduleJob(triggerKey(job.getId()), trigger) == null) {
                 scheduler.scheduleJob(trigger);
             }
-            if (calendarName == null) {
-                deleteCalendar(job.getId());
-            }
+            deleteCalendar(job.getId());
         } catch (Exception exception) {
             throw schedulerError(exception);
         }
@@ -125,10 +117,9 @@ public class QuartzJobManager {
             }
             Trigger trigger = scheduler.getTrigger(triggerKey(job.getId()));
             if (!OpsJobStatus.ENABLED.getValue().equals(job.getStatus())) {
-                return trigger == null && scheduler.getCalendar(calendarName(job.getId())) == null;
+                return trigger == null && !calendarExists(job.getId());
             }
-            boolean calendarExpected = buildCalendar(job) != null;
-            if (calendarExpected != (scheduler.getCalendar(calendarName(job.getId())) != null)) {
+            if (calendarExists(job.getId())) {
                 return false;
             }
             return trigger != null
@@ -173,15 +164,11 @@ public class QuartzJobManager {
     /** 在不注册任务的情况下预览后续计划触发时间。 */
     public List<LocalDateTime> preview(OpsJob job, int count) {
         try {
-            Calendar calendar = buildCalendar(job);
-            Trigger trigger =
-                    buildTrigger(job, calendar == null ? null : "preview", configFingerprint(job));
+            Trigger trigger = buildTrigger(job, configFingerprint(job));
             List<LocalDateTime> result = new ArrayList<>();
             Date next = trigger.getFireTimeAfter(new Date(System.currentTimeMillis() - 1000));
             while (next != null && result.size() < Math.min(Math.max(count, 1), 20)) {
-                if (calendar == null || calendar.isTimeIncluded(next.getTime())) {
-                    result.add(toLocalDateTime(next));
-                }
+                result.add(toLocalDateTime(next));
                 next = trigger.getFireTimeAfter(next);
             }
             return result;
@@ -210,19 +197,12 @@ public class QuartzJobManager {
                 .build();
     }
 
-    private Trigger buildTrigger(OpsJob job, String calendarName, String fingerprint) {
+    private Trigger buildTrigger(OpsJob job, String fingerprint) {
         TriggerBuilder<Trigger> builder =
                 TriggerBuilder.newTrigger()
                         .withIdentity(triggerKey(job.getId()))
                         .forJob(jobKey(job.getId()))
-                        .usingJobData(QuartzDispatchJob.DATA_CONFIG_FINGERPRINT, fingerprint)
-                        .withPriority(
-                                job.getPriority() == null
-                                        ? Trigger.DEFAULT_PRIORITY
-                                        : job.getPriority());
-        if (calendarName != null) {
-            builder.modifiedByCalendar(calendarName);
-        }
+                        .usingJobData(QuartzDispatchJob.DATA_CONFIG_FINGERPRINT, fingerprint);
         ScheduleBuilder<?> schedule = buildSchedule(job);
         switch (job.getScheduleType()) {
             case "CRON" -> builder.withSchedule(schedule).startNow();
@@ -297,57 +277,6 @@ public class QuartzJobManager {
         return SimpleScheduleBuilder.simpleSchedule();
     }
 
-    private String registerCalendar(OpsJob job) throws Exception {
-        Calendar calendar = buildCalendar(job);
-        if (calendar == null) {
-            return null;
-        }
-        String name = calendarName(job.getId());
-        scheduler.addCalendar(name, calendar, true, true);
-        return name;
-    }
-
-    private Calendar buildCalendar(OpsJob job) {
-        OpsJobCalendarConfig config =
-                job.getCalendarConfig() == null
-                        ? null
-                        : JsonUtil.parseObject(job.getCalendarConfig(), OpsJobCalendarConfig.class);
-        if (config == null || config.isEmpty()) {
-            return null;
-        }
-        Calendar calendar = null;
-        if (!config.excludedWeekdays().isEmpty()) {
-            WeeklyCalendar weekly = new WeeklyCalendar();
-            for (Integer weekday : config.excludedWeekdays()) {
-                if (weekday != null && weekday >= 1 && weekday <= 7) {
-                    weekly.setDayExcluded(weekday, true);
-                }
-            }
-            calendar = weekly;
-        }
-        if (!config.excludedDates().isEmpty()) {
-            HolidayCalendar holidays = new HolidayCalendar(calendar);
-            config.excludedDates()
-                    .forEach(
-                            date ->
-                                    holidays.addExcludedDate(
-                                            Date.from(
-                                                    date.atStartOfDay(ZoneId.systemDefault())
-                                                            .toInstant())));
-            calendar = holidays;
-        }
-        if (config.dailyStartTime() != null && config.dailyEndTime() != null) {
-            DailyCalendar daily =
-                    new DailyCalendar(
-                            calendar,
-                            config.dailyStartTime().toString(),
-                            config.dailyEndTime().toString());
-            daily.setInvertTimeRange(true);
-            calendar = daily;
-        }
-        return calendar;
-    }
-
     private JobKey jobKey(Long jobId) {
         return JobKey.jobKey("job-" + jobId, GROUP);
     }
@@ -362,9 +291,14 @@ public class QuartzJobManager {
 
     private void deleteCalendar(Long jobId) throws SchedulerException {
         String calendarName = calendarName(jobId);
-        if (scheduler.getCalendar(calendarName) != null) {
+        if (calendarExists(jobId)) {
             scheduler.deleteCalendar(calendarName);
         }
+    }
+
+    /** 通过名称列表判断日历是否存在，避免 Quartz JDBC 查询不存在的日历时输出误导性警告。 */
+    private boolean calendarExists(Long jobId) throws SchedulerException {
+        return scheduler.getCalendarNames().contains(calendarName(jobId));
     }
 
     private Long parseJobId(JobKey jobKey) {
@@ -382,10 +316,8 @@ public class QuartzJobManager {
                         job.getIntervalMillis(),
                         job.getExecuteAt(),
                         job.getParams(),
-                        job.getPriority(),
                         job.getConcurrent(),
                         job.getMisfirePolicy(),
-                        job.getCalendarConfig(),
                         job.getStatus()));
     }
 

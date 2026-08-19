@@ -11,26 +11,22 @@ export namespace OpsJobApi {
     [key: string]: any;
     alertUserIds?: number[];
     concurrent: 0 | 1;
+    createBy?: number;
+    createByUsername?: string;
     cronExpression?: string;
-    dailyEndTime?: string;
-    dailyStartTime?: string;
-    excludedDates?: string[];
-    excludedWeekdays?: number[];
     executeAt?: string;
     handlerName: string;
     handlerAvailable?: boolean;
     id: number;
     intervalMillis?: number;
+    isBuiltin: 0 | 1;
     jobName: string;
+    lastExecutionStatus?: 0 | 1 | 2;
+    lastExecutionTime?: string;
     lockVersion?: number;
-    logRetentionDays: number;
     misfirePolicy: number;
     nextFireTime?: string;
-    ownerUserId?: number;
-    ownerUsername?: string;
-    paramSchema?: string;
     params?: string;
-    priority: number;
     remark?: string;
     scheduleType: ScheduleType;
     status: 0 | 1;
@@ -50,11 +46,24 @@ export namespace OpsJobApi {
     jobId: number;
     jobName: string;
     paramsSnapshot?: string;
+    resultMessage?: string;
     scheduledFireTime?: string;
     schedulerInstanceId?: string;
     stackTrace?: string;
     startTime?: string;
     status: number;
+  }
+
+  export interface Handler {
+    description: string;
+    name: string;
+  }
+
+  export interface PreviewReq {
+    cronExpression?: string;
+    executeAt?: string;
+    intervalMillis?: number;
+    scheduleType: ScheduleType;
   }
 
   export interface UserOption {
@@ -65,15 +74,19 @@ export namespace OpsJobApi {
   }
 
   export interface Stats {
-    averageDurationMillis: number;
-    consecutiveFailures: number;
-    failed: number;
-    maxDurationMillis: number;
-    p95DurationMillis: number;
-    success: number;
+    averageDurationMillis: number | string;
+    consecutiveFailures: number | string;
+    failed: number | string;
+    maxDurationMillis: number | string;
+    p95DurationMillis: number | string;
+    success: number | string;
     successRate: number;
-    total: number;
-    trend: Array<{ date: string; failed: number; success: number }>;
+    total: number | string;
+    trend: Array<{
+      date: string;
+      failed: number | string;
+      success: number | string;
+    }>;
   }
 
   export interface Dashboard {
@@ -101,16 +114,19 @@ const changeJobStatus = (id: number, status: number) =>
 const runJob = (id: number, params?: string) =>
   requestClient.post(`/ops/job/${id}/run`, { params });
 const copyJob = (id: number) => requestClient.post(`/ops/job/${id}/copy`);
-const previewJob = (data: Partial<OpsJobApi.Job>, count = 5) =>
-  requestClient.post<string[]>('/ops/job/preview', data, { params: { count } });
-const getJobHandlers = () => requestClient.get<string[]>('/ops/job/handlers');
+const previewJob = (data: OpsJobApi.PreviewReq, count = 5) =>
+  requestClient.post<string[]>('/ops/job/preview', data, {
+    errorMessageType: false,
+    params: { count },
+  });
+const getJobHandlers = (includeBuiltin = false) =>
+  requestClient.get<OpsJobApi.Handler[]>('/ops/job/handlers', {
+    params: { includeBuiltin },
+  });
 const getJobUserOptions = (params?: { keyword?: string; userIds?: string }) =>
   requestClient.get<OpsJobApi.UserOption[]>('/ops/job/user-options', {
     params,
   });
-const exportJobs = () => requestClient.get<OpsJobApi.Job[]>('/ops/job/export');
-const importJobs = (data: Partial<OpsJobApi.Job>[]) =>
-  requestClient.post('/ops/job/import', data);
 const getJobStats = (id: number) =>
   requestClient.get<OpsJobApi.Stats>(`/ops/job/${id}/stats`);
 const getJobDashboard = () =>
@@ -121,8 +137,6 @@ const getJobLogPage = (params: Recordable<any>) =>
   });
 const getJobLogDetail = (id: number) =>
   requestClient.get<OpsJobApi.JobLog>(`/ops/job-log/${id}`);
-const exportJobLogs = (params: Recordable<any>) =>
-  requestClient.get<OpsJobApi.JobLog[]>('/ops/job-log/export', { params });
 const cleanJobLogs = (jobId?: number) =>
   requestClient.delete('/ops/job-log/clean', { params: { jobId } });
 
@@ -132,8 +146,6 @@ export {
   copyJob,
   createJob,
   deleteJob,
-  exportJobLogs,
-  exportJobs,
   getJobDashboard,
   getJobDetail,
   getJobHandlers,
@@ -142,7 +154,6 @@ export {
   getJobPage,
   getJobStats,
   getJobUserOptions,
-  importJobs,
   previewJob,
   runJob,
   updateJob,

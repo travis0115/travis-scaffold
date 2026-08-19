@@ -22,6 +22,10 @@ public class OpsJobLogPageReq extends PageRequest {
     @Size(max = 120, message = "任务名称长度不能超过120个字符")
     private String jobName;
 
+    /** 任务处理器名称。 */
+    @Size(max = 120, message = "任务处理器长度不能超过120个字符")
+    private String handlerName;
+
     /** 执行状态。 */
     @EnumValue(value = OpsJobLogStatus.class, message = "执行状态值错误")
     private Integer status;

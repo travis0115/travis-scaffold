@@ -37,6 +37,7 @@ class ServerExceptionHandlerTest {
         MDC.put(MdcKey.REQUEST_ID, "request-1");
         MDC.put(MdcKey.TRACE_ID, "trace-1");
         MDC.put(MdcKey.USER_ID, "7");
+        MDC.put(MdcKey.USERNAME, "admin");
         var handler = new ServerExceptionHandler(reporter, snapshotter);
 
         handler.handleException(new NullPointerException("unexpected"), request);
@@ -48,6 +49,7 @@ class ServerExceptionHandlerTest {
         assertThat(event.getValue().requestId()).isEqualTo("request-1");
         assertThat(event.getValue().traceId()).isEqualTo("trace-1");
         assertThat(event.getValue().userId()).isEqualTo(7L);
+        assertThat(event.getValue().username()).isEqualTo("admin");
         assertThat(event.getValue().requestParams()).contains("id");
         assertThat(event.getValue().stackTrace()).contains("NullPointerException");
     }

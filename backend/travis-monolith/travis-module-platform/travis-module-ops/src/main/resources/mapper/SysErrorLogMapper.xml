@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.travis.monolith.ops.errorlog.internal.mapper.SysErrorLogMapper">
+
+    <!-- 按稳定异常指纹原子聚合，并将已解决的复发异常恢复为待处理。 -->
+    <insert id="upsertAggregate">
+        INSERT INTO sys_error_log (
+            id, fingerprint, module_name, platform_type, user_id, username,
+            source_type, source_name, business_key,
+            request_id, trace_id, request_url, request_method, controller_method, request_params,
+            exception_class, message, stack_trace, ip,
+            status, occurrence_count, first_occurrence_time, last_occurrence_time,
+            application_name, application_version, instance_name, create_time
+        ) VALUES (
+            #{id}, #{fingerprint}, #{moduleName}, #{platformType}, #{userId}, #{username},
+            #{sourceType}, #{sourceName}, #{businessKey},
+            #{requestId}, #{traceId}, #{requestUrl}, #{requestMethod}, #{controllerMethod}, #{requestParams},
+            #{exceptionClass}, #{message}, #{stackTrace}, #{ip},
+            #{status}, #{occurrenceCount}, #{firstOccurrenceTime}, #{lastOccurrenceTime},
+            #{applicationName}, #{applicationVersion}, #{instanceName}, #{createTime}
+        )
+        ON DUPLICATE KEY UPDATE
+            handled_by = CASE WHEN status = 1 THEN NULL ELSE handled_by END,
+            handled_time = CASE WHEN status = 1 THEN NULL ELSE handled_time END,
+            handle_remark = CASE WHEN status = 1 THEN NULL ELSE handle_remark END,
+            status = CASE WHEN status = 1 THEN 0 ELSE status END,
+            occurrence_count = occurrence_count + 1,
+            last_occurrence_time = VALUES(last_occurrence_time),
+            user_id = VALUES(user_id),
+            username = VALUES(username),
+            request_id = VALUES(request_id),
+            trace_id = VALUES(trace_id),
+            request_url = VALUES(request_url),
+            request_method = VALUES(request_method),
+            controller_method = VALUES(controller_method),
+            request_params = VALUES(request_params),
+            message = VALUES(message),
+            stack_trace = VALUES(stack_trace),
+            ip = VALUES(ip),
+            application_name = VALUES(application_name),
+            application_version = VALUES(application_version),
+            instance_name = VALUES(instance_name)
+    </insert>
+
+    <select id="selectIdByFingerprint" resultType="java.lang.Long">
+        SELECT id
+        FROM sys_error_log
+        WHERE fingerprint = #{fingerprint}
+        LIMIT 1
+    </select>
+
+    <update id="handleIfPending">
+        UPDATE sys_error_log
+        SET status = #{status},
+            handled_by = #{handledBy},
+            handled_time = #{handledTime},
+            handle_remark = #{handleRemark}
+        WHERE id = #{id}
+          AND status = 0
+    </update>
+
+    <update id="handleAllPending">
+        UPDATE sys_error_log
+        SET status = #{status},
+            handled_by = #{handledBy},
+            handled_time = #{handledTime},
+            handle_remark = #{handleRemark}
+        WHERE status = 0
+    </update>
+
+</mapper>

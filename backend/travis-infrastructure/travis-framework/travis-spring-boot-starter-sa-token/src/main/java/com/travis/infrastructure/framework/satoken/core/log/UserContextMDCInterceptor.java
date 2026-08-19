@@ -1,6 +1,7 @@
 package com.travis.infrastructure.framework.satoken.core.log;
 
 import com.travis.infrastructure.common.web.constant.MdcKey;
+import com.travis.infrastructure.framework.satoken.core.LoginSubjectSessionKey;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -24,6 +25,10 @@ public class UserContextMDCInterceptor implements HandlerInterceptor {
             for (var logic : StpKit.all()) {
                 if (logic.isLogin()) {
                     MDC.put(MdcKey.USER_ID, logic.getLoginIdAsString());
+                    var username = logic.getSession().getString(LoginSubjectSessionKey.USERNAME);
+                    if (username != null && !username.isBlank()) {
+                        MDC.put(MdcKey.USERNAME, username);
+                    }
                     break;
                 }
             }

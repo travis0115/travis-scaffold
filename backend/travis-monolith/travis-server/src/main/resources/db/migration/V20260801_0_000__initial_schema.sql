@@ -1,4 +1,3 @@
--- 脚手架与业务系统初始数据库结构
 /*
  Navicat Premium Dump SQL
 
@@ -12,7 +11,7 @@
  Target Server Version : 90701 (9.7.1)
  File Encoding         : 65001
 
- Date: 11/08/2026 21:21:48
+ Date: 12/08/2026 16:17:13
 */
 
 SET NAMES utf8mb4;
@@ -326,7 +325,7 @@ CREATE TABLE `qrtz_scheduler_state` (
 -- Records of qrtz_scheduler_state
 -- ----------------------------
 BEGIN;
-INSERT INTO `qrtz_scheduler_state` (`sched_name`, `instance_name`, `last_checkin_time`, `checkin_interval`) VALUES ('travisScheduler', 'Mac1786450908357', 1786454502073, 10000);
+INSERT INTO `qrtz_scheduler_state` (`sched_name`, `instance_name`, `last_checkin_time`, `checkin_interval`) VALUES ('travisScheduler', 'MacBook-Pro.local1786521816308', 1786522628253, 10000);
 COMMIT;
 
 -- ----------------------------
@@ -420,7 +419,7 @@ CREATE TABLE `qrtz_triggers` (
 -- Records of qrtz_triggers
 -- ----------------------------
 BEGIN;
-INSERT INTO `qrtz_triggers` (`sched_name`, `trigger_name`, `trigger_group`, `job_name`, `job_group`, `description`, `next_fire_time`, `prev_fire_time`, `priority`, `trigger_state`, `trigger_type`, `start_time`, `end_time`, `calendar_name`, `misfire_instr`, `job_data`) VALUES ('travisScheduler', 'log-cleanup-trigger', 'ops-internal', 'log-cleanup', 'ops-internal', NULL, 1786503600000, -1, 5, 'WAITING', 'CRON', 1786450909000, 0, NULL, 0, '');
+INSERT INTO `qrtz_triggers` (`sched_name`, `trigger_name`, `trigger_group`, `job_name`, `job_group`, `description`, `next_fire_time`, `prev_fire_time`, `priority`, `trigger_state`, `trigger_type`, `start_time`, `end_time`, `calendar_name`, `misfire_instr`, `job_data`) VALUES ('travisScheduler', 'log-cleanup-trigger', 'ops-internal', 'log-cleanup', 'ops-internal', NULL, 1786590000000, -1, 5, 'WAITING', 'CRON', 1786521817000, 0, NULL, 0, '');
 COMMIT;
 
 -- ----------------------------
@@ -615,11 +614,15 @@ DROP TABLE IF EXISTS `sys_error_log`;
 CREATE TABLE `sys_error_log` (
   `id` bigint NOT NULL COMMENT '主键ID',
   `user_id` bigint DEFAULT NULL COMMENT '登录用户ID',
+  `source_type` varchar(32) NOT NULL DEFAULT 'WEB' COMMENT '异常来源类型',
+  `source_name` varchar(1000) DEFAULT NULL COMMENT '异常来源名称',
+  `business_key` varchar(500) DEFAULT NULL COMMENT '业务定位键',
   `request_id` varchar(64) DEFAULT NULL COMMENT '请求ID',
   `trace_id` varchar(64) DEFAULT NULL COMMENT '链路追踪ID',
   `request_url` varchar(500) DEFAULT NULL COMMENT '请求地址',
   `request_method` varchar(10) DEFAULT NULL COMMENT 'HTTP方法',
   `controller_method` varchar(1000) DEFAULT NULL COMMENT '控制器方法',
+  `request_params` text COMMENT '脱敏后的请求参数',
   `exception_class` varchar(500) NOT NULL COMMENT '异常类型',
   `message` text COMMENT '异常消息',
   `stack_trace` mediumtext COMMENT '异常堆栈',
@@ -629,13 +632,15 @@ CREATE TABLE `sys_error_log` (
   KEY `idx_error_create_time` (`create_time`),
   KEY `idx_error_exception_class` (`exception_class`(191)),
   KEY `idx_error_request_id` (`request_id`),
-  KEY `idx_error_trace_id` (`trace_id`)
+  KEY `idx_error_trace_id` (`trace_id`),
+  KEY `idx_error_source_type` (`source_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='后端错误日志表';
 
 -- ----------------------------
 -- Records of sys_error_log
 -- ----------------------------
 BEGIN;
+INSERT INTO `sys_error_log` (`id`, `user_id`, `source_type`, `source_name`, `business_key`, `request_id`, `trace_id`, `request_url`, `request_method`, `controller_method`, `request_params`, `exception_class`, `message`, `stack_trace`, `ip`, `create_time`) VALUES (2087449932397871106, 1, 'WEB', 'com.travis.monolith.ops.job.internal.controller.admin.OpsJobController#page', NULL, '71c03e87941ee2c28301487e6308b6ad', '9a5fc3d212378c03e320a2868b7d7b3a', '/api/admin/ops/job/page', 'GET', 'com.travis.monolith.ops.job.internal.controller.admin.OpsJobController#page', '{\"pageSize\":\"20\",\"pageNum\":\"1\"}', 'java.lang.ArithmeticException', '/ by zero', 'java.lang.ArithmeticException: / by zero\n	at com.travis.monolith.ops.job.internal.controller.admin.OpsJobController.page(OpsJobController.java:43)\n	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)\n	at java.base/java.lang.reflect.Method.invoke(Method.java:565)\n	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:359)\n	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:190)\n	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:158)\n	at org.springframework.validation.beanvalidation.MethodValidationInterceptor.invoke(MethodValidationInterceptor.java:172)\n	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:179)\n	at org.springframework.aop.interceptor.ExposeInvocationInterceptor.invoke(ExposeInvocationInterceptor.java:96)\n	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:179)\n	at org.springframework.modulith.observability.support.ModuleEntryInterceptor.invoke(ModuleEntryIntercepto', '127.0.0.1', '2026-08-12 08:03:41');
 COMMIT;
 
 -- ----------------------------
@@ -1446,7 +1451,7 @@ CREATE TABLE `sys_user` (
 -- Records of sys_user
 -- ----------------------------
 BEGIN;
-INSERT INTO `sys_user` (`id`, `username`, `password`, `nickname`, `avatar_file_id`, `email`, `mobile`, `dept_id`, `status`, `last_online_time`, `last_online_ip`, `last_online_location`, `last_offline_time`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`, `lock_version`) VALUES (1, 'travis0115', '$2a$10$0iPJdkb53DEVol1Un/cOYOV8vKU1Hfwpfhq913/yqvRD.fjSGlxxi', '鸭腿儿', 2087110856591372289, 'travis0115@163.com', '15700070718', 0, 1, '2026-08-11 12:45:11', '127.0.0.1', '内网', '2026-08-11 02:02:51', 0, '2026-05-01 00:00:00', 1, '2026-08-11 20:45:11', 1, 1);
+INSERT INTO `sys_user` (`id`, `username`, `password`, `nickname`, `avatar_file_id`, `email`, `mobile`, `dept_id`, `status`, `last_online_time`, `last_online_ip`, `last_online_location`, `last_offline_time`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`, `lock_version`) VALUES (1, 'travis0115', '$2a$10$0iPJdkb53DEVol1Un/cOYOV8vKU1Hfwpfhq913/yqvRD.fjSGlxxi', '鸭腿儿', 2087110856591372289, 'travis0115@163.com', '15700070718', 0, 1, '2026-08-12 08:03:08', '127.0.0.1', '内网', '2026-08-12 00:33:11', 0, '2026-05-01 00:00:00', 1, '2026-08-12 16:03:07', 1, 4);
 INSERT INTO `sys_user` (`id`, `username`, `password`, `nickname`, `avatar_file_id`, `email`, `mobile`, `dept_id`, `status`, `last_online_time`, `last_online_ip`, `last_online_location`, `last_offline_time`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`, `lock_version`) VALUES (2067566320808062977, 'test123456', '$2a$10$US8a8euq7Y7BY3P7oSPlWOXQtton1rQLB./qrwbOWv15cSPfj41mq', 'test123456', NULL, NULL, NULL, 0, 1, NULL, NULL, NULL, NULL, 0, '2026-06-18 11:13:19', 1, '2026-06-26 17:28:16', 1, 0);
 COMMIT;
 

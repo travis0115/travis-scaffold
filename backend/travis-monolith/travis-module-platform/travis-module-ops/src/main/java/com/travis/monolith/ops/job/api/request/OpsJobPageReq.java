@@ -28,8 +28,4 @@ public class OpsJobPageReq extends PageRequest {
     /** 任务状态。 */
     @EnumValue(value = OpsJobStatus.class, message = "任务状态值错误")
     private Integer status;
-
-    /** 负责人用户 ID。 */
-    @Positive(message = "负责人用户ID必须为正数")
-    private Long ownerUserId;
 }

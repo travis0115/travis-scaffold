@@ -2,6 +2,7 @@ package com.travis.monolith.ops.job.internal.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -103,8 +104,10 @@ class QuartzJobManagerTest {
                 .thenReturn(detailCaptor.getValue());
         when(scheduler.getTrigger(triggerCaptor.getValue().getKey()))
                 .thenReturn(triggerCaptor.getValue());
+        when(scheduler.getCalendarNames()).thenReturn(List.of());
 
         assertThat(manager.isSynchronized(job)).isTrue();
+        verify(scheduler, never()).getCalendar(anyString());
     }
 
     private OpsJob intervalJob(Integer status) {
@@ -136,7 +139,6 @@ class QuartzJobManagerTest {
         job.setJobName("测试任务");
         job.setHandlerName("testHandler");
         job.setParams("{}");
-        job.setPriority(5);
         job.setConcurrent(0);
         job.setMisfirePolicy(OpsJobMisfirePolicy.SMART.getValue());
         job.setStatus(status);

@@ -5,35 +5,45 @@ import type {
 } from '#/adapter/vxe-table';
 import type { OpsJobApi } from '#/api';
 
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
-import { confirm as vbenConfirm, Page, useVbenModal } from '@vben/common-ui';
-import { Download } from '@vben/icons';
+import { Page, useVbenModal, confirm as vbenConfirm } from '@vben/common-ui';
 import { formatDateTime } from '@vben/utils';
 
 import {
   Button,
   Descriptions,
   DescriptionsItem,
+  Divider,
   message,
-  Space,
+  Tag,
+  TypographyParagraph,
 } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   cleanJobLogs,
-  exportJobLogs,
+  getJobHandlers,
   getJobLogDetail,
   getJobLogPage,
 } from '#/api';
+import { getDictLabel, getDictOptions } from '#/utils/dict';
 import { OPS_PERMS } from '#/utils/permissions';
 
-import { useLogColumns, useLogGridFormSchema } from './data';
+import {
+  JOB_EXECUTION_STATUS_DICT,
+  useLogColumns,
+  useLogGridFormSchema,
+} from './data';
 
 const detail = ref<OpsJobApi.JobLog>();
+const executionStatusOptions = getDictOptions(JOB_EXECUTION_STATUS_DICT);
 
 const [Grid, gridApi] = useVbenVxeGrid({
-  formOptions: { schema: useLogGridFormSchema() },
+  formOptions: {
+    fieldMappingTime: [['executionTimeRange', ['startTime', 'endTime']]],
+    schema: useLogGridFormSchema(),
+  },
   gridOptions: {
     columns: useLogColumns(onActionClick),
     height: 'auto',
@@ -52,6 +62,26 @@ const [Grid, gridApi] = useVbenVxeGrid({
   } as VxeTableGridOptions<OpsJobApi.JobLog>,
 });
 
+onMounted(async () => {
+  const handlers = await getJobHandlers(true);
+  gridApi.formApi.updateSchema([
+    {
+      componentProps: {
+        allowClear: true,
+        optionFilterProp: 'label',
+        options: handlers.map((handler) => ({
+          label: handler.description
+            ? `${handler.name} - ${handler.description}`
+            : handler.name,
+          value: handler.name,
+        })),
+        showSearch: true,
+      },
+      fieldName: 'handlerName',
+    },
+  ]);
+});
+
 const [DetailModal, detailModalApi] = useVbenModal({
   footer: false,
 });
@@ -61,20 +91,18 @@ async function onActionClick({ row }: OnActionClickParams<OpsJobApi.JobLog>) {
   detailModalApi.open();
 }
 
-function downloadJson(filename: string, value: unknown) {
-  const blob = new Blob([JSON.stringify(value, null, 2)], {
-    type: 'application/json',
-  });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.click();
-  URL.revokeObjectURL(url);
+function statusColor(status?: number) {
+  return executionStatusOptions.find((item) => item.value === status)?.color;
 }
 
-async function onExport() {
-  downloadJson('ops-job-logs.json', await exportJobLogs({}));
+function statusLabel(status?: number) {
+  return getDictLabel(JOB_EXECUTION_STATUS_DICT, status) || '-';
+}
+
+function formatDuration(durationMillis?: number) {
+  return durationMillis === undefined || durationMillis === null
+    ? '-'
+    : `${durationMillis} ms`;
 }
 
 function onClean() {
@@ -97,51 +125,97 @@ function onClean() {
   <Page auto-content-height>
     <Grid table-title="执行日志">
       <template #toolbar-tools>
-        <Space>
-          <Button v-access:code="OPS_PERMS.jobLogQuery" @click="onExport">
-            <Download class="size-4" />
-            导出
-          </Button>
-          <Button
-            danger
-            v-access:code="OPS_PERMS.jobOperation"
-            @click="onClean"
-          >
-            清理日志
-          </Button>
-        </Space>
+        <Button
+          class="transition-all enabled:hover:!border-destructive-hover enabled:hover:!bg-destructive/10 enabled:hover:!text-destructive-hover enabled:hover:shadow-sm"
+          danger
+          v-access:code="OPS_PERMS.jobOperation"
+          @click="onClean"
+        >
+          清理日志
+        </Button>
       </template>
     </Grid>
 
-    <DetailModal class="w-full max-w-225" title="执行日志详情">
-      <Descriptions v-if="detail" bordered :column="2">
-        <DescriptionsItem label="任务名称">
-          {{ detail.jobName }}
-        </DescriptionsItem>
-        <DescriptionsItem label="执行实例">
-          {{ detail.schedulerInstanceId }}
-        </DescriptionsItem>
-        <DescriptionsItem label="开始时间">
-          {{ formatDateTime(detail.startTime) }}
-        </DescriptionsItem>
-        <DescriptionsItem label="耗时">
-          {{ detail.durationMillis }} ms
-        </DescriptionsItem>
-        <DescriptionsItem label="参数快照" :span="2">
-          <pre class="whitespace-pre-wrap">{{ detail.paramsSnapshot }}</pre>
-        </DescriptionsItem>
-        <DescriptionsItem label="异常类型" :span="2">
-          {{ detail.exceptionClass || '-' }}
-        </DescriptionsItem>
-        <DescriptionsItem label="异常信息" :span="2">
-          {{ detail.exceptionMessage || '-' }}
-        </DescriptionsItem>
-        <DescriptionsItem label="堆栈" :span="2">
-          <pre class="max-h-96 overflow-auto whitespace-pre-wrap">{{
-            detail.stackTrace || '-'
+    <DetailModal class="w-[860px]" title="执行日志详情">
+      <template v-if="detail">
+        <Divider title-placement="start">执行概览</Divider>
+        <Descriptions bordered :column="2" size="small">
+          <DescriptionsItem label="执行状态">
+            <Tag :color="statusColor(detail.status)">
+              {{ statusLabel(detail.status) }}
+            </Tag>
+          </DescriptionsItem>
+          <DescriptionsItem label="执行耗时">
+            {{ formatDuration(detail.durationMillis) }}
+          </DescriptionsItem>
+          <DescriptionsItem label="开始时间">
+            {{ detail.startTime ? formatDateTime(detail.startTime) : '-' }}
+          </DescriptionsItem>
+          <DescriptionsItem label="结束时间">
+            {{ detail.endTime ? formatDateTime(detail.endTime) : '-' }}
+          </DescriptionsItem>
+          <DescriptionsItem label="计划触发时间">
+            {{
+              detail.scheduledFireTime
+                ? formatDateTime(detail.scheduledFireTime)
+                : '-'
+            }}
+          </DescriptionsItem>
+          <DescriptionsItem label="执行结果" :span="2">
+            {{ detail.resultMessage || '-' }}
+          </DescriptionsItem>
+        </Descriptions>
+
+        <Divider title-placement="start">任务信息</Divider>
+        <Descriptions bordered :column="2" size="small">
+          <DescriptionsItem label="任务名称">
+            {{ detail.jobName || '-' }}
+          </DescriptionsItem>
+          <DescriptionsItem label="任务处理器">
+            {{ detail.handlerName || '-' }}
+          </DescriptionsItem>
+          <DescriptionsItem label="调度器实例">
+            {{ detail.schedulerInstanceId || '-' }}
+          </DescriptionsItem>
+          <DescriptionsItem label="触发实例 ID">
+            {{ detail.fireInstanceId || '-' }}
+          </DescriptionsItem>
+        </Descriptions>
+
+        <Divider title-placement="start">参数快照</Divider>
+        <TypographyParagraph
+          :copyable="
+            detail.paramsSnapshot ? { text: detail.paramsSnapshot } : false
+          "
+        >
+          <pre class="max-h-64 overflow-auto whitespace-pre-wrap break-all">{{
+            detail.paramsSnapshot || '-'
           }}</pre>
-        </DescriptionsItem>
-      </Descriptions>
+        </TypographyParagraph>
+
+        <Divider title-placement="start">异常信息</Divider>
+        <Descriptions
+          bordered
+          :column="1"
+          size="small"
+          :styles="{ label: { whiteSpace: 'nowrap', width: '120px' } }"
+        >
+          <DescriptionsItem label="异常类型">
+            {{ detail.exceptionClass || '-' }}
+          </DescriptionsItem>
+          <DescriptionsItem label="异常消息">
+            {{ detail.exceptionMessage || '-' }}
+          </DescriptionsItem>
+        </Descriptions>
+        <template v-if="detail.stackTrace">
+          <Divider title-placement="start">异常堆栈</Divider>
+          <TypographyParagraph :copyable="{ text: detail.stackTrace }">
+            <pre
+              class="max-h-96 overflow-auto whitespace-pre-wrap break-all"
+            >{{ detail.stackTrace }}</pre>
+          </TypographyParagraph>
+        </template>
+      </template>
     </DetailModal>
   </Page>
 </template>

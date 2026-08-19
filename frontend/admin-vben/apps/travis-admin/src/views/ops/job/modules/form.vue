@@ -14,10 +14,9 @@ import {
   Button,
   Form,
   FormItem,
-  Input,
   message,
   Select,
-  Space,
+  TimePicker,
 } from 'antdv-next';
 
 import { InputNumber } from '#/adapter/component';
@@ -37,20 +36,59 @@ import { useJobFormSchema } from '../data';
 const emit = defineEmits(['success']);
 const formData = ref<OpsJobApi.Job>();
 const previewTimes = ref<string[]>([]);
+const previewLoading = ref(false);
 const userOptions = ref<Array<{ label: string; value: number }>>([]);
 const userOptionsLoading = ref(false);
 let userSearchSequence = 0;
 const cronModel = reactive({
-  frequency: 'DAY',
-  hour: 0,
+  frequency: 'INTERVAL',
   interval: 5,
-  minute: 0,
-  second: 0,
+  intervalUnit: 'MINUTE',
+  monthday: 1,
+  time: '00:00:00',
   weekday: 2,
+});
+const cronFrequencyOptions = [
+  {
+    description: '按秒、分钟或小时周期运行',
+    label: '固定间隔',
+    value: 'INTERVAL',
+  },
+  { description: '每天固定时间运行', label: '每天', value: 'DAY' },
+  { description: '每周固定时间运行', label: '每周', value: 'WEEK' },
+  { description: '每月固定日期和时间运行', label: '每月', value: 'MONTH' },
+];
+const intervalUnitOptions = [
+  { label: '秒', value: 'SECOND' },
+  { label: '分钟', value: 'MINUTE' },
+  { label: '小时', value: 'HOUR' },
+];
+const monthdayOptions = Array.from({ length: 31 }, (_, index) => ({
+  label: `${index + 1} 日`,
+  value: index + 1,
+}));
+const weekdayOptions = [
+  { label: '星期日', value: 1 },
+  { label: '星期一', value: 2 },
+  { label: '星期二', value: 3 },
+  { label: '星期三', value: 4 },
+  { label: '星期四', value: 5 },
+  { label: '星期五', value: 6 },
+  { label: '星期六', value: 7 },
+];
+
+const [CronModal, cronModalApi] = useVbenModal({
+  onConfirm() {
+    generateCron();
+  },
 });
 
 const [JobForm, formApi] = useVbenForm({
-  schema: useJobFormSchema(),
+  commonConfig: {
+    labelClass: 'whitespace-nowrap',
+    labelWidth: 140,
+  },
+  schema: useJobFormSchema(() => cronModalApi.open()),
   showDefaultActions: false,
 });
 
@@ -58,13 +96,12 @@ const [Drawer, drawerApi] = useVbenDrawer({
   async onConfirm() {
     const { valid } = await formApi.validate();
     if (!valid) return;
-    const payload = normalize(await formApi.getValues());
+    const payload = buildJobPayload(await formApi.getValues());
     if (formData.value?.id) {
       payload.lockVersion = formData.value.lockVersion;
     }
     try {
       validateJson(payload.params, 'JSON 参数');
-      validateJson(payload.paramSchema, 'JSON Schema', true);
     } catch (error: any) {
       message.error(error?.message || 'JSON 格式不正确');
       return;
@@ -93,11 +130,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
       getJobHandlers(),
       data?.id ? getJobDetail(data.id) : Promise.resolve(undefined),
     ]);
-    const selectedUserIds = detail
-      ? [detail.ownerUserId, ...(detail.alertUserIds || [])].filter(
-          (id): id is number => id !== undefined,
-        )
-      : [];
+    if (detail) formData.value = detail;
+    const selectedUserIds = detail?.alertUserIds || [];
     const [initialUsers, selectedUsers] = await Promise.all([
       getJobUserOptions(),
       selectedUserIds.length
@@ -108,7 +142,12 @@ const [Drawer, drawerApi] = useVbenDrawer({
     formApi.updateSchema([
       {
         componentProps: {
-          options: handlers.map((name) => ({ label: name, value: name })),
+          options: handlers.map((handler) => ({
+            label: handler.description
+              ? `${handler.name} - ${handler.description}`
+              : handler.name,
+            value: handler.name,
+          })),
         },
         fieldName: 'handlerName',
       },
@@ -117,24 +156,20 @@ const [Drawer, drawerApi] = useVbenDrawer({
     if (detail) {
       await formApi.setValues({
         ...detail,
-        excludedDatesText: detail.excludedDates?.join(','),
+        intervalSeconds:
+          detail.intervalMillis === undefined
+            ? undefined
+            : detail.intervalMillis / 1000,
       });
     } else {
+      cronModel.frequency = 'INTERVAL';
       await formApi.setValues({
         concurrent: 0,
-        logRetentionDays: 30,
         misfirePolicy: 0,
         params: '{}',
-        priority: 5,
         scheduleType: 'CRON',
       });
     }
-  },
-});
-
-const [CronModal, cronModalApi] = useVbenModal({
-  onConfirm() {
-    generateCron();
   },
 });
 
@@ -162,10 +197,6 @@ function updateUserOptionSchema() {
   };
   formApi.updateSchema([
     {
-      componentProps: { ...commonProps, allowClear: true },
-      fieldName: 'ownerUserId',
-    },
-    {
       componentProps: { ...commonProps, mode: 'multiple' },
       fieldName: 'alertUserIds',
     },
@@ -182,10 +213,7 @@ const searchUserOptions = useDebounceFn(async (keyword: string) => {
     });
     if (sequence !== userSearchSequence) return;
     const values = await formApi.getValues();
-    const selectedIds = new Set<number>([
-      ...(values.ownerUserId ? [values.ownerUserId] : []),
-      ...(values.alertUserIds || []),
-    ]);
+    const selectedIds = new Set<number>([...(values.alertUserIds || [])]);
     const options = new Map(
       userOptions.value
         .filter((option) => selectedIds.has(option.value))
@@ -204,23 +232,27 @@ const searchUserOptions = useDebounceFn(async (keyword: string) => {
 const title = computed(() =>
   formData.value?.id ? '编辑调度任务' : '新增调度任务',
 );
+const generatedCronExpression = computed(buildCronExpression);
+const generatedCronDescription = computed(() => {
+  if (cronModel.frequency === 'INTERVAL') {
+    const unit = intervalUnitOptions.find(
+      (option) => option.value === cronModel.intervalUnit,
+    )?.label;
+    return `每隔 ${cronModel.interval} ${unit ?? ''}执行`;
+  }
+  if (cronModel.frequency === 'WEEK') {
+    const weekday = weekdayOptions.find(
+      (option) => option.value === cronModel.weekday,
+    )?.label;
+    return `每周${weekday ?? ''} ${cronModel.time} 执行`;
+  }
+  if (cronModel.frequency === 'MONTH') {
+    return `每月 ${cronModel.monthday} 日 ${cronModel.time} 执行`;
+  }
+  return `每天 ${cronModel.time} 执行`;
+});
 
-function normalize(values: Record<string, any>): Record<string, any> {
-  const excludedDates = String(values.excludedDatesText || '')
-    .split(',')
-    .map((value) => value.trim())
-    .filter(Boolean);
-  const payload: Record<string, any> = { ...values, excludedDates };
-  delete payload.excludedDatesText;
-  return payload;
-}
-
-function validateJson(
-  value: string | undefined,
-  label: string,
-  optional = false,
-) {
-  if (!value?.trim() && optional) return;
+function validateJson(value: string | undefined, label: string) {
   try {
     JSON.parse(value || '{}');
   } catch {
@@ -228,25 +260,81 @@ function validateJson(
   }
 }
 
+function buildJobPayload(values: Record<string, any>): Record<string, any> {
+  const payload = { ...values };
+  payload.intervalMillis =
+    payload.intervalSeconds === undefined
+      ? undefined
+      : payload.intervalSeconds * 1000;
+  delete payload.intervalSeconds;
+  return payload;
+}
+
 async function onPreview() {
+  previewTimes.value = [];
+  const values = await formApi.getValues();
+  const previewField = {
+    CRON: 'cronExpression',
+    INTERVAL: 'intervalSeconds',
+    ONCE: 'executeAt',
+  }[values.scheduleType as OpsJobApi.ScheduleType];
+  const { valid } = await formApi.validateField(previewField ?? 'scheduleType');
+  if (!valid) return;
+
+  previewLoading.value = true;
   try {
-    const payload = normalize(await formApi.getValues());
-    previewTimes.value = await previewJob(payload, 7);
+    previewTimes.value = await previewJob(
+      {
+        cronExpression: values.cronExpression,
+        executeAt: values.executeAt,
+        intervalMillis:
+          values.intervalSeconds === undefined
+            ? undefined
+            : values.intervalSeconds * 1000,
+        scheduleType: values.scheduleType,
+      },
+      7,
+    );
   } catch (error: any) {
-    message.error(error?.message || '无法预览执行时间');
+    const responseData = error?.response?.data ?? error?.data ?? {};
+    message.error(
+      responseData?.msg ||
+        responseData?.error ||
+        responseData?.message ||
+        error?.message ||
+        '无法预览执行时间',
+    );
+  } finally {
+    previewLoading.value = false;
   }
 }
 
-function generateCron() {
-  const { frequency, hour, interval, minute, second, weekday } = cronModel;
-  const expression = {
+function buildCronExpression() {
+  const { frequency, interval, intervalUnit, monthday, time, weekday } =
+    cronModel;
+  if (frequency === 'INTERVAL') {
+    return {
+      HOUR: `0 0 */${interval} * * ?`,
+      MINUTE: `0 */${interval} * * * ?`,
+      SECOND: `*/${interval} * * * * ?`,
+    }[intervalUnit];
+  }
+  const [hour, minute, second] = time.split(':').map(Number);
+  return {
     DAY: `${second} ${minute} ${hour} * * ?`,
-    HOUR: `${second} ${minute} */${interval} * * ?`,
-    MINUTE: `${second} */${interval} * * * ?`,
+    MONTH: `${second} ${minute} ${hour} ${monthday} * ?`,
     WEEK: `${second} ${minute} ${hour} ? * ${weekday}`,
   }[frequency];
-  formApi.setFieldValue('cronExpression', expression);
+}
+
+function generateCron() {
+  formApi.setFieldValue('cronExpression', generatedCronExpression.value);
   cronModalApi.close();
+}
+
+function normalizeInterval() {
+  const max = cronModel.intervalUnit === 'HOUR' ? 23 : 59;
+  cronModel.interval = Math.min(cronModel.interval, max);
 }
 
 async function confirmUpdate() {
@@ -266,66 +354,142 @@ async function confirmUpdate() {
 <template>
   <Drawer class="w-full max-w-220" :title="title">
     <JobForm />
-    <Space class="mb-4 ml-30">
-      <Button @click="cronModalApi.open()">Cron 生成器</Button>
-      <Button v-access:code="OPS_PERMS.jobQuery" @click="onPreview">
-        预览执行时间
-      </Button>
-    </Space>
+    <Button
+      v-access:code="OPS_PERMS.jobQuery"
+      :loading="previewLoading"
+      class="mb-4 ml-30"
+      @click="onPreview"
+    >
+      预览执行时间
+    </Button>
     <div v-if="previewTimes.length" class="ml-30 rounded border p-3 text-sm">
       <div class="mb-2 font-medium">未来执行时间</div>
       <div v-for="item in previewTimes" :key="item">{{ item }}</div>
     </div>
   </Drawer>
 
-  <CronModal title="Cron 可视化生成">
-    <Form layout="vertical">
-      <FormItem label="执行频率">
-        <Select
-          v-model:value="cronModel.frequency"
-          :options="[
-            { label: '每隔 N 分钟', value: 'MINUTE' },
-            { label: '每隔 N 小时', value: 'HOUR' },
-            { label: '每天', value: 'DAY' },
-            { label: '每周', value: 'WEEK' },
-          ]"
-        />
-      </FormItem>
-      <FormItem
-        v-if="['MINUTE', 'HOUR'].includes(cronModel.frequency)"
-        label="间隔"
+  <CronModal class="w-[640px]" title="Cron 表达式生成器">
+    <div class="space-y-4">
+      <section>
+        <div class="mb-2 text-sm font-medium">选择执行频率</div>
+        <div class="grid grid-cols-2 gap-2">
+          <button
+            v-for="option in cronFrequencyOptions"
+            :key="option.value"
+            class="rounded-lg border px-4 py-3 text-left transition-colors"
+            :class="
+              cronModel.frequency === option.value
+                ? 'border-primary bg-primary/5 text-primary'
+                : 'border-border bg-card hover:border-primary/40 hover:bg-muted/20'
+            "
+            type="button"
+            @click="cronModel.frequency = option.value"
+          >
+            <span class="block text-sm font-medium">{{ option.label }}</span>
+            <span class="mt-1 block text-xs text-muted-foreground">
+              {{ option.description }}
+            </span>
+          </button>
+        </div>
+      </section>
+
+      <section class="rounded-lg border border-border/60 bg-muted/15 p-4">
+        <div class="mb-3 flex items-center gap-2 text-sm font-medium">
+          <span class="h-4 w-1 rounded-full bg-primary"></span>
+          设置执行参数
+        </div>
+        <Form class="grid grid-cols-2 gap-x-4" layout="vertical">
+          <FormItem
+            v-if="cronModel.frequency === 'INTERVAL'"
+            class="mb-0"
+            label="间隔数值"
+          >
+            <InputNumber
+              v-model:value="cronModel.interval"
+              class="w-full"
+              :max="cronModel.intervalUnit === 'HOUR' ? 23 : 59"
+              :min="1"
+            />
+          </FormItem>
+          <FormItem
+            v-if="cronModel.frequency === 'INTERVAL'"
+            class="mb-0"
+            label="间隔单位"
+          >
+            <Select
+              v-model:value="cronModel.intervalUnit"
+              class="w-full"
+              :options="intervalUnitOptions"
+              @change="normalizeInterval"
+            />
+          </FormItem>
+          <FormItem
+            v-if="cronModel.frequency === 'MONTH'"
+            class="mb-0"
+            label="日期"
+          >
+            <Select
+              v-model:value="cronModel.monthday"
+              class="w-full"
+              :options="monthdayOptions"
+            />
+          </FormItem>
+          <FormItem
+            v-if="cronModel.frequency === 'WEEK'"
+            class="mb-0"
+            label="星期"
+          >
+            <Select
+              v-model:value="cronModel.weekday"
+              class="w-full"
+              :options="weekdayOptions"
+            />
+          </FormItem>
+          <FormItem
+            v-if="cronModel.frequency !== 'INTERVAL'"
+            class="mb-0"
+            :class="{ 'col-span-2': cronModel.frequency === 'DAY' }"
+            label="执行时间"
+          >
+            <TimePicker
+              v-model:value="cronModel.time"
+              :allow-clear="false"
+              class="w-full"
+              format="HH:mm:ss"
+              value-format="HH:mm:ss"
+            />
+          </FormItem>
+        </Form>
+      </section>
+
+      <section
+        class="overflow-hidden rounded-lg border border-primary/20 bg-primary/5"
       >
-        <InputNumber v-model:value="cronModel.interval" :min="1" />
-      </FormItem>
-      <FormItem
-        v-if="['DAY', 'WEEK'].includes(cronModel.frequency)"
-        label="小时"
-      >
-        <InputNumber v-model:value="cronModel.hour" :max="23" :min="0" />
-      </FormItem>
-      <FormItem v-if="cronModel.frequency !== 'MINUTE'" label="分钟">
-        <InputNumber v-model:value="cronModel.minute" :max="59" :min="0" />
-      </FormItem>
-      <FormItem label="秒">
-        <InputNumber v-model:value="cronModel.second" :max="59" :min="0" />
-      </FormItem>
-      <FormItem v-if="cronModel.frequency === 'WEEK'" label="星期">
-        <Select
-          v-model:value="cronModel.weekday"
-          :options="[
-            { label: '星期日', value: 1 },
-            { label: '星期一', value: 2 },
-            { label: '星期二', value: 3 },
-            { label: '星期三', value: 4 },
-            { label: '星期四', value: 5 },
-            { label: '星期五', value: 6 },
-            { label: '星期六', value: 7 },
-          ]"
-        />
-      </FormItem>
-      <FormItem label="说明">
-        <Input value="生成后仍会由后端 Quartz 再次校验" disabled />
-      </FormItem>
-    </Form>
+        <div
+          class="border-b border-primary/10 px-4 py-2 text-xs text-muted-foreground"
+        >
+          实时预览
+        </div>
+        <div class="flex items-center justify-between gap-4 px-4 py-3">
+          <div class="min-w-0">
+            <code class="text-base font-semibold text-primary">
+              {{ generatedCronExpression }}
+            </code>
+            <div class="mt-1 text-xs text-muted-foreground">
+              {{ generatedCronDescription }}
+            </div>
+          </div>
+          <span
+            class="shrink-0 rounded bg-background px-2 py-1 text-xs text-muted-foreground"
+          >
+            Quartz Cron
+          </span>
+        </div>
+      </section>
+
+      <p class="text-xs text-muted-foreground">
+        生成结果写入表单后，保存和启用任务时仍会由后端 Quartz 校验。
+      </p>
+    </div>
   </CronModal>
 </template>

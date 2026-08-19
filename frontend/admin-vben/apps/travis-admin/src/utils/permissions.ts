@@ -72,6 +72,8 @@ export const OPS_PERMS = {
   jobOperation: 'ops:job:operation',
   jobUpdate: 'ops:job:update',
   jobLogQuery: 'ops:job:log:query',
+  errorLogDelete: 'ops:error-log:delete',
+  errorLogHandle: 'ops:error-log:handle',
   errorLogQuery: 'ops:error-log:query',
 } as const;
 

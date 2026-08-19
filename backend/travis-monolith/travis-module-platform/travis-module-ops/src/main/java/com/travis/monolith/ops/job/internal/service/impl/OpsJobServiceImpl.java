@@ -12,12 +12,13 @@ import com.travis.infrastructure.framework.quartz.core.QuartzJobHandlerRegistry;
 import com.travis.monolith.ops.job.api.OpsJobErrorCode;
 import com.travis.monolith.ops.job.api.enums.OpsJobStatus;
 import com.travis.monolith.ops.job.api.request.*;
-import com.travis.monolith.ops.job.api.response.OpsJobBaseResp;
 import com.travis.monolith.ops.job.api.response.OpsJobDetailResp;
-import com.travis.monolith.ops.job.api.response.OpsJobExportResp;
+import com.travis.monolith.ops.job.api.response.OpsJobHandlerResp;
 import com.travis.monolith.ops.job.api.response.OpsJobPageResp;
 import com.travis.monolith.ops.job.internal.converter.OpsJobConverter;
 import com.travis.monolith.ops.job.internal.entity.OpsJob;
+import com.travis.monolith.ops.job.internal.entity.OpsJobLog;
+import com.travis.monolith.ops.job.internal.mapper.OpsJobLogMapper;
 import com.travis.monolith.ops.job.internal.mapper.OpsJobMapper;
 import com.travis.monolith.ops.job.internal.service.OpsJobParamValidator;
 import com.travis.monolith.ops.job.internal.service.OpsJobService;
@@ -41,6 +42,9 @@ import org.springframework.transaction.annotation.Transactional;
 @CacheConfig(cacheNames = "ops:job")
 public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implements OpsJobService {
 
+    private static final int NOT_BUILTIN = 0;
+    private static final int BUILTIN = 1;
+
     private static final Map<String, SFunction<OpsJob, ?>> SORT_COLUMNS =
             Map.of(
                     "jobName", OpsJob::getJobName,
@@ -53,6 +57,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
     private final QuartzJobHandlerRegistry handlerRegistry;
     private final SysUserApi userApi;
     private final OpsJobConverter converter;
+    private final OpsJobLogMapper jobLogMapper;
 
     /** 分页查询定时任务。 */
     @Override
@@ -63,7 +68,6 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
                         .likeIfPresent(OpsJob::getHandlerName, req.getHandlerName())
                         .eqIfPresent(OpsJob::getScheduleType, req.getScheduleType())
                         .eqIfPresent(OpsJob::getStatus, req.getStatus())
-                        .eqIfPresent(OpsJob::getOwnerUserId, req.getOwnerUserId())
                         .orderByAllowed(
                                 req.getOrderBy(),
                                 req.getAsc(),
@@ -71,27 +75,36 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
                                 false,
                                 OpsJob::getCreateTime);
         Page<OpsJob> page = page(req.getPageNum(), req.getPageSize(), wrapper);
-        Map<Long, String> ownerNames =
+        Map<Long, OpsJobLog> latestLogs = latestLogMap(page.getRecords());
+        Map<Long, String> creatorNames =
                 userApi.getUsernameMapByIds(
                         page.getRecords().stream()
-                                .map(OpsJob::getOwnerUserId)
-                                .filter(java.util.Objects::nonNull)
+                                .map(OpsJob::getCreateBy)
+                                .filter(Objects::nonNull)
                                 .toList());
         return PageConverter.toResp(
                 page.convert(
-                        job ->
-                                enrichResponse(
-                                        converter.toPageResp(job),
-                                        job,
-                                        ownerNames.get(job.getOwnerUserId()))));
+                        job -> {
+                            OpsJobPageResp response =
+                                    converter.toPageResp(job);
+                            response.setHandlerAvailable(
+                                    handlerRegistry.contains(job.getHandlerName()));
+                            response.setCreateByUsername(creatorNames.get(job.getCreateBy()));
+                            response.setNextFireTime(quartzJobManager.nextFireTime(job.getId()));
+                            OpsJobLog latestLog = latestLogs.get(job.getId());
+                            if (latestLog != null) {
+                                response.setLastExecutionTime(latestLog.getStartTime());
+                                response.setLastExecutionStatus(latestLog.getStatus());
+                            }
+                            return response;
+                        }));
     }
 
     /** 查询指定定时任务，不存在时抛出业务异常。 */
     @Override
     public OpsJobDetailResp getOrThrow(Long id) {
         OpsJob job = getRequired(id);
-        return enrichResponse(
-                converter.toDetailResp(job), job, userApi.getUsernameById(job.getOwnerUserId()));
+        return enrichResponse(converter.toDetailResp(job), job);
     }
 
     /** 查询指定定时任务，不存在时返回空结果。 */
@@ -100,10 +113,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         OpsJob job = super.getById(id);
         return job == null
                 ? null
-                : enrichResponse(
-                        converter.toDetailResp(job),
-                        job,
-                        userApi.getUsernameById(job.getOwnerUserId()));
+                : enrichResponse(converter.toDetailResp(job), job);
     }
 
     /** 查询全部定时任务。 */
@@ -123,13 +133,10 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
     @Transactional
     @CacheEvict(allEntries = true)
     public void create(OpsJobCreateReq req) {
-        createJob(req);
-    }
-
-    /** 创建定时任务并同步注册 Quartz 调度。 */
-    private void createJob(OpsJobWriteReq req) {
-        validateUserScope(req);
-        OpsJob job = buildEntity(req);
+        validate(req.getHandlerName(), req.getParams());
+        validateUserScope(req.getAlertUserIds());
+        OpsJob job = converter.toEntity(req);
+        job.setIsBuiltin(NOT_BUILTIN);
         job.setStatus(OpsJobStatus.DISABLED.getValue());
         save(job);
         synchronizeAfterCommit(job);
@@ -141,7 +148,9 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
     @CacheEvict(key = "'detail:'+#id")
     public void update(Long id, OpsJobUpdateReq req) {
         OpsJob job = getRequired(id);
-        validateUserScope(req);
+        ensureNotBuiltin(job);
+        validate(req.getHandlerName(), req.getParams());
+        validateUserScope(req.getAlertUserIds());
         converter.update(req, job);
         job.setLockVersion(req.getLockVersion());
         if (OpsJobStatus.ENABLED.getValue().equals(job.getStatus())) {
@@ -156,7 +165,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
     @Transactional
     @CacheEvict(key = "'detail:'+#id")
     public void delete(Long id) {
-        getRequired(id);
+        ensureNotBuiltin(getRequired(id));
         removeById(id);
         runAfterCommit(id, () -> quartzJobManager.delete(id));
     }
@@ -167,6 +176,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
     @CacheEvict(key = "'detail:'+#id")
     public void changeStatus(Long id, Integer status) {
         OpsJob job = getRequired(id);
+        ensureNotBuiltin(job);
         if (OpsJobStatus.ENABLED.getValue().equals(status)) {
             ensureHandlerExists(job.getHandlerName());
             job.setStatus(OpsJobStatus.ENABLED.getValue());
@@ -182,8 +192,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
     public void runNow(Long id, String params) {
         OpsJob job = getRequired(id);
         ensureHandlerExists(job.getHandlerName());
-        OpsJobParamValidator.validate(
-                params == null ? job.getParams() : params, job.getParamSchema());
+        OpsJobParamValidator.validate(params == null ? job.getParams() : params);
         quartzJobManager.runNow(job, params);
     }
 
@@ -193,9 +202,11 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
     @CacheEvict(allEntries = true)
     public void copy(Long id) {
         OpsJob source = getRequired(id);
+        ensureNotBuiltin(source);
         var copy = converter.copy(source);
         copy.setJobName(source.getJobName() + "-副本");
         copy.setStatus(OpsJobStatus.DISABLED.getValue());
+        copy.setIsBuiltin(NOT_BUILTIN);
         save(copy);
         synchronizeAfterCommit(copy);
     }
@@ -219,16 +230,19 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
     /** 预览定时任务后续执行时间。 */
     @Override
     public List<LocalDateTime> preview(OpsJobPreviewReq req, Integer count) {
-        return quartzJobManager.preview(buildEntity(req), count == null ? 5 : count);
+        return quartzJobManager.preview(
+                converter.toPreviewEntity(req), count == null ? 5 : count);
     }
 
-    /** 查询已注册的定时任务处理器。 */
+    /** 查询已注册的定时任务处理器名称及说明。 */
     @Override
-    public Collection<String> listHandlers() {
-        return handlerRegistry.names();
+    public List<OpsJobHandlerResp> listHandlers(boolean includeBuiltin) {
+        return handlerRegistry.descriptors(includeBuiltin).stream()
+                .map(handler -> new OpsJobHandlerResp(handler.name(), handler.description()))
+                .toList();
     }
 
-    /** 查询定时任务通知用户选项。 */
+    /** 查询定时任务告警接收人选项。 */
     @Override
     public List<SysUserOptionResp> listUserOptions(String keyword, Collection<Long> userIds) {
         if (userIds != null && !userIds.isEmpty()) {
@@ -237,58 +251,20 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         return userApi.listCurrentUserScopedOptions(keyword, 20);
     }
 
-    /** 导出全部定时任务。 */
-    @Override
-    public List<OpsJobExportResp> exportJobs() {
-        return list(new LambdaQueryWrapperX<OpsJob>().orderByAsc(OpsJob::getJobName)).stream()
-                .map(
-                        job ->
-                                enrichResponse(
-                                        converter.toExportResp(job),
-                                        job,
-                                        userApi.getUsernameById(job.getOwnerUserId())))
-                .toList();
-    }
-
-    /** 批量导入定时任务。 */
-    @Override
-    @Transactional
-    @CacheEvict(allEntries = true)
-    public void importJobs(List<OpsJobImportReq> jobs) {
-        if (jobs == null) {
-            return;
-        }
-        jobs.forEach(this::createJob);
-    }
-
-    /** 根据写入参数构建定时任务实体。 */
-    private OpsJob buildEntity(OpsJobWriteReq req) {
-        validate(req);
-        return converter.toEntity(req);
-    }
-
     /** 校验定时任务写入参数。 */
-    private void validate(OpsJobWriteReq req) {
-        OpsJobParamValidator.validate(req.getParams(), req.getParamSchema());
-        if ((req.getDailyStartTime() == null) != (req.getDailyEndTime() == null)) {
-            throw new BizException(OpsJobErrorCode.INVALID_SCHEDULE, "每日开始和结束时间必须同时填写");
-        }
-        if (req.getDailyStartTime() != null
-                && !req.getDailyStartTime().isBefore(req.getDailyEndTime())) {
-            throw new BizException(OpsJobErrorCode.INVALID_SCHEDULE, "每日开始时间必须早于结束时间");
-        }
+    private void validate(String handlerName, String params) {
+        ensureNotBuiltinHandler(handlerName);
+        OpsJobParamValidator.validate(params);
     }
 
     /** 校验定时任务通知用户范围。 */
-    private void validateUserScope(OpsJobWriteReq req) {
+    private void validateUserScope(Collection<Long> alertUserIds) {
         Set<Long> userIds =
-                java.util.stream.Stream.concat(
-                                java.util.stream.Stream.of(req.getOwnerUserId()),
-                                req.getAlertUserIds() == null
-                                        ? java.util.stream.Stream.empty()
-                                        : req.getAlertUserIds().stream())
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toSet());
+                alertUserIds == null
+                        ? Set.of()
+                        : alertUserIds.stream()
+                                .filter(Objects::nonNull)
+                                .collect(Collectors.toSet());
         if (userIds.isEmpty()) {
             return;
         }
@@ -306,6 +282,30 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         if (!handlerRegistry.contains(handlerName)) {
             throw new BizException(OpsJobErrorCode.HANDLER_NOT_FOUND, handlerName);
         }
+    }
+
+    /** 校验处理器没有被系统内置任务保留。 */
+    private void ensureNotBuiltinHandler(String handlerName) {
+        if (handlerRegistry.isBuiltin(handlerName)) {
+            throw new BizException(OpsJobErrorCode.BUILTIN_HANDLER_RESERVED, handlerName);
+        }
+    }
+
+    /** 校验任务不是由系统维护的内置任务。 */
+    private void ensureNotBuiltin(OpsJob job) {
+        if (Objects.equals(job.getIsBuiltin(), BUILTIN)) {
+            throw new BizException(OpsJobErrorCode.BUILTIN_NOT_MODIFIABLE);
+        }
+    }
+
+    /** 批量查询当前分页任务的最近一次执行日志。 */
+    private Map<Long, OpsJobLog> latestLogMap(List<OpsJob> jobs) {
+        List<Long> jobIds = jobs.stream().map(OpsJob::getId).filter(Objects::nonNull).toList();
+        if (jobIds.isEmpty()) {
+            return Map.of();
+        }
+        return jobLogMapper.selectLatestByJobIds(jobIds).stream()
+                .collect(Collectors.toMap(OpsJobLog::getJobId, log -> log));
     }
 
     /** 事务提交后将当前业务配置同步至 Quartz。 */
@@ -343,9 +343,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
     }
 
     /** 补充定时任务响应中的展示信息。 */
-    private <T extends OpsJobBaseResp> T enrichResponse(
-            T response, OpsJob job, String ownerUsername) {
-        response.setOwnerUsername(ownerUsername);
+    private OpsJobDetailResp enrichResponse(OpsJobDetailResp response, OpsJob job) {
         response.setHandlerAvailable(handlerRegistry.contains(job.getHandlerName()));
         response.setNextFireTime(quartzJobManager.nextFireTime(job.getId()));
         return response;

@@ -136,7 +136,12 @@ async function selectTemplate(template?: SystemMessageApi.MessageTemplate) {
       <div class="min-w-0 flex-[3]">
         <Grid>
           <template #action="{ row }">
-            <Button size="small" type="link" @click.stop="selectTemplate(row)">
+            <Button
+              class="transition-colors"
+              size="small"
+              type="link"
+              @click.stop="selectTemplate(row)"
+            >
               选择
             </Button>
           </template>

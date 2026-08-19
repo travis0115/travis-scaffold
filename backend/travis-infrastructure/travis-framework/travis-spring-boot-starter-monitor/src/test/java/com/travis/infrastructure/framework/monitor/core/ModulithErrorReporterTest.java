@@ -7,9 +7,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import com.travis.infrastructure.common.monitor.error.ErrorEvent;
+import com.travis.infrastructure.common.monitor.error.ErrorReporter;
 import com.travis.infrastructure.common.monitor.error.ErrorSource;
 import com.travis.infrastructure.framework.event.core.TransactionalApplicationEventPublisher;
-import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -42,22 +42,18 @@ class ModulithErrorReporterTest {
     }
 
     @Test
-    void shouldKeepSerializedEventWithinPublicationColumnLimit() {
+    void shouldKeepStackTraceUpToConfiguredLimit() {
         var publisher = mock(TransactionalApplicationEventPublisher.class);
         var reporter = new ModulithErrorReporter(publisher);
-        var oversized = "\u0000".repeat(10_000);
+        var oversized = "x".repeat(ErrorReporter.MAX_STACK_TRACE_LENGTH + 100);
 
         reporter.report(
-                ErrorEvent.builder()
-                        .sourceType(ErrorSource.WEB)
-                        .sourceName(oversized)
-                        .requestParams(oversized)
-                        .message(oversized)
-                        .stackTrace(oversized)
-                        .build());
+                ErrorEvent.builder().sourceType(ErrorSource.WEB).stackTrace(oversized).build());
 
         var event = ArgumentCaptor.forClass(ErrorEvent.class);
         verify(publisher).publishEventRequiresNew(event.capture());
-        assertThat(JsonUtil.toJsonString(event.getValue())).hasSizeLessThanOrEqualTo(3500);
+        assertThat(event.getValue().stackTrace())
+                .hasSize(ErrorReporter.MAX_STACK_TRACE_LENGTH)
+                .isEqualTo(oversized.substring(0, ErrorReporter.MAX_STACK_TRACE_LENGTH));
     }
 }

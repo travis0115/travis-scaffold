@@ -27,4 +27,10 @@ public class OpsPermission {
 
     /** 错误日志查询权限 */
     public static final String OPS_ERROR_LOG_QUERY = "ops:error-log:query";
+
+    /** 错误日志处理权限 */
+    public static final String OPS_ERROR_LOG_HANDLE = "ops:error-log:handle";
+
+    /** 错误日志删除权限 */
+    public static final String OPS_ERROR_LOG_DELETE = "ops:error-log:delete";
 }

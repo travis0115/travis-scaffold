@@ -17,6 +17,8 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class SysUserApiImpl implements SysUserApi {
+    private static final String ADMIN_ROLE_CODE = "admin";
+
     private final SysUserService userService;
     private final SysDeptApi deptApi;
 
@@ -70,11 +72,15 @@ public class SysUserApiImpl implements SysUserApi {
     }
 
     private LambdaQueryWrapperX<SysUser> currentUserScopeWrapper() {
-        var currentUserId = StpKit.of(LoginType.ADMIN).getLoginIdAsLong();
-        var currentUser = userService.getDetailByIdOrThrow(currentUserId);
+        var stpLogic = StpKit.of(LoginType.ADMIN);
         var wrapper =
                 new LambdaQueryWrapperX<SysUser>()
                         .eq(SysUser::getStatus, Status.ENABLED.getValue());
+        if (stpLogic.hasRole(ADMIN_ROLE_CODE)) {
+            return wrapper;
+        }
+        var currentUserId = stpLogic.getLoginIdAsLong();
+        var currentUser = userService.getDetailByIdOrThrow(currentUserId);
         if (currentUser.getDeptId() == null || currentUser.getDeptId() == 0L) {
             return wrapper.eq(SysUser::getId, currentUserId);
         }

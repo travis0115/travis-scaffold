@@ -7,9 +7,13 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum OpsJobMisfirePolicy {
+    /** 智能策略：根据触发器类型自动选择。 */
     SMART(0),
+    /** 忽略：放弃被错过的执行。 */
     IGNORE(1),
+    /** 立即执行：立即补执行一次。 */
     FIRE_NOW(2),
+    /** 下次执行：等到下次计划时间再执行。 */
     NEXT_TIME(3);
 
     /** 策略值。 */

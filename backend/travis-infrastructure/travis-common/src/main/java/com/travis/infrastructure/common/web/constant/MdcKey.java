@@ -23,6 +23,9 @@ public final class MdcKey {
     /** 用户ID */
     public static final String USER_ID = "user_id";
 
+    /** 用户名 */
+    public static final String USERNAME = "username";
+
     /** 客户端IP */
     public static final String CLIENT_IP = "client_ip";
 

@@ -11,7 +11,10 @@
             m.receiver_scope = 0
             OR (
                 m.receiver_scope = 1
-                AND JSON_CONTAINS(m.receiver_values, CAST(#{userId} AS CHAR))
+                AND JSON_CONTAINS(
+                    m.receiver_values,
+                    JSON_QUOTE(CAST(#{userId} AS CHAR))
+                )
             )
             <if test="roleIds != null and roleIds.size() > 0">
                 OR (
@@ -20,7 +23,7 @@
                         m.receiver_values,
                         JSON_ARRAY(
                             <foreach collection="roleIds" item="roleId" separator=",">
-                                #{roleId}
+                                CAST(#{roleId} AS CHAR)
                             </foreach>
                         )
                     )
@@ -29,7 +32,10 @@
             <if test="deptId != null">
                 OR (
                     m.receiver_scope = 3
-                    AND JSON_CONTAINS(m.receiver_values, CAST(#{deptId} AS CHAR))
+                    AND JSON_CONTAINS(
+                        m.receiver_values,
+                        JSON_QUOTE(CAST(#{deptId} AS CHAR))
+                    )
                 )
             </if>
         )

@@ -13,28 +13,26 @@ public interface ErrorReporter {
     int MAX_BUSINESS_KEY_LENGTH = 100;
     int MAX_MESSAGE_LENGTH = 300;
     int MAX_CONTEXT_LENGTH = 300;
-    int MAX_STACK_TRACE_LENGTH = 1200;
+    int MAX_STACK_TRACE_LENGTH = 64_000;
 
     /** 上报已经采集好的异常快照。 */
     void report(ErrorEvent event);
 
     /** 上报非 HTTP 执行边界中的异常。 */
     default void report(
-            ErrorSource sourceType,
-            String sourceName,
-            String businessKey,
-            Throwable throwable) {
+            ErrorSource sourceType, String sourceName, String businessKey, Throwable throwable) {
         report(
                 ErrorEvent.builder()
-                          .sourceType(sourceType)
-                          .sourceName(truncate(sourceName, MAX_SOURCE_NAME_LENGTH))
-                          .businessKey(truncate(businessKey, MAX_BUSINESS_KEY_LENGTH))
-                          .requestId(MDC.get(MdcKey.REQUEST_ID))
-                          .traceId(MDC.get(MdcKey.TRACE_ID))
-                          .exceptionClass(throwable.getClass().getName())
-                          .message(truncate(throwable.getMessage(), MAX_MESSAGE_LENGTH))
-                          .stackTrace(stackTrace(throwable))
-                          .build());
+                        .sourceType(sourceType)
+                        .sourceName(truncate(sourceName, MAX_SOURCE_NAME_LENGTH))
+                        .businessKey(truncate(businessKey, MAX_BUSINESS_KEY_LENGTH))
+                        .username(MDC.get(MdcKey.USERNAME))
+                        .requestId(MDC.get(MdcKey.REQUEST_ID))
+                        .traceId(MDC.get(MdcKey.TRACE_ID))
+                        .exceptionClass(throwable.getClass().getName())
+                        .message(truncate(throwable.getMessage(), MAX_MESSAGE_LENGTH))
+                        .stackTrace(stackTrace(throwable))
+                        .build());
     }
 
     /** 将文本安全限制在错误事件允许的长度内。 */

@@ -1438,6 +1438,7 @@ onBeforeUnmount(() => {
           <div class="storage-config-actions">
             <Button
               v-access:code="SYSTEM_PERMS.fileUpload"
+              class="transition-colors"
               size="small"
               type="link"
               @click.stop="editStorageConfig(config)"
@@ -1447,7 +1448,7 @@ onBeforeUnmount(() => {
             <Button
               v-if="config.isDefault !== 1"
               v-access:code="SYSTEM_PERMS.fileUpload"
-              class="storage-config-default-action"
+              class="storage-config-default-action transition-colors"
               size="small"
               type="link"
               @click="markDefaultStorageConfig(config)"
@@ -1461,6 +1462,7 @@ onBeforeUnmount(() => {
             >
               <Button
                 v-access:code="SYSTEM_PERMS.fileDelete"
+                class="transition-colors enabled:hover:!text-destructive-400"
                 danger
                 size="small"
                 type="link"

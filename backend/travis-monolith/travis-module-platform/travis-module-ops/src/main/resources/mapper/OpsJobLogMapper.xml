@@ -4,6 +4,29 @@
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.travis.monolith.ops.job.internal.mapper.OpsJobLogMapper">
 
+    <!-- 批量查询每个任务最近一次执行日志。 -->
+    <select id="selectLatestByJobIds" resultType="com.travis.monolith.ops.job.internal.entity.OpsJobLog">
+        SELECT latest.job_id,
+               latest.start_time,
+               latest.status
+        FROM (
+            SELECT log.job_id,
+                   log.start_time,
+                   log.status,
+                   ROW_NUMBER() OVER (
+                       PARTITION BY log.job_id
+                       ORDER BY log.create_time DESC, log.id DESC
+                   ) AS row_num
+            FROM ops_job_log log
+            WHERE log.is_deleted = 0
+              AND log.job_id IN
+              <foreach collection="jobIds" item="jobId" open="(" separator="," close=")">
+                  #{jobId}
+              </foreach>
+        ) latest
+        WHERE latest.row_num = 1
+    </select>
+
     <!-- 根据任务编号物理删除调度日志。 -->
     <delete id="deletePhysicallyByJobId">
         DELETE FROM ops_job_log
@@ -15,11 +38,10 @@
         DELETE FROM ops_job_log
     </delete>
 
-    <!-- 物理删除指定任务在截止时间之前的调度日志。 -->
-    <delete id="deleteExpiredPhysically">
+    <!-- 物理删除截止时间之前的全部调度日志。 -->
+    <delete id="deleteExpiredPhysicallyAll">
         DELETE FROM ops_job_log
-        WHERE job_id = #{jobId}
-          AND create_time &lt; #{before}
+        WHERE create_time &lt; #{before}
     </delete>
 
     <!-- 将 Quartz 中已不存在执行记录的运行中日志标记为中断失败。 -->

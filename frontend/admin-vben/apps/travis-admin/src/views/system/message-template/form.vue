@@ -545,6 +545,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
         </template>
         <template #action="{ row }">
           <Button
+            class="transition-colors enabled:hover:!text-destructive-400"
             danger
             size="small"
             type="link"

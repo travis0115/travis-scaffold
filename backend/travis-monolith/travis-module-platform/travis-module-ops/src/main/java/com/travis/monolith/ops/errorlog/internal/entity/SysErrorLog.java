@@ -17,6 +17,18 @@ public class SysErrorLog {
     /** 异常发生时的登录用户 ID。 */
     private Long userId;
 
+    /** 异常发生时的登录用户名快照。 */
+    private String username;
+
+    /** 异常聚合指纹。 */
+    private String fingerprint;
+
+    /** 模块名称。 */
+    private String moduleName;
+
+    /** 平台类型。 */
+    private String platformType;
+
     /** 异常来源类型。 */
     private String sourceType;
 
@@ -55,6 +67,36 @@ public class SysErrorLog {
 
     /** 客户端 IP。 */
     private String ip;
+
+    /** 处理状态。 */
+    private Integer status;
+
+    /** 发生次数。 */
+    private Long occurrenceCount;
+
+    /** 首次发生时间。 */
+    private LocalDateTime firstOccurrenceTime;
+
+    /** 最后发生时间。 */
+    private LocalDateTime lastOccurrenceTime;
+
+    /** 处理人 ID。 */
+    private Long handledBy;
+
+    /** 处理时间。 */
+    private LocalDateTime handledTime;
+
+    /** 处理备注。 */
+    private String handleRemark;
+
+    /** 应用名称。 */
+    private String applicationName;
+
+    /** 应用版本。 */
+    private String applicationVersion;
+
+    /** 实例名称。 */
+    private String instanceName;
 
     /** 异常记录时间。 */
     @TableField(fill = FieldFill.INSERT)

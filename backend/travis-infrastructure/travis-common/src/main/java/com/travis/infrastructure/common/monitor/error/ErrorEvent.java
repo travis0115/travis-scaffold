@@ -9,6 +9,7 @@ import lombok.Builder;
  * @param sourceName 来源名称
  * @param businessKey 业务定位键
  * @param userId 登录用户 ID
+ * @param username 登录用户名快照
  * @param requestId 请求 ID
  * @param traceId 链路追踪 ID
  * @param requestUrl 请求地址
@@ -25,6 +26,7 @@ public record ErrorEvent(
         String sourceName,
         String businessKey,
         Long userId,
+        String username,
         String requestId,
         String traceId,
         String requestUrl,

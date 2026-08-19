@@ -9,12 +9,10 @@ import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.ops.common.api.OpsPermission;
 import com.travis.monolith.ops.job.api.request.OpsJobLogPageReq;
 import com.travis.monolith.ops.job.api.response.OpsJobLogDetailResp;
-import com.travis.monolith.ops.job.api.response.OpsJobLogExportResp;
 import com.travis.monolith.ops.job.api.response.OpsJobLogPageResp;
 import com.travis.monolith.ops.job.internal.service.OpsJobLogService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -42,13 +40,6 @@ public class OpsJobLogController {
     public ApiResponse<OpsJobLogDetailResp> detail(
             @PathVariable @Positive(message = "任务日志ID必须为正数") Long id) {
         return ApiResponse.success(logService.getOrThrow(id));
-    }
-
-    /** 按查询条件导出任务执行日志。 */
-    @SaCheckPermission(value = OpsPermission.OPS_JOB_LOG_QUERY, type = LoginType.ADMIN)
-    @GetMapping("/export")
-    public ApiResponse<List<OpsJobLogExportResp>> export(@Valid OpsJobLogPageReq req) {
-        return ApiResponse.success(logService.exportLogs(req));
     }
 
     /** 清理指定任务或全部任务的执行日志。 */

@@ -65,6 +65,7 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
 
     private final ThreadPoolTaskScheduler heartbeatScheduler;
     private ScheduledFuture<?> heartbeatTask;
+    private volatile boolean shuttingDown;
     private final ErrorReporter errorReporter;
 
     private final ConcurrentMap<String, ScheduledFuture<?>> pendingDisconnectTasks =
@@ -104,10 +105,13 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
     }
 
     /** 停止心跳定时任务（应用关闭时调用） */
-    public void stopHeartbeat() {
+    public synchronized void stopHeartbeat() {
+        shuttingDown = true;
         if (heartbeatTask != null) {
             heartbeatTask.cancel(false);
         }
+        pendingDisconnectTasks.values().forEach(task -> task.cancel(false));
+        pendingDisconnectTasks.clear();
         heartbeatScheduler.destroy();
     }
 
@@ -178,6 +182,13 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
     @Override
     public void handleTransportError(
             @NonNull WebSocketSession session, @NonNull Throwable exception) {
+        if (shuttingDown) {
+            log.debug(
+                    "[WebSocket] 停机期间连接已关闭: principal={}, sessionId={}",
+                    extractPrincipal(session),
+                    session.getId());
+            return;
+        }
         log.warn(
                 "[WebSocket] 传输错误: principal={}, sessionId={}",
                 extractPrincipal(session),
@@ -473,7 +484,10 @@ public class LocalWebSocketSessionManager extends TextWebSocketHandler
         }
     }
 
-    private void scheduleDisconnect(String principal) {
+    private synchronized void scheduleDisconnect(String principal) {
+        if (shuttingDown) {
+            return;
+        }
         cancelPendingDisconnect(principal);
         var task =
                 heartbeatScheduler.schedule(

@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.JobExecutionContext;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.HtmlUtils;
 
 /** 记录业务任务执行过程，并在执行失败时发送站内告警。 */
 @Slf4j
@@ -123,11 +124,11 @@ public class OpsQuartzExecutionObserver implements QuartzJobExecutionObserver {
                     LoginType.ADMIN,
                     "任务执行失败：" + job.getJobName(),
                     "任务处理器："
-                            + job.getHandlerName()
-                            + "\n执行日志ID："
+                            + HtmlUtils.htmlEscape(job.getHandlerName())
+                            + "<br>执行日志ID："
                             + logId
-                            + "\n异常："
-                            + throwable.getMessage(),
+                            + "<br>异常："
+                            + HtmlUtils.htmlEscape(throwable.getMessage()),
                     job.getAlertUserIds());
             var update = new OpsJobLog();
             update.setId(logId);

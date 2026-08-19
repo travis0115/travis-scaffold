@@ -4,7 +4,6 @@ import java.time.ZoneOffset;
 import java.util.TimeZone;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * 应用启动入口
@@ -12,7 +11,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * @author travis
  */
 @SpringBootApplication(scanBasePackages = {"${travis.info.base-package}"})
-@EnableScheduling
 public class MonolithServerApplication {
 
     static void main(String[] args) {

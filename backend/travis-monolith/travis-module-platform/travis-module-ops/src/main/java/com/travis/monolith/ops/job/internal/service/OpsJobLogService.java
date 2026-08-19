@@ -4,11 +4,9 @@ import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.ops.job.api.request.OpsJobLogPageReq;
 import com.travis.monolith.ops.job.api.response.OpsJobDashboardResp;
 import com.travis.monolith.ops.job.api.response.OpsJobLogDetailResp;
-import com.travis.monolith.ops.job.api.response.OpsJobLogExportResp;
 import com.travis.monolith.ops.job.api.response.OpsJobLogPageResp;
 import com.travis.monolith.ops.job.api.response.OpsJobStatsResp;
 import com.travis.monolith.ops.job.internal.entity.OpsJobLog;
-import java.util.List;
 
 /** 定时任务执行日志服务。 */
 public interface OpsJobLogService {
@@ -17,9 +15,6 @@ public interface OpsJobLogService {
 
     /** 查询执行日志详情，日志不存在时抛出业务异常。 */
     OpsJobLogDetailResp getOrThrow(Long id);
-
-    /** 按条件查询用于导出的执行日志。 */
-    List<OpsJobLogExportResp> exportLogs(OpsJobLogPageReq req);
 
     /** 清理指定任务或全部任务的执行日志。 */
     void clean(Long jobId);

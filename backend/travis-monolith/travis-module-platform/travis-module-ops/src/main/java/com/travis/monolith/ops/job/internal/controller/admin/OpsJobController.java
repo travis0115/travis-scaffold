@@ -16,17 +16,13 @@ import com.travis.monolith.ops.job.internal.service.OpsJobLogService;
 import com.travis.monolith.ops.job.internal.service.OpsJobService;
 import com.travis.monolith.system.user.api.response.SysUserOptionResp;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
-import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.List;
+import jakarta.validation.constraints.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 /** 定时任务管理接口。 */
 @RestController
@@ -133,14 +129,15 @@ public class OpsJobController {
         return ApiResponse.success(jobService.preview(req, count));
     }
 
-    /** 查询已注册的任务处理器。 */
+    /** 查询已注册的任务处理器名称及说明。 */
     @SaCheckPermission(value = OpsPermission.OPS_JOB_QUERY, type = LoginType.ADMIN)
     @GetMapping("/handlers")
-    public ApiResponse<Collection<String>> handlers() {
-        return ApiResponse.success(jobService.listHandlers());
+    public ApiResponse<List<OpsJobHandlerResp>> handlers(
+            @RequestParam(defaultValue = "false") boolean includeBuiltin) {
+        return ApiResponse.success(jobService.listHandlers(includeBuiltin));
     }
 
-    /** 查询任务负责人及告警接收人的用户选项。 */
+    /** 查询任务告警接收人的用户选项。 */
     @SaCheckPermission(value = OpsPermission.OPS_JOB_QUERY, type = LoginType.ADMIN)
     @GetMapping("/user-options")
     public ApiResponse<List<SysUserOptionResp>> userOptions(
@@ -148,25 +145,6 @@ public class OpsJobController {
                     String keyword,
             @RequestParam(required = false) List<@Positive(message = "用户ID必须为正数") Long> userIds) {
         return ApiResponse.success(jobService.listUserOptions(keyword, userIds));
-    }
-
-    /** 导出全部定时任务。 */
-    @SaCheckPermission(value = OpsPermission.OPS_JOB_QUERY, type = LoginType.ADMIN)
-    @GetMapping("/export")
-    public ApiResponse<List<OpsJobExportResp>> exportJobs() {
-        return ApiResponse.success(jobService.exportJobs());
-    }
-
-    /** 批量导入定时任务。 */
-    @SaCheckPermission(value = OpsPermission.OPS_JOB_UPDATE, type = LoginType.ADMIN)
-    @OperationLog(action = "导入任务")
-    @NoRepeatSubmit
-    @PostMapping("/import")
-    public ApiResponse<Void> importJobs(
-            @RequestBody @NotEmpty(message = "导入任务不能为空") @Size(max = 100, message = "单次最多导入100个任务")
-                    List<@Valid OpsJobImportReq> jobs) {
-        jobService.importJobs(jobs);
-        return ApiResponse.success();
     }
 
     /** 查询指定任务的执行统计。 */

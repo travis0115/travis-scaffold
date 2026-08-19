@@ -14,6 +14,7 @@ import com.travis.monolith.ops.job.api.enums.OpsJobLogStatus;
 import com.travis.monolith.ops.job.api.enums.OpsJobStatus;
 import com.travis.monolith.ops.job.api.request.OpsJobLogPageReq;
 import com.travis.monolith.ops.job.api.response.*;
+import com.travis.monolith.ops.job.internal.config.OpsJobProperties;
 import com.travis.monolith.ops.job.internal.converter.OpsJobConverter;
 import com.travis.monolith.ops.job.internal.entity.OpsJob;
 import com.travis.monolith.ops.job.internal.entity.OpsJobLog;
@@ -36,7 +37,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** 定时任务执行日志服务实现，负责日志查询、导出、清理、统计及执行结果持久化。 */
+/** 定时任务执行日志服务实现，负责日志查询、清理、统计及执行结果持久化。 */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -63,6 +64,7 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
 
     private final OpsJobService jobService;
     private final OpsJobConverter converter;
+    private final OpsJobProperties jobProperties;
 
     /** 分页查询定时任务执行日志。 */
     @Override
@@ -91,14 +93,6 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
         return converter.toLogDetailResp(log);
     }
 
-    /** 按筛选条件导出定时任务执行日志。 */
-    @Override
-    public List<OpsJobLogExportResp> exportLogs(OpsJobLogPageReq req) {
-        return list(buildWrapper(req).orderByDesc(OpsJobLog::getCreateTime)).stream()
-                .map(converter::toLogExportResp)
-                .toList();
-    }
-
     /** 清理指定定时任务执行日志。 */
     @Override
     @Transactional
@@ -117,13 +111,9 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
     @Transactional
     @CacheEvict(allEntries = true)
     public void cleanExpired() {
-        List<OpsJob> jobs = jobService.listAll();
-        for (OpsJob job : jobs) {
-            int retentionDays = job.getLogRetentionDays() == null ? 30 : job.getLogRetentionDays();
-            baseMapper.deleteExpiredPhysically(
-                    job.getId(), LocalDateTime.now().minusDays(retentionDays));
-            invalidateStats(job.getId());
-        }
+        baseMapper.deleteExpiredPhysicallyAll(
+                LocalDateTime.now().minusDays(jobProperties.getLogRetentionDays()));
+        invalidateStats(null);
     }
 
     /** 收敛因执行节点中断而遗留的运行中日志。 */
@@ -238,9 +228,10 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
         return new LambdaQueryWrapperX<OpsJobLog>()
                 .eqIfPresent(OpsJobLog::getJobId, req.getJobId())
                 .likeIfPresent(OpsJobLog::getJobName, req.getJobName())
+                .eqIfPresent(OpsJobLog::getHandlerName, req.getHandlerName())
                 .eqIfPresent(OpsJobLog::getStatus, req.getStatus())
-                .geIfPresent(OpsJobLog::getCreateTime, req.getStartTime())
-                .leIfPresent(OpsJobLog::getCreateTime, req.getEndTime());
+                .geIfPresent(OpsJobLog::getStartTime, req.getStartTime())
+                .leIfPresent(OpsJobLog::getStartTime, req.getEndTime());
     }
 
     /** 根据执行日志计算任务统计结果。 */

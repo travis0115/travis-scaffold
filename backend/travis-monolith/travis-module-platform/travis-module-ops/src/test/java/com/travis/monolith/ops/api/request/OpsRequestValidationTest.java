@@ -2,6 +2,7 @@ package com.travis.monolith.ops.api.request;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.travis.monolith.ops.errorlog.api.request.SysErrorLogHandleReq;
 import com.travis.monolith.ops.errorlog.api.request.SysErrorLogPageReq;
 import com.travis.monolith.ops.job.api.request.OpsJobCreateReq;
 import com.travis.monolith.ops.job.api.request.OpsJobLogPageReq;
@@ -22,9 +23,7 @@ class OpsRequestValidationTest {
             request.setConcurrent(2);
             request.setMisfirePolicy(9);
             request.setIntervalMillis(0L);
-            request.setExcludedWeekdays(List.of(0, 8));
             request.setAlertUserIds(List.of(-1L));
-            request.setOwnerUserId(0L);
 
             var messages =
                     factory.getValidator().validate(request).stream()
@@ -37,10 +36,7 @@ class OpsRequestValidationTest {
                             "并发策略值错误",
                             "错过执行策略值错误",
                             "执行间隔必须为正数",
-                            "星期值不能小于1",
-                            "星期值不能大于7",
-                            "告警用户ID必须为正数",
-                            "负责人用户ID必须为正数");
+                            "告警用户ID必须为正数");
         }
     }
 
@@ -77,6 +73,38 @@ class OpsRequestValidationTest {
                             .toList();
 
             assertThat(messages).contains("请求方式长度不能超过10个字符", "IP地址长度不能超过50个字符");
+        }
+    }
+
+    @Test
+    void shouldRejectPendingStatusWhenHandlingErrorLog() {
+        var request = new SysErrorLogHandleReq();
+        request.setStatus(0);
+        request.setRemark(" ");
+
+        try (var factory = Validation.buildDefaultValidatorFactory()) {
+            var messages =
+                    factory.getValidator().validate(request).stream()
+                            .map(violation -> violation.getMessage())
+                            .toList();
+
+            assertThat(messages).containsExactly("处理结果不正确");
+        }
+    }
+
+    @Test
+    void shouldRequireStatusAndAllowEmptyRemarkWhenHandlingErrorLog() {
+        var request = new SysErrorLogHandleReq();
+
+        try (var factory = Validation.buildDefaultValidatorFactory()) {
+            var messages =
+                    factory.getValidator().validate(request).stream()
+                            .map(violation -> violation.getMessage())
+                            .toList();
+            assertThat(messages).containsExactly("处理结果不能为空");
+
+            request.setStatus(1);
+            assertThat(factory.getValidator().validate(request)).isEmpty();
         }
     }
 }

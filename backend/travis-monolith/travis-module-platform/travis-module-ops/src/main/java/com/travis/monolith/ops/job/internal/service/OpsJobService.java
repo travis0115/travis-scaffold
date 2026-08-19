@@ -2,12 +2,11 @@ package com.travis.monolith.ops.job.internal.service;
 
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.ops.job.api.request.OpsJobCreateReq;
-import com.travis.monolith.ops.job.api.request.OpsJobImportReq;
 import com.travis.monolith.ops.job.api.request.OpsJobPageReq;
 import com.travis.monolith.ops.job.api.request.OpsJobPreviewReq;
 import com.travis.monolith.ops.job.api.request.OpsJobUpdateReq;
 import com.travis.monolith.ops.job.api.response.OpsJobDetailResp;
-import com.travis.monolith.ops.job.api.response.OpsJobExportResp;
+import com.travis.monolith.ops.job.api.response.OpsJobHandlerResp;
 import com.travis.monolith.ops.job.api.response.OpsJobPageResp;
 import com.travis.monolith.ops.job.internal.entity.OpsJob;
 import com.travis.monolith.system.user.api.response.SysUserOptionResp;
@@ -56,15 +55,10 @@ public interface OpsJobService {
     /** 预览任务接下来的计划执行时间。 */
     List<LocalDateTime> preview(OpsJobPreviewReq req, Integer count);
 
-    /** 查询当前已注册的任务处理器名称。 */
-    Collection<String> listHandlers();
+    /** 查询当前已注册的任务处理器名称及说明。 */
+    List<OpsJobHandlerResp> listHandlers(boolean includeBuiltin);
 
-    /** 查询任务负责人及告警接收人的可选用户。 */
+    /** 查询任务告警接收人的可选用户。 */
     List<SysUserOptionResp> listUserOptions(String keyword, Collection<Long> userIds);
 
-    /** 查询用于导出的全部任务。 */
-    List<OpsJobExportResp> exportJobs();
-
-    /** 批量导入并注册任务。 */
-    void importJobs(List<OpsJobImportReq> jobs);
 }

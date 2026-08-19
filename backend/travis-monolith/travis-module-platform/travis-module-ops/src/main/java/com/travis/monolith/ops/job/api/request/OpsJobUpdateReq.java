@@ -3,22 +3,18 @@ package com.travis.monolith.ops.job.api.request;
 import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.monolith.ops.job.api.enums.OpsJobConcurrentPolicy;
 import com.travis.monolith.ops.job.api.enums.OpsJobMisfirePolicy;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import lombok.Data;
 
 /** 定时任务更新参数。 */
 @Data
-public class OpsJobUpdateReq implements OpsJobWriteReq {
+public class OpsJobUpdateReq {
     /** 乐观锁版本号。 */
     @NotNull(message = "版本号不能为空")
     private Integer lockVersion;
@@ -52,14 +48,6 @@ public class OpsJobUpdateReq implements OpsJobWriteReq {
     /** 默认执行参数。 */
     private String params;
 
-    /** 参数结构定义，用于前端生成参数表单。 */
-    private String paramSchema;
-
-    /** 调度优先级，取值 1 至 10。 */
-    @Min(value = 1, message = "优先级不能小于 1")
-    @Max(value = 10, message = "优先级不能大于 10")
-    private Integer priority;
-
     /** 并发策略：0 禁止并发，1 允许并发。 */
     @NotNull(message = "并发策略不能为空")
     @EnumValue(value = OpsJobConcurrentPolicy.class, message = "并发策略值错误")
@@ -69,31 +57,8 @@ public class OpsJobUpdateReq implements OpsJobWriteReq {
     @EnumValue(value = OpsJobMisfirePolicy.class, message = "错过执行策略值错误")
     private Integer misfirePolicy;
 
-    /** 不执行任务的日期列表。 */
-    private List<LocalDate> excludedDates;
-
-    /** 不执行任务的星期列表。 */
-    private List<
-                    @Min(value = 1, message = "星期值不能小于1") @Max(value = 7, message = "星期值不能大于7")
-                    Integer>
-            excludedWeekdays;
-
-    /** 每日允许执行时间段的起点。 */
-    private LocalTime dailyStartTime;
-
-    /** 每日允许执行时间段的终点。 */
-    private LocalTime dailyEndTime;
-
     /** 执行失败时接收告警的用户 ID 列表。 */
     private List<@Positive(message = "告警用户ID必须为正数") Long> alertUserIds;
-
-    /** 任务负责人用户 ID。 */
-    @Positive(message = "负责人用户ID必须为正数")
-    private Long ownerUserId;
-
-    /** 执行日志保留天数。 */
-    @Min(value = 1, message = "日志保留天数不能小于 1")
-    private Integer logRetentionDays;
 
     /** 备注。 */
     @Size(max = 500, message = "备注长度不能超过500个字符")

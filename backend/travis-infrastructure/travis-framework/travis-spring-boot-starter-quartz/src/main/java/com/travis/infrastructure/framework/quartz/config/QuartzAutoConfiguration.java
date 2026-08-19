@@ -3,13 +3,12 @@ package com.travis.infrastructure.framework.quartz.config;
 import com.travis.infrastructure.common.monitor.error.ErrorReporter;
 import com.travis.infrastructure.framework.quartz.core.*;
 import org.quartz.Scheduler;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.quartz.autoconfigure.SchedulerFactoryBeanCustomizer;
 import org.springframework.context.annotation.Bean;
-
-import java.util.List;
 
 /** Quartz 任务处理器与 Spring JobFactory 自动配置。 */
 @AutoConfiguration
@@ -17,7 +16,8 @@ public class QuartzAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public QuartzJobHandlerRegistry quartzJobHandlerRegistry(List<QuartzJobHandler> handlers) {
+    public QuartzJobHandlerRegistry quartzJobHandlerRegistry(
+            ObjectProvider<QuartzJobHandler> handlers) {
         return new QuartzJobHandlerRegistry(handlers);
     }
 

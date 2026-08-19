@@ -11,6 +11,7 @@ import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.framework.web.core.util.ErrorRequestSnapshotter;
 import com.travis.infrastructure.framework.web.core.util.IpUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import java.io.FileNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -23,8 +24,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
-
-import java.io.FileNotFoundException;
 
 /**
  * Server 异常处理器
@@ -153,21 +152,21 @@ public class ServerExceptionHandler {
         var snapshot = requestSnapshotter.snapshot(request);
         errorReporter.report(
                 ErrorEvent.builder()
-                          .sourceType(ErrorSource.WEB)
-                          .sourceName(snapshot.controllerMethod())
-                          .userId(Convert.toLong(MDC.get(MdcKey.USER_ID)))
-                          .requestId(MDC.get(MdcKey.REQUEST_ID))
-                          .traceId(MDC.get(MdcKey.TRACE_ID))
-                          .requestUrl(ErrorReporter.truncate(request.getRequestURI(), 500))
-                          .requestMethod(request.getMethod())
-                          .requestParams(snapshot.requestParams())
-                          .exceptionClass(throwable.getClass().getName())
-                          .message(
-                                  ErrorReporter.truncate(
-                                          throwable.getMessage(),
-                                          ErrorReporter.MAX_MESSAGE_LENGTH))
-                          .stackTrace(ErrorReporter.stackTrace(throwable))
-                          .ip(IpUtil.getClientIp(request))
-                          .build());
+                        .sourceType(ErrorSource.WEB)
+                        .sourceName(snapshot.controllerMethod())
+                        .userId(Convert.toLong(MDC.get(MdcKey.USER_ID)))
+                        .username(MDC.get(MdcKey.USERNAME))
+                        .requestId(MDC.get(MdcKey.REQUEST_ID))
+                        .traceId(MDC.get(MdcKey.TRACE_ID))
+                        .requestUrl(ErrorReporter.truncate(request.getRequestURI(), 500))
+                        .requestMethod(request.getMethod())
+                        .requestParams(snapshot.requestParams())
+                        .exceptionClass(throwable.getClass().getName())
+                        .message(
+                                ErrorReporter.truncate(
+                                        throwable.getMessage(), ErrorReporter.MAX_MESSAGE_LENGTH))
+                        .stackTrace(ErrorReporter.stackTrace(throwable))
+                        .ip(IpUtil.getClientIp(request))
+                        .build());
     }
 }

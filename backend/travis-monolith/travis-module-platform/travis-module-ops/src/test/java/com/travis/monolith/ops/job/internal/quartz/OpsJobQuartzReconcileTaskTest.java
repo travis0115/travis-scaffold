@@ -43,4 +43,24 @@ class OpsJobQuartzReconcileTaskTest {
         verify(quartzJobManager).reconcile(List.of());
         verify(jobLogService).markInterruptedExecutions();
     }
+
+    @Test
+    void shouldExposeReconcileAsOpsJobHandler() {
+        OpsJobService jobService = mock(OpsJobService.class);
+        OpsJobLogService jobLogService = mock(OpsJobLogService.class);
+        QuartzJobManager quartzJobManager = mock(QuartzJobManager.class);
+        var task =
+                new OpsJobQuartzReconcileTask(
+                        jobService,
+                        jobLogService,
+                        quartzJobManager,
+                        mock(ClusterPeriodicTaskExecutor.class),
+                        mock(ErrorReporter.class));
+        when(jobService.listAll()).thenReturn(List.of());
+
+        task.execute("{}");
+
+        verify(quartzJobManager).reconcile(List.of());
+        verify(jobLogService).markInterruptedExecutions();
+    }
 }

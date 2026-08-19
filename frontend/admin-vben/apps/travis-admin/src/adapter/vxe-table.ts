@@ -23,6 +23,8 @@ import { getDictOptions } from '#/utils/dict';
 
 import { useVbenForm } from './form';
 
+const QUERY_OPERATION_CODES = new Set(['detail', 'preview', 'stats', 'view']);
+
 setupVbenVxeTable({
   configVxeTable: (vxeUI) => {
     vxeUI.setConfig({
@@ -283,13 +285,22 @@ setupVbenVxeTable({
             return optBtn;
           })
           .map((opt) => {
-            if (opt.code !== 'edit' && opt.code !== 'delete' && !opt.danger) {
-              opt.style = {
-                ...opt.style,
-                color: opt.disabled
-                  ? 'var(--ant-color-text-disabled, rgba(0, 0, 0, 0.25))'
-                  : 'hsl(181 84% 32%)',
-              };
+            const operationClasses = [opt.class, 'transition-colors'];
+            if (QUERY_OPERATION_CODES.has(opt.code)) {
+              operationClasses.push(
+                'enabled:hover:!text-[hsl(181_84%_42%)]',
+              );
+            } else if (opt.danger) {
+              operationClasses.push('enabled:hover:!text-destructive-400');
+            }
+            opt.class = operationClasses;
+            if (
+              QUERY_OPERATION_CODES.has(opt.code) &&
+              !opt.danger &&
+              !opt.disabled &&
+              !opt.style?.color
+            ) {
+              opt.class = [opt.class, '!text-[hsl(181_84%_32%)]'];
             }
             return opt;
           })
@@ -300,7 +311,7 @@ setupVbenVxeTable({
             Button,
             {
               ...props,
-              ...objectOmit(opt, ['popconfirm']),
+              ...objectOmit(opt, ['breakBefore', 'popconfirm']),
               icon: undefined,
               onClick: listen
                 ? () =>
@@ -340,7 +351,7 @@ setupVbenVxeTable({
                 popconfirm?.title ??
                 $t('ui.actionTitle.delete', [attrs?.nameTitle || '']),
               ...props,
-              ...objectOmit(opt, ['popconfirm']),
+              ...objectOmit(opt, ['breakBefore', 'popconfirm']),
               icon: undefined,
               onOpenChange: (open: boolean) => {
                 if (open) {
@@ -371,13 +382,34 @@ setupVbenVxeTable({
           );
         }
 
-        const btns = operations.map((opt) =>
+        const breakIndex = operations.findIndex((opt) => opt.breakBefore);
+        const shouldWrap = breakIndex > 0;
+        const renderOperation = (opt: Recordable<any>) =>
           (opt.code === 'delete' && opt.popconfirm !== false) || opt.popconfirm
             ? renderConfirm(opt)
-            : renderBtn(opt),
-        );
-        if (btns.length === 0) {
+            : renderBtn(opt);
+        if (operations.length === 0) {
           return h('span', {}, '-');
+        }
+        if (shouldWrap) {
+          const rows = [
+            operations.slice(0, breakIndex),
+            operations.slice(breakIndex),
+          ];
+          return h(
+            'div',
+            {
+              class: 'flex flex-col gap-1 table-operations',
+              style: { alignItems: align },
+            },
+            rows.map((operationRow) =>
+              h(
+                'div',
+                { class: 'flex', style: { justifyContent: align } },
+                operationRow.map(renderOperation),
+              ),
+            ),
+          );
         }
         return h(
           'div',
@@ -385,7 +417,7 @@ setupVbenVxeTable({
             class: 'flex table-operations',
             style: { justifyContent: align },
           },
-          btns,
+          operations.map(renderOperation),
         );
       },
     });

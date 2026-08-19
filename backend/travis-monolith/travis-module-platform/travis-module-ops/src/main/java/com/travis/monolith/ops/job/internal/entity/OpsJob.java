@@ -34,32 +34,20 @@ public class OpsJob extends BaseEntity {
     /** 默认执行参数。 */
     private String params;
 
-    /** 参数结构定义。 */
-    private String paramSchema;
-
-    /** 调度优先级。 */
-    private Integer priority;
-
     /** 并发策略。 */
     private Integer concurrent;
 
     /** 错过执行策略。 */
     private Integer misfirePolicy;
 
-    /** 序列化后的任务日历配置。 */
-    private String calendarConfig;
-
     /** 序列化后的告警接收用户 ID 列表。 */
     private String alertUserIds;
 
-    /** 任务负责人用户 ID。 */
-    private Long ownerUserId;
-
-    /** 执行日志保留天数。 */
-    private Integer logRetentionDays;
-
     /** 任务状态。 */
     private Integer status;
+
+    /** 是否为系统内置任务（0-否 1-是）。 */
+    private Integer isBuiltin;
 
     /** 备注。 */
     private String remark;

@@ -175,6 +175,9 @@ sa-token:
 travis:
   info:
     base-package: com.travis.monolith
+  ops:
+    job:
+      log-retention-days: ${OPS_JOB_LOG_RETENTION_DAYS:30}
   redis:
     key-prefix: ${spring.application.name}
   web:
