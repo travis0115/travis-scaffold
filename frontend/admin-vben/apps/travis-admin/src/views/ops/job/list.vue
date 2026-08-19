@@ -7,6 +7,7 @@ import type {
 import type { OpsJobApi } from '#/api';
 
 import { computed, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 import { Page, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
@@ -39,6 +40,8 @@ const runTarget = ref<OpsJobApi.Job>();
 const runParams = ref('{}');
 const statsTarget = ref<OpsJobApi.Job>();
 const stats = ref<OpsJobApi.Stats>();
+const router = useRouter();
+const canQueryJobLog = hasAccessCode(OPS_PERMS.jobLogQuery);
 
 const executionStatusOptions = getDictOptions(JOB_EXECUTION_STATUS_DICT);
 const statsTrend = computed(() =>
@@ -135,6 +138,13 @@ function onJobAction({ code, row }: OnActionClickParams<OpsJobApi.Job>) {
   if (code === 'stats') openStats(row);
 }
 
+function openJobLog(row: OpsJobApi.Job) {
+  void router.push({
+    path: '/ops/job/log',
+    query: { jobName: row.jobName, pageKey: '/ops/job/log' },
+  });
+}
+
 async function onStatusChange(value: number, row: OpsJobApi.Job) {
   await changeJobStatus(row.id, value);
   message.success(`任务已${getDictLabel('status', value)}`);
@@ -192,6 +202,12 @@ async function openStats(row: OpsJobApi.Job) {
   <Page auto-content-height>
     <FormDrawer @success="gridApi.query" />
     <Grid table-title="任务管理">
+      <template #jobName="{ row }">
+        <Button v-if="canQueryJobLog" type="link" @click="openJobLog(row)">
+          {{ row.jobName }}
+        </Button>
+        <template v-else>{{ row.jobName }}</template>
+      </template>
       <template #toolbar-tools>
         <Space>
           <Button

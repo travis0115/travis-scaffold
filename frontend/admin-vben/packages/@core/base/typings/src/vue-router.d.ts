@@ -48,7 +48,8 @@ interface RouteMeta {
    */
   domCached?: boolean;
   /**
-   * 路由的完整路径作为key（默认true）
+   * 是否使用路由完整路径作为标签页 key
+   * @default false
    */
   fullPathKey?: boolean;
   /**

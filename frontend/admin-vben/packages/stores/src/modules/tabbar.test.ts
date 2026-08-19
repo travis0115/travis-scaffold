@@ -47,9 +47,7 @@ describe('useAccessStore', () => {
     const store = useTabbarStore();
     const initialTab: any = {
       fullPath: '/existing',
-      meta: {
-        fullPathKey: false,
-      },
+      meta: {},
       name: 'Existing',
       path: '/existing',
       query: {},
@@ -59,6 +57,24 @@ describe('useAccessStore', () => {
     store.addTab(updatedTab);
     expect(store.tabs.length).toBe(1);
     expect(store.tabs[0]?.query).toEqual({ id: '1' });
+  });
+
+  it('adds separate tabs when fullPathKey is enabled', () => {
+    const store = useTabbarStore();
+    const initialTab: any = {
+      fullPath: '/details?id=1',
+      meta: { fullPathKey: true },
+      name: 'Details',
+      path: '/details',
+      query: { id: '1' },
+    };
+    store.addTab(initialTab);
+    store.addTab({
+      ...initialTab,
+      fullPath: '/details?id=2',
+      query: { id: '2' },
+    });
+    expect(store.tabs.length).toBe(2);
   });
 
   it('closes all tabs', async () => {

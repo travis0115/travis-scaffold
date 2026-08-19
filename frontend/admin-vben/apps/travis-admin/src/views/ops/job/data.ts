@@ -263,7 +263,12 @@ export function useJobColumns(
     row.isBuiltin === 1;
 
   return [
-    { field: 'jobName', minWidth: 180, title: '任务名称' },
+    {
+      field: 'jobName',
+      minWidth: 180,
+      slots: { default: 'jobName' },
+      title: '任务名称',
+    },
     {
       cellRender: {
         attrs: { dictCode: 'sys_config_type' },

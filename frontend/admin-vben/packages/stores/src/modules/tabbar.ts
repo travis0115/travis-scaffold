@@ -724,7 +724,7 @@ function getTabKey(tab: RouteLocationNormalized | RouteRecordNormalized) {
   if (pageKey) {
     rawKey = pageKey;
   } else {
-    rawKey = fullPathKey === false ? path : (fullPath ?? path);
+    rawKey = fullPathKey === true ? (fullPath ?? path) : path;
   }
   try {
     return decodeURIComponent(rawKey);

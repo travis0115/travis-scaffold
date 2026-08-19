@@ -5,7 +5,8 @@ import type {
 } from '#/adapter/vxe-table';
 import type { OpsJobApi } from '#/api';
 
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 
 import { Page, useVbenModal, confirm as vbenConfirm } from '@vben/common-ui';
 import { formatDateTime } from '@vben/utils';
@@ -38,6 +39,11 @@ import {
 
 const detail = ref<OpsJobApi.JobLog>();
 const executionStatusOptions = getDictOptions(JOB_EXECUTION_STATUS_DICT);
+const route = useRoute();
+const routeJobName = computed(() => {
+  const value = route.query.jobName;
+  return (Array.isArray(value) ? value[0] : value) || '';
+});
 
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
@@ -48,6 +54,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     columns: useLogColumns(onActionClick),
     height: 'auto',
     proxyConfig: {
+      autoLoad: !routeJobName.value,
       ajax: {
         query: ({ page }, values) =>
           getJobLogPage({
@@ -63,6 +70,11 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 onMounted(async () => {
+  if (routeJobName.value) {
+    await gridApi.formApi.setFieldValue('jobName', routeJobName.value);
+    await gridApi.query();
+  }
+
   const handlers = await getJobHandlers(true);
   gridApi.formApi.updateSchema([
     {
@@ -80,6 +92,12 @@ onMounted(async () => {
       fieldName: 'handlerName',
     },
   ]);
+});
+
+watch(routeJobName, async (jobName) => {
+  if (route.path !== '/ops/job/log') return;
+  await gridApi.formApi.setFieldValue('jobName', jobName || undefined);
+  await gridApi.query();
 });
 
 const [DetailModal, detailModalApi] = useVbenModal({
