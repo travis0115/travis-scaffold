@@ -5,7 +5,7 @@ import com.travis.monolith.ops.job.api.request.OpsJobCreateReq;
 import com.travis.monolith.ops.job.api.request.OpsJobPageReq;
 import com.travis.monolith.ops.job.api.request.OpsJobPreviewReq;
 import com.travis.monolith.ops.job.api.request.OpsJobUpdateReq;
-import com.travis.monolith.ops.job.api.response.OpsJobDetailResp;
+import com.travis.monolith.ops.job.api.response.OpsJobResp;
 import com.travis.monolith.ops.job.api.response.OpsJobHandlerResp;
 import com.travis.monolith.ops.job.api.response.OpsJobPageResp;
 import com.travis.monolith.ops.job.internal.entity.OpsJob;
@@ -20,10 +20,10 @@ public interface OpsJobService {
     PageResp<OpsJobPageResp> page(OpsJobPageReq req);
 
     /** 查询任务详情，任务不存在时抛出业务异常。 */
-    OpsJobDetailResp getOrThrow(Long id);
+    OpsJobResp getOrThrow(Long id);
 
     /** 查询任务详情，任务不存在时返回 {@code null}。 */
-    OpsJobDetailResp find(Long id);
+    OpsJobResp find(Long id);
 
     /** 查询全部任务实体，供调度器初始化使用。 */
     List<OpsJob> listAll();

@@ -5,7 +5,7 @@ import com.travis.monolith.ops.job.api.enums.OpsJobMisfirePolicy;
 import com.travis.monolith.ops.job.api.request.OpsJobCreateReq;
 import com.travis.monolith.ops.job.api.request.OpsJobPreviewReq;
 import com.travis.monolith.ops.job.api.request.OpsJobUpdateReq;
-import com.travis.monolith.ops.job.api.response.OpsJobDetailResp;
+import com.travis.monolith.ops.job.api.response.OpsJobResp;
 import com.travis.monolith.ops.job.api.response.OpsJobLogDetailResp;
 import com.travis.monolith.ops.job.api.response.OpsJobLogPageResp;
 import com.travis.monolith.ops.job.api.response.OpsJobPageResp;
@@ -61,7 +61,7 @@ public interface OpsJobConverter {
     @Mapping(target = "handlerAvailable", ignore = true)
     @Mapping(target = "nextFireTime", ignore = true)
     @Mapping(target = "alertUserIds", qualifiedByName = "parseIds")
-    OpsJobDetailResp toDetailResp(OpsJob job);
+    OpsJobResp toDetailResp(OpsJob job);
 
     /** 将调度预览参数转换为临时任务实体。 */
     OpsJob toPreviewEntity(OpsJobPreviewReq req);

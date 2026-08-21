@@ -2,7 +2,7 @@ package com.travis.monolith.ops.job.internal.service;
 
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
-import com.travis.monolith.ops.job.api.OpsJobErrorCode;
+import com.travis.monolith.ops.common.api.enums.OpsErrorCode;
 
 /** 校验定时任务 JSON 参数。 */
 public final class OpsJobParamValidator {
@@ -19,6 +19,6 @@ public final class OpsJobParamValidator {
     }
 
     private static BizException invalid(String message) {
-        return new BizException(OpsJobErrorCode.INVALID_PARAMS, message);
+        return new BizException(OpsErrorCode.INVALID_PARAMS, message);
     }
 }

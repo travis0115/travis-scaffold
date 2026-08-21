@@ -8,7 +8,7 @@ import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
-import com.travis.monolith.ops.errorlog.api.OpsErrorLogErrorCode;
+import com.travis.monolith.ops.common.api.enums.OpsErrorCode;
 import com.travis.monolith.ops.errorlog.api.enums.SysErrorLogHandleStatus;
 import com.travis.monolith.ops.errorlog.api.request.SysErrorLogHandleReq;
 import com.travis.monolith.ops.errorlog.api.request.SysErrorLogPageReq;
@@ -131,7 +131,7 @@ public class SysErrorLogServiceImpl extends ServiceImplX<SysErrorLogMapper, SysE
     public void handle(Long id, SysErrorLogHandleReq req) {
         var errorLog = getRequired(id);
         if (!SysErrorLogHandleStatus.PENDING.getValue().equals(errorLog.getStatus())) {
-            throw new BizException(OpsErrorLogErrorCode.LOG_ALREADY_HANDLED);
+            throw new BizException(OpsErrorCode.ERROR_LOG_ALREADY_HANDLED);
         }
         var remark = req.getRemark();
         int updated =
@@ -142,7 +142,7 @@ public class SysErrorLogServiceImpl extends ServiceImplX<SysErrorLogMapper, SysE
                         LocalDateTime.now(),
                         remark == null || remark.isBlank() ? null : remark.trim());
         if (updated == 0) {
-            throw new BizException(OpsErrorLogErrorCode.LOG_ALREADY_HANDLED);
+            throw new BizException(OpsErrorCode.ERROR_LOG_ALREADY_HANDLED);
         }
     }
 
@@ -170,7 +170,7 @@ public class SysErrorLogServiceImpl extends ServiceImplX<SysErrorLogMapper, SysE
     private SysErrorLog getRequired(Long id) {
         var errorLog = getById(id);
         if (errorLog == null) {
-            throw new BizException(OpsErrorLogErrorCode.LOG_NOT_FOUND);
+            throw new BizException(OpsErrorCode.ERROR_LOG_NOT_FOUND);
         }
         return errorLog;
     }

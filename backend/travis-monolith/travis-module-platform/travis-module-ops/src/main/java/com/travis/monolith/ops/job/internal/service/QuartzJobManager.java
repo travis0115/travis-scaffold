@@ -5,7 +5,7 @@ import com.travis.infrastructure.framework.quartz.core.NonConcurrentQuartzDispat
 import com.travis.infrastructure.framework.quartz.core.QuartzDispatchJob;
 import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
 import com.travis.infrastructure.framework.redis.core.annotation.DistributedLockNamespace;
-import com.travis.monolith.ops.job.api.OpsJobErrorCode;
+import com.travis.monolith.ops.common.api.enums.OpsErrorCode;
 import com.travis.monolith.ops.job.api.enums.OpsJobConcurrentPolicy;
 import com.travis.monolith.ops.job.api.enums.OpsJobMisfirePolicy;
 import com.travis.monolith.ops.job.api.enums.OpsJobStatus;
@@ -214,7 +214,7 @@ public class QuartzJobManager {
                                             job.getExecuteAt()
                                                     .atZone(ZoneId.systemDefault())
                                                     .toInstant()));
-            default -> throw new BizException(OpsJobErrorCode.INVALID_SCHEDULE, "不支持的调度类型");
+            default -> throw new BizException(OpsErrorCode.INVALID_SCHEDULE, "不支持的调度类型");
         }
         return builder.build();
     }
@@ -227,7 +227,7 @@ public class QuartzJobManager {
         if ("CRON".equals(job.getScheduleType())) {
             if (job.getCronExpression() == null
                     || !org.quartz.CronExpression.isValidExpression(job.getCronExpression())) {
-                throw new BizException(OpsJobErrorCode.INVALID_SCHEDULE, "Cron 表达式不合法");
+                throw new BizException(OpsErrorCode.INVALID_SCHEDULE, "Cron 表达式不合法");
             }
             CronScheduleBuilder builder = CronScheduleBuilder.cronSchedule(job.getCronExpression());
             if (OpsJobMisfirePolicy.IGNORE.getValue().equals(policy)) {
@@ -242,7 +242,7 @@ public class QuartzJobManager {
         }
         if ("INTERVAL".equals(job.getScheduleType())) {
             if (job.getIntervalMillis() == null || job.getIntervalMillis() <= 0) {
-                throw new BizException(OpsJobErrorCode.INVALID_SCHEDULE, "固定间隔必须大于 0");
+                throw new BizException(OpsErrorCode.INVALID_SCHEDULE, "固定间隔必须大于 0");
             }
             SimpleScheduleBuilder builder =
                     SimpleScheduleBuilder.simpleSchedule()
@@ -260,7 +260,7 @@ public class QuartzJobManager {
         }
         if ("ONCE".equals(job.getScheduleType())) {
             if (job.getExecuteAt() == null) {
-                throw new BizException(OpsJobErrorCode.INVALID_SCHEDULE, "单次任务必须指定执行时间");
+                throw new BizException(OpsErrorCode.INVALID_SCHEDULE, "单次任务必须指定执行时间");
             }
             SimpleScheduleBuilder builder =
                     SimpleScheduleBuilder.simpleSchedule().withRepeatCount(0);
@@ -329,6 +329,6 @@ public class QuartzJobManager {
         if (exception instanceof BizException bizException) {
             return bizException;
         }
-        return new BizException(OpsJobErrorCode.SCHEDULER_ERROR, exception, exception.getMessage());
+        return new BizException(OpsErrorCode.SCHEDULER_ERROR, exception, exception.getMessage());
     }
 }

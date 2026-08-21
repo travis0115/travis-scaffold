@@ -1,69 +1,160 @@
-<p style="text-align: center">
- <img src="https://img.shields.io/badge/Spring%20Boot-4.0.1-blue.svg" alt="Spring Boot">
- <img src="https://img.shields.io/badge/JDK-25-blue.svg" alt="JDK">
- <img src="https://img.shields.io/badge/Vue-3-blue.svg" alt="Vue">
- <img src="https://img.shields.io/github/license/YunaiV/ruoyi-vue-pro" alt="License"/>
+# Travis Scaffold
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Spring%20Boot-4.1.0-6DB33F.svg" alt="Spring Boot 4.1.0">
+  <img src="https://img.shields.io/badge/JDK-25-007396.svg" alt="JDK 25">
+  <img src="https://img.shields.io/badge/Vue-3-42B883.svg" alt="Vue 3">
+  <img src="https://img.shields.io/github/license/travis0115/travis-scaffold" alt="License">
 </p>
 
-## 💻 项目外包
+Travis Scaffold 是一个面向业务系统快速开发的前后端脚手架。后端采用 Spring Boot + Spring Modulith 的模块化单体架构，前端基于 Vue 3、Vite 和 Vben Admin，提供系统管理、运维治理、认证、缓存、消息、调度、文件和实时通信等可复用能力。
 
-独立开发者，前阿里工程师，APP/小程序/H5，「远程兼职」&「定制开发」接单中。
+项目强调明确的模块边界和公共入口：开发新功能前，先复用已有 starter、基础类、业务 API、事件和前端公共组件，避免在业务模块中重复封装。
 
-如果你有项目想要外包，可以微信联系【<span style="color: #FF5733;">**travis0115_**</span>】
+## 核心能力
 
-## 🐣 项目简介
+### 后端基础设施
 
-一款单体多模块架构脚手架，基于 Spring Boot 4，提供一套开箱即用的快速开发解决方案。
+- 统一响应、分页、业务异常、国际化和参数校验；
+- MyBatis-Plus 基类、审计字段、逻辑删除、分页和安全拦截；
+- Jackson/JSON、Redis、Spring Cache、Redisson 分布式锁；
+- Sa-Token + JWT 多登录体系，支持 admin/app；
+- WebMVC API 前缀、CORS、防重复提交和富文本清洗；
+- WebSocket ticket、点对点推送、命名空间和 Redis 集群广播；
+- Spring Modulith 事件、事务提交后处理和 RocketMQ；
+- Quartz JDBC 集群调度、后台动态任务和业务一次性任务；
+- 访问日志、操作日志、结构化日志和统一错误上报；
+- DTO、JSON、参数和日志数据脱敏。
 
-* Java 后端：`master` 分支为 JDK 25 + Spring Boot 4.0.1
-* //TODO
+### 业务模块
 
-##  🐳 项目关系
+- 系统管理：用户、角色、菜单、部门、字典、参数配置；
+- 文件管理：文件夹、存储配置、本地上传、引用保护、富文本图片；
+- 内容发布：公告、版本发布及客户端查询；
+- 消息中心：模板、站内信、定时推送、撤回、收件箱和未读数；
+- 运维管理：Quartz 任务、执行日志、错误聚合和处理闭环；
+- 管理端：动态路由、权限、表单、VXE Grid、字典和公共操作组件。
 
-### 后端项目
+完整能力边界见 [项目能力总览](docs/project-overview.md)。
 
-| 项目                                                               | Star                                                                                                                                                          | 简介                     |
-|------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------|
-| [travis-monolith](https://github.com/travis0115/travis-scaffold/tree/main/backend/monolith) | [![GitHub stars](https://img.shields.io/github/stars/travis0115/travis-scaffold.svg?style=social&label=Stars)](https://github.com/travis0115/travis-scaffold) | 基于 Spring Boot 多模块单体架构 |
-| [travis-cloud](https://github.com/travis0115/travis-scaffold)    | //TODO                                                                                                                                                        | 基于 Spring Cloud 微服务架构  |
+## 项目结构
 
-### 前端项目
-//TODO
+```text
+travis-scaffold/
+├── backend/
+│   ├── travis-dependencies/        # 全局依赖 BOM
+│   ├── travis-infrastructure/      # common 与自定义 Spring Boot starters
+│   └── travis-monolith/
+│       ├── travis-module-app/      # app 端接口与适配
+│       ├── travis-module-platform/ # system、ops 等平台模块
+│       └── travis-server/          # 启动、配置和数据库迁移
+├── frontend/
+│   └── admin-vben/
+│       ├── apps/travis-admin/      # 管理端应用
+│       └── packages/               # Vben workspace 共享包
+└── docs/                            # 项目使用文档
+```
 
-### 系统功能
-//TODO
+后端跨模块调用只能依赖目标模块公开的 `api`、`event` 或 `@NamedInterface`，不要直接引用其他模块的 `internal` 实现。
 
-## 🐨 技术栈
+## 环境要求
 
-### 模块
+| 工具 | 要求 |
+| --- | --- |
+| JDK | 25 |
+| Maven | 3.9+ |
+| Node.js | `>=22.18.0` |
+| pnpm | `>=11.0.0`，项目指定 `pnpm@11.2.2` |
+| Docker / Compose | 用于本地 MySQL、Redis、RocketMQ |
 
-| 项目                    | 说明              |
-|-----------------------|-----------------|
-| `travis-dependencies`  | Maven 依赖版本管理    |
-| `travis-framework`     | 框架整合扩展          |
-| `travis-server`        | 启动模块            |
-| `travis-module-system` | 系统功能的 Module 模块 |
-//TODO
+## 快速开始
 
-### 框架
+当前 Compose 与 dev 默认配置在 MySQL 库名、宿主机端口和 8080 端口占用上存在需要对齐的地方。请直接按照 [快速开始](docs/getting-started.md) 配置，不建议只执行 `docker compose up` 后猜测连接参数。
 
-| 框架                                                                                          | 说明               | 版本      |
-|---------------------------------------------------------------------------------------------|------------------|---------|
-| [Spring Boot](https://spring.io/projects/spring-boot)                                       | 应用开发框架           | 4.0.1   |
-| [MySQL](https://www.mysql.com/cn/)                                                          | 数据库服务器           | 9.0+    |
-| [Druid](https://github.com/alibaba/druid)                                                   | JDBC 连接池、监控组件    | 1.2.9   |
-| [MyBatis Plus](https://mp.baomidou.com/)                                                    | MyBatis 增强工具包    | 3.5.15  |
-| [Redis](https://redis.io/)                                                                  | key-value 数据库    | 7.0     |
-| [Redisson](https://github.com/redisson/redisson)                                            | Redis 客户端        | 4.1.0   |
-| [Spring MVC](https://github.com/spring-projects/spring-framework/tree/master/spring-webmvc) | MVC 框架           | 4.0.1   |
-| [Spring Security](https://github.com/spring-projects/spring-security)                       | Spring 安全框架      | 4.0.1   |
-| [Hibernate Validator](https://github.com/hibernate/hibernate-validator)                     | 参数校验组件           | 9.0.1.Final   |
-| [Springdoc](https://springdoc.org/)                                                         | Swagger 文档       | 3.0.0   |
-| [Jackson](https://github.com/FasterXML/jackson)                                             | JSON 工具库         | 2.13.5  |
-| [MapStruct](https://mapstruct.org/)                                                         | Java Bean 转换     | 1.6.3   |
-| [JUnit](https://junit.org/junit5/)                                                          | Java 单元测试框架      | 5.8.2   |
-| [Mockito](https://github.com/mockito/mockito)                                               | Java Mock 框架     | 4.8.0   |
-//TODO
+准备完成后，常用启动命令如下：
 
-## 🐷 演示图
-//TODO
+```bash
+# 后端
+cd backend/travis-monolith
+mvn spring-boot:run -pl travis-server
+
+# 管理端
+cd frontend/admin-vben
+pnpm install
+pnpm dev:travis-admin
+```
+
+## 文档
+
+所有文档从 [文档总入口](docs/README.md) 开始。
+
+| 我想了解 | 文档 |
+| --- | --- |
+| 第一次如何启动 | [快速开始](docs/getting-started.md) |
+| 如何部署双实例、HTTPS、备份和滚动升级 | [生产部署](docs/production-deployment.md) |
+| 项目能做什么、已有封装有哪些 | [项目能力总览](docs/project-overview.md) |
+| 后端模块、starter、yml 和业务接入 | [后端文档](docs/backend/README.md) |
+| 前端配置与页面开发约定 | [前端文档](docs/frontend/README.md) |
+
+## 常用命令
+
+### 后端
+
+```bash
+cd backend/travis-monolith
+
+mvn clean compile -DskipTests
+mvn test
+mvn spotless:check
+```
+
+基础设施模块变更后先安装：
+
+```bash
+cd backend/travis-dependencies
+mvn clean install -DskipTests
+
+cd ../travis-infrastructure
+mvn clean install -DskipTests
+```
+
+### 前端
+
+```bash
+cd frontend/admin-vben
+
+pnpm dev:travis-admin
+pnpm check:type
+pnpm lint
+pnpm test:unit
+pnpm build:travis-admin
+```
+
+前端只使用 pnpm，不要使用 npm 或 yarn 重写 lockfile。
+
+## 主要技术栈
+
+| 领域 | 技术 |
+| --- | --- |
+| 模块化后端 | Spring Boot 4.1.0、Spring Modulith 2.1.0、JDK 25 |
+| 数据访问 | MyBatis-Plus、Druid、MySQL、Flyway |
+| 认证与权限 | Sa-Token、JWT |
+| 缓存与并发 | Redis、Redisson、Spring Cache |
+| 消息与实时通信 | RocketMQ、WebSocket |
+| 调度与治理 | Quartz JDBC、Actuator、结构化日志 |
+| 管理端 | Vue 3、Vite、Vben Admin、Ant Design Vue、VXE Grid |
+| 工程化 | Maven、pnpm workspace、Turbo、Spotless、ESLint、Lefthook |
+
+## 开发约定
+
+- 新增封装前先搜索已有工具类、starter、公共 API 和相似调用点；
+- Controller 使用统一响应、校验、错误码和后端权限校验；
+- 数据库变更只新增迁移脚本，不修改已经发布或执行的历史脚本；
+- 前后端字段契约一起核对，前端隐藏不是安全边界；
+- 文档需要同步说明新增的公共类、配置项、starter 和业务接入方式。
+
+详细约定见 [后端模块开发](docs/backend/module-development.md) 和 [管理端开发约定](docs/frontend/development.md)。
+
+## License
+
+本项目基于 [LICENSE](LICENSE) 中的许可协议发布。

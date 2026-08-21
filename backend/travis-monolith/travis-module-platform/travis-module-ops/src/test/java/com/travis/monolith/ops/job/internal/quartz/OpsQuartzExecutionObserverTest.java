@@ -7,7 +7,7 @@ import static org.mockito.Mockito.when;
 
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.framework.quartz.core.QuartzDispatchJob;
-import com.travis.monolith.ops.job.api.response.OpsJobDetailResp;
+import com.travis.monolith.ops.job.api.response.OpsJobResp;
 import com.travis.monolith.ops.job.internal.service.OpsJobLogService;
 import com.travis.monolith.ops.job.internal.service.OpsJobService;
 import com.travis.monolith.system.message.api.SysMessageApi;
@@ -54,7 +54,7 @@ class OpsQuartzExecutionObserverTest {
         var observer = new OpsQuartzExecutionObserver(jobService, logService, messageApi);
         JobExecutionContext context = context(true);
         when(context.get("opsJobLogId")).thenReturn(2001L);
-        var job = new OpsJobDetailResp();
+        var job = new OpsJobResp();
         job.setJobName("测试任务");
         job.setHandlerName("<handler>");
         job.setAlertUserIds(List.of(1L));

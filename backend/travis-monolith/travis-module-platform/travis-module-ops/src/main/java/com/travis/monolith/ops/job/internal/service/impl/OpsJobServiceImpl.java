@@ -9,10 +9,10 @@ import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.quartz.core.QuartzJobHandlerRegistry;
-import com.travis.monolith.ops.job.api.OpsJobErrorCode;
+import com.travis.monolith.ops.common.api.enums.OpsErrorCode;
 import com.travis.monolith.ops.job.api.enums.OpsJobStatus;
 import com.travis.monolith.ops.job.api.request.*;
-import com.travis.monolith.ops.job.api.response.OpsJobDetailResp;
+import com.travis.monolith.ops.job.api.response.OpsJobResp;
 import com.travis.monolith.ops.job.api.response.OpsJobHandlerResp;
 import com.travis.monolith.ops.job.api.response.OpsJobPageResp;
 import com.travis.monolith.ops.job.internal.converter.OpsJobConverter;
@@ -102,14 +102,14 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
 
     /** 查询指定定时任务，不存在时抛出业务异常。 */
     @Override
-    public OpsJobDetailResp getOrThrow(Long id) {
+    public OpsJobResp getOrThrow(Long id) {
         OpsJob job = getRequired(id);
         return enrichResponse(converter.toDetailResp(job), job);
     }
 
     /** 查询指定定时任务，不存在时返回空结果。 */
     @Override
-    public OpsJobDetailResp find(Long id) {
+    public OpsJobResp find(Long id) {
         OpsJob job = super.getById(id);
         return job == null
                 ? null
@@ -273,28 +273,28 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
                         .map(SysUserOptionResp::getId)
                         .collect(Collectors.toSet());
         if (!allowedUserIds.containsAll(userIds)) {
-            throw new BizException(OpsJobErrorCode.USER_OUT_OF_SCOPE);
+            throw new BizException(OpsErrorCode.USER_OUT_OF_SCOPE);
         }
     }
 
     /** 校验定时任务处理器是否已注册。 */
     private void ensureHandlerExists(String handlerName) {
         if (!handlerRegistry.contains(handlerName)) {
-            throw new BizException(OpsJobErrorCode.HANDLER_NOT_FOUND, handlerName);
+            throw new BizException(OpsErrorCode.HANDLER_NOT_FOUND, handlerName);
         }
     }
 
     /** 校验处理器没有被系统内置任务保留。 */
     private void ensureNotBuiltinHandler(String handlerName) {
         if (handlerRegistry.isBuiltin(handlerName)) {
-            throw new BizException(OpsJobErrorCode.BUILTIN_HANDLER_RESERVED, handlerName);
+            throw new BizException(OpsErrorCode.BUILTIN_HANDLER_RESERVED, handlerName);
         }
     }
 
     /** 校验任务不是由系统维护的内置任务。 */
     private void ensureNotBuiltin(OpsJob job) {
         if (Objects.equals(job.getIsBuiltin(), BUILTIN)) {
-            throw new BizException(OpsJobErrorCode.BUILTIN_NOT_MODIFIABLE);
+            throw new BizException(OpsErrorCode.BUILTIN_NOT_MODIFIABLE);
         }
     }
 
@@ -330,7 +330,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
     private OpsJob getRequired(Long id) {
         OpsJob job = getById(id);
         if (job == null) {
-            throw new BizException(OpsJobErrorCode.JOB_NOT_FOUND);
+            throw new BizException(OpsErrorCode.JOB_NOT_FOUND);
         }
         return job;
     }
@@ -338,12 +338,12 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
     /** 更新调度任务，检测并发覆盖。 */
     private void updateOrThrow(OpsJob job) {
         if (!updateById(job)) {
-            throw new BizException(OpsJobErrorCode.CONCURRENT_UPDATE);
+            throw new BizException(OpsErrorCode.CONCURRENT_UPDATE);
         }
     }
 
     /** 补充定时任务响应中的展示信息。 */
-    private OpsJobDetailResp enrichResponse(OpsJobDetailResp response, OpsJob job) {
+    private OpsJobResp enrichResponse(OpsJobResp response, OpsJob job) {
         response.setHandlerAvailable(handlerRegistry.contains(job.getHandlerName()));
         response.setNextFireTime(quartzJobManager.nextFireTime(job.getId()));
         return response;

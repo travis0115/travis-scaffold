@@ -9,7 +9,7 @@ import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.redis.core.util.RedisUtil;
-import com.travis.monolith.ops.job.api.OpsJobErrorCode;
+import com.travis.monolith.ops.common.api.enums.OpsErrorCode;
 import com.travis.monolith.ops.job.api.enums.OpsJobLogStatus;
 import com.travis.monolith.ops.job.api.enums.OpsJobStatus;
 import com.travis.monolith.ops.job.api.request.OpsJobLogPageReq;
@@ -88,7 +88,7 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
     public OpsJobLogDetailResp getOrThrow(Long id) {
         OpsJobLog log = getById(id);
         if (log == null) {
-            throw new BizException(OpsJobErrorCode.LOG_NOT_FOUND);
+            throw new BizException(OpsErrorCode.JOB_LOG_NOT_FOUND);
         }
         return converter.toLogDetailResp(log);
     }

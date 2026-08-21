@@ -45,7 +45,7 @@ public class OpsJobController {
     /** 查询定时任务详情。 */
     @SaCheckPermission(value = OpsPermission.OPS_JOB_QUERY, type = LoginType.ADMIN)
     @GetMapping("/{id:\\d+}")
-    public ApiResponse<OpsJobDetailResp> get(
+    public ApiResponse<OpsJobResp> get(
             @PathVariable @Positive(message = "任务ID必须为正数") Long id) {
         return ApiResponse.success(jobService.getOrThrow(id));
     }

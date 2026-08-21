@@ -4,7 +4,7 @@ import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.framework.quartz.core.QuartzDispatchJob;
 import com.travis.infrastructure.framework.quartz.core.QuartzJobExecutionObserver;
 import com.travis.monolith.ops.job.api.enums.OpsJobLogStatus;
-import com.travis.monolith.ops.job.api.response.OpsJobDetailResp;
+import com.travis.monolith.ops.job.api.response.OpsJobResp;
 import com.travis.monolith.ops.job.internal.entity.OpsJobLog;
 import com.travis.monolith.ops.job.internal.service.OpsJobLogService;
 import com.travis.monolith.ops.job.internal.service.OpsJobService;
@@ -34,7 +34,7 @@ public class OpsQuartzExecutionObserver implements QuartzJobExecutionObserver {
     @Override
     public void beforeExecution(JobExecutionContext context) {
         Long jobId = context.getMergedJobDataMap().getLong(QuartzDispatchJob.DATA_JOB_ID);
-        OpsJobDetailResp job = jobService.find(jobId);
+        OpsJobResp job = jobService.find(jobId);
         if (job == null) {
             return;
         }
@@ -115,7 +115,7 @@ public class OpsQuartzExecutionObserver implements QuartzJobExecutionObserver {
 
     /** 向任务配置的告警接收人发布失败通知。 */
     private void publishFailure(Long jobId, Long logId, Throwable throwable) {
-        OpsJobDetailResp job = jobService.find(jobId);
+        OpsJobResp job = jobService.find(jobId);
         if (job == null || job.getAlertUserIds() == null || job.getAlertUserIds().isEmpty()) {
             return;
         }
