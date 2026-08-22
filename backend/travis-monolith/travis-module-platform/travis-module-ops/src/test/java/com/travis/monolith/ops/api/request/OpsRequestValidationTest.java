@@ -6,6 +6,7 @@ import com.travis.monolith.ops.errorlog.api.request.SysErrorLogHandleReq;
 import com.travis.monolith.ops.errorlog.api.request.SysErrorLogPageReq;
 import com.travis.monolith.ops.job.api.request.OpsJobCreateReq;
 import com.travis.monolith.ops.job.api.request.OpsJobLogPageReq;
+import com.travis.monolith.ops.job.api.request.OpsJobPreviewReq;
 import jakarta.validation.Validation;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,12 +32,26 @@ class OpsRequestValidationTest {
                             .toList();
 
             assertThat(messages)
-                    .contains(
-                            "调度类型错误",
-                            "并发策略值错误",
-                            "错过执行策略值错误",
-                            "执行间隔必须为正数",
-                            "告警用户ID必须为正数");
+                    .contains("调度类型错误", "并发策略值错误", "错过执行策略值错误", "执行间隔必须为正数", "告警用户ID必须为正数");
+        }
+    }
+
+    @Test
+    void shouldRequireScheduleSpecificFields() {
+        var createRequest = new OpsJobCreateReq();
+        createRequest.setJobName("job");
+        createRequest.setHandlerName("handler");
+        createRequest.setScheduleType("CRON");
+        createRequest.setConcurrent(0);
+        var previewRequest = new OpsJobPreviewReq();
+        previewRequest.setScheduleType("ONCE");
+
+        try (var factory = Validation.buildDefaultValidatorFactory()) {
+            var validator = factory.getValidator();
+            assertThat(validator.validate(createRequest))
+                    .anyMatch(violation -> "调度参数与调度类型不匹配".equals(violation.getMessage()));
+            assertThat(validator.validate(previewRequest))
+                    .anyMatch(violation -> "调度参数与调度类型不匹配".equals(violation.getMessage()));
         }
     }
 

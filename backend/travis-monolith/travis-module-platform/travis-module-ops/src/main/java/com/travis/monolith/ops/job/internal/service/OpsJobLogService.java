@@ -1,15 +1,17 @@
 package com.travis.monolith.ops.job.internal.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.ops.job.api.request.OpsJobLogPageReq;
-import com.travis.monolith.ops.job.api.response.OpsJobDashboardResp;
 import com.travis.monolith.ops.job.api.response.OpsJobLogDetailResp;
 import com.travis.monolith.ops.job.api.response.OpsJobLogPageResp;
 import com.travis.monolith.ops.job.api.response.OpsJobStatsResp;
 import com.travis.monolith.ops.job.internal.entity.OpsJobLog;
+import java.util.Collection;
+import java.util.Map;
 
 /** 定时任务执行日志服务。 */
-public interface OpsJobLogService {
+public interface OpsJobLogService extends IService<OpsJobLog> {
     /** 分页查询任务执行日志。 */
     PageResp<OpsJobLogPageResp> page(OpsJobLogPageReq req);
 
@@ -28,9 +30,6 @@ public interface OpsJobLogService {
     /** 统计指定任务的执行情况。 */
     OpsJobStatsResp stats(Long jobId);
 
-    /** 汇总任务调度看板数据。 */
-    OpsJobDashboardResp dashboard();
-
     /** 新增任务执行日志。 */
     void saveExecution(OpsJobLog log);
 
@@ -39,4 +38,7 @@ public interface OpsJobLogService {
 
     /** 使指定任务的执行统计缓存失效。 */
     void invalidateStats(Long jobId);
+
+    /** 批量查询各任务最近一次执行日志。 */
+    Map<Long, OpsJobLog> latestByJobIds(Collection<Long> jobIds);
 }

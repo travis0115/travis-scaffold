@@ -3,6 +3,7 @@ package com.travis.monolith.ops.job.api.request;
 import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.monolith.ops.job.api.enums.OpsJobConcurrentPolicy;
 import com.travis.monolith.ops.job.api.enums.OpsJobMisfirePolicy;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -63,4 +64,18 @@ public class OpsJobUpdateReq {
     /** 备注。 */
     @Size(max = 500, message = "备注长度不能超过500个字符")
     private String remark;
+
+    /** 调度类型对应的必要配置必须存在。 */
+    @AssertTrue(message = "调度参数与调度类型不匹配")
+    public boolean isScheduleConfigValid() {
+        if (scheduleType == null) {
+            return true;
+        }
+        return switch (scheduleType) {
+            case "CRON" -> cronExpression != null && !cronExpression.isBlank();
+            case "INTERVAL" -> intervalMillis != null;
+            case "ONCE" -> executeAt != null;
+            default -> true;
+        };
+    }
 }

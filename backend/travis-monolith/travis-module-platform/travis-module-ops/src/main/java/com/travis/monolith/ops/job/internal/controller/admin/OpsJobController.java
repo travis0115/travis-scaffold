@@ -12,17 +12,18 @@ import com.travis.monolith.ops.common.api.OpsPermission;
 import com.travis.monolith.ops.job.api.enums.OpsJobStatus;
 import com.travis.monolith.ops.job.api.request.*;
 import com.travis.monolith.ops.job.api.response.*;
+import com.travis.monolith.ops.job.internal.service.OpsJobDashboardService;
 import com.travis.monolith.ops.job.internal.service.OpsJobLogService;
+import com.travis.monolith.ops.job.internal.service.OpsJobScheduleValidator;
 import com.travis.monolith.ops.job.internal.service.OpsJobService;
 import com.travis.monolith.system.user.api.response.SysUserOptionResp;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 /** 定时任务管理接口。 */
 @RestController
@@ -34,6 +35,7 @@ public class OpsJobController {
 
     private final OpsJobService jobService;
     private final OpsJobLogService logService;
+    private final OpsJobDashboardService dashboardService;
 
     /** 分页查询定时任务。 */
     @SaCheckPermission(value = OpsPermission.OPS_JOB_QUERY, type = LoginType.ADMIN)
@@ -45,8 +47,7 @@ public class OpsJobController {
     /** 查询定时任务详情。 */
     @SaCheckPermission(value = OpsPermission.OPS_JOB_QUERY, type = LoginType.ADMIN)
     @GetMapping("/{id:\\d+}")
-    public ApiResponse<OpsJobResp> get(
-            @PathVariable @Positive(message = "任务ID必须为正数") Long id) {
+    public ApiResponse<OpsJobResp> get(@PathVariable @Positive(message = "任务ID必须为正数") Long id) {
         return ApiResponse.success(jobService.getOrThrow(id));
     }
 
@@ -124,7 +125,7 @@ public class OpsJobController {
             @RequestBody @Valid OpsJobPreviewReq req,
             @RequestParam(defaultValue = "5")
                     @Min(value = 1, message = "预览数量不能小于1")
-                    @Max(value = 100, message = "预览数量不能大于100")
+                    @Max(value = OpsJobScheduleValidator.MAX_PREVIEW_COUNT, message = "预览数量不能大于20")
                     Integer count) {
         return ApiResponse.success(jobService.preview(req, count));
     }
@@ -159,6 +160,6 @@ public class OpsJobController {
     @SaCheckPermission(value = OpsPermission.OPS_JOB_QUERY, type = LoginType.ADMIN)
     @GetMapping("/dashboard")
     public ApiResponse<OpsJobDashboardResp> dashboard() {
-        return ApiResponse.success(logService.dashboard());
+        return ApiResponse.success(dashboardService.dashboard());
     }
 }

@@ -5,20 +5,19 @@ import com.travis.monolith.ops.job.api.enums.OpsJobMisfirePolicy;
 import com.travis.monolith.ops.job.api.request.OpsJobCreateReq;
 import com.travis.monolith.ops.job.api.request.OpsJobPreviewReq;
 import com.travis.monolith.ops.job.api.request.OpsJobUpdateReq;
-import com.travis.monolith.ops.job.api.response.OpsJobResp;
-import com.travis.monolith.ops.job.api.response.OpsJobLogDetailResp;
-import com.travis.monolith.ops.job.api.response.OpsJobLogPageResp;
 import com.travis.monolith.ops.job.api.response.OpsJobPageResp;
+import com.travis.monolith.ops.job.api.response.OpsJobResp;
 import com.travis.monolith.ops.job.internal.entity.OpsJob;
-import com.travis.monolith.ops.job.internal.entity.OpsJobLog;
-import java.util.List;
-import java.util.stream.Collectors;
+import com.travis.monolith.ops.job.internal.model.OpsJobExecutionConfig;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
 
-/** 定时任务及执行日志对象转换器。 */
+import java.util.List;
+import java.util.stream.Collectors;
+
+/** 定时任务对象转换器。 */
 @Mapper(config = BaseMapperConfig.class)
 public interface OpsJobConverter {
 
@@ -66,11 +65,9 @@ public interface OpsJobConverter {
     /** 将调度预览参数转换为临时任务实体。 */
     OpsJob toPreviewEntity(OpsJobPreviewReq req);
 
-    /** 将执行日志实体转换为分页响应。 */
-    OpsJobLogPageResp toLogPageResp(OpsJobLog log);
-
-    /** 将执行日志实体转换为详情响应。 */
-    OpsJobLogDetailResp toLogDetailResp(OpsJobLog log);
+    /** 将任务实体转换为执行观察器所需配置。 */
+    @Mapping(target = "alertUserIds", qualifiedByName = "parseIds")
+    OpsJobExecutionConfig toExecutionConfig(OpsJob job);
 
     /** 将用户 ID 列表序列化为逗号分隔字符串。 */
     @Named("serializeIds")

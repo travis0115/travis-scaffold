@@ -37,7 +37,7 @@ public class OpsJobQuartzReconcileTask implements QuartzJobHandler {
                     QuartzJobManager.RECONCILE_LOCK_KEY,
                     RECONCILE_INTERVAL,
                     () -> {
-                        quartzJobManager.reconcile(jobService.listAll());
+                        quartzJobManager.reconcile(jobService.list());
                         jobLogService.markInterruptedExecutions();
                     });
         } catch (Exception exception) {
@@ -72,7 +72,7 @@ public class OpsJobQuartzReconcileTask implements QuartzJobHandler {
     }
 
     private void reconcile() {
-        quartzJobManager.reconcile(jobService.listAll());
+        quartzJobManager.reconcile(jobService.list());
         jobLogService.markInterruptedExecutions();
     }
 }

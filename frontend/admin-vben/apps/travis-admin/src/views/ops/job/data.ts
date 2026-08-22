@@ -417,7 +417,7 @@ export const useLogGridFormSchema = (): VbenFormSchema[] => [
 ];
 
 export function useLogColumns(
-  onActionClick: OnActionClickFn<OpsJobApi.JobLog>,
+  onActionClick: OnActionClickFn<OpsJobApi.JobLogPage>,
 ): VxeTableGridColumns {
   return [
     { field: 'jobName', minWidth: 180, title: '任务名称' },

@@ -29,7 +29,7 @@ class OpsJobQuartzReconcileTaskTest {
                         quartzJobManager,
                         periodicTaskExecutor,
                         mock(ErrorReporter.class));
-        when(jobService.listAll()).thenReturn(List.of());
+        when(jobService.list()).thenReturn(List.of());
         doAnswer(
                         invocation -> {
                             invocation.<Runnable>getArgument(3).run();
@@ -56,7 +56,7 @@ class OpsJobQuartzReconcileTaskTest {
                         quartzJobManager,
                         mock(ClusterPeriodicTaskExecutor.class),
                         mock(ErrorReporter.class));
-        when(jobService.listAll()).thenReturn(List.of());
+        when(jobService.list()).thenReturn(List.of());
 
         task.execute("{}");
 

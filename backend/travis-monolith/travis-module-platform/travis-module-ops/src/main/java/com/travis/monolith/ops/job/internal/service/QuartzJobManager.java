@@ -167,7 +167,11 @@ public class QuartzJobManager {
             Trigger trigger = buildTrigger(job, configFingerprint(job));
             List<LocalDateTime> result = new ArrayList<>();
             Date next = trigger.getFireTimeAfter(new Date(System.currentTimeMillis() - 1000));
-            while (next != null && result.size() < Math.min(Math.max(count, 1), 20)) {
+            while (next != null
+                    && result.size()
+                            < Math.min(
+                                    Math.max(count, 1),
+                                    OpsJobScheduleValidator.MAX_PREVIEW_COUNT)) {
                 result.add(toLocalDateTime(next));
                 next = trigger.getFireTimeAfter(next);
             }
@@ -220,15 +224,12 @@ public class QuartzJobManager {
     }
 
     private ScheduleBuilder<?> buildSchedule(OpsJob job) {
+        OpsJobScheduleValidator.validate(job);
         int policy =
                 job.getMisfirePolicy() == null
                         ? OpsJobMisfirePolicy.SMART.getValue()
                         : job.getMisfirePolicy();
         if ("CRON".equals(job.getScheduleType())) {
-            if (job.getCronExpression() == null
-                    || !org.quartz.CronExpression.isValidExpression(job.getCronExpression())) {
-                throw new BizException(OpsErrorCode.INVALID_SCHEDULE, "Cron 表达式不合法");
-            }
             CronScheduleBuilder builder = CronScheduleBuilder.cronSchedule(job.getCronExpression());
             if (OpsJobMisfirePolicy.IGNORE.getValue().equals(policy)) {
                 return builder.withMisfireHandlingInstructionIgnoreMisfires();
@@ -241,9 +242,6 @@ public class QuartzJobManager {
                     : builder;
         }
         if ("INTERVAL".equals(job.getScheduleType())) {
-            if (job.getIntervalMillis() == null || job.getIntervalMillis() <= 0) {
-                throw new BizException(OpsErrorCode.INVALID_SCHEDULE, "固定间隔必须大于 0");
-            }
             SimpleScheduleBuilder builder =
                     SimpleScheduleBuilder.simpleSchedule()
                             .withIntervalInMilliseconds(job.getIntervalMillis())
@@ -259,9 +257,6 @@ public class QuartzJobManager {
                     : builder;
         }
         if ("ONCE".equals(job.getScheduleType())) {
-            if (job.getExecuteAt() == null) {
-                throw new BizException(OpsErrorCode.INVALID_SCHEDULE, "单次任务必须指定执行时间");
-            }
             SimpleScheduleBuilder builder =
                     SimpleScheduleBuilder.simpleSchedule().withRepeatCount(0);
             if (OpsJobMisfirePolicy.IGNORE.getValue().equals(policy)) {

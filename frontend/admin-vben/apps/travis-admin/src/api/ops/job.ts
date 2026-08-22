@@ -32,26 +32,28 @@ export namespace OpsJobApi {
     status: 0 | 1;
   }
 
-  export interface JobLog {
+  export interface JobLogPage {
     [key: string]: any;
-    alertStatus: number;
-    createTime: string;
     durationMillis?: number;
     endTime?: string;
-    exceptionClass?: string;
-    exceptionMessage?: string;
-    fireInstanceId?: string;
     handlerName: string;
     id: number;
     jobId: number;
     jobName: string;
+    schedulerInstanceId?: string;
+    startTime?: string;
+    status: number;
+  }
+
+  export interface JobLogDetail extends JobLogPage {
+    createTime: string;
+    exceptionClass?: string;
+    exceptionMessage?: string;
+    fireInstanceId?: string;
     paramsSnapshot?: string;
     resultMessage?: string;
     scheduledFireTime?: string;
-    schedulerInstanceId?: string;
     stackTrace?: string;
-    startTime?: string;
-    status: number;
   }
 
   export interface Handler {
@@ -132,11 +134,11 @@ const getJobStats = (id: number) =>
 const getJobDashboard = () =>
   requestClient.get<OpsJobApi.Dashboard>('/ops/job/dashboard');
 const getJobLogPage = (params: Recordable<any>) =>
-  requestClient.get<PageResp<OpsJobApi.JobLog>>('/ops/job-log/page', {
+  requestClient.get<PageResp<OpsJobApi.JobLogPage>>('/ops/job-log/page', {
     params,
   });
 const getJobLogDetail = (id: number) =>
-  requestClient.get<OpsJobApi.JobLog>(`/ops/job-log/${id}`);
+  requestClient.get<OpsJobApi.JobLogDetail>(`/ops/job-log/${id}`);
 const cleanJobLogs = (jobId?: number) =>
   requestClient.delete('/ops/job-log/clean', { params: { jobId } });
 

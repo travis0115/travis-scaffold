@@ -3,7 +3,7 @@ package com.travis.monolith.ops.job.api.response;
 import java.time.LocalDate;
 import java.util.List;
 
-/** 指定时间范围内的任务执行统计。 */
+/** 基于当前保留执行日志计算的任务统计。 */
 public record OpsJobStatsResp(
         /** 执行总数。 */
         long total,

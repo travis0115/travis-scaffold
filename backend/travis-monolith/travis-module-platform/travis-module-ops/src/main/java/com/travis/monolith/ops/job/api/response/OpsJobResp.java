@@ -1,9 +1,8 @@
 package com.travis.monolith.ops.job.api.response;
 
-import lombok.Data;
-
 import java.time.LocalDateTime;
 import java.util.List;
+import lombok.Data;
 
 /** 定时任务详情响应。 */
 @Data

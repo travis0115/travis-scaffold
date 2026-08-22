@@ -19,7 +19,6 @@ import com.travis.monolith.ops.job.api.response.OpsJobPageResp;
 import com.travis.monolith.ops.job.internal.converter.OpsJobConverter;
 import com.travis.monolith.ops.job.internal.entity.OpsJob;
 import com.travis.monolith.ops.job.internal.entity.OpsJobLog;
-import com.travis.monolith.ops.job.internal.mapper.OpsJobLogMapper;
 import com.travis.monolith.ops.job.internal.mapper.OpsJobMapper;
 import com.travis.monolith.ops.job.internal.service.impl.OpsJobServiceImpl;
 import com.travis.monolith.system.user.api.SysUserApi;
@@ -119,10 +118,7 @@ class OpsJobServiceImplTest {
                 .hasMessageContaining("系统内置调度任务不允许修改");
         assertThatThrownBy(() -> service.delete(1001L)).hasMessageContaining("系统内置调度任务不允许修改");
         assertThatThrownBy(() -> service.copy(1001L)).hasMessageContaining("系统内置调度任务不允许修改");
-        assertThatThrownBy(
-                        () ->
-                                service.changeStatus(
-                                        1001L, OpsJobStatus.DISABLED.getValue()))
+        assertThatThrownBy(() -> service.changeStatus(1001L, OpsJobStatus.DISABLED.getValue()))
                 .hasMessageContaining("系统内置调度任务不允许修改");
     }
 
@@ -138,7 +134,8 @@ class OpsJobServiceImplTest {
                         registry,
                         mock(SysUserApi.class),
                         mock(OpsJobConverter.class),
-                        mock(OpsJobLogMapper.class));
+                        mock(OpsJobLogService.class),
+                        mock(OpsJobDashboardService.class));
         ReflectionTestUtils.setField(service, "baseMapper", mock(OpsJobMapper.class));
 
         assertThatThrownBy(() -> service.create(request))
@@ -150,7 +147,7 @@ class OpsJobServiceImplTest {
         OpsJobMapper mapper = mock(OpsJobMapper.class);
         SysUserApi userApi = mock(SysUserApi.class);
         OpsJobConverter converter = mock(OpsJobConverter.class);
-        OpsJobLogMapper jobLogMapper = mock(OpsJobLogMapper.class);
+        OpsJobLogService jobLogService = mock(OpsJobLogService.class);
         OpsJob job = job();
         job.setIsBuiltin(1);
         job.setCreateBy(1L);
@@ -161,7 +158,8 @@ class OpsJobServiceImplTest {
                         mock(QuartzJobHandlerRegistry.class),
                         userApi,
                         converter,
-                        jobLogMapper);
+                        jobLogService,
+                        mock(OpsJobDashboardService.class));
         ReflectionTestUtils.setField(service, "baseMapper", mapper);
         when(mapper.page(anyInt(), anyInt(), any(LambdaQueryWrapperX.class)))
                 .thenReturn(new Page<OpsJob>().setRecords(List.of(job)).setTotal(1));
@@ -171,8 +169,8 @@ class OpsJobServiceImplTest {
         latestLog.setJobId(job.getId());
         latestLog.setStartTime(LocalDateTime.of(2026, 8, 16, 19, 0));
         latestLog.setStatus(1);
-        when(jobLogMapper.selectLatestByJobIds(List.of(job.getId())))
-                .thenReturn(List.of(latestLog));
+        when(jobLogService.latestByJobIds(List.of(job.getId())))
+                .thenReturn(Map.of(job.getId(), latestLog));
 
         var result = service.page(new OpsJobPageReq());
 
@@ -191,7 +189,8 @@ class OpsJobServiceImplTest {
                         registry,
                         mock(SysUserApi.class),
                         mock(OpsJobConverter.class),
-                        mock(OpsJobLogMapper.class));
+                        mock(OpsJobLogService.class),
+                        mock(OpsJobDashboardService.class));
         ReflectionTestUtils.setField(service, "baseMapper", mapper);
         return service;
     }
@@ -206,6 +205,8 @@ class OpsJobServiceImplTest {
         job.setId(1001L);
         job.setHandlerName("testHandler");
         job.setStatus(OpsJobStatus.DISABLED.getValue());
+        job.setScheduleType("INTERVAL");
+        job.setIntervalMillis(1000L);
         return job;
     }
 }

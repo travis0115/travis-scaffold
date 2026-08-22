@@ -11,22 +11,22 @@ import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.redis.core.util.RedisUtil;
 import com.travis.monolith.ops.common.api.enums.OpsErrorCode;
 import com.travis.monolith.ops.job.api.enums.OpsJobLogStatus;
-import com.travis.monolith.ops.job.api.enums.OpsJobStatus;
 import com.travis.monolith.ops.job.api.request.OpsJobLogPageReq;
 import com.travis.monolith.ops.job.api.response.*;
 import com.travis.monolith.ops.job.internal.config.OpsJobProperties;
-import com.travis.monolith.ops.job.internal.converter.OpsJobConverter;
-import com.travis.monolith.ops.job.internal.entity.OpsJob;
+import com.travis.monolith.ops.job.internal.converter.OpsJobLogConverter;
 import com.travis.monolith.ops.job.internal.entity.OpsJobLog;
 import com.travis.monolith.ops.job.internal.mapper.OpsJobLogMapper;
+import com.travis.monolith.ops.job.internal.service.OpsJobDashboardService;
 import com.travis.monolith.ops.job.internal.service.OpsJobLogService;
-import com.travis.monolith.ops.job.internal.service.OpsJobService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -48,9 +48,6 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
     /** 单个任务执行统计的 Redis 键前缀。 */
     private static final String STATS_KEY_PREFIX = "ops:job:stats:";
 
-    /** 任务调度看板的 Redis 键。 */
-    private static final String DASHBOARD_KEY = "ops:job:dashboard";
-
     /** 执行统计缓存有效期，默认十分钟。 */
     private static final long CACHE_MILLIS = TimeUnit.MINUTES.toMillis(10);
 
@@ -62,24 +59,34 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
                     "startTime", OpsJobLog::getStartTime,
                     "createTime", OpsJobLog::getCreateTime);
 
-    private final OpsJobService jobService;
-    private final OpsJobConverter converter;
+    private final OpsJobLogConverter converter;
     private final OpsJobProperties jobProperties;
+    private final OpsJobDashboardService dashboardService;
 
     /** 分页查询定时任务执行日志。 */
     @Override
     public PageResp<OpsJobLogPageResp> page(OpsJobLogPageReq req) {
+        var wrapper = buildWrapper(req);
+        wrapper.select(
+                OpsJobLog::getId,
+                OpsJobLog::getJobId,
+                OpsJobLog::getJobName,
+                OpsJobLog::getHandlerName,
+                OpsJobLog::getSchedulerInstanceId,
+                OpsJobLog::getStartTime,
+                OpsJobLog::getEndTime,
+                OpsJobLog::getDurationMillis,
+                OpsJobLog::getStatus);
         Page<OpsJobLog> page =
                 page(
                         new Page<>(req.getPageNum(), req.getPageSize()),
-                        buildWrapper(req)
-                                .orderByAllowed(
-                                        req.getOrderBy(),
-                                        req.getAsc(),
-                                        SORT_COLUMNS,
-                                        false,
-                                        OpsJobLog::getCreateTime));
-        return PageConverter.toResp(page.convert(converter::toLogPageResp));
+                        wrapper.orderByAllowed(
+                                req.getOrderBy(),
+                                req.getAsc(),
+                                SORT_COLUMNS,
+                                false,
+                                OpsJobLog::getCreateTime));
+        return PageConverter.toResp(page.convert(converter::toPageResp));
     }
 
     /** 查询指定定时任务执行日志，不存在时抛出业务异常。 */
@@ -90,7 +97,7 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
         if (log == null) {
             throw new BizException(OpsErrorCode.JOB_LOG_NOT_FOUND);
         }
-        return converter.toLogDetailResp(log);
+        return converter.toDetailResp(log);
     }
 
     /** 清理指定定时任务执行日志。 */
@@ -133,45 +140,10 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
         if (cached instanceof String value) {
             return JsonUtil.parseObject(value, OpsJobStatsResp.class);
         }
-        List<OpsJobLog> logs =
-                list(
-                        new LambdaQueryWrapperX<OpsJobLog>()
-                                .eq(OpsJobLog::getJobId, jobId)
-                                .orderByAsc(OpsJobLog::getCreateTime));
+        List<OpsJobLog> logs = list(statsWrapper(jobId));
         OpsJobStatsResp stats = calculateStats(logs);
         setCache(key, stats);
         return stats;
-    }
-
-    /** 汇总定时任务仪表盘数据。 */
-    @Override
-    public OpsJobDashboardResp dashboard() {
-        Object cached = getCache(DASHBOARD_KEY);
-        if (cached instanceof String value) {
-            return JsonUtil.parseObject(value, OpsJobDashboardResp.class);
-        }
-        long totalJobs = jobService.countJobs(null);
-        long enabledJobs = jobService.countJobs(OpsJobStatus.ENABLED.getValue());
-        long executions = count();
-        long success =
-                count(
-                        new LambdaQueryWrapperX<OpsJobLog>()
-                                .eq(OpsJobLog::getStatus, OpsJobLogStatus.SUCCESS.getValue()));
-        long failed =
-                count(
-                        new LambdaQueryWrapperX<OpsJobLog>()
-                                .eq(OpsJobLog::getStatus, OpsJobLogStatus.FAILED.getValue()));
-        var response =
-                new OpsJobDashboardResp(
-                        totalJobs,
-                        enabledJobs,
-                        totalJobs - enabledJobs,
-                        executions,
-                        success,
-                        failed,
-                        executions == 0 ? 0 : success * 100.0 / executions);
-        setCache(DASHBOARD_KEY, response);
-        return response;
     }
 
     /** 保存定时任务执行日志。 */
@@ -198,7 +170,7 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
             } else {
                 RedisUtil.delete(STATS_KEY_PREFIX + jobId);
             }
-            RedisUtil.delete(DASHBOARD_KEY);
+            dashboardService.invalidate();
         } catch (RuntimeException exception) {
             log.warn("任务统计缓存失效失败, jobId={}", jobId, exception);
         }
@@ -234,6 +206,27 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
                 .leIfPresent(OpsJobLog::getStartTime, req.getEndTime());
     }
 
+    /** 批量查询各任务最近一次执行日志。 */
+    @Override
+    public Map<Long, OpsJobLog> latestByJobIds(Collection<Long> jobIds) {
+        if (jobIds == null || jobIds.isEmpty()) {
+            return Map.of();
+        }
+        return baseMapper.selectLatestByJobIds(jobIds).stream()
+                .collect(Collectors.toMap(OpsJobLog::getJobId, log -> log));
+    }
+
+    /** 构建仅查询统计必要字段的日志条件。 */
+    private LambdaQueryWrapperX<OpsJobLog> statsWrapper(Long jobId) {
+        var wrapper =
+                new LambdaQueryWrapperX<OpsJobLog>()
+                        .eq(OpsJobLog::getJobId, jobId)
+                        .orderByAsc(OpsJobLog::getCreateTime);
+        wrapper.select(
+                OpsJobLog::getStatus, OpsJobLog::getDurationMillis, OpsJobLog::getCreateTime);
+        return wrapper;
+    }
+
     /** 根据执行日志计算任务统计结果。 */
     private OpsJobStatsResp calculateStats(List<OpsJobLog> logs) {
         long total = logs.size();
@@ -248,7 +241,7 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
         List<Long> durations =
                 logs.stream()
                         .map(OpsJobLog::getDurationMillis)
-                        .filter(java.util.Objects::nonNull)
+                        .filter(Objects::nonNull)
                         .sorted()
                         .toList();
         long average =

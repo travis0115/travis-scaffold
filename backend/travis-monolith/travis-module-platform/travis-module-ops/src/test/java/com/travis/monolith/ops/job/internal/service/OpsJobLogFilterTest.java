@@ -8,7 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.monolith.ops.job.api.request.OpsJobLogPageReq;
 import com.travis.monolith.ops.job.internal.config.OpsJobProperties;
-import com.travis.monolith.ops.job.internal.converter.OpsJobConverter;
+import com.travis.monolith.ops.job.internal.converter.OpsJobLogConverter;
 import com.travis.monolith.ops.job.internal.entity.OpsJobLog;
 import com.travis.monolith.ops.job.internal.service.impl.OpsJobLogServiceImpl;
 import java.time.LocalDateTime;
@@ -29,9 +29,9 @@ class OpsJobLogFilterTest {
     void shouldFilterByHandlerAndExecutionStartTime() {
         var service =
                 new OpsJobLogServiceImpl(
-                        mock(OpsJobService.class),
-                        mock(OpsJobConverter.class),
-                        new OpsJobProperties());
+                        mock(OpsJobLogConverter.class),
+                        new OpsJobProperties(),
+                        mock(OpsJobDashboardService.class));
         var start = LocalDateTime.of(2026, 8, 19, 10, 0);
         var end = LocalDateTime.of(2026, 8, 19, 11, 0);
         var request = new OpsJobLogPageReq();

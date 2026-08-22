@@ -37,7 +37,7 @@ import {
   useLogGridFormSchema,
 } from './data';
 
-const detail = ref<OpsJobApi.JobLog>();
+const detail = ref<OpsJobApi.JobLogDetail>();
 const executionStatusOptions = getDictOptions(JOB_EXECUTION_STATUS_DICT);
 const route = useRoute();
 const routeJobName = computed(() => {
@@ -66,7 +66,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     rowConfig: { keyField: 'id' },
     toolbarConfig: { custom: true, refresh: true, search: true, zoom: true },
-  } as VxeTableGridOptions<OpsJobApi.JobLog>,
+  } as VxeTableGridOptions<OpsJobApi.JobLogPage>,
 });
 
 onMounted(async () => {
@@ -104,7 +104,9 @@ const [DetailModal, detailModalApi] = useVbenModal({
   footer: false,
 });
 
-async function onActionClick({ row }: OnActionClickParams<OpsJobApi.JobLog>) {
+async function onActionClick({
+  row,
+}: OnActionClickParams<OpsJobApi.JobLogPage>) {
   detail.value = await getJobLogDetail(row.id);
   detailModalApi.open();
 }
@@ -228,9 +230,9 @@ function onClean() {
         <template v-if="detail.stackTrace">
           <Divider title-placement="start">异常堆栈</Divider>
           <TypographyParagraph :copyable="{ text: detail.stackTrace }">
-            <pre
-              class="max-h-96 overflow-auto whitespace-pre-wrap break-all"
-            >{{ detail.stackTrace }}</pre>
+            <pre class="max-h-96 overflow-auto whitespace-pre-wrap break-all">{{
+              detail.stackTrace
+            }}</pre>
           </TypographyParagraph>
         </template>
       </template>

@@ -18,17 +18,8 @@ public class OpsJobLogPageResp {
     /** 任务处理器名称快照。 */
     private String handlerName;
 
-    /** Quartz 本次触发实例 ID。 */
-    private String fireInstanceId;
-
     /** 执行任务的调度器实例 ID。 */
     private String schedulerInstanceId;
-
-    /** 本次执行参数快照。 */
-    private String paramsSnapshot;
-
-    /** 原计划触发时间。 */
-    private LocalDateTime scheduledFireTime;
 
     /** 实际开始时间。 */
     private LocalDateTime startTime;
@@ -41,22 +32,4 @@ public class OpsJobLogPageResp {
 
     /** 执行状态。 */
     private Integer status;
-
-    /** 执行结果摘要。 */
-    private String resultMessage;
-
-    /** 异常类名。 */
-    private String exceptionClass;
-
-    /** 异常消息。 */
-    private String exceptionMessage;
-
-    /** 完整异常堆栈。 */
-    private String stackTrace;
-
-    /** 告警发送状态。 */
-    private Integer alertStatus;
-
-    /** 日志创建时间。 */
-    private LocalDateTime createTime;
 }

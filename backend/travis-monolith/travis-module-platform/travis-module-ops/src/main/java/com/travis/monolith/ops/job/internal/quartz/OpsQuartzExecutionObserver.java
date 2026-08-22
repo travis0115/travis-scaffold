@@ -3,9 +3,10 @@ package com.travis.monolith.ops.job.internal.quartz;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.framework.quartz.core.QuartzDispatchJob;
 import com.travis.infrastructure.framework.quartz.core.QuartzJobExecutionObserver;
+import com.travis.monolith.ops.job.api.enums.OpsJobAlertStatus;
 import com.travis.monolith.ops.job.api.enums.OpsJobLogStatus;
-import com.travis.monolith.ops.job.api.response.OpsJobResp;
 import com.travis.monolith.ops.job.internal.entity.OpsJobLog;
+import com.travis.monolith.ops.job.internal.model.OpsJobExecutionConfig;
 import com.travis.monolith.ops.job.internal.service.OpsJobLogService;
 import com.travis.monolith.ops.job.internal.service.OpsJobService;
 import com.travis.monolith.system.message.api.SysMessageApi;
@@ -34,14 +35,14 @@ public class OpsQuartzExecutionObserver implements QuartzJobExecutionObserver {
     @Override
     public void beforeExecution(JobExecutionContext context) {
         Long jobId = context.getMergedJobDataMap().getLong(QuartzDispatchJob.DATA_JOB_ID);
-        OpsJobResp job = jobService.find(jobId);
+        OpsJobExecutionConfig job = jobService.findExecutionConfig(jobId);
         if (job == null) {
             return;
         }
         var executionLog = new OpsJobLog();
         executionLog.setJobId(jobId);
-        executionLog.setJobName(job.getJobName());
-        executionLog.setHandlerName(job.getHandlerName());
+        executionLog.setJobName(job.jobName());
+        executionLog.setHandlerName(job.handlerName());
         executionLog.setFireInstanceId(context.getFireInstanceId());
         try {
             executionLog.setSchedulerInstanceId(context.getScheduler().getSchedulerInstanceId());
@@ -57,7 +58,7 @@ public class OpsQuartzExecutionObserver implements QuartzJobExecutionObserver {
         }
         executionLog.setStartTime(LocalDateTime.now());
         executionLog.setStatus(OpsJobLogStatus.RUNNING.getValue());
-        executionLog.setAlertStatus(0);
+        executionLog.setAlertStatus(OpsJobAlertStatus.NOT_SENT.getValue());
         logService.saveExecution(executionLog);
         context.put(CONTEXT_LOG_ID, executionLog.getId());
     }
@@ -86,7 +87,10 @@ public class OpsQuartzExecutionObserver implements QuartzJobExecutionObserver {
             executionLog.setJobId(jobId);
             executionLog.setEndTime(LocalDateTime.now());
             executionLog.setDurationMillis(durationMillis);
-            executionLog.setStatus(throwable == null ? 1 : 2);
+            executionLog.setStatus(
+                    throwable == null
+                            ? OpsJobLogStatus.SUCCESS.getValue()
+                            : OpsJobLogStatus.FAILED.getValue());
             executionLog.setResultMessage(throwable == null ? "执行成功" : "执行失败");
             if (throwable != null) {
                 executionLog.setExceptionClass(throwable.getClass().getName());
@@ -115,25 +119,25 @@ public class OpsQuartzExecutionObserver implements QuartzJobExecutionObserver {
 
     /** 向任务配置的告警接收人发布失败通知。 */
     private void publishFailure(Long jobId, Long logId, Throwable throwable) {
-        OpsJobResp job = jobService.find(jobId);
-        if (job == null || job.getAlertUserIds() == null || job.getAlertUserIds().isEmpty()) {
+        OpsJobExecutionConfig job = jobService.findExecutionConfig(jobId);
+        if (job == null || job.alertUserIds() == null || job.alertUserIds().isEmpty()) {
             return;
         }
         try {
             messageApi.publishToUsers(
                     LoginType.ADMIN,
-                    "任务执行失败：" + job.getJobName(),
+                    "任务执行失败：" + job.jobName(),
                     "任务处理器："
-                            + HtmlUtils.htmlEscape(job.getHandlerName())
+                            + HtmlUtils.htmlEscape(job.handlerName())
                             + "<br>执行日志ID："
                             + logId
                             + "<br>异常："
                             + HtmlUtils.htmlEscape(throwable.getMessage()),
-                    job.getAlertUserIds());
+                    job.alertUserIds());
             var update = new OpsJobLog();
             update.setId(logId);
             update.setJobId(jobId);
-            update.setAlertStatus(1);
+            update.setAlertStatus(OpsJobAlertStatus.SENT.getValue());
             logService.updateExecution(update);
         } catch (Exception exception) {
             log.warn("任务失败告警发送失败, jobId={}, logId={}", jobId, logId, exception);

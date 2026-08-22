@@ -54,9 +54,6 @@ public class OpsJobLogDetailResp {
     /** 完整异常堆栈。 */
     private String stackTrace;
 
-    /** 告警发送状态。 */
-    private Integer alertStatus;
-
     /** 日志创建时间。 */
     private LocalDateTime createTime;
 }

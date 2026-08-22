@@ -1,5 +1,6 @@
 package com.travis.monolith.ops.job.api.request;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
@@ -25,4 +26,18 @@ public class OpsJobPreviewReq {
 
     /** 单次任务的计划执行时间。 */
     private LocalDateTime executeAt;
+
+    /** 调度类型对应的必要配置必须存在。 */
+    @AssertTrue(message = "调度参数与调度类型不匹配")
+    public boolean isScheduleConfigValid() {
+        if (scheduleType == null) {
+            return true;
+        }
+        return switch (scheduleType) {
+            case "CRON" -> cronExpression != null && !cronExpression.isBlank();
+            case "INTERVAL" -> intervalMillis != null;
+            case "ONCE" -> executeAt != null;
+            default -> true;
+        };
+    }
 }

@@ -10,7 +10,6 @@ import com.travis.infrastructure.framework.quartz.core.QuartzJobHandlerRegistry;
 import com.travis.monolith.ops.job.api.request.OpsJobUpdateReq;
 import com.travis.monolith.ops.job.internal.converter.OpsJobConverter;
 import com.travis.monolith.ops.job.internal.entity.OpsJob;
-import com.travis.monolith.ops.job.internal.mapper.OpsJobLogMapper;
 import com.travis.monolith.ops.job.internal.mapper.OpsJobMapper;
 import com.travis.monolith.ops.job.internal.service.impl.OpsJobServiceImpl;
 import com.travis.monolith.system.user.api.SysUserApi;
@@ -39,6 +38,8 @@ class OpsJobOptimisticLockTest {
         job.setId(1L);
         job.setLockVersion(2);
         job.setStatus(0);
+        job.setScheduleType("INTERVAL");
+        job.setIntervalMillis(1000L);
         when(mapper.selectById(1L)).thenReturn(job);
         when(mapper.updateById(job)).thenReturn(0);
         var service =
@@ -47,7 +48,8 @@ class OpsJobOptimisticLockTest {
                         mock(QuartzJobHandlerRegistry.class),
                         mock(SysUserApi.class),
                         converter,
-                        mock(OpsJobLogMapper.class));
+                        mock(OpsJobLogService.class),
+                        mock(OpsJobDashboardService.class));
         ReflectionTestUtils.setField(service, "baseMapper", mapper);
         var request = new OpsJobUpdateReq();
         request.setLockVersion(1);
