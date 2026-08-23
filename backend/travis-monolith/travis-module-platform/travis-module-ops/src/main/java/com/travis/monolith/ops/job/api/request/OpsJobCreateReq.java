@@ -4,6 +4,7 @@ import com.travis.infrastructure.common.validation.annotation.EnumValue;
 import com.travis.monolith.ops.job.api.enums.OpsJobConcurrentPolicy;
 import com.travis.monolith.ops.job.api.enums.OpsJobMisfirePolicy;
 import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -36,7 +37,7 @@ public class OpsJobCreateReq {
     private String cronExpression;
 
     /** 固定间隔调度的间隔毫秒数。 */
-    @Positive(message = "执行间隔必须为正数")
+    @Min(value = 1000, message = "执行间隔不能小于1000毫秒")
     private Long intervalMillis;
 
     /** 单次任务的计划执行时间。 */
@@ -55,6 +56,7 @@ public class OpsJobCreateReq {
     private Integer misfirePolicy;
 
     /** 执行失败时接收告警的用户 ID 列表。 */
+    @Size(max = 50, message = "告警用户数量不能超过50个")
     private List<@Positive(message = "告警用户ID必须为正数") Long> alertUserIds;
 
     /** 备注。 */

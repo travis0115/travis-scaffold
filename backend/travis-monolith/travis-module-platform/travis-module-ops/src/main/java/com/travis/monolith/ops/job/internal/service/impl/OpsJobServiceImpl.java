@@ -1,6 +1,5 @@
 package com.travis.monolith.ops.job.internal.service.impl;
 
-import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.transaction.AfterCommitExecutor;
@@ -10,22 +9,24 @@ import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.quartz.core.QuartzJobHandlerRegistry;
 import com.travis.monolith.ops.common.api.enums.OpsErrorCode;
+import com.travis.monolith.ops.job.api.enums.OpsJobMisfirePolicy;
 import com.travis.monolith.ops.job.api.enums.OpsJobStatus;
-import com.travis.monolith.ops.job.api.request.*;
+import com.travis.monolith.ops.job.api.request.OpsJobCreateReq;
+import com.travis.monolith.ops.job.api.request.OpsJobPageReq;
+import com.travis.monolith.ops.job.api.request.OpsJobPreviewReq;
+import com.travis.monolith.ops.job.api.request.OpsJobUpdateReq;
 import com.travis.monolith.ops.job.api.response.OpsJobHandlerResp;
-import com.travis.monolith.ops.job.api.response.OpsJobPageResp;
 import com.travis.monolith.ops.job.api.response.OpsJobResp;
 import com.travis.monolith.ops.job.internal.converter.OpsJobConverter;
 import com.travis.monolith.ops.job.internal.entity.OpsJob;
 import com.travis.monolith.ops.job.internal.entity.OpsJobLog;
 import com.travis.monolith.ops.job.internal.mapper.OpsJobMapper;
 import com.travis.monolith.ops.job.internal.model.OpsJobExecutionConfig;
-import com.travis.monolith.ops.job.internal.service.OpsJobDashboardService;
+import com.travis.monolith.ops.job.internal.quartz.QuartzJobManager;
 import com.travis.monolith.ops.job.internal.service.OpsJobLogService;
-import com.travis.monolith.ops.job.internal.service.OpsJobParamValidator;
-import com.travis.monolith.ops.job.internal.service.OpsJobScheduleValidator;
 import com.travis.monolith.ops.job.internal.service.OpsJobService;
-import com.travis.monolith.ops.job.internal.service.QuartzJobManager;
+import com.travis.monolith.ops.job.internal.validator.OpsJobParamValidator;
+import com.travis.monolith.ops.job.internal.validator.OpsJobScheduleValidator;
 import com.travis.monolith.system.user.api.SysUserApi;
 import com.travis.monolith.system.user.api.response.SysUserOptionResp;
 import java.time.LocalDateTime;
@@ -33,6 +34,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,37 +47,26 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
 
     private static final int NOT_BUILTIN = 0;
     private static final int BUILTIN = 1;
-
-    private static final Map<String, SFunction<OpsJob, ?>> SORT_COLUMNS =
-            Map.of(
-                    "jobName", OpsJob::getJobName,
-                    "handlerName", OpsJob::getHandlerName,
-                    "status", OpsJob::getStatus,
-                    "createTime", OpsJob::getCreateTime,
-                    "updateTime", OpsJob::getUpdateTime);
+    private static final String DEFAULT_PARAMS = "{}";
+    private static final String COPY_NAME_SUFFIX = "-副本";
+    private static final int MAX_JOB_NAME_LENGTH = 120;
 
     private final QuartzJobManager quartzJobManager;
     private final QuartzJobHandlerRegistry handlerRegistry;
     private final SysUserApi userApi;
     private final OpsJobConverter converter;
     private final OpsJobLogService jobLogService;
-    private final OpsJobDashboardService dashboardService;
 
     /** 分页查询定时任务。 */
     @Override
-    public PageResp<OpsJobPageResp> page(OpsJobPageReq req) {
+    public PageResp<OpsJobResp> page(OpsJobPageReq req) {
         var wrapper =
                 new LambdaQueryWrapperX<OpsJob>()
                         .likeIfPresent(OpsJob::getJobName, req.getJobName())
-                        .likeIfPresent(OpsJob::getHandlerName, req.getHandlerName())
+                        .eqIfPresent(OpsJob::getHandlerName, req.getHandlerName())
                         .eqIfPresent(OpsJob::getScheduleType, req.getScheduleType())
                         .eqIfPresent(OpsJob::getStatus, req.getStatus())
-                        .orderByAllowed(
-                                req.getOrderBy(),
-                                req.getAsc(),
-                                SORT_COLUMNS,
-                                false,
-                                OpsJob::getCreateTime);
+                        .orderByDesc(OpsJob::getCreateTime);
         Page<OpsJob> page = page(req.getPageNum(), req.getPageSize(), wrapper);
         Map<Long, OpsJobLog> latestLogs = latestLogMap(page.getRecords());
         Map<Long, String> creatorNames =
@@ -86,7 +78,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         return PageConverter.toResp(
                 page.convert(
                         job -> {
-                            OpsJobPageResp response = converter.toPageResp(job);
+                            OpsJobResp response = converter.toResp(job);
                             response.setHandlerAvailable(
                                     handlerRegistry.contains(job.getHandlerName()));
                             response.setCreateByUsername(creatorNames.get(job.getCreateBy()));
@@ -104,7 +96,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
     @Override
     public OpsJobResp getOrThrow(Long id) {
         OpsJob job = getRequired(id);
-        return enrichResponse(converter.toDetailResp(job), job);
+        return enrichResponse(converter.toResp(job), job);
     }
 
     /** 查询执行观察器所需配置，任务不存在时返回空结果。 */
@@ -117,16 +109,17 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
     /** 创建定时任务。 */
     @Override
     @Transactional
+    @CacheEvict(cacheNames = "ops:job-dashboard", key = "'summary'")
     public void create(OpsJobCreateReq req) {
         validate(req.getHandlerName(), req.getParams());
         validateUserScope(req.getAlertUserIds());
         OpsJob job = converter.toEntity(req);
+        normalizeDefaults(job);
         OpsJobScheduleValidator.validate(job);
         job.setIsBuiltin(NOT_BUILTIN);
         job.setStatus(OpsJobStatus.DISABLED.getValue());
         save(job);
         synchronizeAfterCommit(job);
-        invalidateDashboardAfterCommit();
     }
 
     /** 更新指定定时任务。 */
@@ -138,6 +131,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         validate(req.getHandlerName(), req.getParams());
         validateUserScope(req.getAlertUserIds());
         converter.update(req, job);
+        normalizeDefaults(job);
         OpsJobScheduleValidator.validate(job);
         job.setLockVersion(req.getLockVersion());
         if (OpsJobStatus.ENABLED.getValue().equals(job.getStatus())) {
@@ -150,16 +144,21 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
     /** 删除指定定时任务。 */
     @Override
     @Transactional
+    @Caching(
+            evict = {
+                @CacheEvict(cacheNames = "ops:job-stats", key = "#id"),
+                @CacheEvict(cacheNames = "ops:job-dashboard", key = "'summary'")
+            })
     public void delete(Long id) {
         ensureNotBuiltin(getRequired(id));
         removeById(id);
         runAfterCommit(id, () -> quartzJobManager.delete(id));
-        invalidateDashboardAfterCommit();
     }
 
     /** 变更指定定时任务的状态。 */
     @Override
     @Transactional
+    @CacheEvict(cacheNames = "ops:job-dashboard", key = "'summary'")
     public void changeStatus(Long id, Integer status) {
         OpsJob job = getRequired(id);
         ensureNotBuiltin(job);
@@ -172,7 +171,6 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         }
         updateOrThrow(job);
         synchronizeAfterCommit(job);
-        invalidateDashboardAfterCommit();
     }
 
     /** 立即运行指定定时任务。 */
@@ -187,22 +185,24 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
     /** 复制指定定时任务。 */
     @Override
     @Transactional
+    @CacheEvict(cacheNames = "ops:job-dashboard", key = "'summary'")
     public void copy(Long id) {
         OpsJob source = getRequired(id);
         ensureNotBuiltin(source);
         var copy = converter.copy(source);
-        copy.setJobName(source.getJobName() + "-副本");
+        copy.setJobName(copyName(source.getJobName()));
         copy.setStatus(OpsJobStatus.DISABLED.getValue());
         copy.setIsBuiltin(NOT_BUILTIN);
+        normalizeDefaults(copy);
         OpsJobScheduleValidator.validate(copy);
         save(copy);
         synchronizeAfterCommit(copy);
-        invalidateDashboardAfterCommit();
     }
 
     /** 当前配置对应的单次计划执行结束后将任务恢复为停用状态。 */
     @Override
     @Transactional
+    @CacheEvict(cacheNames = "ops:job-dashboard", key = "'summary'")
     public void completeOnce(Long id, String configFingerprint) {
         OpsJob job = super.getById(id);
         if (job == null
@@ -213,13 +213,12 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         }
         job.setStatus(OpsJobStatus.DISABLED.getValue());
         updateById(job);
-        invalidateDashboardAfterCommit();
     }
 
     /** 预览定时任务后续执行时间。 */
     @Override
     public List<LocalDateTime> preview(OpsJobPreviewReq req, Integer count) {
-        OpsJob job = converter.toPreviewEntity(req);
+        OpsJob job = converter.toEntity(req);
         OpsJobScheduleValidator.validate(job);
         return quartzJobManager.preview(job, count == null ? 5 : count);
     }
@@ -297,14 +296,29 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
         return jobLogService.latestByJobIds(jobIds);
     }
 
+    /** 统一补充任务持久化和调度所需的默认配置。 */
+    private void normalizeDefaults(OpsJob job) {
+        if (job.getMisfirePolicy() == null) {
+            job.setMisfirePolicy(OpsJobMisfirePolicy.SMART.getValue());
+        }
+        if (job.getParams() == null || job.getParams().isBlank()) {
+            job.setParams(DEFAULT_PARAMS);
+        }
+    }
+
+    /** 生成不超过数据库字段长度的复制任务名称。 */
+    private String copyName(String sourceName) {
+        int maxSourceLength = MAX_JOB_NAME_LENGTH - COPY_NAME_SUFFIX.length();
+        String normalizedSource =
+                sourceName.length() <= maxSourceLength
+                        ? sourceName
+                        : sourceName.substring(0, maxSourceLength);
+        return normalizedSource + COPY_NAME_SUFFIX;
+    }
+
     /** 事务提交后将当前业务配置同步至 Quartz。 */
     private void synchronizeAfterCommit(OpsJob job) {
         runAfterCommit(job.getId(), () -> quartzJobManager.schedule(job));
-    }
-
-    /** 事务提交后使任务调度看板缓存失效。 */
-    private void invalidateDashboardAfterCommit() {
-        AfterCommitExecutor.execute(dashboardService::invalidate);
     }
 
     /** 在事务确认提交后执行 Quartz 操作，失败时由周期对账恢复。 */

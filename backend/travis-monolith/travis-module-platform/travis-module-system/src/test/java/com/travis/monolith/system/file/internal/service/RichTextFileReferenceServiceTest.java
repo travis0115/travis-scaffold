@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.travis.monolith.system.file.api.ManagedFileReferenceParser;
+import com.travis.monolith.system.file.internal.service.impl.RichTextFileReferenceServiceImpl;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,7 @@ class RichTextFileReferenceServiceTest {
     void shouldRecognizeNonCanonicalFileReferenceAndNormalizeIt() {
         var fileService = mock(SysFileService.class);
         when(fileService.getFileUrlMapByIds(anyCollection())).thenReturn(Map.of(12L, "/a.png"));
-        var service = new RichTextFileReferenceService(fileService);
+        var service = new RichTextFileReferenceServiceImpl(fileService);
         var html = "<p>x</p><IMG DATA-FILE-ID = '12' src=\"/temporary.png\">";
 
         var normalized = service.stripManagedImageSources(html);
@@ -31,7 +32,7 @@ class RichTextFileReferenceServiceTest {
         var fileService = mock(SysFileService.class);
         when(fileService.getFileUrlMapByIds(anyCollection()))
                 .thenReturn(Map.of(1L, "/1.png", 2L, "/2.png"));
-        var service = new RichTextFileReferenceService(fileService);
+        var service = new RichTextFileReferenceServiceImpl(fileService);
 
         var result =
                 service.resolveManagedImageSources(

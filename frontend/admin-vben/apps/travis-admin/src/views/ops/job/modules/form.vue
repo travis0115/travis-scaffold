@@ -3,11 +3,7 @@ import type { OpsJobApi } from '#/api';
 
 import { computed, reactive, ref } from 'vue';
 
-import {
-  confirm as vbenConfirm,
-  useVbenDrawer,
-  useVbenModal,
-} from '@vben/common-ui';
+import { confirm, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 
 import { useDebounceFn } from '@vueuse/core';
 import {
@@ -134,7 +130,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
     const selectedUserIds = detail?.alertUserIds || [];
     const [initialUsers, selectedUsers] = await Promise.all([
       getJobUserOptions(),
-      selectedUserIds.length
+      selectedUserIds.length > 0
         ? getJobUserOptions({ userIds: selectedUserIds.join(',') })
         : Promise.resolve([]),
     ]);
@@ -167,7 +163,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
         concurrent: 0,
         misfirePolicy: 0,
         params: '{}',
-        scheduleType: 'CRON',
+        scheduleType: 'INTERVAL',
       });
     }
   },
@@ -213,7 +209,8 @@ const searchUserOptions = useDebounceFn(async (keyword: string) => {
     });
     if (sequence !== userSearchSequence) return;
     const values = await formApi.getValues();
-    const selectedIds = new Set<number>([...(values.alertUserIds || [])]);
+    const selectedUserIds: number[] = values.alertUserIds || [];
+    const selectedIds = new Set(selectedUserIds);
     const options = new Map(
       userOptions.value
         .filter((option) => selectedIds.has(option.value))
@@ -339,7 +336,7 @@ function normalizeInterval() {
 
 async function confirmUpdate() {
   try {
-    await vbenConfirm({
+    await confirm({
       content: '修改运行中的任务会立即重建 Quartz 调度配置，确认继续吗？',
       icon: 'warning',
       title: '确认修改任务',
@@ -362,7 +359,10 @@ async function confirmUpdate() {
     >
       预览执行时间
     </Button>
-    <div v-if="previewTimes.length" class="ml-30 rounded border p-3 text-sm">
+    <div
+      v-if="previewTimes.length > 0"
+      class="ml-30 rounded border p-3 text-sm"
+    >
       <div class="mb-2 font-medium">未来执行时间</div>
       <div v-for="item in previewTimes" :key="item">{{ item }}</div>
     </div>

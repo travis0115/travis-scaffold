@@ -6,7 +6,6 @@ import com.travis.infrastructure.framework.quartz.core.QuartzJobHandler;
 import com.travis.infrastructure.framework.redis.core.task.ClusterPeriodicTaskExecutor;
 import com.travis.monolith.ops.job.internal.service.OpsJobLogService;
 import com.travis.monolith.ops.job.internal.service.OpsJobService;
-import com.travis.monolith.ops.job.internal.service.QuartzJobManager;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import lombok.Data;
 
-/** 定时任务详情响应。 */
+/** 定时任务响应。 */
 @Data
 public class OpsJobResp {
     /** 任务 ID。 */
@@ -52,11 +52,23 @@ public class OpsJobResp {
     /** 是否为系统内置任务（0-否 1-是）。 */
     private Integer isBuiltin;
 
+    /** 创建人 ID。 */
+    private Long createBy;
+
+    /** 创建人用户名。 */
+    private String createByUsername;
+
     /** 备注。 */
     private String remark;
 
     /** 下一次计划执行时间。 */
     private LocalDateTime nextFireTime;
+
+    /** 最近一次执行开始时间。 */
+    private LocalDateTime lastExecutionTime;
+
+    /** 最近一次执行状态。 */
+    private Integer lastExecutionStatus;
 
     /** 创建时间。 */
     private LocalDateTime createTime;

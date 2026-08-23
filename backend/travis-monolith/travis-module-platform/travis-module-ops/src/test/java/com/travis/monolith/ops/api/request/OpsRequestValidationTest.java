@@ -9,6 +9,7 @@ import com.travis.monolith.ops.job.api.request.OpsJobLogPageReq;
 import com.travis.monolith.ops.job.api.request.OpsJobPreviewReq;
 import jakarta.validation.Validation;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -32,7 +33,7 @@ class OpsRequestValidationTest {
                             .toList();
 
             assertThat(messages)
-                    .contains("调度类型错误", "并发策略值错误", "错过执行策略值错误", "执行间隔必须为正数", "告警用户ID必须为正数");
+                    .contains("调度类型错误", "并发策略值错误", "错过执行策略值错误", "执行间隔不能小于1000毫秒", "告警用户ID必须为正数");
         }
     }
 
@@ -52,6 +53,22 @@ class OpsRequestValidationTest {
                     .anyMatch(violation -> "调度参数与调度类型不匹配".equals(violation.getMessage()));
             assertThat(validator.validate(previewRequest))
                     .anyMatch(violation -> "调度参数与调度类型不匹配".equals(violation.getMessage()));
+        }
+    }
+
+    @Test
+    void shouldLimitAlertRecipientsToDatabaseCapacity() {
+        var request = new OpsJobCreateReq();
+        request.setJobName("job");
+        request.setHandlerName("handler");
+        request.setScheduleType("INTERVAL");
+        request.setIntervalMillis(1000L);
+        request.setConcurrent(0);
+        request.setAlertUserIds(Collections.nCopies(51, 1L));
+
+        try (var factory = Validation.buildDefaultValidatorFactory()) {
+            assertThat(factory.getValidator().validate(request))
+                    .anyMatch(violation -> "告警用户数量不能超过50个".equals(violation.getMessage()));
         }
     }
 

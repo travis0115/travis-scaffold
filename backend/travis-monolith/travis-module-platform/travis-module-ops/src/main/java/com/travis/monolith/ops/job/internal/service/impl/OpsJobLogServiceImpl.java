@@ -5,19 +5,18 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.model.PageResp;
-import com.travis.infrastructure.framework.jackson.core.JsonUtil;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
-import com.travis.infrastructure.framework.redis.core.util.RedisUtil;
 import com.travis.monolith.ops.common.api.enums.OpsErrorCode;
-import com.travis.monolith.ops.job.api.enums.OpsJobLogStatus;
 import com.travis.monolith.ops.job.api.request.OpsJobLogPageReq;
-import com.travis.monolith.ops.job.api.response.*;
+import com.travis.monolith.ops.job.api.response.OpsJobLogResp;
+import com.travis.monolith.ops.job.api.response.OpsJobStatsResp;
 import com.travis.monolith.ops.job.internal.config.OpsJobProperties;
 import com.travis.monolith.ops.job.internal.converter.OpsJobLogConverter;
 import com.travis.monolith.ops.job.internal.entity.OpsJobLog;
 import com.travis.monolith.ops.job.internal.mapper.OpsJobLogMapper;
-import com.travis.monolith.ops.job.internal.service.OpsJobDashboardService;
+import com.travis.monolith.ops.job.internal.mapper.OpsJobMapper;
+import com.travis.monolith.ops.job.internal.model.OpsJobLogStatsSummary;
 import com.travis.monolith.ops.job.internal.service.OpsJobLogService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -26,46 +25,32 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /** 定时任务执行日志服务实现，负责日志查询、清理、统计及执行结果持久化。 */
 @Service
 @RequiredArgsConstructor
-@Slf4j
-@CacheConfig(cacheNames = "ops:job-log")
 public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLog>
         implements OpsJobLogService {
 
-    /** 单个任务执行统计的 Redis 键前缀。 */
-    private static final String STATS_KEY_PREFIX = "ops:job:stats:";
-
-    /** 执行统计缓存有效期，默认十分钟。 */
-    private static final long CACHE_MILLIS = TimeUnit.MINUTES.toMillis(10);
-
     private static final Map<String, SFunction<OpsJobLog, ?>> SORT_COLUMNS =
             Map.of(
-                    "jobName", OpsJobLog::getJobName,
-                    "status", OpsJobLog::getStatus,
                     "durationMillis", OpsJobLog::getDurationMillis,
-                    "startTime", OpsJobLog::getStartTime,
-                    "createTime", OpsJobLog::getCreateTime);
+                    "startTime", OpsJobLog::getStartTime);
 
     private final OpsJobLogConverter converter;
     private final OpsJobProperties jobProperties;
-    private final OpsJobDashboardService dashboardService;
+    private final OpsJobMapper jobMapper;
 
     /** 分页查询定时任务执行日志。 */
     @Override
-    public PageResp<OpsJobLogPageResp> page(OpsJobLogPageReq req) {
+    public PageResp<OpsJobLogResp> page(OpsJobLogPageReq req) {
         var wrapper = buildWrapper(req);
         wrapper.select(
                 OpsJobLog::getId,
@@ -86,113 +71,126 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
                                 SORT_COLUMNS,
                                 false,
                                 OpsJobLog::getCreateTime));
-        return PageConverter.toResp(page.convert(converter::toPageResp));
+        return PageConverter.toResp(page.convert(converter::toResp));
     }
 
     /** 查询指定定时任务执行日志，不存在时抛出业务异常。 */
     @Override
-    @Cacheable(key = "'detail:'+#id")
-    public OpsJobLogDetailResp getOrThrow(Long id) {
+    public OpsJobLogResp getOrThrow(Long id) {
         OpsJobLog log = getById(id);
         if (log == null) {
             throw new BizException(OpsErrorCode.JOB_LOG_NOT_FOUND);
         }
-        return converter.toDetailResp(log);
+        return converter.toResp(log);
     }
 
     /** 清理指定定时任务执行日志。 */
     @Override
     @Transactional
-    @CacheEvict(allEntries = true)
+    @Caching(
+            evict = {
+                @CacheEvict(
+                        cacheNames = "ops:job-stats",
+                        key = "#jobId",
+                        condition = "#jobId != null"),
+                @CacheEvict(
+                        cacheNames = "ops:job-stats",
+                        allEntries = true,
+                        condition = "#jobId == null"),
+                @CacheEvict(cacheNames = "ops:job-dashboard", key = "'summary'")
+            })
     public void clean(Long jobId) {
         if (jobId == null) {
             baseMapper.deleteAllPhysically();
         } else {
             baseMapper.deletePhysicallyByJobId(jobId);
         }
-        invalidateStats(jobId);
     }
 
     /** 清理过期的定时任务执行日志。 */
     @Override
     @Transactional
-    @CacheEvict(allEntries = true)
+    @Caching(
+            evict = {
+                @CacheEvict(cacheNames = "ops:job-stats", allEntries = true),
+                @CacheEvict(cacheNames = "ops:job-dashboard", key = "'summary'")
+            })
     public void cleanExpired() {
         baseMapper.deleteExpiredPhysicallyAll(
                 LocalDateTime.now().minusDays(jobProperties.getLogRetentionDays()));
-        invalidateStats(null);
     }
 
     /** 收敛因执行节点中断而遗留的运行中日志。 */
     @Override
     @Transactional
+    @Caching(
+            evict = {
+                @CacheEvict(cacheNames = "ops:job-stats", allEntries = true),
+                @CacheEvict(cacheNames = "ops:job-dashboard", key = "'summary'")
+            })
     public void markInterruptedExecutions() {
-        if (baseMapper.markInterruptedExecutions(LocalDateTime.now()) > 0) {
-            invalidateStats(null);
-        }
+        baseMapper.markInterruptedExecutions(LocalDateTime.now());
     }
 
     /** 统计定时任务执行日志执行情况。 */
     @Override
+    @Cacheable(cacheNames = "ops:job-stats", key = "#jobId")
     public OpsJobStatsResp stats(Long jobId) {
-        String key = STATS_KEY_PREFIX + jobId;
-        Object cached = getCache(key);
-        if (cached instanceof String value) {
-            return JsonUtil.parseObject(value, OpsJobStatsResp.class);
+        if (jobMapper.selectById(jobId) == null) {
+            throw new BizException(OpsErrorCode.JOB_NOT_FOUND);
         }
-        List<OpsJobLog> logs = list(statsWrapper(jobId));
-        OpsJobStatsResp stats = calculateStats(logs);
-        setCache(key, stats);
-        return stats;
+        OpsJobLogStatsSummary summary = baseMapper.selectStatsSummary(jobId);
+        long completed = summary.success() + summary.failed();
+        LocalDate firstDay = LocalDate.now().minusDays(6);
+        Map<LocalDate, OpsJobStatsResp.TrendPoint> trendByDate =
+                baseMapper.selectTrend(jobId, firstDay.atStartOfDay()).stream()
+                        .collect(
+                                Collectors.toMap(
+                                        point -> point.date(),
+                                        point ->
+                                                new OpsJobStatsResp.TrendPoint(
+                                                        point.date(),
+                                                        point.success(),
+                                                        point.failed()),
+                                        (left, _right) -> left,
+                                        LinkedHashMap::new));
+        List<OpsJobStatsResp.TrendPoint> trend = new ArrayList<>(7);
+        for (int offset = 0; offset < 7; offset++) {
+            LocalDate date = firstDay.plusDays(offset);
+            trend.add(trendByDate.getOrDefault(date, new OpsJobStatsResp.TrendPoint(date, 0, 0)));
+        }
+        return new OpsJobStatsResp(
+                summary.total(),
+                summary.success(),
+                summary.failed(),
+                completed == 0 ? 0 : summary.success() * 100.0 / completed,
+                summary.averageDurationMillis(),
+                summary.maxDurationMillis(),
+                baseMapper.selectP95Duration(jobId),
+                baseMapper.selectConsecutiveFailures(jobId),
+                trend);
     }
 
     /** 保存定时任务执行日志。 */
     @Override
+    @Caching(
+            evict = {
+                @CacheEvict(cacheNames = "ops:job-stats", key = "#log.jobId"),
+                @CacheEvict(cacheNames = "ops:job-dashboard", key = "'summary'")
+            })
     public void saveExecution(OpsJobLog log) {
         super.save(log);
-        invalidateStats(log.getJobId());
     }
 
     /** 更新定时任务执行结果。 */
     @Override
-    @CacheEvict(key = "'detail:'+#log.id")
+    @Caching(
+            evict = {
+                @CacheEvict(cacheNames = "ops:job-stats", key = "#log.jobId"),
+                @CacheEvict(cacheNames = "ops:job-dashboard", key = "'summary'")
+            })
     public void updateExecution(OpsJobLog log) {
         updateById(log);
-        invalidateStats(log.getJobId());
-    }
-
-    /** 清除指定任务的执行统计缓存。 */
-    @Override
-    public void invalidateStats(Long jobId) {
-        try {
-            if (jobId == null) {
-                RedisUtil.deleteByPattern(STATS_KEY_PREFIX + "*");
-            } else {
-                RedisUtil.delete(STATS_KEY_PREFIX + jobId);
-            }
-            dashboardService.invalidate();
-        } catch (RuntimeException exception) {
-            log.warn("任务统计缓存失效失败, jobId={}", jobId, exception);
-        }
-    }
-
-    /** 读取定时任务统计缓存。 */
-    private Object getCache(String key) {
-        try {
-            return RedisUtil.get(key);
-        } catch (RuntimeException exception) {
-            log.warn("读取任务统计缓存失败, key={}", key, exception);
-            return null;
-        }
-    }
-
-    /** 写入定时任务统计缓存。 */
-    private void setCache(String key, Object value) {
-        try {
-            RedisUtil.set(key, JsonUtil.toJsonString(value), CACHE_MILLIS);
-        } catch (RuntimeException exception) {
-            log.warn("写入任务统计缓存失败, key={}", key, exception);
-        }
     }
 
     /** 根据查询条件构建定时任务执行日志查询条件。 */
@@ -214,97 +212,5 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
         }
         return baseMapper.selectLatestByJobIds(jobIds).stream()
                 .collect(Collectors.toMap(OpsJobLog::getJobId, log -> log));
-    }
-
-    /** 构建仅查询统计必要字段的日志条件。 */
-    private LambdaQueryWrapperX<OpsJobLog> statsWrapper(Long jobId) {
-        var wrapper =
-                new LambdaQueryWrapperX<OpsJobLog>()
-                        .eq(OpsJobLog::getJobId, jobId)
-                        .orderByAsc(OpsJobLog::getCreateTime);
-        wrapper.select(
-                OpsJobLog::getStatus, OpsJobLog::getDurationMillis, OpsJobLog::getCreateTime);
-        return wrapper;
-    }
-
-    /** 根据执行日志计算任务统计结果。 */
-    private OpsJobStatsResp calculateStats(List<OpsJobLog> logs) {
-        long total = logs.size();
-        long success =
-                logs.stream()
-                        .filter(log -> OpsJobLogStatus.SUCCESS.getValue().equals(log.getStatus()))
-                        .count();
-        long failed =
-                logs.stream()
-                        .filter(log -> OpsJobLogStatus.FAILED.getValue().equals(log.getStatus()))
-                        .count();
-        List<Long> durations =
-                logs.stream()
-                        .map(OpsJobLog::getDurationMillis)
-                        .filter(Objects::nonNull)
-                        .sorted()
-                        .toList();
-        long average =
-                durations.isEmpty()
-                        ? 0
-                        : Math.round(
-                                durations.stream().mapToLong(Long::longValue).average().orElse(0));
-        long max = durations.isEmpty() ? 0 : durations.getLast();
-        long p95 =
-                durations.isEmpty()
-                        ? 0
-                        : durations.get(
-                                Math.min(
-                                        durations.size() - 1,
-                                        (int) Math.ceil(durations.size() * 0.95) - 1));
-        long consecutiveFailures = 0;
-        for (int index = logs.size() - 1; index >= 0; index--) {
-            if (!OpsJobLogStatus.FAILED.getValue().equals(logs.get(index).getStatus())) {
-                break;
-            }
-            consecutiveFailures++;
-        }
-        LocalDate firstDay = LocalDate.now().minusDays(6);
-        Map<LocalDate, List<OpsJobLog>> grouped =
-                logs.stream()
-                        .filter(log -> log.getCreateTime() != null)
-                        .filter(log -> !log.getCreateTime().toLocalDate().isBefore(firstDay))
-                        .collect(
-                                Collectors.groupingBy(
-                                        log -> log.getCreateTime().toLocalDate(),
-                                        LinkedHashMap::new,
-                                        Collectors.toList()));
-        List<OpsJobStatsResp.TrendPoint> trend = new ArrayList<>();
-        for (int offset = 0; offset < 7; offset++) {
-            LocalDate date = firstDay.plusDays(offset);
-            List<OpsJobLog> daily = grouped.getOrDefault(date, List.of());
-            trend.add(
-                    new OpsJobStatsResp.TrendPoint(
-                            date,
-                            daily.stream()
-                                    .filter(
-                                            log ->
-                                                    OpsJobLogStatus.SUCCESS
-                                                            .getValue()
-                                                            .equals(log.getStatus()))
-                                    .count(),
-                            daily.stream()
-                                    .filter(
-                                            log ->
-                                                    OpsJobLogStatus.FAILED
-                                                            .getValue()
-                                                            .equals(log.getStatus()))
-                                    .count()));
-        }
-        return new OpsJobStatsResp(
-                total,
-                success,
-                failed,
-                total == 0 ? 0 : success * 100.0 / total,
-                average,
-                max,
-                p95,
-                consecutiveFailures,
-                trend);
     }
 }

@@ -7,7 +7,6 @@ import com.travis.monolith.ops.job.api.request.OpsJobPageReq;
 import com.travis.monolith.ops.job.api.request.OpsJobPreviewReq;
 import com.travis.monolith.ops.job.api.request.OpsJobUpdateReq;
 import com.travis.monolith.ops.job.api.response.OpsJobHandlerResp;
-import com.travis.monolith.ops.job.api.response.OpsJobPageResp;
 import com.travis.monolith.ops.job.api.response.OpsJobResp;
 import com.travis.monolith.ops.job.internal.entity.OpsJob;
 import com.travis.monolith.ops.job.internal.model.OpsJobExecutionConfig;
@@ -19,7 +18,7 @@ import java.util.List;
 /** 定时任务管理服务。 */
 public interface OpsJobService extends IService<OpsJob> {
     /** 分页查询定时任务。 */
-    PageResp<OpsJobPageResp> page(OpsJobPageReq req);
+    PageResp<OpsJobResp> page(OpsJobPageReq req);
 
     /** 查询任务详情，任务不存在时抛出业务异常。 */
     OpsJobResp getOrThrow(Long id);

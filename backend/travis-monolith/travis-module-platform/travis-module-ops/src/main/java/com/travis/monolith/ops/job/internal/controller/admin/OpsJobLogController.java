@@ -8,8 +8,7 @@ import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.ops.common.api.OpsPermission;
 import com.travis.monolith.ops.job.api.request.OpsJobLogPageReq;
-import com.travis.monolith.ops.job.api.response.OpsJobLogDetailResp;
-import com.travis.monolith.ops.job.api.response.OpsJobLogPageResp;
+import com.travis.monolith.ops.job.api.response.OpsJobLogResp;
 import com.travis.monolith.ops.job.internal.service.OpsJobLogService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
@@ -30,14 +29,14 @@ public class OpsJobLogController {
     /** 分页查询任务执行日志。 */
     @SaCheckPermission(value = OpsPermission.OPS_JOB_LOG_QUERY, type = LoginType.ADMIN)
     @GetMapping("/page")
-    public ApiResponse<PageResp<OpsJobLogPageResp>> page(@Valid OpsJobLogPageReq req) {
+    public ApiResponse<PageResp<OpsJobLogResp>> page(@Valid OpsJobLogPageReq req) {
         return ApiResponse.success(logService.page(req));
     }
 
     /** 查询任务执行日志详情。 */
     @SaCheckPermission(value = OpsPermission.OPS_JOB_LOG_QUERY, type = LoginType.ADMIN)
     @GetMapping("/{id}")
-    public ApiResponse<OpsJobLogDetailResp> detail(
+    public ApiResponse<OpsJobLogResp> detail(
             @PathVariable @Positive(message = "任务日志ID必须为正数") Long id) {
         return ApiResponse.success(logService.getOrThrow(id));
     }

@@ -27,6 +27,7 @@ export namespace OpsErrorLogApi {
     lastOccurrenceTime: string;
     message?: string;
     moduleName?: string;
+    occurrences?: Occurrence[];
     occurrenceCount: number;
     platformType: 'ADMIN' | 'APP' | 'SYSTEM';
     requestId?: string;
@@ -60,10 +61,6 @@ export namespace OpsErrorLogApi {
     userId?: number;
     username?: string;
   }
-
-  export interface Detail extends ErrorLog {
-    occurrences: Occurrence[];
-  }
 }
 
 const getErrorLogPage = (params: Recordable<any>) =>
@@ -72,7 +69,7 @@ const getErrorLogPage = (params: Recordable<any>) =>
   });
 
 const getErrorLogDetail = (id: number) =>
-  requestClient.get<OpsErrorLogApi.Detail>(`/ops/error-log/${id}`);
+  requestClient.get<OpsErrorLogApi.ErrorLog>(`/ops/error-log/${id}`);
 
 const handleErrorLog = (id: number, data: { remark?: string; status: 1 | 2 }) =>
   requestClient.put(`/ops/error-log/${id}/handle`, data);

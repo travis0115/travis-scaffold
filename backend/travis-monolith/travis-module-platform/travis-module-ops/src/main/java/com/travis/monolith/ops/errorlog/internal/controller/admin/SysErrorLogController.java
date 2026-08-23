@@ -9,7 +9,6 @@ import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.ops.common.api.OpsPermission;
 import com.travis.monolith.ops.errorlog.api.request.SysErrorLogHandleReq;
 import com.travis.monolith.ops.errorlog.api.request.SysErrorLogPageReq;
-import com.travis.monolith.ops.errorlog.api.response.SysErrorLogDetailResp;
 import com.travis.monolith.ops.errorlog.api.response.SysErrorLogResp;
 import com.travis.monolith.ops.errorlog.internal.service.SysErrorLogService;
 import jakarta.validation.Valid;
@@ -43,7 +42,7 @@ public class SysErrorLogController {
     /** 查询错误日志详情。 */
     @GetMapping("/{id}")
     @SaCheckPermission(value = OpsPermission.OPS_ERROR_LOG_QUERY, type = LoginType.ADMIN)
-    public ApiResponse<SysErrorLogDetailResp> detail(
+    public ApiResponse<SysErrorLogResp> detail(
             @PathVariable @Positive(message = "错误日志ID必须为正数") Long id) {
         return ApiResponse.success(errorLogService.getDetailOrThrow(id));
     }

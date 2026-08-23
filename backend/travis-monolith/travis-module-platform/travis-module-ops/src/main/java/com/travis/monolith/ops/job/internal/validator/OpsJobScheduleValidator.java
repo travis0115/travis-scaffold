@@ -1,4 +1,4 @@
-package com.travis.monolith.ops.job.internal.service;
+package com.travis.monolith.ops.job.internal.validator;
 
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.monolith.ops.common.api.enums.OpsErrorCode;
@@ -33,8 +33,8 @@ public final class OpsJobScheduleValidator {
     }
 
     private static void validateInterval(Long intervalMillis) {
-        if (intervalMillis == null || intervalMillis <= 0) {
-            throw invalid("固定间隔必须大于 0");
+        if (intervalMillis == null || intervalMillis < 1000) {
+            throw invalid("固定间隔不能小于 1000 毫秒");
         }
     }
 

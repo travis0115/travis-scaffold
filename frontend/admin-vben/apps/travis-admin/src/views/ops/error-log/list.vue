@@ -47,7 +47,7 @@ import {
   useGridFormSchema,
 } from './data';
 
-const detail = ref<OpsErrorLogApi.Detail>();
+const detail = ref<OpsErrorLogApi.ErrorLog>();
 const handleTarget = ref<OpsErrorLogApi.ErrorLog>();
 const isBatchHandle = ref(false);
 const handleForm = reactive<{ remark: string; status: 1 | 2 }>({
@@ -332,8 +332,8 @@ function requestInfoTitle(row: OpsErrorLogApi.ErrorLog) {
         </TypographyParagraph>
 
         <Divider title-placement="start">最近发生明细</Divider>
-        <Timeline v-if="detail.occurrences.length > 0">
-          <TimelineItem v-for="item in detail.occurrences" :key="item.id">
+        <Timeline v-if="detail.occurrences?.length">
+          <TimelineItem v-for="item in detail.occurrences ?? []" :key="item.id">
             <Descriptions
               bordered
               class="occurrence-descriptions"

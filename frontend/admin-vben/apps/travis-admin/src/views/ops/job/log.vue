@@ -37,7 +37,7 @@ import {
   useLogGridFormSchema,
 } from './data';
 
-const detail = ref<OpsJobApi.JobLogDetail>();
+const detail = ref<OpsJobApi.JobLog>();
 const executionStatusOptions = getDictOptions(JOB_EXECUTION_STATUS_DICT);
 const route = useRoute();
 const routeJobName = computed(() => {
@@ -66,7 +66,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     rowConfig: { keyField: 'id' },
     toolbarConfig: { custom: true, refresh: true, search: true, zoom: true },
-  } as VxeTableGridOptions<OpsJobApi.JobLogPage>,
+  } as VxeTableGridOptions<OpsJobApi.JobLog>,
 });
 
 onMounted(async () => {
@@ -104,9 +104,7 @@ const [DetailModal, detailModalApi] = useVbenModal({
   footer: false,
 });
 
-async function onActionClick({
-  row,
-}: OnActionClickParams<OpsJobApi.JobLogPage>) {
+async function onActionClick({ row }: OnActionClickParams<OpsJobApi.JobLog>) {
   detail.value = await getJobLogDetail(row.id);
   detailModalApi.open();
 }

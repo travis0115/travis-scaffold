@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.travis.monolith.ops.job.internal.mapper.OpsJobMapper">
+
+    <!-- 查询定时任务数量汇总。 -->
+    <select id="selectCountSummary"
+            resultType="com.travis.monolith.ops.job.internal.model.OpsJobCountSummary">
+        SELECT COUNT(*) AS total,
+               COALESCE(SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END), 0) AS enabled
+        FROM ops_job
+        WHERE is_deleted = 0
+    </select>
+
+</mapper>

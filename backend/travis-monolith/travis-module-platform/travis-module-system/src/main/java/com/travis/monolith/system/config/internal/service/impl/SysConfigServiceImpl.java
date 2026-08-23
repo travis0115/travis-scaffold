@@ -1,6 +1,5 @@
 package com.travis.monolith.system.config.internal.service.impl;
 
-import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.model.PageResp;
@@ -17,7 +16,6 @@ import com.travis.monolith.system.config.internal.converter.SysConfigConverter;
 import com.travis.monolith.system.config.internal.entity.SysConfig;
 import com.travis.monolith.system.config.internal.mapper.SysConfigMapper;
 import com.travis.monolith.system.config.internal.service.SysConfigService;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -36,8 +34,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class SysConfigServiceImpl extends ServiceImplX<SysConfigMapper, SysConfig>
         implements SysConfigService {
 
-    private static final Map<String, SFunction<SysConfig, ?>> SORT_COLUMNS = Map.of();
-
     private final SysConfigConverter converter;
     private final BuiltinResourceGuard builtinResourceGuard;
 
@@ -47,12 +43,7 @@ public class SysConfigServiceImpl extends ServiceImplX<SysConfigMapper, SysConfi
         var wrapper =
                 new LambdaQueryWrapperX<SysConfig>()
                         .likeIfPresent(SysConfig::getConfigKey, req.getConfigKey())
-                        .orderByAllowed(
-                                req.getOrderBy(),
-                                req.getAsc(),
-                                SORT_COLUMNS,
-                                true,
-                                SysConfig::getCreateTime);
+                        .orderByAsc(SysConfig::getCreateTime);
         var page = page(req.getPageNum(), req.getPageSize(), wrapper);
         return PageConverter.toResp(page.convert(converter::toResp));
     }

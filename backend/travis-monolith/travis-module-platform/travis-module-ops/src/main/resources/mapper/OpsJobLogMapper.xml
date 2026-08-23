@@ -27,6 +27,72 @@
         WHERE latest.row_num = 1
     </select>
 
+    <!-- 查询指定任务或全部任务的执行日志统计汇总。 -->
+    <select id="selectStatsSummary"
+            resultType="com.travis.monolith.ops.job.internal.model.OpsJobLogStatsSummary">
+        SELECT COUNT(*) AS total,
+               COALESCE(SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END), 0) AS success,
+               COALESCE(SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END), 0) AS failed,
+               COALESCE(ROUND(AVG(duration_millis)), 0) AS average_duration_millis,
+               COALESCE(MAX(duration_millis), 0) AS max_duration_millis
+        FROM ops_job_log
+        WHERE is_deleted = 0
+        <if test="jobId != null">
+            AND job_id = #{jobId}
+        </if>
+    </select>
+
+    <!-- 查询指定任务执行耗时的第 95 百分位。 -->
+    <select id="selectP95Duration" resultType="long">
+        SELECT COALESCE(
+                   MAX(CASE WHEN row_num = CEIL(total * 0.95) THEN duration_millis END),
+                   0
+               )
+        FROM (
+            SELECT duration_millis,
+                   ROW_NUMBER() OVER (ORDER BY duration_millis) AS row_num,
+                   COUNT(*) OVER () AS total
+            FROM ops_job_log
+            WHERE is_deleted = 0
+              AND job_id = #{jobId}
+              AND duration_millis IS NOT NULL
+        ) ranked
+    </select>
+
+    <!-- 查询指定任务当前连续失败次数，运行中的执行不影响结果。 -->
+    <select id="selectConsecutiveFailures" resultType="long">
+        SELECT COUNT(*)
+        FROM ops_job_log failed
+        WHERE failed.is_deleted = 0
+          AND failed.job_id = #{jobId}
+          AND failed.status = 2
+          AND NOT EXISTS (
+              SELECT 1
+              FROM ops_job_log success
+              WHERE success.is_deleted = 0
+                AND success.job_id = failed.job_id
+                AND success.status = 1
+                AND (
+                    success.create_time &gt; failed.create_time
+                    OR (success.create_time = failed.create_time AND success.id &gt; failed.id)
+                )
+          )
+    </select>
+
+    <!-- 查询指定任务每日执行趋势。 -->
+    <select id="selectTrend"
+            resultType="com.travis.monolith.ops.job.internal.model.OpsJobLogTrendPoint">
+        SELECT DATE(create_time) AS date,
+               SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) AS success,
+               SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) AS failed
+        FROM ops_job_log
+        WHERE is_deleted = 0
+          AND job_id = #{jobId}
+          AND create_time &gt;= #{startTime}
+        GROUP BY DATE(create_time)
+        ORDER BY DATE(create_time)
+    </select>
+
     <!-- 根据任务编号物理删除调度日志。 -->
     <delete id="deletePhysicallyByJobId">
         DELETE FROM ops_job_log

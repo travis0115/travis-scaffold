@@ -14,8 +14,8 @@ import com.travis.monolith.ops.job.api.request.*;
 import com.travis.monolith.ops.job.api.response.*;
 import com.travis.monolith.ops.job.internal.service.OpsJobDashboardService;
 import com.travis.monolith.ops.job.internal.service.OpsJobLogService;
-import com.travis.monolith.ops.job.internal.service.OpsJobScheduleValidator;
 import com.travis.monolith.ops.job.internal.service.OpsJobService;
+import com.travis.monolith.ops.job.internal.validator.OpsJobScheduleValidator;
 import com.travis.monolith.system.user.api.response.SysUserOptionResp;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
@@ -40,7 +40,7 @@ public class OpsJobController {
     /** 分页查询定时任务。 */
     @SaCheckPermission(value = OpsPermission.OPS_JOB_QUERY, type = LoginType.ADMIN)
     @GetMapping("/page")
-    public ApiResponse<PageResp<OpsJobPageResp>> page(@Valid OpsJobPageReq req) {
+    public ApiResponse<PageResp<OpsJobResp>> page(@Valid OpsJobPageReq req) {
         return ApiResponse.success(jobService.page(req));
     }
 
@@ -144,7 +144,8 @@ public class OpsJobController {
     public ApiResponse<List<SysUserOptionResp>> userOptions(
             @RequestParam(required = false) @Size(max = 64, message = "搜索关键字长度不能超过64个字符")
                     String keyword,
-            @RequestParam(required = false) List<@Positive(message = "用户ID必须为正数") Long> userIds) {
+            @RequestParam(required = false) @Size(max = 50, message = "用户ID数量不能超过50个")
+                    List<@Positive(message = "用户ID必须为正数") Long> userIds) {
         return ApiResponse.success(jobService.listUserOptions(keyword, userIds));
     }
 

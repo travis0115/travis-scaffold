@@ -188,17 +188,11 @@ const [Grid, gridApi] = useVbenVxeGrid({
     height: 'auto',
     proxyConfig: {
       ajax: {
-        async query({ page, sort }, values) {
+        async query({ page }, values) {
           const thumbnailRequestId = beginMediaThumbnailDelay();
           const result = await getFilePage({
             pageNum: page.currentPage,
             pageSize: page.pageSize,
-            ...(sort?.order
-              ? {
-                  asc: sort.order === 'asc',
-                  orderBy: sort.field || sort.property,
-                }
-              : {}),
             ...values,
             ...getFolderQueryParams(),
           });

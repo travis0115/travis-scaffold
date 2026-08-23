@@ -21,17 +21,10 @@ const [Grid] = useVbenVxeGrid({
     keepSource: true,
     proxyConfig: {
       ajax: {
-        query: async ({ page, sort }, formValues) => {
-          const orderParams = sort?.order
-            ? {
-                asc: sort.order === 'asc',
-                orderBy: sort.field || sort.property,
-              }
-            : {};
+        query: async ({ page }, formValues) => {
           return await getLoginLogList({
             pageNum: page.currentPage,
             pageSize: page.pageSize,
-            ...orderParams,
             ...formValues,
           });
         },

@@ -10,6 +10,7 @@ import com.travis.monolith.ops.job.api.request.OpsJobLogPageReq;
 import com.travis.monolith.ops.job.internal.config.OpsJobProperties;
 import com.travis.monolith.ops.job.internal.converter.OpsJobLogConverter;
 import com.travis.monolith.ops.job.internal.entity.OpsJobLog;
+import com.travis.monolith.ops.job.internal.mapper.OpsJobMapper;
 import com.travis.monolith.ops.job.internal.service.impl.OpsJobLogServiceImpl;
 import java.time.LocalDateTime;
 import org.apache.ibatis.builder.MapperBuilderAssistant;
@@ -31,7 +32,7 @@ class OpsJobLogFilterTest {
                 new OpsJobLogServiceImpl(
                         mock(OpsJobLogConverter.class),
                         new OpsJobProperties(),
-                        mock(OpsJobDashboardService.class));
+                        mock(OpsJobMapper.class));
         var start = LocalDateTime.of(2026, 8, 19, 10, 0);
         var end = LocalDateTime.of(2026, 8, 19, 11, 0);
         var request = new OpsJobLogPageReq();

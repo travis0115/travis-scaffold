@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -12,14 +13,17 @@ import static org.mockito.Mockito.when;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.quartz.core.QuartzJobHandlerRegistry;
+import com.travis.monolith.ops.job.api.enums.OpsJobMisfirePolicy;
 import com.travis.monolith.ops.job.api.enums.OpsJobStatus;
 import com.travis.monolith.ops.job.api.request.OpsJobCreateReq;
 import com.travis.monolith.ops.job.api.request.OpsJobPageReq;
-import com.travis.monolith.ops.job.api.response.OpsJobPageResp;
+import com.travis.monolith.ops.job.api.request.OpsJobUpdateReq;
+import com.travis.monolith.ops.job.api.response.OpsJobResp;
 import com.travis.monolith.ops.job.internal.converter.OpsJobConverter;
 import com.travis.monolith.ops.job.internal.entity.OpsJob;
 import com.travis.monolith.ops.job.internal.entity.OpsJobLog;
 import com.travis.monolith.ops.job.internal.mapper.OpsJobMapper;
+import com.travis.monolith.ops.job.internal.quartz.QuartzJobManager;
 import com.travis.monolith.ops.job.internal.service.impl.OpsJobServiceImpl;
 import com.travis.monolith.system.user.api.SysUserApi;
 import java.time.LocalDateTime;
@@ -134,12 +138,75 @@ class OpsJobServiceImplTest {
                         registry,
                         mock(SysUserApi.class),
                         mock(OpsJobConverter.class),
-                        mock(OpsJobLogService.class),
-                        mock(OpsJobDashboardService.class));
+                        mock(OpsJobLogService.class));
         ReflectionTestUtils.setField(service, "baseMapper", mock(OpsJobMapper.class));
 
         assertThatThrownBy(() -> service.create(request))
                 .hasMessageContaining("系统内置任务处理器不允许用于自定义任务");
+    }
+
+    @Test
+    void shouldNormalizeDefaultsWhenCreatingJob() {
+        QuartzJobManager manager = mock(QuartzJobManager.class);
+        QuartzJobHandlerRegistry registry = mock(QuartzJobHandlerRegistry.class);
+        OpsJobMapper mapper = mock(OpsJobMapper.class);
+        OpsJobConverter converter = mock(OpsJobConverter.class);
+        var request = new OpsJobCreateReq();
+        request.setHandlerName("testHandler");
+        request.setParams(" ");
+        OpsJob job = job();
+        job.setParams(" ");
+        when(converter.toEntity(request)).thenReturn(job);
+        var service =
+                new OpsJobServiceImpl(
+                        manager,
+                        registry,
+                        mock(SysUserApi.class),
+                        converter,
+                        mock(OpsJobLogService.class));
+        ReflectionTestUtils.setField(service, "baseMapper", mapper);
+
+        service.create(request);
+
+        assertThat(job.getMisfirePolicy()).isEqualTo(OpsJobMisfirePolicy.SMART.getValue());
+        assertThat(job.getParams()).isEqualTo("{}");
+        verify(mapper).insert(job);
+    }
+
+    @Test
+    void shouldNormalizeDefaultsWhenUpdatingJob() {
+        QuartzJobManager manager = mock(QuartzJobManager.class);
+        OpsJobMapper mapper = mock(OpsJobMapper.class);
+        OpsJobConverter converter = mock(OpsJobConverter.class);
+        OpsJob job = job();
+        var request = new OpsJobUpdateReq();
+        request.setHandlerName("testHandler");
+        request.setParams(" ");
+        request.setLockVersion(1);
+        when(mapper.selectById(job.getId())).thenReturn(job);
+        when(mapper.updateById(job)).thenReturn(1);
+        doAnswer(
+                        invocation -> {
+                            job.setMisfirePolicy(null);
+                            job.setParams(" ");
+                            return null;
+                        })
+                .when(converter)
+                .update(request, job);
+        var service =
+                new OpsJobServiceImpl(
+                        manager,
+                        mock(QuartzJobHandlerRegistry.class),
+                        mock(SysUserApi.class),
+                        converter,
+                        mock(OpsJobLogService.class));
+        ReflectionTestUtils.setField(service, "baseMapper", mapper);
+
+        service.update(job.getId(), request);
+
+        assertThat(job.getMisfirePolicy()).isEqualTo(OpsJobMisfirePolicy.SMART.getValue());
+        assertThat(job.getParams()).isEqualTo("{}");
+        verify(mapper).updateById(job);
     }
 
     @Test
@@ -151,19 +218,18 @@ class OpsJobServiceImplTest {
         OpsJob job = job();
         job.setIsBuiltin(1);
         job.setCreateBy(1L);
-        var response = new OpsJobPageResp();
+        var response = new OpsJobResp();
         var service =
                 new OpsJobServiceImpl(
                         mock(QuartzJobManager.class),
                         mock(QuartzJobHandlerRegistry.class),
                         userApi,
                         converter,
-                        jobLogService,
-                        mock(OpsJobDashboardService.class));
+                        jobLogService);
         ReflectionTestUtils.setField(service, "baseMapper", mapper);
         when(mapper.page(anyInt(), anyInt(), any(LambdaQueryWrapperX.class)))
                 .thenReturn(new Page<OpsJob>().setRecords(List.of(job)).setTotal(1));
-        when(converter.toPageResp(job)).thenReturn(response);
+        when(converter.toResp(job)).thenReturn(response);
         when(userApi.getUsernameMapByIds(List.of(1L))).thenReturn(Map.of(1L, "admin"));
         var latestLog = new OpsJobLog();
         latestLog.setJobId(job.getId());
@@ -180,6 +246,30 @@ class OpsJobServiceImplTest {
         assertThat(response.getCreateByUsername()).isEqualTo("admin");
     }
 
+    @Test
+    void shouldTruncateCopiedJobNameToDatabaseLimit() {
+        OpsJobMapper mapper = mock(OpsJobMapper.class);
+        OpsJobConverter converter = mock(OpsJobConverter.class);
+        OpsJob source = job();
+        source.setJobName("a".repeat(120));
+        OpsJob copy = job();
+        when(mapper.selectById(source.getId())).thenReturn(source);
+        when(converter.copy(source)).thenReturn(copy);
+        var service =
+                new OpsJobServiceImpl(
+                        mock(QuartzJobManager.class),
+                        mock(QuartzJobHandlerRegistry.class),
+                        mock(SysUserApi.class),
+                        converter,
+                        mock(OpsJobLogService.class));
+        ReflectionTestUtils.setField(service, "baseMapper", mapper);
+
+        service.copy(source.getId());
+
+        assertThat(copy.getJobName()).hasSize(120).endsWith("-副本");
+        verify(mapper).insert(copy);
+    }
+
     private OpsJobServiceImpl service(QuartzJobManager manager, OpsJobMapper mapper) {
         QuartzJobHandlerRegistry registry = mock(QuartzJobHandlerRegistry.class);
         when(registry.contains("testHandler")).thenReturn(true);
@@ -189,8 +279,7 @@ class OpsJobServiceImplTest {
                         registry,
                         mock(SysUserApi.class),
                         mock(OpsJobConverter.class),
-                        mock(OpsJobLogService.class),
-                        mock(OpsJobDashboardService.class));
+                        mock(OpsJobLogService.class));
         ReflectionTestUtils.setField(service, "baseMapper", mapper);
         return service;
     }

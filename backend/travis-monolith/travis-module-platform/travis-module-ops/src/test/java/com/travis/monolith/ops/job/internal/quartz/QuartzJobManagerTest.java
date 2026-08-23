@@ -1,4 +1,4 @@
-package com.travis.monolith.ops.job.internal.service;
+package com.travis.monolith.ops.job.internal.quartz;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.quartz.JobDetail;
+import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.SimpleTrigger;
 import org.quartz.Trigger;
@@ -108,6 +109,18 @@ class QuartzJobManagerTest {
 
         assertThat(manager.isSynchronized(job)).isTrue();
         verify(scheduler, never()).getCalendar(anyString());
+    }
+
+    @Test
+    void shouldDeleteUnrecognizedOrphanJobWithoutInterruptingReconciliation() throws Exception {
+        Scheduler scheduler = mock(Scheduler.class);
+        var manager = new QuartzJobManager(scheduler);
+        JobKey orphanKey = JobKey.jobKey("legacy-job", "ops-job");
+        when(scheduler.getJobKeys(any())).thenReturn(java.util.Set.of(orphanKey));
+
+        manager.reconcile(List.of());
+
+        verify(scheduler).deleteJob(orphanKey);
     }
 
     private OpsJob intervalJob(Integer status) {

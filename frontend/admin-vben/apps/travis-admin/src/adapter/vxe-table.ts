@@ -496,12 +496,32 @@ function processColumnsWithEmptyPlaceholder(columns: any[]): any[] {
   });
 }
 
+/** 将表格排序统一转换为后端分页请求参数。 */
+function enableRemoteSorting(gridOptions: Recordable<any>) {
+  const proxyConfig = gridOptions.proxyConfig;
+  const query = proxyConfig?.ajax?.query;
+  if (!isFunction(query) || proxyConfig.sort === false) return;
+
+  proxyConfig.ajax.query = (
+    params: Recordable<any>,
+    values: Recordable<any> = {},
+    ...args: any[]
+  ) => {
+    const sort = params?.sort;
+    const orderBy = sort?.field || sort?.property;
+    const orderParams =
+      sort?.order && orderBy ? { asc: sort.order === 'asc', orderBy } : {};
+    return query(params, { ...values, ...orderParams }, ...args);
+  };
+}
+
 export const useVbenVxeGrid = <T extends Record<string, any>>(
   ...rest: Parameters<typeof useGrid<T, ComponentType, ComponentPropsMap>>
 ) => {
   // 全局处理：为所有列自动添加空值占位符
   const [options, ...restArgs] = rest;
   if (options?.gridOptions) {
+    enableRemoteSorting(options.gridOptions);
     // 树结构不支持 stripe，自动关闭
     if (options.gridOptions.treeConfig) {
       options.gridOptions.stripe = false;

@@ -27,17 +27,10 @@ const [Grid] = useVbenVxeGrid({
     height: 'auto',
     proxyConfig: {
       ajax: {
-        query: ({ page, sort }, values) => {
-          const orderParams = sort?.order
-            ? {
-                asc: sort.order === 'asc',
-                orderBy: sort.field || sort.property,
-              }
-            : {};
+        query: ({ page }, values) => {
           return getOperationLogPage({
             pageNum: page.currentPage,
             pageSize: page.pageSize,
-            ...orderParams,
             ...values,
           });
         },

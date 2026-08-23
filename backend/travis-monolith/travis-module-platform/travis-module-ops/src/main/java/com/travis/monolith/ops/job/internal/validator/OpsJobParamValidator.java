@@ -1,4 +1,4 @@
-package com.travis.monolith.ops.job.internal.service;
+package com.travis.monolith.ops.job.internal.validator;
 
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.framework.jackson.core.JsonUtil;
@@ -14,11 +14,7 @@ public final class OpsJobParamValidator {
         try {
             JsonUtil.getObjectMapper().readTree(params == null || params.isBlank() ? "{}" : params);
         } catch (Exception exception) {
-            throw invalid("参数必须是合法 JSON");
+            throw new BizException(OpsErrorCode.INVALID_PARAMS, "参数必须是合法 JSON");
         }
-    }
-
-    private static BizException invalid(String message) {
-        return new BizException(OpsErrorCode.INVALID_PARAMS, message);
     }
 }

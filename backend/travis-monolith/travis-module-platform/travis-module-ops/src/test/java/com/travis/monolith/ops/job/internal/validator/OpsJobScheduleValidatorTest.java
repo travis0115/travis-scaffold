@@ -1,4 +1,4 @@
-package com.travis.monolith.ops.job.internal.service;
+package com.travis.monolith.ops.job.internal.validator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -30,5 +30,19 @@ class OpsJobScheduleValidatorTest {
         job.setIntervalMillis(1000L);
 
         assertThatCode(() -> OpsJobScheduleValidator.validate(job)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void shouldRejectIntervalShorterThanOneSecond() {
+        var job = new OpsJob();
+        job.setScheduleType("INTERVAL");
+        job.setIntervalMillis(999L);
+
+        assertThatThrownBy(() -> OpsJobScheduleValidator.validate(job))
+                .isInstanceOfSatisfying(
+                        BizException.class,
+                        exception ->
+                                assertThat(exception.getArgs())
+                                        .containsExactly("固定间隔不能小于 1000 毫秒"));
     }
 }

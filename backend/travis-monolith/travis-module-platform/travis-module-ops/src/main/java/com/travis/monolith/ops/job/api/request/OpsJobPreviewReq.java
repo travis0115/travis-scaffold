@@ -1,9 +1,9 @@
 package com.travis.monolith.ops.job.api.request;
 
 import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import lombok.Data;
@@ -21,7 +21,7 @@ public class OpsJobPreviewReq {
     private String cronExpression;
 
     /** 固定间隔调度的间隔毫秒数。 */
-    @Positive(message = "执行间隔必须为正数")
+    @Min(value = 1000, message = "执行间隔不能小于1000毫秒")
     private Long intervalMillis;
 
     /** 单次任务的计划执行时间。 */

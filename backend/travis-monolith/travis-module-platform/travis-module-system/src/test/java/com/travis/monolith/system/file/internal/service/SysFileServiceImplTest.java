@@ -21,6 +21,7 @@ import com.travis.monolith.system.file.internal.entity.SysFileStorageConfig;
 import com.travis.monolith.system.file.internal.mapper.SysFileFolderMapper;
 import com.travis.monolith.system.file.internal.mapper.SysFileMapper;
 import com.travis.monolith.system.file.internal.mapper.SysFileStorageConfigMapper;
+import com.travis.monolith.system.file.internal.service.impl.SysFileMetadataServiceImpl;
 import com.travis.monolith.system.file.internal.service.impl.SysFileServiceImpl;
 import com.travis.monolith.system.file.internal.strategy.FileStorageStrategy;
 import com.travis.monolith.system.file.internal.strategy.StorageResult;
@@ -146,7 +147,7 @@ class SysFileServiceImplTest {
         var config = new SysFileStorageConfig();
         config.setStorageType("LOCAL");
         when(storageConfigMapper.selectById(any())).thenReturn(config);
-        return new SysFileMetadataService(
+        return new SysFileMetadataServiceImpl(
                 mapper, mock(SysFileFolderMapper.class), storageConfigMapper);
     }
 

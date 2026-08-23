@@ -303,15 +303,11 @@ const [Grid, gridApi] = useVbenVxeGrid({
     keepSource: true,
     proxyConfig: {
       ajax: {
-        query: async ({ page, sort }, formValues) => {
-          const orderParams = sort?.order
-            ? { asc: sort.order === 'asc', orderBy: sort.field || sort.property }
-            : {};
+        query: async ({ page }, formValues) => {
           const result = await getUserPage({
             pageNum: page.currentPage,
             pageSize: page.pageSize,
             onlineOnly: onlineOnly.value,
-            ...orderParams,
             ...formValues,
             ...(selectedDeptId.value === undefined
               ? {}

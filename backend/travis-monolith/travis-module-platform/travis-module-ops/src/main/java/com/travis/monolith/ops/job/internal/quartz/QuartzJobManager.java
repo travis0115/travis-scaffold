@@ -1,4 +1,4 @@
-package com.travis.monolith.ops.job.internal.service;
+package com.travis.monolith.ops.job.internal.quartz;
 
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.framework.quartz.core.NonConcurrentQuartzDispatchJob;
@@ -10,16 +10,13 @@ import com.travis.monolith.ops.job.api.enums.OpsJobConcurrentPolicy;
 import com.travis.monolith.ops.job.api.enums.OpsJobMisfirePolicy;
 import com.travis.monolith.ops.job.api.enums.OpsJobStatus;
 import com.travis.monolith.ops.job.internal.entity.OpsJob;
+import com.travis.monolith.ops.job.internal.validator.OpsJobScheduleValidator;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
 import org.quartz.impl.matchers.GroupMatcher;
 import org.springframework.stereotype.Component;
@@ -27,6 +24,7 @@ import org.springframework.stereotype.Component;
 /** 负责将业务任务配置同步到 Quartz 调度器。 */
 @Component
 @AllArgsConstructor
+@Slf4j
 @DistributedLockNamespace(QuartzJobManager.LOCK_NAMESPACE)
 public class QuartzJobManager {
 
@@ -96,7 +94,13 @@ public class QuartzJobManager {
             }
             for (JobKey existingKey : scheduler.getJobKeys(GroupMatcher.jobGroupEquals(GROUP))) {
                 if (!expectedJobKeys.contains(existingKey)) {
-                    delete(parseJobId(existingKey));
+                    Long jobId = parseJobId(existingKey);
+                    if (jobId == null) {
+                        log.warn("删除无法识别的 Quartz 孤立任务，jobKey={}", existingKey);
+                        scheduler.deleteJob(existingKey);
+                    } else {
+                        delete(jobId);
+                    }
                 }
             }
         } catch (Exception exception) {
@@ -169,9 +173,7 @@ public class QuartzJobManager {
             Date next = trigger.getFireTimeAfter(new Date(System.currentTimeMillis() - 1000));
             while (next != null
                     && result.size()
-                            < Math.min(
-                                    Math.max(count, 1),
-                                    OpsJobScheduleValidator.MAX_PREVIEW_COUNT)) {
+                            < Math.clamp(count, 1, OpsJobScheduleValidator.MAX_PREVIEW_COUNT)) {
                 result.add(toLocalDateTime(next));
                 next = trigger.getFireTimeAfter(next);
             }
@@ -297,7 +299,15 @@ public class QuartzJobManager {
     }
 
     private Long parseJobId(JobKey jobKey) {
-        return Long.valueOf(jobKey.getName().substring("job-".length()));
+        String name = jobKey.getName();
+        if (!name.startsWith("job-")) {
+            return null;
+        }
+        try {
+            return Long.valueOf(name.substring("job-".length()));
+        } catch (NumberFormatException exception) {
+            return null;
+        }
     }
 
     /** 计算会影响 Quartz Job 或 Trigger 的业务配置指纹。 */

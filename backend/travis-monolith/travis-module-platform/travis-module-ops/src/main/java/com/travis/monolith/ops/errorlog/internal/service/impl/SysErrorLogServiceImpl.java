@@ -12,7 +12,6 @@ import com.travis.monolith.ops.common.api.enums.OpsErrorCode;
 import com.travis.monolith.ops.errorlog.api.enums.SysErrorLogHandleStatus;
 import com.travis.monolith.ops.errorlog.api.request.SysErrorLogHandleReq;
 import com.travis.monolith.ops.errorlog.api.request.SysErrorLogPageReq;
-import com.travis.monolith.ops.errorlog.api.response.SysErrorLogDetailResp;
 import com.travis.monolith.ops.errorlog.api.response.SysErrorLogOccurrenceResp;
 import com.travis.monolith.ops.errorlog.api.response.SysErrorLogResp;
 import com.travis.monolith.ops.errorlog.internal.converter.SysErrorLogConverter;
@@ -112,8 +111,8 @@ public class SysErrorLogServiceImpl extends ServiceImplX<SysErrorLogMapper, SysE
     }
 
     @Override
-    public SysErrorLogDetailResp getDetailOrThrow(Long id) {
-        var detail = converter.toDetailResp(getRequired(id));
+    public SysErrorLogResp getDetailOrThrow(Long id) {
+        var detail = converter.toResp(getRequired(id));
         var occurrences =
                 occurrenceMapper.selectList(
                         new LambdaQueryWrapperX<SysErrorLogOccurrence>()
@@ -199,7 +198,7 @@ public class SysErrorLogServiceImpl extends ServiceImplX<SysErrorLogMapper, SysE
     }
 
     private void enrichUsers(
-            SysErrorLogDetailResp detail, Collection<SysErrorLogOccurrenceResp> occurrences) {
+            SysErrorLogResp detail, Collection<SysErrorLogOccurrenceResp> occurrences) {
         var userIds = new HashSet<Long>();
         if (detail.getHandledBy() != null) {
             userIds.add(detail.getHandledBy());

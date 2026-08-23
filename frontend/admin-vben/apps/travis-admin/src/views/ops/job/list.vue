@@ -147,7 +147,7 @@ function openJobLog(row: OpsJobApi.Job) {
 
 async function onStatusChange(value: number, row: OpsJobApi.Job) {
   await changeJobStatus(row.id, value);
-  message.success(`任务已${getDictLabel('status', value)}`);
+  message.success(`任务已${getDictLabel('enable_status', value)}`);
   await gridApi.query();
   return true;
 }
@@ -341,14 +341,18 @@ async function openStats(row: OpsJobApi.Job) {
             <div class="text-xs text-muted-foreground">平均耗时</div>
             <div class="mt-2 text-2xl font-semibold tabular-nums">
               {{ stats.averageDurationMillis
-              }}<span class="ml-1 text-xs font-normal text-muted-foreground">ms</span>
+              }}<span class="ml-1 text-xs font-normal text-muted-foreground">
+                ms
+              </span>
             </div>
           </div>
           <div class="rounded-lg border border-border/60 bg-muted/20 p-4">
             <div class="text-xs text-muted-foreground">P95 耗时</div>
             <div class="mt-2 text-2xl font-semibold tabular-nums">
               {{ stats.p95DurationMillis
-              }}<span class="ml-1 text-xs font-normal text-muted-foreground">ms</span>
+              }}<span class="ml-1 text-xs font-normal text-muted-foreground">
+                ms
+              </span>
             </div>
           </div>
         </div>
@@ -393,9 +397,13 @@ async function openStats(row: OpsJobApi.Job) {
                 ></div>
               </div>
               <span class="whitespace-nowrap text-right text-xs tabular-nums">
-                <span class="font-medium text-success">成功 {{ point.success }}</span>
+                <span class="font-medium text-success">
+                  成功 {{ point.success }}
+                </span>
                 <span class="mx-1.5 text-border">/</span>
-                <span class="text-muted-foreground">失败 {{ point.failed }}</span>
+                <span class="text-muted-foreground">
+                  失败 {{ point.failed }}
+                </span>
                 <span class="mx-1.5 text-border">/</span>
                 <span class="font-medium text-primary">
                   成功率 {{ successPercent(point).toFixed(2) }}%
@@ -409,12 +417,16 @@ async function openStats(row: OpsJobApi.Job) {
           >
             <span>
               <span class="text-muted-foreground">连续失败</span>
-              <strong class="ml-2 font-semibold tabular-nums">{{ stats.consecutiveFailures }} 次</strong>
+              <strong class="ml-2 font-semibold tabular-nums">
+                {{ stats.consecutiveFailures }} 次
+              </strong>
             </span>
             <span class="h-4 w-px bg-border"></span>
             <span>
               <span class="text-muted-foreground">最大耗时</span>
-              <strong class="ml-2 font-semibold tabular-nums">{{ stats.maxDurationMillis }} ms</strong>
+              <strong class="ml-2 font-semibold tabular-nums">
+                {{ stats.maxDurationMillis }} ms
+              </strong>
             </span>
           </div>
         </section>

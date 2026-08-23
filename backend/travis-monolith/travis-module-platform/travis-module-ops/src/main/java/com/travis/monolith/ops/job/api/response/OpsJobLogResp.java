@@ -3,9 +3,9 @@ package com.travis.monolith.ops.job.api.response;
 import java.time.LocalDateTime;
 import lombok.Data;
 
-/** 任务执行日志详情响应。 */
+/** 任务执行日志响应。 */
 @Data
-public class OpsJobLogDetailResp {
+public class OpsJobLogResp {
     /** 日志 ID。 */
     private Long id;
 

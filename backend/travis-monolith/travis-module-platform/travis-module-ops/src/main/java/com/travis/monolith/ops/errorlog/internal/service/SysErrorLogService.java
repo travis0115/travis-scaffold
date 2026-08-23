@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.ops.errorlog.api.request.SysErrorLogHandleReq;
 import com.travis.monolith.ops.errorlog.api.request.SysErrorLogPageReq;
-import com.travis.monolith.ops.errorlog.api.response.SysErrorLogDetailResp;
 import com.travis.monolith.ops.errorlog.api.response.SysErrorLogResp;
 import com.travis.monolith.ops.errorlog.internal.entity.SysErrorLog;
 import com.travis.monolith.ops.errorlog.internal.entity.SysErrorLogOccurrence;
@@ -18,7 +17,7 @@ public interface SysErrorLogService extends IService<SysErrorLog> {
     void record(SysErrorLog errorLog, SysErrorLogOccurrence occurrence);
 
     /** 查询错误日志详情。 */
-    SysErrorLogDetailResp getDetailOrThrow(Long id);
+    SysErrorLogResp getDetailOrThrow(Long id);
 
     /** 处理错误日志。 */
     void handle(Long id, SysErrorLogHandleReq req);

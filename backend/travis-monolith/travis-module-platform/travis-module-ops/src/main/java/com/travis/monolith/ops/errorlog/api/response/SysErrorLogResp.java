@@ -1,6 +1,7 @@
 package com.travis.monolith.ops.errorlog.api.response;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.Data;
 
 /** 系统异常日志响应。 */
@@ -98,4 +99,7 @@ public class SysErrorLogResp {
 
     /** 异常记录时间。 */
     private LocalDateTime createTime;
+
+    /** 最近发生明细，按发生时间倒序。 */
+    private List<SysErrorLogOccurrenceResp> occurrences;
 }

@@ -8,6 +8,7 @@ import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
 import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.infrastructure.framework.event.core.TransactionalApplicationEventPublisher;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
@@ -15,7 +16,6 @@ import com.travis.infrastructure.framework.redis.core.util.RedisUtil;
 import com.travis.infrastructure.framework.satoken.core.LoginSubjectSessionKey;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.satoken.core.websocket.SaTokenWebSocketPrincipal;
-import com.travis.infrastructure.framework.event.core.TransactionalApplicationEventPublisher;
 import com.travis.infrastructure.framework.web.core.util.Ip2RegionUtil;
 import com.travis.infrastructure.framework.websocket.core.session.WebSocketSessionManager;
 import com.travis.monolith.system.common.api.enums.Status;
@@ -58,7 +58,6 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     private static final Map<String, SFunction<SysUser, ?>> SORT_COLUMNS =
             Map.ofEntries(
                     Map.entry("lastOnlineTime", SysUser::getLastOnlineTime),
-                    Map.entry("lastOfflineTime", SysUser::getLastOfflineTime),
                     Map.entry("createTime", SysUser::getCreateTime));
 
     /** 部门 API（用于关联查询部门名称） */

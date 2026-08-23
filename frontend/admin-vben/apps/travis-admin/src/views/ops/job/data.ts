@@ -73,7 +73,7 @@ export function useJobFormSchema(
     {
       component: 'RadioGroup',
       componentProps: { options: scheduleTypeOptions },
-      defaultValue: 'CRON',
+      defaultValue: 'INTERVAL',
       fieldName: 'scheduleType',
       label: '调度类型',
       rules: z
@@ -417,7 +417,7 @@ export const useLogGridFormSchema = (): VbenFormSchema[] => [
 ];
 
 export function useLogColumns(
-  onActionClick: OnActionClickFn<OpsJobApi.JobLogPage>,
+  onActionClick: OnActionClickFn<OpsJobApi.JobLog>,
 ): VxeTableGridColumns {
   return [
     { field: 'jobName', minWidth: 180, title: '任务名称' },
@@ -426,6 +426,7 @@ export function useLogColumns(
     {
       field: 'startTime',
       formatter: 'formatDateTime',
+      sortable: true,
       title: '开始时间',
       width: 180,
     },
@@ -440,6 +441,7 @@ export function useLogColumns(
       field: 'durationMillis',
       fixed: 'right',
       formatter: ({ cellValue }: any) => cellValue ?? '-',
+      sortable: true,
       title: '耗时（ms）',
       width: 110,
     },

@@ -10,7 +10,6 @@ import com.travis.infrastructure.common.monitor.error.ErrorReporter;
 import com.travis.infrastructure.framework.redis.core.task.ClusterPeriodicTaskExecutor;
 import com.travis.monolith.ops.job.internal.service.OpsJobLogService;
 import com.travis.monolith.ops.job.internal.service.OpsJobService;
-import com.travis.monolith.ops.job.internal.service.QuartzJobManager;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
