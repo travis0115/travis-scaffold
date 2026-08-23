@@ -27,6 +27,20 @@
         WHERE latest.row_num = 1
     </select>
 
+    <!-- 查询看板时间范围内全部任务的执行汇总。 -->
+    <select id="selectDashboardStatsSummary"
+            resultType="com.travis.monolith.ops.job.internal.model.OpsJobLogStatsSummary">
+        SELECT COUNT(*) AS total,
+               COALESCE(SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END), 0) AS success,
+               COALESCE(SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END), 0) AS failed,
+               COALESCE(ROUND(AVG(duration_millis)), 0) AS average_duration_millis,
+               COALESCE(MAX(duration_millis), 0) AS max_duration_millis
+        FROM ops_job_log
+        WHERE is_deleted = 0
+          AND create_time &gt;= #{startTime}
+          AND create_time &lt; #{endTime}
+    </select>
+
     <!-- 查询指定任务或全部任务的执行日志统计汇总。 -->
     <select id="selectStatsSummary"
             resultType="com.travis.monolith.ops.job.internal.model.OpsJobLogStatsSummary">
@@ -40,6 +54,20 @@
         <if test="jobId != null">
             AND job_id = #{jobId}
         </if>
+    </select>
+
+    <!-- 查询看板时间范围内全部任务的每日执行趋势。 -->
+    <select id="selectDashboardTrend"
+            resultType="com.travis.monolith.ops.job.internal.model.OpsJobLogTrendPoint">
+        SELECT DATE(create_time) AS date,
+               SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) AS success,
+               SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) AS failed
+        FROM ops_job_log
+        WHERE is_deleted = 0
+          AND create_time &gt;= #{startTime}
+          AND create_time &lt; #{endTime}
+        GROUP BY DATE(create_time)
+        ORDER BY DATE(create_time)
     </select>
 
     <!-- 查询指定任务执行耗时的第 95 百分位。 -->

@@ -3,6 +3,7 @@ package com.travis.monolith.system.user.internal.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.user.api.request.*;
+import com.travis.monolith.system.user.api.response.SysUserDashboardResp;
 import com.travis.monolith.system.user.api.response.SysUserResp;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import java.util.Collection;
@@ -85,6 +86,9 @@ public interface SysUserService extends IService<SysUser> {
      * @return 在线用户数量
      */
     Long countOnlineUsers();
+
+    /** 获取首页用户概览。 */
+    SysUserDashboardResp dashboard();
 
     /**
      * 为用户分配角色（先清除原有关联再批量插入）

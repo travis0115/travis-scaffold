@@ -9,21 +9,29 @@ import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.infrastructure.framework.web.core.annotation.NoRepeatSubmit;
 import com.travis.monolith.ops.common.api.OpsPermission;
+import com.travis.monolith.ops.job.api.enums.OpsJobDashboardRange;
 import com.travis.monolith.ops.job.api.enums.OpsJobStatus;
 import com.travis.monolith.ops.job.api.request.*;
-import com.travis.monolith.ops.job.api.response.*;
+import com.travis.monolith.ops.job.api.response.OpsJobDashboardResp;
+import com.travis.monolith.ops.job.api.response.OpsJobHandlerResp;
+import com.travis.monolith.ops.job.api.response.OpsJobResp;
+import com.travis.monolith.ops.job.api.response.OpsJobStatsResp;
 import com.travis.monolith.ops.job.internal.service.OpsJobDashboardService;
 import com.travis.monolith.ops.job.internal.service.OpsJobLogService;
 import com.travis.monolith.ops.job.internal.service.OpsJobService;
 import com.travis.monolith.ops.job.internal.validator.OpsJobScheduleValidator;
 import com.travis.monolith.system.user.api.response.SysUserOptionResp;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
-import java.time.LocalDateTime;
-import java.util.List;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 /** 定时任务管理接口。 */
 @RestController
@@ -160,7 +168,8 @@ public class OpsJobController {
     /** 查询任务调度看板汇总数据。 */
     @SaCheckPermission(value = OpsPermission.OPS_JOB_QUERY, type = LoginType.ADMIN)
     @GetMapping("/dashboard")
-    public ApiResponse<OpsJobDashboardResp> dashboard() {
-        return ApiResponse.success(dashboardService.dashboard());
+    public ApiResponse<OpsJobDashboardResp> dashboard(
+            @RequestParam(defaultValue = "TODAY") OpsJobDashboardRange range) {
+        return ApiResponse.success(dashboardService.dashboard(range));
     }
 }

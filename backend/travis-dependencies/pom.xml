@@ -45,7 +45,9 @@
         <!-- 文档 -->
         <swagger.version>3.0.0</swagger.version>
 
+
         <!-- 工具 -->
+        <wx-java.version>4.8.5.B</wx-java.version>
         <mapstruct.version>1.7.0.Beta1</mapstruct.version>
         <hutool.version>5.8.44</hutool.version>
         <ip2region.version>3.3.7</ip2region.version>
@@ -80,6 +82,15 @@
                 <groupId>com.baomidou</groupId>
                 <artifactId>mybatis-plus-bom</artifactId>
                 <version>${mybatis-plus.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- wx-java-bom -->
+            <dependency>
+                <groupId>com.github.binarywang</groupId>
+                <artifactId>wx-java-bom</artifactId>
+                <version>${wx-java.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

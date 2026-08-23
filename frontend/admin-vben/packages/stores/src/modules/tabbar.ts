@@ -176,6 +176,9 @@ export const useTabbarStore = defineStore('core-tabbar', {
           ...tab,
           meta: { ...currentTab?.meta, ...tab.meta },
         };
+        if (!Reflect.has(tab.meta ?? {}, 'keepAlive')) {
+          delete mergedTab.meta.keepAlive;
+        }
         if (currentTab) {
           const curMeta = currentTab.meta;
           if (Reflect.has(curMeta, 'affixTab')) {

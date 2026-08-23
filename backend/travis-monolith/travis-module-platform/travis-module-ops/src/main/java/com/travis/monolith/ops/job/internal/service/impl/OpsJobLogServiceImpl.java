@@ -97,7 +97,7 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
                         cacheNames = "ops:job-stats",
                         allEntries = true,
                         condition = "#jobId == null"),
-                @CacheEvict(cacheNames = "ops:job-dashboard", key = "'summary'")
+                @CacheEvict(cacheNames = "ops:job-dashboard", allEntries = true)
             })
     public void clean(Long jobId) {
         if (jobId == null) {
@@ -113,7 +113,7 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
     @Caching(
             evict = {
                 @CacheEvict(cacheNames = "ops:job-stats", allEntries = true),
-                @CacheEvict(cacheNames = "ops:job-dashboard", key = "'summary'")
+                @CacheEvict(cacheNames = "ops:job-dashboard", allEntries = true)
             })
     public void cleanExpired() {
         baseMapper.deleteExpiredPhysicallyAll(
@@ -126,7 +126,7 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
     @Caching(
             evict = {
                 @CacheEvict(cacheNames = "ops:job-stats", allEntries = true),
-                @CacheEvict(cacheNames = "ops:job-dashboard", key = "'summary'")
+                @CacheEvict(cacheNames = "ops:job-dashboard", allEntries = true)
             })
     public void markInterruptedExecutions() {
         baseMapper.markInterruptedExecutions(LocalDateTime.now());
@@ -176,7 +176,7 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
     @Caching(
             evict = {
                 @CacheEvict(cacheNames = "ops:job-stats", key = "#log.jobId"),
-                @CacheEvict(cacheNames = "ops:job-dashboard", key = "'summary'")
+                @CacheEvict(cacheNames = "ops:job-dashboard", allEntries = true)
             })
     public void saveExecution(OpsJobLog log) {
         super.save(log);
@@ -187,7 +187,7 @@ public class OpsJobLogServiceImpl extends ServiceImplX<OpsJobLogMapper, OpsJobLo
     @Caching(
             evict = {
                 @CacheEvict(cacheNames = "ops:job-stats", key = "#log.jobId"),
-                @CacheEvict(cacheNames = "ops:job-dashboard", key = "'summary'")
+                @CacheEvict(cacheNames = "ops:job-dashboard", allEntries = true)
             })
     public void updateExecution(OpsJobLog log) {
         updateById(log);

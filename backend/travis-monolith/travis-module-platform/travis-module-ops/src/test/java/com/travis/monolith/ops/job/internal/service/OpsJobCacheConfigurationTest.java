@@ -2,6 +2,7 @@ package com.travis.monolith.ops.job.internal.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.travis.monolith.ops.job.api.enums.OpsJobDashboardRange;
 import com.travis.monolith.ops.job.api.request.OpsJobCreateReq;
 import com.travis.monolith.ops.job.internal.entity.OpsJobLog;
 import com.travis.monolith.ops.job.internal.service.impl.OpsJobDashboardServiceImpl;
@@ -21,15 +22,18 @@ class OpsJobCacheConfigurationTest {
         assertThat(cacheNames(OpsJobDashboardServiceImpl.class))
                 .containsExactly("ops:job-dashboard");
         assertThat(
-                        method(OpsJobDashboardServiceImpl.class, "dashboard")
+                        method(
+                                        OpsJobDashboardServiceImpl.class,
+                                        "dashboard",
+                                        OpsJobDashboardRange.class)
                                 .getAnnotation(Cacheable.class)
                                 .key())
-                .isEqualTo("'summary'");
+                .isEqualTo("#range.name() + ':' + T(java.time.LocalDate).now().toString()");
         var eviction =
                 method(OpsJobServiceImpl.class, "create", OpsJobCreateReq.class)
                         .getAnnotation(CacheEvict.class);
         assertThat(eviction.cacheNames()).containsExactly("ops:job-dashboard");
-        assertThat(eviction.key()).isEqualTo("'summary'");
+        assertThat(eviction.allEntries()).isTrue();
     }
 
     @Test
@@ -65,7 +69,7 @@ class OpsJobCacheConfigurationTest {
                 .anySatisfy(
                         eviction -> {
                             assertThat(eviction.cacheNames()).containsExactly("ops:job-dashboard");
-                            assertThat(eviction.key()).isEqualTo("'summary'");
+                            assertThat(eviction.allEntries()).isTrue();
                         });
 
         var interruptedCaching =

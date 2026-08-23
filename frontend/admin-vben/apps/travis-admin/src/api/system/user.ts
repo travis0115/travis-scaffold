@@ -5,6 +5,12 @@ import type { Id, PageResp } from '#/api/types';
 import { requestClient } from '#/api/request';
 
 export namespace SystemUserApi {
+  export interface Dashboard {
+    newUsersToday: number;
+    onlineUsers: number;
+    totalUsers: number;
+  }
+
   export interface SysUser {
     [key: string]: any;
     id: Id;
@@ -52,11 +58,19 @@ async function getOnlineUserCount() {
   return requestClient.get<number>('/system/user/online-count');
 }
 
+async function getUserDashboard() {
+  return requestClient.get<SystemUserApi.Dashboard>('/system/user/dashboard');
+}
+
 async function getAppUserPage(params: Recordable<any>) {
   return requestClient.get<PageResp<SystemUserApi.UserOption>>(
     '/app/user/page',
     { params },
   );
+}
+
+async function getAppUserDashboard() {
+  return requestClient.get<SystemUserApi.Dashboard>('/app/user/dashboard');
 }
 
 async function getUserOptionsByIds(ids: Id[]) {
@@ -134,9 +148,11 @@ export {
   assignUserRoles,
   createUser,
   deleteUser,
+  getAppUserDashboard,
   getAppUserOptionsByIds,
   getAppUserPage,
   getOnlineUserCount,
+  getUserDashboard,
   getUserDetail,
   getUserOptionsByIds,
   getUserPage,

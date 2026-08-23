@@ -20,6 +20,7 @@ import com.travis.monolith.system.user.api.response.SysUserResp;
 import com.travis.monolith.system.user.internal.converter.SysUserConverter;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.mapper.SysUserMapper;
+import com.travis.monolith.system.user.internal.model.SysUserCountSummary;
 import com.travis.monolith.system.user.internal.service.impl.SysUserServiceImpl;
 import java.util.List;
 import java.util.Map;
@@ -107,6 +108,19 @@ class SysUserServiceImplTest {
         verify(deptApi, never()).getDeptNameById(any());
         verify(roleApi, never()).getRoleNamesByUserId(any());
         verify(fileApi, never()).getFileUrlById(any());
+    }
+
+    @Test
+    void shouldReturnUserDashboardSummary() {
+        var mapper = mock(SysUserMapper.class);
+        when(mapper.selectCountSummary(any())).thenReturn(new SysUserCountSummary(12, 2));
+        var service = service(mapper, mock(SysDeptApi.class));
+
+        var result = service.dashboard();
+
+        assertThat(result.totalUsers()).isEqualTo(12);
+        assertThat(result.newUsersToday()).isEqualTo(2);
+        assertThat(result.onlineUsers()).isZero();
     }
 
     private SysUserServiceImpl service(SysUserMapper mapper, SysDeptApi deptApi) {

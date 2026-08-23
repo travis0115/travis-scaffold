@@ -5,7 +5,8 @@ import type {
 } from '#/adapter/vxe-table';
 import type { OpsErrorLogApi } from '#/api';
 
-import { reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 
 import { Page, useVbenModal, confirm as vbenConfirm } from '@vben/common-ui';
 import { formatDateTime } from '@vben/utils';
@@ -50,6 +51,22 @@ import {
 const detail = ref<OpsErrorLogApi.ErrorLog>();
 const handleTarget = ref<OpsErrorLogApi.ErrorLog>();
 const isBatchHandle = ref(false);
+const route = useRoute();
+const routeErrorLogId = computed(() => {
+  const value = Array.isArray(route.query.errorLogId)
+    ? route.query.errorLogId[0]
+    : route.query.errorLogId;
+  return typeof value === 'string' && /^[1-9]\d*$/.test(value)
+    ? value
+    : undefined;
+});
+const routeStatus = computed(() => {
+  const value = Array.isArray(route.query.status)
+    ? route.query.status[0]
+    : route.query.status;
+  const status = Number(value);
+  return status === 0 || status === 1 || status === 2 ? status : undefined;
+});
 const handleForm = reactive<{ remark: string; status: 1 | 2 }>({
   remark: '',
   status: 1,
@@ -64,6 +81,8 @@ const [Grid, gridApi] = useVbenVxeGrid({
     columns: useColumns(onActionClick),
     height: 'auto',
     proxyConfig: {
+      autoLoad:
+        routeStatus.value === undefined && routeErrorLogId.value === undefined,
       ajax: {
         query: ({ page }, values) =>
           getErrorLogPage({
@@ -114,10 +133,32 @@ function onActionClick({
   if (code === 'delete') onDelete(row);
 }
 
-async function openDetail(row: OpsErrorLogApi.ErrorLog) {
-  detail.value = await getErrorLogDetail(row.id);
+async function openDetail(row: OpsErrorLogApi.ErrorLog | number | string) {
+  detail.value = await getErrorLogDetail(
+    typeof row === 'object' ? row.id : row,
+  );
   detailModalApi.open();
 }
+
+async function applyRouteQuery() {
+  if (route.path !== '/ops/error-log') return;
+  await gridApi.formApi.setFieldValue('status', routeStatus.value);
+  gridApi.formApi.setLatestSubmissionValues(await gridApi.formApi.getValues());
+  await gridApi.query();
+  if (routeErrorLogId.value) {
+    await openDetail(routeErrorLogId.value);
+  } else {
+    detail.value = undefined;
+    detailModalApi.close();
+  }
+}
+
+onMounted(() => {
+  if (routeStatus.value !== undefined || routeErrorLogId.value !== undefined) {
+    void applyRouteQuery();
+  }
+});
+watch([routeStatus, routeErrorLogId], applyRouteQuery);
 
 function openHandle(row: OpsErrorLogApi.ErrorLog) {
   isBatchHandle.value = false;

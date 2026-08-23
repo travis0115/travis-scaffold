@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.travis.monolith.system.log.loginlog.internal.mapper.SysLoginLogMapper">
+
+    <!-- 查询时间范围内成功登录的去重用户数。 -->
+    <select id="selectSuccessfulUserCount" resultType="long">
+        SELECT COUNT(DISTINCT username)
+        FROM sys_user_login_log
+        WHERE status = 1
+          AND login_time &gt;= #{startTime}
+          AND login_time &lt; #{endTime}
+    </select>
+
+</mapper>

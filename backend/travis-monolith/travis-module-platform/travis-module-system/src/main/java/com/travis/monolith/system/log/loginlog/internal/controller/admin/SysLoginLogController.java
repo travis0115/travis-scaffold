@@ -6,6 +6,7 @@ import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.common.api.constant.SystemPermission;
 import com.travis.monolith.system.log.loginlog.api.request.SysLoginLogPageReq;
+import com.travis.monolith.system.log.loginlog.api.response.SysLoginDashboardResp;
 import com.travis.monolith.system.log.loginlog.api.response.SysLoginLogResp;
 import com.travis.monolith.system.log.loginlog.internal.service.SysLoginLogService;
 import jakarta.validation.Valid;
@@ -37,5 +38,12 @@ public class SysLoginLogController {
     @SaCheckPermission(value = SystemPermission.LOGIN_LOG_QUERY, type = LoginType.ADMIN)
     public ApiResponse<PageResp<SysLoginLogResp>> page(@Valid SysLoginLogPageReq req) {
         return ApiResponse.success(loginLogService.page(req));
+    }
+
+    /** 获取首页登录活跃概览。 */
+    @GetMapping("/dashboard")
+    @SaCheckPermission(value = SystemPermission.LOGIN_LOG_QUERY, type = LoginType.ADMIN)
+    public ApiResponse<SysLoginDashboardResp> dashboard() {
+        return ApiResponse.success(loginLogService.dashboard());
     }
 }

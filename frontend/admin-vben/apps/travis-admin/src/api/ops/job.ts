@@ -5,6 +5,8 @@ import type { PageResp } from '#/api/types';
 import { requestClient } from '#/api/request';
 
 export namespace OpsJobApi {
+  export type DashboardRange = 'LAST_7_DAYS' | 'LAST_30_DAYS' | 'TODAY';
+
   export type ScheduleType = 'CRON' | 'INTERVAL' | 'ONCE';
 
   export interface Job {
@@ -93,9 +95,16 @@ export namespace OpsJobApi {
     executions: number;
     failedExecutions: number;
     pausedJobs: number;
+    range: DashboardRange;
+    runningExecutions: number;
     successExecutions: number;
     successRate: number;
     totalJobs: number;
+    trend: Array<{
+      date: string;
+      failed: number;
+      success: number;
+    }>;
   }
 }
 
@@ -128,8 +137,10 @@ const getJobUserOptions = (params?: { keyword?: string; userIds?: string }) =>
   });
 const getJobStats = (id: number) =>
   requestClient.get<OpsJobApi.Stats>(`/ops/job/${id}/stats`);
-const getJobDashboard = () =>
-  requestClient.get<OpsJobApi.Dashboard>('/ops/job/dashboard');
+const getJobDashboard = (range: OpsJobApi.DashboardRange = 'TODAY') =>
+  requestClient.get<OpsJobApi.Dashboard>('/ops/job/dashboard', {
+    params: { range },
+  });
 const getJobLogPage = (params: Recordable<any>) =>
   requestClient.get<PageResp<OpsJobApi.JobLog>>('/ops/job-log/page', {
     params,

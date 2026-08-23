@@ -17,6 +17,7 @@ import com.travis.monolith.system.file.api.constant.FileFolderId;
 import com.travis.monolith.system.file.api.response.FileUploadResp;
 import com.travis.monolith.system.user.api.SysUserApi;
 import com.travis.monolith.system.user.api.request.*;
+import com.travis.monolith.system.user.api.response.SysUserDashboardResp;
 import com.travis.monolith.system.user.api.response.SysUserOptionResp;
 import com.travis.monolith.system.user.api.response.SysUserResp;
 import com.travis.monolith.system.user.internal.service.SysUserService;
@@ -71,6 +72,13 @@ public class SysUserController {
     @SaCheckPermission(value = SystemPermission.USER_QUERY, type = LoginType.ADMIN)
     public ApiResponse<Long> onlineCount() {
         return ApiResponse.success(userService.countOnlineUsers());
+    }
+
+    /** 获取首页用户概览。 */
+    @GetMapping("/dashboard")
+    @SaCheckPermission(value = SystemPermission.USER_QUERY, type = LoginType.ADMIN)
+    public ApiResponse<SysUserDashboardResp> dashboard() {
+        return ApiResponse.success(userService.dashboard());
     }
 
     /**

@@ -81,7 +81,9 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
                             OpsJobResp response = converter.toResp(job);
                             response.setHandlerAvailable(
                                     handlerRegistry.contains(job.getHandlerName()));
-                            response.setCreateByUsername(creatorNames.get(job.getCreateBy()));
+                            Long createBy = job.getCreateBy();
+                            response.setCreateByUsername(
+                                    createBy == null ? null : creatorNames.get(createBy));
                             response.setNextFireTime(quartzJobManager.nextFireTime(job.getId()));
                             OpsJobLog latestLog = latestLogs.get(job.getId());
                             if (latestLog != null) {
@@ -109,7 +111,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
     /** 创建定时任务。 */
     @Override
     @Transactional
-    @CacheEvict(cacheNames = "ops:job-dashboard", key = "'summary'")
+    @CacheEvict(cacheNames = "ops:job-dashboard", allEntries = true)
     public void create(OpsJobCreateReq req) {
         validate(req.getHandlerName(), req.getParams());
         validateUserScope(req.getAlertUserIds());
@@ -147,7 +149,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
     @Caching(
             evict = {
                 @CacheEvict(cacheNames = "ops:job-stats", key = "#id"),
-                @CacheEvict(cacheNames = "ops:job-dashboard", key = "'summary'")
+                @CacheEvict(cacheNames = "ops:job-dashboard", allEntries = true)
             })
     public void delete(Long id) {
         ensureNotBuiltin(getRequired(id));
@@ -158,7 +160,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
     /** 变更指定定时任务的状态。 */
     @Override
     @Transactional
-    @CacheEvict(cacheNames = "ops:job-dashboard", key = "'summary'")
+    @CacheEvict(cacheNames = "ops:job-dashboard", allEntries = true)
     public void changeStatus(Long id, Integer status) {
         OpsJob job = getRequired(id);
         ensureNotBuiltin(job);
@@ -185,7 +187,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
     /** 复制指定定时任务。 */
     @Override
     @Transactional
-    @CacheEvict(cacheNames = "ops:job-dashboard", key = "'summary'")
+    @CacheEvict(cacheNames = "ops:job-dashboard", allEntries = true)
     public void copy(Long id) {
         OpsJob source = getRequired(id);
         ensureNotBuiltin(source);
@@ -202,7 +204,7 @@ public class OpsJobServiceImpl extends ServiceImplX<OpsJobMapper, OpsJob> implem
     /** 当前配置对应的单次计划执行结束后将任务恢复为停用状态。 */
     @Override
     @Transactional
-    @CacheEvict(cacheNames = "ops:job-dashboard", key = "'summary'")
+    @CacheEvict(cacheNames = "ops:job-dashboard", allEntries = true)
     public void completeOnce(Long id, String configFingerprint) {
         OpsJob job = super.getById(id);
         if (job == null

@@ -20,6 +20,10 @@ public interface OpsJobLogMapper extends BaseMapperX<OpsJobLog> {
     /** 查询指定任务或全部任务的执行日志统计汇总。 */
     OpsJobLogStatsSummary selectStatsSummary(@Param("jobId") Long jobId);
 
+    /** 查询看板时间范围内全部任务的执行汇总。 */
+    OpsJobLogStatsSummary selectDashboardStatsSummary(
+            @Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
+
     /** 查询指定任务执行耗时的第 95 百分位。 */
     long selectP95Duration(@Param("jobId") Long jobId);
 
@@ -29,6 +33,10 @@ public interface OpsJobLogMapper extends BaseMapperX<OpsJobLog> {
     /** 查询指定任务从给定日期开始的每日执行趋势。 */
     List<OpsJobLogTrendPoint> selectTrend(
             @Param("jobId") Long jobId, @Param("startTime") LocalDateTime startTime);
+
+    /** 查询看板时间范围内全部任务的每日执行趋势。 */
+    List<OpsJobLogTrendPoint> selectDashboardTrend(
+            @Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
 
     /** 根据任务编号物理删除调度日志。 */
     int deletePhysicallyByJobId(@Param("jobId") Long jobId);

@@ -44,6 +44,13 @@ const routeJobName = computed(() => {
   const value = route.query.jobName;
   return (Array.isArray(value) ? value[0] : value) || '';
 });
+const routeStatus = computed(() => {
+  const value = Array.isArray(route.query.status)
+    ? route.query.status[0]
+    : route.query.status;
+  const status = Number(value);
+  return status === 0 || status === 1 || status === 2 ? status : undefined;
+});
 
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
@@ -54,7 +61,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     columns: useLogColumns(onActionClick),
     height: 'auto',
     proxyConfig: {
-      autoLoad: !routeJobName.value,
+      autoLoad: !routeJobName.value && routeStatus.value === undefined,
       ajax: {
         query: ({ page }, values) =>
           getJobLogPage({
@@ -69,10 +76,19 @@ const [Grid, gridApi] = useVbenVxeGrid({
   } as VxeTableGridOptions<OpsJobApi.JobLog>,
 });
 
+async function applyRouteQuery() {
+  if (route.path !== '/ops/job/log') return;
+  await Promise.all([
+    gridApi.formApi.setFieldValue('jobName', routeJobName.value || undefined),
+    gridApi.formApi.setFieldValue('status', routeStatus.value),
+  ]);
+  gridApi.formApi.setLatestSubmissionValues(await gridApi.formApi.getValues());
+  await gridApi.query();
+}
+
 onMounted(async () => {
-  if (routeJobName.value) {
-    await gridApi.formApi.setFieldValue('jobName', routeJobName.value);
-    await gridApi.query();
+  if (routeJobName.value || routeStatus.value !== undefined) {
+    await applyRouteQuery();
   }
 
   const handlers = await getJobHandlers(true);
@@ -94,11 +110,7 @@ onMounted(async () => {
   ]);
 });
 
-watch(routeJobName, async (jobName) => {
-  if (route.path !== '/ops/job/log') return;
-  await gridApi.formApi.setFieldValue('jobName', jobName || undefined);
-  await gridApi.query();
-});
+watch([routeJobName, routeStatus], applyRouteQuery);
 
 const [DetailModal, detailModalApi] = useVbenModal({
   footer: false,

@@ -6,7 +6,8 @@ type OperationOption = Record<string, any> | string;
  * 系统设置
  */
 export const SYSTEM_PERMS = {
-   // 用户管理
+  // 用户管理
+  userQuery: 'system:user:query',
   userCreate: 'system:user:create',
   userDelete: 'system:user:delete',
   userUpdate: 'system:user:update',
@@ -35,7 +36,7 @@ export const SYSTEM_PERMS = {
   configCreate: 'system:config:create',
   configDelete: 'system:config:delete',
   configUpdate: 'system:config:update',
-  
+
   // 版本管理
   versionCreate: 'system:version:create',
   versionDelete: 'system:version:delete',
@@ -59,8 +60,9 @@ export const SYSTEM_PERMS = {
   // 文件管理
   fileDelete: 'system:file:delete',
   fileUpload: 'system:file:upload',
-  
- 
+
+  // 登录日志
+  loginLogQuery: 'system:log:login:query',
 } as const;
 
 /**

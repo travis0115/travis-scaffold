@@ -68,7 +68,7 @@ const getErrorLogPage = (params: Recordable<any>) =>
     params,
   });
 
-const getErrorLogDetail = (id: number) =>
+const getErrorLogDetail = (id: number | string) =>
   requestClient.get<OpsErrorLogApi.ErrorLog>(`/ops/error-log/${id}`);
 
 const handleErrorLog = (id: number, data: { remark?: string; status: 1 | 2 }) =>

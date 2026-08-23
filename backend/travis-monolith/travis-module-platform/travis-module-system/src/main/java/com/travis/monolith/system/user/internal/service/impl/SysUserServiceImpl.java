@@ -25,11 +25,13 @@ import com.travis.monolith.system.file.api.SysFileApi;
 import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.api.event.UserMessageAudienceChangedEvent;
 import com.travis.monolith.system.user.api.request.*;
+import com.travis.monolith.system.user.api.response.SysUserDashboardResp;
 import com.travis.monolith.system.user.api.response.SysUserResp;
 import com.travis.monolith.system.user.internal.converter.SysUserConverter;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.mapper.SysUserMapper;
 import com.travis.monolith.system.user.internal.service.SysUserService;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -273,6 +275,13 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     @Override
     public Long countOnlineUsers() {
         return (long) getConnectedAdminUserIds().size();
+    }
+
+    /** 获取首页用户概览。 */
+    @Override
+    public SysUserDashboardResp dashboard() {
+        var summary = baseMapper.selectCountSummary(LocalDate.now().atStartOfDay());
+        return new SysUserDashboardResp(summary.total(), summary.newToday(), countOnlineUsers());
     }
 
     /** 分配用户角色：委托给角色服务 */

@@ -4,17 +4,21 @@ import cn.hutool.crypto.digest.BCrypt;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
+import com.travis.infrastructure.framework.event.core.TransactionalApplicationEventPublisher;
 import com.travis.infrastructure.framework.satoken.core.LoginSubjectSessionKey;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.satoken.core.websocket.SaTokenWebSocketAuthService;
 import com.travis.infrastructure.framework.satoken.core.websocket.SaTokenWebSocketPrincipal;
 import com.travis.infrastructure.framework.satoken.core.websocket.ticket.SaTokenWebSocketTicketStore;
+import com.travis.infrastructure.framework.web.core.util.IpUtil;
+import com.travis.infrastructure.framework.web.core.util.UserAgentUtil;
 import com.travis.infrastructure.framework.websocket.core.session.WebSocketSessionManager;
 import com.travis.monolith.app.user.api.request.AppUserLoginReq;
 import com.travis.monolith.app.user.api.response.AppUserInfoResp;
 import com.travis.monolith.app.user.api.response.AppWebSocketTicketResp;
 import com.travis.monolith.app.user.internal.converter.AppUserConverter;
 import com.travis.monolith.app.user.internal.entity.AppUser;
+import com.travis.monolith.app.user.internal.event.AppUserLoginEvent;
 import com.travis.monolith.app.user.internal.service.AppAuthService;
 import com.travis.monolith.app.user.internal.service.AppUserService;
 import com.travis.monolith.system.common.api.enums.Status;
@@ -30,10 +34,13 @@ public class AppAuthServiceImpl implements AppAuthService {
     private final AppUserConverter converter;
     private final SaTokenWebSocketTicketStore ticketStore;
     private final WebSocketSessionManager webSocketSessionManager;
+    private final TransactionalApplicationEventPublisher eventPublisher;
 
     /** 执行App 端认证登录。 */
     @Override
     public void login(AppUserLoginReq req) {
+        var clientIp = IpUtil.getClientIp();
+        var uaInfo = UserAgentUtil.getCurrentUserAgentInfo();
         var user =
                 userService
                         .lambdaQuery()
@@ -44,16 +51,43 @@ public class AppAuthServiceImpl implements AppAuthService {
                                 AppUser::getPassword,
                                 AppUser::getStatus)
                         .one();
-        if (user == null || !BCrypt.checkpw(req.getPassword(), user.getPassword())) {
+        if (user == null) {
+            publishLoginEvent(req.getUsername(), Status.DISABLED.getValue(), "用户不存在", clientIp);
+            throw new BizException(CommonErrorCode.AUTH_LOGIN_BAD_CREDENTIALS);
+        }
+        if (!BCrypt.checkpw(req.getPassword(), user.getPassword())) {
+            publishLoginEvent(req.getUsername(), Status.DISABLED.getValue(), "密码错误", clientIp);
             throw new BizException(CommonErrorCode.AUTH_LOGIN_BAD_CREDENTIALS);
         }
         if (Status.DISABLED.getValue().equals(user.getStatus())) {
+            publishLoginEvent(req.getUsername(), Status.DISABLED.getValue(), "账号已被禁用", clientIp);
             throw new BizException(CommonErrorCode.AUTH_LOGIN_USER_DISABLED);
         }
 
         var stpLogic = StpKit.of(LoginType.APP);
         stpLogic.login(user.getId());
         stpLogic.getSession().set(LoginSubjectSessionKey.USERNAME, user.getUsername());
+        eventPublisher.publishEvent(
+                AppUserLoginEvent.builder()
+                        .username(user.getUsername())
+                        .status(Status.ENABLED.getValue())
+                        .ip(clientIp)
+                        .browser(uaInfo.getBrowser())
+                        .os(uaInfo.getOs())
+                        .build());
+    }
+
+    private void publishLoginEvent(String username, int status, String message, String clientIp) {
+        var uaInfo = UserAgentUtil.getCurrentUserAgentInfo();
+        eventPublisher.publishEvent(
+                AppUserLoginEvent.builder()
+                        .username(username)
+                        .status(status)
+                        .message(message)
+                        .ip(clientIp)
+                        .browser(uaInfo.getBrowser())
+                        .os(uaInfo.getOs())
+                        .build());
     }
 
     /** 执行App 端认证退出。 */

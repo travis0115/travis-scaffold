@@ -5,6 +5,7 @@ import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.model.ApiResponse;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.app.user.api.request.AppUserPageReq;
+import com.travis.monolith.app.user.api.response.AppUserDashboardResp;
 import com.travis.monolith.app.user.api.response.AppUserOptionResp;
 import com.travis.monolith.app.user.internal.service.AppUserService;
 import com.travis.monolith.system.common.api.constant.SystemPermission;
@@ -30,6 +31,13 @@ public class AppUserController {
     @SaCheckPermission(value = SystemPermission.USER_QUERY, type = LoginType.ADMIN)
     public ApiResponse<PageResp<AppUserOptionResp>> page(@Valid AppUserPageReq req) {
         return ApiResponse.success(userService.page(req));
+    }
+
+    /** 获取首页客户端用户概览。 */
+    @GetMapping("/dashboard")
+    @SaCheckPermission(value = SystemPermission.USER_QUERY, type = LoginType.ADMIN)
+    public ApiResponse<AppUserDashboardResp> dashboard() {
+        return ApiResponse.success(userService.dashboard());
     }
 
     /** 根据用户 ID 集合查询选择项。 */

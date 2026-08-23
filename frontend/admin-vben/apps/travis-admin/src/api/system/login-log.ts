@@ -5,6 +5,10 @@ import type { PageResp } from '#/api/types';
 import { requestClient } from '#/api/request';
 
 export namespace SystemLoginLogApi {
+  export interface Dashboard {
+    todayLoginUsers: number;
+  }
+
   export interface LoginLog {
     browser?: string;
     id: string;
@@ -28,4 +32,10 @@ async function getLoginLogList(params: Recordable<any>) {
   );
 }
 
-export { getLoginLogList };
+async function getLoginDashboard() {
+  return requestClient.get<SystemLoginLogApi.Dashboard>(
+    '/system/login-log/dashboard',
+  );
+}
+
+export { getLoginDashboard, getLoginLogList };

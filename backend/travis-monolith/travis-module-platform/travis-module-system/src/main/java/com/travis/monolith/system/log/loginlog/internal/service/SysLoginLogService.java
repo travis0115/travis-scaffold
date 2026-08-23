@@ -3,6 +3,7 @@ package com.travis.monolith.system.log.loginlog.internal.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.travis.infrastructure.common.web.model.PageResp;
 import com.travis.monolith.system.log.loginlog.api.request.SysLoginLogPageReq;
+import com.travis.monolith.system.log.loginlog.api.response.SysLoginDashboardResp;
 import com.travis.monolith.system.log.loginlog.api.response.SysLoginLogResp;
 import com.travis.monolith.system.log.loginlog.internal.entity.SysLoginLog;
 
@@ -21,6 +22,9 @@ public interface SysLoginLogService extends IService<SysLoginLog> {
      */
     PageResp<SysLoginLogResp> page(SysLoginLogPageReq req);
 
+    /** 获取首页登录活跃概览。 */
+    SysLoginDashboardResp dashboard();
+
     /**
      * 记录登录日志（使用独立事务，不受外层事务回滚影响）
      *
@@ -32,5 +36,10 @@ public interface SysLoginLogService extends IService<SysLoginLog> {
      * @param os 操作系统
      */
     void recordLoginLog(
-            String username, int status, String message, String ip, String browser, String os);
+            String username,
+            int status,
+            String message,
+            String ip,
+            String browser,
+            String os);
 }

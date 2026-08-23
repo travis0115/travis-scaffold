@@ -247,6 +247,36 @@ class OpsJobServiceImplTest {
     }
 
     @Test
+    void shouldPageBuiltinJobWhenCreatorIsNull() {
+        OpsJobMapper mapper = mock(OpsJobMapper.class);
+        SysUserApi userApi = mock(SysUserApi.class);
+        OpsJobConverter converter = mock(OpsJobConverter.class);
+        OpsJobLogService jobLogService = mock(OpsJobLogService.class);
+        OpsJob job = job();
+        job.setIsBuiltin(1);
+        job.setCreateBy(null);
+        var response = new OpsJobResp();
+        var service =
+                new OpsJobServiceImpl(
+                        mock(QuartzJobManager.class),
+                        mock(QuartzJobHandlerRegistry.class),
+                        userApi,
+                        converter,
+                        jobLogService);
+        ReflectionTestUtils.setField(service, "baseMapper", mapper);
+        when(mapper.page(anyInt(), anyInt(), any(LambdaQueryWrapperX.class)))
+                .thenReturn(new Page<OpsJob>().setRecords(List.of(job)).setTotal(1));
+        when(converter.toResp(job)).thenReturn(response);
+        when(userApi.getUsernameMapByIds(List.of())).thenReturn(Map.of());
+        when(jobLogService.latestByJobIds(List.of(job.getId()))).thenReturn(Map.of());
+
+        var result = service.page(new OpsJobPageReq());
+
+        assertThat(result.getRecords()).containsExactly(response);
+        assertThat(response.getCreateByUsername()).isNull();
+    }
+
+    @Test
     void shouldTruncateCopiedJobNameToDatabaseLimit() {
         OpsJobMapper mapper = mock(OpsJobMapper.class);
         OpsJobConverter converter = mock(OpsJobConverter.class);

@@ -7,11 +7,13 @@ import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.web.core.util.Ip2RegionUtil;
 import com.travis.monolith.system.log.loginlog.api.request.SysLoginLogPageReq;
+import com.travis.monolith.system.log.loginlog.api.response.SysLoginDashboardResp;
 import com.travis.monolith.system.log.loginlog.api.response.SysLoginLogResp;
 import com.travis.monolith.system.log.loginlog.internal.converter.SysLoginLogConverter;
 import com.travis.monolith.system.log.loginlog.internal.entity.SysLoginLog;
 import com.travis.monolith.system.log.loginlog.internal.mapper.SysLoginLogMapper;
 import com.travis.monolith.system.log.loginlog.internal.service.SysLoginLogService;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -54,11 +56,26 @@ public class SysLoginLogServiceImpl extends ServiceImplX<SysLoginLogMapper, SysL
         return PageConverter.toResp(page.convert(converter::toResp));
     }
 
+    /** 获取今日成功登录用户数。 */
+    @Override
+    public SysLoginDashboardResp dashboard() {
+        LocalDate today = LocalDate.now();
+        long todayLoginUsers =
+                baseMapper.selectSuccessfulUserCount(
+                        today.atStartOfDay(), today.plusDays(1).atStartOfDay());
+        return new SysLoginDashboardResp(todayLoginUsers);
+    }
+
     /** 记录登录日志，使用 REQUIRES_NEW 独立事务，确保日志不受外层事务回滚影响 */
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordLoginLog(
-            String username, int status, String message, String ip, String browser, String os) {
+            String username,
+            int status,
+            String message,
+            String ip,
+            String browser,
+            String os) {
         var loginLog =
                 SysLoginLog.builder()
                         .username(username)

@@ -59,6 +59,26 @@ describe('useAccessStore', () => {
     expect(store.tabs[0]?.query).toEqual({ id: '1' });
   });
 
+  it('removes stale keepAlive metadata when the route disables caching', () => {
+    const store = useTabbarStore();
+    const initialTab: any = {
+      fullPath: '/dashboard',
+      meta: { affixTab: true, keepAlive: true },
+      name: 'Dashboard',
+      path: '/dashboard',
+    };
+    store.addTab(initialTab);
+    expect(store.getCachedTabs).toContain('Dashboard');
+
+    store.addTab({
+      ...initialTab,
+      meta: { affixTab: true },
+    });
+
+    expect(store.tabs[0]?.meta).not.toHaveProperty('keepAlive');
+    expect(store.getCachedTabs).not.toContain('Dashboard');
+  });
+
   it('adds separate tabs when fullPathKey is enabled', () => {
     const store = useTabbarStore();
     const initialTab: any = {
