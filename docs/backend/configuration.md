@@ -39,19 +39,20 @@ starter 的 `application-reference.yml` 只存在于 Jackson、Redis、RocketMQ 
 
 | 变量 | dev | prod | 作用 |
 | --- | --- | --- | --- |
-| `JWT_SECRET_KEY` | 必填 | 必填 | Sa-Token JWT 签名密钥 |
-| `MYSQL_USERNAME` | 必填 | 默认 `root` | MySQL 用户名 |
+| `JWT_SECRET_KEY` | 有仅供本地使用的默认值 | 必填 | Sa-Token JWT 签名密钥 |
+| `MYSQL_USERNAME` | 默认 `travis` | 必填 | MySQL 用户名 |
 | `MYSQL_PASSWORD` | 必填 | 必填 | MySQL 密码 |
-| `MYSQL_URL` | 使用固定本地 URL | 有本地 URL 默认值 | 完整 JDBC URL |
-| `REDIS_HOST` / `REDIS_PORT` / `REDIS_DATABASE` | 均有本地默认值 | 均有本地默认值 | Redis 连接 |
-| `DRUID_USERNAME` / `DRUID_PASSWORD` | 均有开发默认值 | 均有开发默认值 | Druid 监控页登录，生产必须覆盖或关闭监控页 |
+| `MYSQL_URL` | 使用固定本地 URL | 必填 | 完整 JDBC URL |
+| `REDIS_HOST` / `REDIS_PORT` / `REDIS_DATABASE` | 均有本地默认值 | `REDIS_HOST` 必填，其余有默认值 | Redis 连接 |
+| `REDIS_PASSWORD` | 可为空 | 必填 | Redis 密码 |
+| `DRUID_USERNAME` / `DRUID_PASSWORD` | 均有开发默认值 | 不使用 | Druid 管理页在生产关闭 |
 | `OPS_JOB_LOG_RETENTION_DAYS` | 默认 `30` | 默认 `30` | Ops 任务日志保留天数，最小 1 |
-| `ROCKETMQ_NAMESRV_ADDR` | 默认 `127.0.0.1:9876` | 同左 | 自动创建 Topic/消费者组时连接 NameServer |
-| `ROCKETMQ_PRODUCER_ENDPOINTS` / `ROCKETMQ_CONSUMER_ENDPOINTS` | 默认 `127.0.0.1:8081` | 同左 | RocketMQ v5 Proxy gRPC 地址 |
+| `ROCKETMQ_NAMESRV_ADDR` | 默认 `127.0.0.1:9876` | 必填 | 自动创建 Topic/消费者组时连接 NameServer |
+| `ROCKETMQ_PRODUCER_ENDPOINTS` / `ROCKETMQ_CONSUMER_ENDPOINTS` | 默认 `127.0.0.1:8081` | 必填 | RocketMQ v5 Proxy gRPC 地址 |
 | `ROCKETMQ_*_ACCESS_KEY` / `ROCKETMQ_*_SECRET_KEY` | 可为空 | 必填 | 生产者/消费者 ACL |
 | `HOSTNAME` | 不使用 | 默认 `local` | 生产日志实例目录，并可参与实例识别 |
 
-`${VAR:default}` 表示有默认值，`${VAR}` 表示缺失时无法正确绑定或启动。生产环境即使存在本地默认值，也应按部署网络显式配置。
+`${VAR:default}` 表示有默认值，`${VAR}` 表示缺失时无法正确绑定或启动。生产部署还会由 `validate.sh` 检查弱口令、密钥长度和必要变量。
 
 ## 服务与 Spring 基础配置
 
@@ -72,7 +73,7 @@ starter 的 `application-reference.yml` 只存在于 Jackson、Redis、RocketMQ 
 
 | 配置项 | 当前值/作用 |
 | --- | --- |
-| `spring.datasource.url/username/password` | profile 中配置数据库连接；dev 用户名和密码无默认值 |
+| `spring.datasource.url/username/password` | dev 与本地 Compose 对齐；prod 必须通过环境变量提供 |
 | `spring.datasource.type` | Druid 数据源 |
 | `spring.datasource.druid.initial-size/min-idle/max-active/max-wait` | 初始 5、最小空闲 10、最大 20、等待 60000ms |
 | `spring.datasource.druid.validation-query` | `SELECT 1 FROM DUAL` |
@@ -188,12 +189,12 @@ Quartz 表和 Modulith 事件表必须由数据库脚本提供。详细用法见
 
 | 配置项 | dev | prod | 说明 |
 | --- | --- | --- | --- |
-| `rocketmq.producer.endpoints` | 本地 Proxy | 本地默认，可覆盖 | v5 Producer gRPC 端点 |
-| `rocketmq.push-consumer.endpoints` | 本地 Proxy | 本地默认，可覆盖 | v5 Consumer gRPC 端点 |
+| `rocketmq.producer.endpoints` | 本地 Proxy | 环境变量必填 | v5 Producer gRPC 端点 |
+| `rocketmq.push-consumer.endpoints` | 本地 Proxy | 环境变量必填 | v5 Consumer gRPC 端点 |
 | `access-key/secret-key` | 可为空 | 环境变量必填 | ACL 凭证 |
 | `enable-msg-trace` | `false` | `true` | 消息轨迹 |
 | `travis.rocketmq.auto-initialize.enabled` | `true` | `true` | 启动时创建缺失 Topic/消费者组 |
-| `travis.rocketmq.auto-initialize.namesrv-addr` | `127.0.0.1:9876` | 同左，可覆盖 | 初始化使用 NameServer，不是 Proxy 端口 |
+| `travis.rocketmq.auto-initialize.namesrv-addr` | `127.0.0.1:9876` | 环境变量必填 | 初始化使用 NameServer，不是 Proxy 端口 |
 | `travis.rocketmq.client.log-path` | `${user.home}/data/logs/rocketmq` | `/data/logs/rocketmq` | v5 客户端日志根目录 |
 
 starter 中的 `application-reference.yml` 还列出 Producer group、请求超时等 RocketMQ 官方属性；实际值以 server 的 profile 配置和官方 starter 绑定为准。
@@ -208,20 +209,16 @@ starter 中的 `application-reference.yml` 还列出 Producer group、请求超�
 | `logging.file.path` | 不使用 | `/data/logs/<应用>/<实例>` |
 | `logging.file.async.*` | 不使用 | 队列 1024、默认允许阻塞以避免丢日志 |
 | `logging.logback.rollingpolicy.*` | 不使用 | 30 天、单文件 10MB、总量 5GB |
-| `management.endpoints.web.exposure.include` | `*` | health、info、modulith、metrics、prometheus |
+| `management.endpoints.web.exposure.include` | `*` | 仅 `health`；详情和组件始终隐藏 |
 | `management.otlp.metrics.export.enabled` | `false` | `false` |
 
 Jackson 当前为 `yyyy-MM-dd HH:mm:ss`、UTC、非空字段输出、未知入参字段不报错。starter 参考 yml 中的示例值不一定等于应用最终值，最终以 `application.yml` 为准。
 
 ## 本地 Compose 注意事项
 
-`backend/travis-monolith/compose.yaml` 会启动 MySQL、Redis、RocketMQ NameServer/Broker/Proxy，但当前配置有两个需要显式处理的端口差异：
+`backend/travis-monolith/compose.yaml` 会启动 MySQL、Redis、RocketMQ NameServer/Broker/Proxy。MySQL 固定映射 `3306`，创建 `travis_monolith` 库和 `travis` 本地账号；Redis 固定映射 `6379`；RocketMQ Proxy 只映射 `8081`。这些值已与 dev Profile 对齐，应用仍使用默认 `8080`，不会与 Proxy 冲突。
 
-- MySQL 写的是容器端口 `3306`，没有固定宿主机端口；而 dev JDBC 默认连接 `127.0.0.1:3306`。若 Docker 分配了随机端口，需要查询映射后覆盖 JDBC URL，或由维护者统一 Compose 端口。
-- Compose 创建的库是 `mydatabase`，账号是 `myuser/secret`；dev JDBC 指向 `travis_monolith`，且从 `MYSQL_USERNAME/MYSQL_PASSWORD` 取账号。首次启动前必须让库名、账号和 JDBC 配置保持一致。
-- RocketMQ Proxy 映射宿主机 `8080` 和 `8081`，应用 HTTP 默认也是 `8080`。同机启动两者时会端口冲突，需要调整应用端口或 Proxy 映射。
-
-Redis 固定映射 `6379:6379`。Compose 内置账号和密码只适合本地开发，不可直接用于生产。
+Compose 内置账号、密码和 dev JWT 只适合本地开发，不可直接用于生产。Flyway 在 dev 默认关闭；如需在全新且已审阅的数据库上执行迁移，应显式设置 `SPRING_FLYWAY_ENABLED=true`。本项目的生产 Compose、凭据和网络边界见 [生产部署](../production-deployment.md)。
 
 ## 修改配置时的检查表
 

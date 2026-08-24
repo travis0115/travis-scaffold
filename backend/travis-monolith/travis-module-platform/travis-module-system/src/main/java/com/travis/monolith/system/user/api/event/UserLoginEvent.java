@@ -15,9 +15,4 @@ import lombok.Builder;
  */
 @Builder
 public record UserLoginEvent(
-        String username,
-        int status,
-        String message,
-        String ip,
-        String browser,
-        String os) {}
+        String username, int status, String message, String ip, String browser, String os) {}

@@ -46,10 +46,14 @@ export namespace SystemFileApi {
     meta?: string;
     region?: string;
     remark?: string;
-    secretKey?: string;
+    secretConfigured?: boolean;
     status: number;
     storagePath: string;
     storageType: string;
+  }
+
+  export interface StorageConfigMutation extends Partial<StorageConfig> {
+    secretKey?: string;
   }
 
   export interface StorageTypeOption {
@@ -91,11 +95,11 @@ const getStorageConfigPage = (params: Recordable<any>) =>
   );
 const getStorageConfigDetail = (id: Id) =>
   requestClient.get<SystemFileApi.StorageConfig>(`/system/file/storage/${id}`);
-const createStorageConfig = (data: Partial<SystemFileApi.StorageConfig>) =>
+const createStorageConfig = (data: SystemFileApi.StorageConfigMutation) =>
   requestClient.post('/system/file/storage', data);
 const updateStorageConfig = (
   id: Id,
-  data: Partial<SystemFileApi.StorageConfig>,
+  data: SystemFileApi.StorageConfigMutation,
 ) => requestClient.put(`/system/file/storage/${id}`, data);
 const setDefaultStorageConfig = (id: Id) =>
   requestClient.put(`/system/file/storage/${id}/default`);

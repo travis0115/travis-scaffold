@@ -3,6 +3,9 @@ package com.travis.infrastructure.framework.desensitize.core;
 import cn.hutool.core.util.StrUtil;
 import com.travis.infrastructure.framework.desensitize.core.resolver.DesensitizeResolver;
 import com.travis.infrastructure.framework.desensitize.core.rule.DesensitizeRule;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -11,10 +14,6 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
-
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
-import java.util.*;
 
 /** 统一处理字符串、对象、参数和 JSON 的脱敏，失败时返回空结果，避免影响调用方业务。 */
 @Slf4j

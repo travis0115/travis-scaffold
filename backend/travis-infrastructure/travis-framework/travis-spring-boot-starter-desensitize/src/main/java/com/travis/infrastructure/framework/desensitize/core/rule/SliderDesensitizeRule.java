@@ -15,8 +15,8 @@ public record SliderDesensitizeRule(int prefix, int suffix, char mask) implement
         if (value.length() <= prefix + suffix || prefix < 0 || suffix < 0) {
             return value;
         }
-        return value.substring(0, prefix) +
-                String.valueOf(mask).repeat(value.length() - prefix - suffix) +
-                value.substring(value.length() - suffix);
+        return value.substring(0, prefix)
+                + String.valueOf(mask).repeat(value.length() - prefix - suffix)
+                + value.substring(value.length() - suffix);
     }
 }

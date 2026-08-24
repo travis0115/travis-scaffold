@@ -1,0 +1,2 @@
+limit_req_zone $binary_remote_addr zone=admin_login:10m rate=${ADMIN_LOGIN_RATE}r/m;
+limit_req_zone $binary_remote_addr zone=app_login:20m rate=${APP_LOGIN_RATE}r/m;

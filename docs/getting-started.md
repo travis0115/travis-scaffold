@@ -1,6 +1,6 @@
 # 快速开始
 
-本文给出从空环境启动 Travis Scaffold 的最短路径。当前 Compose 与 dev 默认值存在库名和端口差异，下面使用环境变量显式对齐，不要求修改仓库配置。
+本文给出从空环境启动 Travis Scaffold 的最短路径。Compose 与 dev Profile 已使用一致的本地默认值，首次启动不需要额外拼接环境变量。
 
 ## 环境要求
 
@@ -20,29 +20,27 @@
 cd backend/travis-monolith
 docker compose up -d
 docker compose ps
-docker compose port mysql 3306
 ```
 
-记录最后一条命令返回的 MySQL 宿主机端口，例如 `0.0.0.0:55001` 中的 `55001`。Redis 固定为 6379，RocketMQ NameServer 为 9876，Proxy gRPC 为 8081。
-
-当前 Compose 还会占用宿主机 8080，而后端默认端口也是 8080，所以下文把后端改为 8082。所有差异详见 [后端配置](backend/configuration.md#本地-compose-注意事项)。
+本地端口为 MySQL 3306、Redis 6379、RocketMQ NameServer 9876、Broker 10909/10911/10912、Proxy gRPC 8081。后端使用 8080，不与 Compose 冲突。
 
 ## 2. 准备数据库和环境变量
 
-Compose 创建的数据库为 `mydatabase`，账号为 `myuser/secret`。在当前终端设置：
+Compose 创建数据库 `travis_monolith`，本地账号为 `travis/travis-local-password`。dev Profile 已提供相同默认值和仅限开发使用的 JWT 密钥，通常无需设置环境变量。
+
+需要覆盖时，在当前终端设置：
 
 ```bash
-export SPRING_DATASOURCE_URL='jdbc:mysql://127.0.0.1:<MySQL宿主机端口>/mydatabase?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true'
-export MYSQL_USERNAME='myuser'
-export MYSQL_PASSWORD='secret'
+export MYSQL_URL='jdbc:mysql://127.0.0.1:3306/travis_monolith?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true'
+export MYSQL_USERNAME='travis'
+export MYSQL_PASSWORD='travis-local-password'
 export JWT_SECRET_KEY='<替换为足够长的本地开发密钥>'
 export SPRING_FLYWAY_ENABLED='true'
-export SERVER_PORT='8082'
 ```
 
-把尖括号占位内容替换为真实值。Flyway 默认关闭；全新本地库可以临时启用，让 `db/migration` 中的初始化和增量脚本建表。已有数据库不要直接开启，先按 [数据库迁移说明](../backend/travis-monolith/travis-server/src/main/resources/db/README.md) 完成基线核对。
+把尖括号占位内容替换为真实值。Flyway 默认关闭；仅在已核对迁移脚本的全新数据库上显式启用。已有数据库启用前应先完成基线核对。初始化 SQL 的整理与确认由项目维护者单独处理。
 
-这些示例凭证只能用于本机开发。生产环境还必须设置 RocketMQ ACL、真实 Redis/MySQL 地址并更换 Druid 监控账号。
+这些示例凭证只能用于本机开发。prod Profile 不提供 MySQL、Redis、JWT 或 RocketMQ 的弱默认值，缺失时会启动失败。
 
 ## 3. 构建并启动后端
 
@@ -63,17 +61,17 @@ cd ../travis-monolith
 mvn spring-boot:run -pl travis-server
 ```
 
-启动成功后，管理端 API 前缀是 `http://localhost:8082/api/admin`，app API 前缀是 `http://localhost:8082/api/app`，WebSocket 端点分别是 `/ws/admin` 和 `/ws/app`。
+启动成功后，管理端 API 前缀是 `http://localhost:8080/api/admin`，app API 前缀是 `http://localhost:8080/api/app`，WebSocket 端点分别是 `/ws/admin` 和 `/ws/app`。
 
 若启动失败，先按顺序检查 MySQL 实际端口/库名、Redis 6379、RocketMQ 9876/8081、JWT 密钥和 Flyway 表结构，不要只看 Java 编译是否通过。
 
 ## 4. 配置并启动管理端
 
-管理端仓库默认 API 地址没有端口，适合经过网关访问。直接连接本地 8082 时，新建不提交的 `frontend/admin-vben/apps/travis-admin/.env.development.local`：
+管理端仓库默认 API 地址没有端口，适合经过网关访问。直接连接本地 8080 时，新建不提交的 `frontend/admin-vben/apps/travis-admin/.env.development.local`：
 
 ```dotenv
-VITE_GLOB_API_URL=http://localhost:8082/api/admin
-VITE_GLOB_WS_URL=ws://localhost:8082/ws/admin
+VITE_GLOB_API_URL=http://localhost:8080/api/admin
+VITE_GLOB_WS_URL=ws://localhost:8080/ws/admin
 ```
 
 安装并启动：

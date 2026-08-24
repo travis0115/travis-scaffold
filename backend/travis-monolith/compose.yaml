@@ -1,42 +1,108 @@
+name: travis-scaffold-local
+
 services:
   mysql:
-    image: 'mysql:latest'
+    image: mysql:8.4.11
     environment:
-      - 'MYSQL_DATABASE=mydatabase'
-      - 'MYSQL_PASSWORD=secret'
-      - 'MYSQL_ROOT_PASSWORD=verysecret'
-      - 'MYSQL_USER=myuser'
+      MYSQL_DATABASE: travis_monolith
+      MYSQL_PASSWORD: travis-local-password
+      MYSQL_ROOT_PASSWORD: root-local-password
+      MYSQL_USER: travis
+      TZ: UTC
     ports:
-      - '3306'
+      - '127.0.0.1:3306:3306'
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'mysqladmin ping --silent -h 127.0.0.1 -uroot -p"$$MYSQL_ROOT_PASSWORD"',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    restart: unless-stopped
+
   redis:
-    image: 'redis:latest'
+    image: redis:7.2.15-bookworm
+    command: ['redis-server', '--appendonly', 'yes']
     ports:
-      - '6379:6379'
+      - '127.0.0.1:6379:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
   rocketmq-namesrv:
-    image: 'apache/rocketmq:5.3.2'
-    ports:
-      - '9876:9876'
+    image: apache/rocketmq:5.3.2
     command: sh mqnamesrv
+    ports:
+      - '127.0.0.1:9876:9876'
+    volumes:
+      - rocketmq-namesrv-logs:/home/rocketmq/logs
+    healthcheck:
+      test: ['CMD-SHELL', 'bash -c "echo > /dev/tcp/127.0.0.1/9876"']
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    restart: unless-stopped
+
   rocketmq-broker:
-    image: 'apache/rocketmq:5.3.2'
-    environment:
-      - 'NAMESRV_ADDR=rocketmq-namesrv:9876'
-    ports:
-      - '10909:10909'
-      - '10911:10911'
-      - '10912:10912'
-    depends_on:
-      - rocketmq-namesrv
+    image: apache/rocketmq:5.3.2
     command: sh mqbroker
-  rocketmq-proxy:
-    image: 'apache/rocketmq:5.3.2'
     environment:
-      - 'NAMESRV_ADDR=rocketmq-namesrv:9876'
+      NAMESRV_ADDR: rocketmq-namesrv:9876
     ports:
-      - '8080:8080'
-      - '8081:8081'
+      - '127.0.0.1:10909:10909'
+      - '127.0.0.1:10911:10911'
+      - '127.0.0.1:10912:10912'
+    volumes:
+      - rocketmq-broker-logs:/home/rocketmq/logs
+      - rocketmq-broker-store:/home/rocketmq/store
     depends_on:
-      - rocketmq-namesrv
-      - rocketmq-broker
-    restart: on-failure
+      rocketmq-namesrv:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'bash -c "echo > /dev/tcp/127.0.0.1/10911"']
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    restart: unless-stopped
+
+  rocketmq-proxy:
+    image: apache/rocketmq:5.3.2
     command: sh mqproxy
+    environment:
+      NAMESRV_ADDR: rocketmq-namesrv:9876
+    ports:
+      - '127.0.0.1:8081:8081'
+    volumes:
+      - rocketmq-proxy-logs:/home/rocketmq/logs
+    depends_on:
+      rocketmq-namesrv:
+        condition: service_healthy
+      rocketmq-broker:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'bash -c "echo > /dev/tcp/127.0.0.1/8081"']
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  mysql-data:
+  redis-data:
+  rocketmq-namesrv-logs:
+  rocketmq-broker-logs:
+  rocketmq-broker-store:
+  rocketmq-proxy-logs:

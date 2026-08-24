@@ -3,7 +3,6 @@ package com.travis.monolith.system.file.internal.service.impl;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
-import com.travis.monolith.system.file.api.response.SysFileStorageConfigResp;
 import com.travis.monolith.system.file.internal.entity.SysFile;
 import com.travis.monolith.system.file.internal.entity.SysFileStorageConfig;
 import com.travis.monolith.system.file.internal.mapper.SysFileFolderMapper;
@@ -28,7 +27,7 @@ public class SysFileMetadataServiceImpl implements SysFileMetadataService {
     @Transactional
     @DistributedLock(namespace = "system-file-metadata", key = "'mutation'", waitTime = 5000)
     @Override
-    public void save(SysFile file, SysFileStorageConfigResp configSnapshot) {
+    public void save(SysFile file, SysFileStorageConfig configSnapshot) {
         var folderId = file.getFolderId();
         if (folderId != null && folderId != 0L && folderMapper.selectById(folderId) == null) {
             throw new BizException(SystemErrorCode.FILE_FOLDER_PARENT_INVALID);
@@ -43,7 +42,7 @@ public class SysFileMetadataServiceImpl implements SysFileMetadataService {
     }
 
     private boolean isStorageLocationChanged(
-            SysFileStorageConfig current, SysFileStorageConfigResp snapshot) {
+            SysFileStorageConfig current, SysFileStorageConfig snapshot) {
         return !Objects.equals(current.getStorageType(), snapshot.getStorageType())
                 || !Objects.equals(current.getStoragePath(), snapshot.getStoragePath())
                 || !Objects.equals(current.getEndpoint(), snapshot.getEndpoint())

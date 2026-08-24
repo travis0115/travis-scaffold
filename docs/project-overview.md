@@ -10,7 +10,7 @@
 | `backend/travis-infrastructure/travis-common` | 与具体 starter 无关的公共契约 | 放响应模型、错误码、校验、事件端口等轻量 API |
 | `backend/travis-infrastructure/travis-framework` | Spring Boot starters | 通过自动配置提供基础设施，不在业务模块重复装配 |
 | `backend/travis-monolith/travis-module-platform` | system、ops 等平台业务模块 | 模块间只依赖公开 `api`、`event` 或 `@NamedInterface` |
-| `backend/travis-monolith/travis-module-app` | 客户端接口与客户端侧适配 | `/api/app` 下的认证、用户与收件箱入口 |
+| `backend/travis-monolith/travis-module-app` | App 用户体系基础适配示例 | 演示 `/api/app` 认证、用户、收件箱、文件主体和 WebSocket 接入；不包含会员、支付、注册或第三方登录 |
 | `backend/travis-monolith/travis-server` | 启动、环境配置与数据库迁移 | 不承载可复用业务实现 |
 | `frontend/admin-vben/apps/travis-admin` | 项目管理端 | 项目 API、页面、adapter、权限与业务工具 |
 | `frontend/admin-vben/packages` | Vben 共享包 | 上游通用能力；修改前先确认是否应留在应用层 |

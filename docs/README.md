@@ -8,7 +8,7 @@
 2. [项目能力总览](project-overview.md)：了解脚手架已经具备什么、哪些公共入口应直接复用；
 3. 根据开发方向进入 [后端文档](backend/README.md) 或 [前端文档](frontend/README.md)。
 
-准备生产环境时，再阅读 [单机双实例生产部署](production-deployment.md)。
+准备生产环境时，再阅读 [可变副本生产部署](production-deployment.md)。
 
 ## 我应该去哪里
 
@@ -20,7 +20,9 @@
 | 管理端配置、请求、表单、表格、权限和字典 | [前端文档](frontend/README.md) |
 | 查看后端全部 yml 和环境变量 | [后端配置](backend/configuration.md) |
 | 查看管理端 `.env*` | [前端配置](frontend/configuration.md) |
-| 部署 HTTPS、双实例、备份和滚动升级 | [生产部署](production-deployment.md) |
+| 部署 HTTPS、任意副本数、备份和升级回滚 | [生产部署](production-deployment.md) |
+| 新增一个客户端或登录体系 | [新增客户端指南](backend/new-client.md) |
+| 查看 V1 发布结论、剩余风险和验收边界 | [V1 发布诊断报告](v1-release-diagnostic.md) |
 
 ## 目录结构
 
@@ -30,6 +32,7 @@ docs/
 ├── getting-started.md        # 从零启动
 ├── production-deployment.md  # 跨前后端生产部署
 ├── project-overview.md       # 项目能力总览
+├── v1-release-diagnostic.md  # V1 发布诊断与验收边界
 ├── backend/
 │   ├── README.md             # 后端二级目录
 │   └── ...                   # 后端专题

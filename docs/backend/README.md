@@ -18,6 +18,7 @@
 | 返回统一结果、分页、抛业务异常、校验和转换 | [公共基础](common.md) | `ApiResponse`、`PageRequest`、`BizException`、`BaseMapperConfig` |
 | 使用 MyBatis、JSON、Redis、缓存和分布式锁 | [数据访问与缓存](data-and-cache.md) | `BaseMapperX`、`JsonUtil`、`RedisUtil`、`DistributedLock` |
 | 新增 HTTP API、认证、输入清洗或 WebSocket | [Web、认证与 WebSocket](web-auth-websocket.md) | WebMVC starter、`StpKit`、`WebSocketMessageSender` |
+| 新增一个客户端或登录端 | [新增客户端指南](new-client.md) | LoginType、认证、权限、消息、文件与前端验收 |
 | 使用模块事件、RocketMQ、日志和错误上报 | [事件、消息与可观测性](events-messaging-observability.md) | `TransactionalApplicationEventPublisher`、`MessagePublisher`、`ErrorReporter` |
 | 上传附件、保护引用和处理富文本图片 | [文件管理](file-management.md) | `SysFileApi`、引用检查器、上传主体解析器 |
 | 发布站内信、来源消息和接入收件箱 | [系统消息与收件箱](system-message.md) | `SysMessageApi`、`SysMessageInboxApi` |

@@ -1,5 +1,6 @@
 package com.travis.monolith.system.file.internal.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.model.PageResp;
@@ -71,11 +72,17 @@ public class SysFileStorageConfigServiceImpl
     @Override
     @Cacheable(key = "'detail:default'")
     public SysFileStorageConfigResp getDefaultOrThrow() {
-        return converter.toResp(
-                getOneOrThrow(
-                        new LambdaQueryWrapperX<SysFileStorageConfig>()
-                                .eq(SysFileStorageConfig::getStatus, Status.ENABLED.getValue())
-                                .eq(SysFileStorageConfig::getIsDefault, IsDefault.YES.getValue())));
+        return converter.toResp(getDefaultInternalOrThrow());
+    }
+
+    /** 查询默认文件存储配置内部模型，不存在时抛出业务异常。 */
+    @Override
+    @Cacheable(key = "'internal:default'")
+    public SysFileStorageConfig getDefaultInternalOrThrow() {
+        return getOneOrThrow(
+                new LambdaQueryWrapperX<SysFileStorageConfig>()
+                        .eq(SysFileStorageConfig::getStatus, Status.ENABLED.getValue())
+                        .eq(SysFileStorageConfig::getIsDefault, IsDefault.YES.getValue()));
     }
 
     /** 查询已启用的本地文件存储配置。 */
@@ -116,6 +123,8 @@ public class SysFileStorageConfigServiceImpl
             })
     public void update(Long id, SysFileStorageConfigUpdateReq req) {
         var old = getByIdOrThrow(id);
+        var oldAccessKey = old.getAccessKey();
+        var oldSecretKey = old.getSecretKey();
         validateDefaultEnabled(req.getIsDefault(), req.getStatus());
         if (baseMapper.existsFile(id) && isStorageLocationChanged(old, req)) {
             throw new BizException(SystemErrorCode.FILE_STORAGE_LOCATION_IMMUTABLE);
@@ -126,6 +135,10 @@ public class SysFileStorageConfigServiceImpl
         }
         resetDefault(req.getIsDefault(), id);
         var entity = converter.update(req, old);
+        if (StrUtil.isBlank(req.getSecretKey())) {
+            entity.setAccessKey(oldAccessKey);
+            entity.setSecretKey(oldSecretKey);
+        }
         entity.setLockVersion(req.getLockVersion());
         updateOrThrow(entity);
     }

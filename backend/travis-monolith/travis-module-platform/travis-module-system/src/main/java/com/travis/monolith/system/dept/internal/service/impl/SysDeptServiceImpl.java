@@ -2,11 +2,11 @@ package com.travis.monolith.system.dept.internal.service.impl;
 
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
+import com.travis.infrastructure.framework.event.core.TransactionalApplicationEventPublisher;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
 import com.travis.infrastructure.framework.redis.core.annotation.DistributedLockNamespace;
-import com.travis.infrastructure.framework.event.core.TransactionalApplicationEventPublisher;
 import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.dept.api.event.DeptDeletedEvent;

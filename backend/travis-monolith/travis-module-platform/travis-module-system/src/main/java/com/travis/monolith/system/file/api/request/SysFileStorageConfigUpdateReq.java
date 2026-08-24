@@ -96,10 +96,12 @@ public class SysFileStorageConfigUpdateReq {
         return isLocalStorage() || StrUtil.isNotBlank(endpoint) || StrUtil.isNotBlank(region);
     }
 
-    /** 校验对象存储是否同时配置访问密钥 ID 和访问密钥。 */
+    /** 校验对象存储的新访问凭据必须成对提交；不提交 SecretKey 时保留旧凭据。 */
     @AssertTrue(message = "对象存储必须配置访问凭据")
     public boolean isObjectCredentialValid() {
-        return isLocalStorage() || (StrUtil.isNotBlank(accessKey) && StrUtil.isNotBlank(secretKey));
+        return isLocalStorage()
+                || StrUtil.isBlank(secretKey)
+                || (StrUtil.isNotBlank(accessKey) && StrUtil.isNotBlank(secretKey));
     }
 
     private boolean isLocalStorage() {

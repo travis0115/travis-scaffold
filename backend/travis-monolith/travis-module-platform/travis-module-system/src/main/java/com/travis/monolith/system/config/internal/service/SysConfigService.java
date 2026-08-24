@@ -24,6 +24,9 @@ public interface SysConfigService extends IService<SysConfig> {
     /** 根据配置键获取配置值 */
     SysConfigResp getByKeyOrThrow(String configKey);
 
+    /** 根据配置键查询可选配置值，不存在时返回空字符串。 */
+    String findValueByKey(String configKey);
+
     /** 新增配置 */
     void create(SysConfigCreateReq req);
 

@@ -2,13 +2,12 @@ package com.travis.infrastructure.framework.monitor.core;
 
 import com.travis.infrastructure.common.monitor.error.ErrorReporter;
 import com.travis.infrastructure.common.monitor.error.ErrorSource;
+import java.lang.reflect.Method;
 import lombok.RequiredArgsConstructor;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
-
-import java.lang.reflect.Method;
 
 /** 上报无返回值异步方法中未被调用方观察的异常。 */
 @RequiredArgsConstructor

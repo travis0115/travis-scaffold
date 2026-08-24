@@ -22,6 +22,7 @@ import com.travis.monolith.app.user.internal.event.AppUserLoginEvent;
 import com.travis.monolith.app.user.internal.service.AppAuthService;
 import com.travis.monolith.app.user.internal.service.AppUserService;
 import com.travis.monolith.system.common.api.enums.Status;
+import com.travis.monolith.system.user.api.LoginProtectionApi;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -35,12 +36,14 @@ public class AppAuthServiceImpl implements AppAuthService {
     private final SaTokenWebSocketTicketStore ticketStore;
     private final WebSocketSessionManager webSocketSessionManager;
     private final TransactionalApplicationEventPublisher eventPublisher;
+    private final LoginProtectionApi loginProtectionApi;
 
     /** 执行App 端认证登录。 */
     @Override
     public void login(AppUserLoginReq req) {
         var clientIp = IpUtil.getClientIp();
         var uaInfo = UserAgentUtil.getCurrentUserAgentInfo();
+        loginProtectionApi.checkAllowed(LoginType.APP, req.getUsername(), clientIp);
         var user =
                 userService
                         .lambdaQuery()
@@ -53,16 +56,20 @@ public class AppAuthServiceImpl implements AppAuthService {
                         .one();
         if (user == null) {
             publishLoginEvent(req.getUsername(), Status.DISABLED.getValue(), "用户不存在", clientIp);
+            loginProtectionApi.recordFailure(LoginType.APP, req.getUsername(), clientIp);
             throw new BizException(CommonErrorCode.AUTH_LOGIN_BAD_CREDENTIALS);
         }
         if (!BCrypt.checkpw(req.getPassword(), user.getPassword())) {
             publishLoginEvent(req.getUsername(), Status.DISABLED.getValue(), "密码错误", clientIp);
+            loginProtectionApi.recordFailure(LoginType.APP, req.getUsername(), clientIp);
             throw new BizException(CommonErrorCode.AUTH_LOGIN_BAD_CREDENTIALS);
         }
         if (Status.DISABLED.getValue().equals(user.getStatus())) {
             publishLoginEvent(req.getUsername(), Status.DISABLED.getValue(), "账号已被禁用", clientIp);
             throw new BizException(CommonErrorCode.AUTH_LOGIN_USER_DISABLED);
         }
+
+        loginProtectionApi.recordSuccess(LoginType.APP, req.getUsername());
 
         var stpLogic = StpKit.of(LoginType.APP);
         stpLogic.login(user.getId());

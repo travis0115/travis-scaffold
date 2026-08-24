@@ -4,10 +4,10 @@ import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.model.PageResp;
+import com.travis.infrastructure.framework.event.core.TransactionalApplicationEventPublisher;
 import com.travis.infrastructure.framework.mybatis.core.LambdaQueryWrapperX;
 import com.travis.infrastructure.framework.mybatis.core.ServiceImplX;
 import com.travis.infrastructure.framework.redis.core.annotation.DistributedLock;
-import com.travis.infrastructure.framework.event.core.TransactionalApplicationEventPublisher;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.file.api.SysFileReferenceChecker;
 import com.travis.monolith.system.file.api.SysFileUploaderNameResolver;
@@ -18,6 +18,7 @@ import com.travis.monolith.system.file.api.response.SysFileResp;
 import com.travis.monolith.system.file.api.response.SysFileStorageConfigResp;
 import com.travis.monolith.system.file.internal.converter.SysFileConverter;
 import com.travis.monolith.system.file.internal.entity.SysFile;
+import com.travis.monolith.system.file.internal.entity.SysFileStorageConfig;
 import com.travis.monolith.system.file.internal.mapper.SysFileMapper;
 import com.travis.monolith.system.file.internal.service.SysFileMetadataService;
 import com.travis.monolith.system.file.internal.service.SysFileService;
@@ -63,7 +64,7 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
     @Override
     public FileUploadResp upload(
             MultipartFile file, Long folderId, String uploaderType, Long uploaderId) {
-        var config = sysFileStorageConfigService.getDefaultOrThrow();
+        var config = sysFileStorageConfigService.getDefaultInternalOrThrow();
         var strategy =
                 storageStrategies.stream()
                         .filter(
@@ -204,7 +205,7 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
 
     @Override
     public void deleteStorageObject(String storageType, String storagePath, String path) {
-        var config = new SysFileStorageConfigResp();
+        var config = new SysFileStorageConfig();
         config.setStorageType(storageType);
         config.setStoragePath(storagePath);
         findStorageStrategy(config).delete(path, config);
@@ -240,7 +241,7 @@ public class SysFileServiceImpl extends ServiceImplX<SysFileMapper, SysFile>
         return config == null ? path : buildUrl(config.getDomain(), path);
     }
 
-    private FileStorageStrategy findStorageStrategy(SysFileStorageConfigResp config) {
+    private FileStorageStrategy findStorageStrategy(SysFileStorageConfig config) {
         return storageStrategies.stream()
                 .filter(item -> item.getStorageType().equalsIgnoreCase(config.getStorageType()))
                 .findFirst()

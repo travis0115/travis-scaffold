@@ -4,8 +4,8 @@ import cn.hutool.core.util.StrUtil;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.monolith.system.common.api.enums.SystemErrorCode;
 import com.travis.monolith.system.file.api.enums.FileStorageType;
-import com.travis.monolith.system.file.api.response.SysFileStorageConfigResp;
 import com.travis.monolith.system.file.internal.config.properties.FileUploadProperties;
+import com.travis.monolith.system.file.internal.entity.SysFileStorageConfig;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,7 +41,7 @@ public class LocalFileStorageStrategy implements FileStorageStrategy {
     }
 
     @Override
-    public StorageResult upload(MultipartFile file, SysFileStorageConfigResp config) {
+    public StorageResult upload(MultipartFile file, SysFileStorageConfig config) {
         if (file == null || file.isEmpty()) {
             throw new BizException(SystemErrorCode.FILE_UPLOAD_FAILED);
         }
@@ -86,7 +86,7 @@ public class LocalFileStorageStrategy implements FileStorageStrategy {
     }
 
     @Override
-    public void delete(String path, SysFileStorageConfigResp config) {
+    public void delete(String path, SysFileStorageConfig config) {
         if (StrUtil.isBlank(path) || config == null || StrUtil.isBlank(config.getStoragePath())) {
             return;
         }

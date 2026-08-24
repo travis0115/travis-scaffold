@@ -1,0 +1,16 @@
+.git
+.github
+.idea
+.vscode
+.codex
+.agents
+**/node_modules
+**/target
+**/dist
+**/dist.zip
+**/.turbo
+**/*.log
+**/.env.*.local
+deploy/production/.env
+deploy/production/.env.bak.*
+specs

@@ -2,6 +2,9 @@ package com.travis.infrastructure.framework.rocketmq.core;
 
 import com.travis.infrastructure.common.monitor.error.ErrorReporter;
 import com.travis.infrastructure.common.monitor.error.ErrorSource;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.apis.consumer.ConsumeResult;
 import org.apache.rocketmq.client.apis.message.MessageView;
@@ -9,10 +12,6 @@ import org.apache.rocketmq.client.core.RocketMQListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
-
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.nio.ByteBuffer;
 
 /**
  * RocketMQ 事件消费者抽象基类，封装消息体读取、JSON 反序列化和异常处理的通用模板。
@@ -99,8 +98,7 @@ public abstract class AbstractEventListener<T> implements RocketMQListener {
                     System.currentTimeMillis() - start,
                     e);
             if (errorReporter != null) {
-                errorReporter.report(
-                        ErrorSource.ROCKETMQ, getClass().getName(), messageId, e);
+                errorReporter.report(ErrorSource.ROCKETMQ, getClass().getName(), messageId, e);
             }
             throw new IllegalStateException("RocketMQ 消息消费失败: " + messageId, e);
         }

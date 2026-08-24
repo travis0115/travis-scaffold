@@ -60,10 +60,10 @@ class SysFileServiceImplTest {
         var mapper = mock(SysFileMapper.class);
         var strategy = mock(FileStorageStrategy.class);
         var configService = mock(SysFileStorageConfigService.class);
-        var config = new SysFileStorageConfigResp();
+        var config = new SysFileStorageConfig();
         config.setId(1L);
         config.setStorageType("LOCAL");
-        when(configService.getDefaultOrThrow()).thenReturn(config);
+        when(configService.getDefaultInternalOrThrow()).thenReturn(config);
         when(strategy.getStorageType()).thenReturn("LOCAL");
         when(strategy.upload(any(), any())).thenReturn(new StorageResult("/files/a.png", "a.png"));
         when(mapper.insert(any(SysFile.class)))

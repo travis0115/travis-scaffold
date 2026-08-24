@@ -23,6 +23,9 @@ public interface SysFileStorageConfigService extends IService<SysFileStorageConf
     /** 查询默认存储配置，未配置时抛出业务异常。 */
     SysFileStorageConfigResp getDefaultOrThrow();
 
+    /** 查询默认存储配置内部模型，供存储策略使用。 */
+    SysFileStorageConfig getDefaultInternalOrThrow();
+
     /** 查询已启用的本地存储配置。 */
     List<SysFileStorageConfig> listEnabledLocalConfigs();
 

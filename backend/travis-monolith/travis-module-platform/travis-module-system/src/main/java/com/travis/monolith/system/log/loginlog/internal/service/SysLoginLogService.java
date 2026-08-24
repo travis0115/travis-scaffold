@@ -36,10 +36,5 @@ public interface SysLoginLogService extends IService<SysLoginLog> {
      * @param os 操作系统
      */
     void recordLoginLog(
-            String username,
-            int status,
-            String message,
-            String ip,
-            String browser,
-            String os);
+            String username, int status, String message, String ip, String browser, String os);
 }

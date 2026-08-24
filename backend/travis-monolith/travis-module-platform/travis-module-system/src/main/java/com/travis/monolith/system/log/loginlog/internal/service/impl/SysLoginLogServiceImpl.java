@@ -70,12 +70,7 @@ public class SysLoginLogServiceImpl extends ServiceImplX<SysLoginLogMapper, SysL
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordLoginLog(
-            String username,
-            int status,
-            String message,
-            String ip,
-            String browser,
-            String os) {
+            String username, int status, String message, String ip, String browser, String os) {
         var loginLog =
                 SysLoginLog.builder()
                         .username(username)

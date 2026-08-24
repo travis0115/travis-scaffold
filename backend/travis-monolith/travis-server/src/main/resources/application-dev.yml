@@ -25,6 +25,9 @@ management:
       export:
         enabled: false  # 是否启用 OTLP（OpenTelemetry Protocol）指标导出
 
+sa-token:
+  jwt-secret-key: ${JWT_SECRET_KEY:dev-only-jwt-secret-key-change-before-production-2026}
+
 # RocketMQ配置
 rocketmq:
   # 消费者配置(全局默认配置)
@@ -51,8 +54,10 @@ rocketmq:
 spring:
   datasource:
     url: jdbc:mysql://127.0.0.1:3306/travis_monolith?serverTimezone=${travis.web.time-zone:UTC}&useSSL=false&allowPublicKeyRetrieval=true
-    username: ${MYSQL_USERNAME}
-    password: ${MYSQL_PASSWORD}
+    username: ${MYSQL_USERNAME:travis}
+    password: ${MYSQL_PASSWORD:travis-local-password}
+  flyway:
+    enabled: ${SPRING_FLYWAY_ENABLED:false}
   modulith:
     runtime:
       verification-enabled: true  #是否启用运行时验证，true/false

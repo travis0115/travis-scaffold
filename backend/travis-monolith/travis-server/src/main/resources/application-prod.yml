@@ -19,10 +19,21 @@ logging:
       clean-history-on-start: true  #启动时清理
 
 management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-components: never
+      show-details: never
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,db,redis
   endpoints:
     web:
       exposure:
-        include: health,info,modulith,metrics,prometheus  # 通过 HTTP 暴露所有 Actuator 端点（默认只开放 health 和 info）,生产环境不建议全部开放，建议按需开启
+        include: health
   otlp:
     metrics:
       export:
@@ -38,7 +49,7 @@ rocketmq:
     # 是否启用消息轨迹，本地开发可以关闭消息轨迹
     enable-msg-trace: true
     # Proxy 模式访问，端口为 Docker 映射的 8081
-    endpoints: ${ROCKETMQ_CONSUMER_ENDPOINTS:127.0.0.1:8081}
+    endpoints: ${ROCKETMQ_CONSUMER_ENDPOINTS}
 
   # 生产者配置
   producer:
@@ -49,13 +60,25 @@ rocketmq:
     # 是否启用消息轨迹，本地开发可以关闭消息轨迹
     enable-msg-trace: true
     # Proxy 模式访问，端口为 Docker 映射的 8081
-    endpoints: ${ROCKETMQ_PRODUCER_ENDPOINTS:127.0.0.1:8081}
+    endpoints: ${ROCKETMQ_PRODUCER_ENDPOINTS}
 
 spring:
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
+      database: ${REDIS_DATABASE:0}
+      password: ${REDIS_PASSWORD}
   datasource:
-    url: ${MYSQL_URL:jdbc:mysql://127.0.0.1:3306/travis_monolith?serverTimezone=${travis.web.time-zone:UTC}&useSSL=false&allowPublicKeyRetrieval=true}
-    username: ${MYSQL_USERNAME:root}
+    url: ${MYSQL_URL}
+    username: ${MYSQL_USERNAME}
     password: ${MYSQL_PASSWORD}
+    druid:
+      stat-view-servlet:
+        enabled: false
+        reset-enable: false
+      web-stat-filter:
+        enabled: false
   modulith:
     runtime:
       verification-enabled: false #是否启用运行时验证，true/false
@@ -67,4 +90,4 @@ travis:
       log-path: /data/logs/rocketmq
     auto-initialize:
       enabled: true  # 启动时自动初始化不存在的 Topic 和消费者分组
-      namesrv-addr: ${ROCKETMQ_NAMESRV_ADDR:127.0.0.1:9876}  # NameServer 地址（注意：不是 Proxy gRPC 端口），启用 auto-initialize 时必填
+      namesrv-addr: ${ROCKETMQ_NAMESRV_ADDR}  # NameServer 地址（注意：不是 Proxy gRPC 端口），启用 auto-initialize 时必填

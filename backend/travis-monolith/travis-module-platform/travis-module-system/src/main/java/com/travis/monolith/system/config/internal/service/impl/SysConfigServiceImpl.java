@@ -66,6 +66,15 @@ public class SysConfigServiceImpl extends ServiceImplX<SysConfigMapper, SysConfi
         return converter.toResp(config);
     }
 
+    /** 根据配置键查询可选配置值，不存在时返回空字符串并缓存结果。 */
+    @Override
+    @Cacheable(key = "'value:key:'+#configKey")
+    public String findValueByKey(String configKey) {
+        var config =
+                getOne(new LambdaQueryWrapperX<SysConfig>().eq(SysConfig::getConfigKey, configKey));
+        return config == null ? "" : config.getConfigValue();
+    }
+
     /** 创建系统配置。 */
     @Override
     @Transactional
@@ -79,6 +88,7 @@ public class SysConfigServiceImpl extends ServiceImplX<SysConfigMapper, SysConfi
         }
         var entity = converter.toEntity(req);
         save(entity);
+        RedisUtil.deleteCacheKey("system:config", "value:key:" + entity.getConfigKey());
     }
 
     /** 更新指定系统配置。 */
@@ -94,6 +104,7 @@ public class SysConfigServiceImpl extends ServiceImplX<SysConfigMapper, SysConfi
             throw new BizException(SystemErrorCode.CONFIG_CONCURRENT_UPDATE);
         }
         RedisUtil.deleteCacheKey("system:config", "detail:key:" + entity.getConfigKey());
+        RedisUtil.deleteCacheKey("system:config", "value:key:" + entity.getConfigKey());
     }
 
     /** 根据 ID 删除指定系统配置。 */
@@ -105,6 +116,7 @@ public class SysConfigServiceImpl extends ServiceImplX<SysConfigMapper, SysConfi
         checkDeletable(entity);
         removeById(id);
         RedisUtil.deleteCacheKey("system:config", "detail:key:" + entity.getConfigKey());
+        RedisUtil.deleteCacheKey("system:config", "value:key:" + entity.getConfigKey());
     }
 
     /** 校验系统配置是否允许删除。 */

@@ -1,6 +1,6 @@
 package com.travis.monolith.system.file.internal.strategy;
 
-import com.travis.monolith.system.file.api.response.SysFileStorageConfigResp;
+import com.travis.monolith.system.file.internal.entity.SysFileStorageConfig;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -14,8 +14,8 @@ public interface FileStorageStrategy {
     String getStorageType();
 
     /** 上传文件 */
-    StorageResult upload(MultipartFile file, SysFileStorageConfigResp config);
+    StorageResult upload(MultipartFile file, SysFileStorageConfig config);
 
     /** 删除存储对象。 */
-    void delete(String path, SysFileStorageConfigResp config);
+    void delete(String path, SysFileStorageConfig config);
 }

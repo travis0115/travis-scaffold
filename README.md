@@ -69,7 +69,7 @@ travis-scaffold/
 
 ## 快速开始
 
-当前 Compose 与 dev 默认配置在 MySQL 库名、宿主机端口和 8080 端口占用上存在需要对齐的地方。请直接按照 [快速开始](docs/getting-started.md) 配置，不建议只执行 `docker compose up` 后猜测连接参数。
+Compose 与 dev Profile 已对齐 MySQL、Redis、RocketMQ 和端口默认值。按照 [快速开始](docs/getting-started.md) 即可启动；本地示例凭据不得用于生产。
 
 准备完成后，常用启动命令如下：
 
@@ -91,7 +91,8 @@ pnpm dev:travis-admin
 | 我想了解 | 文档 |
 | --- | --- |
 | 第一次如何启动 | [快速开始](docs/getting-started.md) |
-| 如何部署双实例、HTTPS、备份和滚动升级 | [生产部署](docs/production-deployment.md) |
+| 如何部署任意实例数、HTTPS、备份和升级回滚 | [生产部署](docs/production-deployment.md) |
+| 如何新增一个客户端/登录端 | [新增客户端指南](docs/backend/new-client.md) |
 | 项目能做什么、已有封装有哪些 | [项目能力总览](docs/project-overview.md) |
 | 后端模块、starter、yml 和业务接入 | [后端文档](docs/backend/README.md) |
 | 前端配置与页面开发约定 | [前端文档](docs/frontend/README.md) |

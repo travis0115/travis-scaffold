@@ -1,0 +1,2 @@
+# 该文件由 scripts/sync-upstreams.sh 生成。端口仅为动态发布示例，不应手工复用。
+server 127.0.0.1:49152 max_fails=2 fail_timeout=10s;

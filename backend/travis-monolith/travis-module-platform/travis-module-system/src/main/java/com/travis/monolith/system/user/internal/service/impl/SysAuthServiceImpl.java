@@ -4,11 +4,11 @@ import cn.hutool.crypto.digest.BCrypt;
 import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.common.web.exception.BizException;
 import com.travis.infrastructure.common.web.exception.CommonErrorCode;
+import com.travis.infrastructure.framework.event.core.TransactionalApplicationEventPublisher;
 import com.travis.infrastructure.framework.satoken.core.LoginSubjectSessionKey;
 import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.infrastructure.framework.satoken.core.websocket.SaTokenWebSocketAuthService;
 import com.travis.infrastructure.framework.satoken.core.websocket.SaTokenWebSocketPrincipal;
-import com.travis.infrastructure.framework.event.core.TransactionalApplicationEventPublisher;
 import com.travis.infrastructure.framework.web.core.util.IpUtil;
 import com.travis.infrastructure.framework.web.core.util.UserAgentUtil;
 import com.travis.infrastructure.framework.websocket.core.session.WebSocketSessionManager;
@@ -16,6 +16,7 @@ import com.travis.monolith.system.common.api.enums.Status;
 import com.travis.monolith.system.menu.api.SysMenuApi;
 import com.travis.monolith.system.menu.api.response.VbenMenuResp;
 import com.travis.monolith.system.role.api.SysRoleApi;
+import com.travis.monolith.system.user.api.LoginProtectionApi;
 import com.travis.monolith.system.user.api.event.UserLoginEvent;
 import com.travis.monolith.system.user.api.request.SysUserLoginReq;
 import com.travis.monolith.system.user.api.response.SysUserInfoResp;
@@ -55,6 +56,8 @@ public class SysAuthServiceImpl implements SysAuthService {
 
     private final TransactionalApplicationEventPublisher eventPublisher;
 
+    private final LoginProtectionApi loginProtectionApi;
+
     /** 对象转换器 */
     private final SysUserConverter converter;
 
@@ -64,6 +67,7 @@ public class SysAuthServiceImpl implements SysAuthService {
         // 在 Web 线程中提前捕获请求上下文信息
         var clientIp = IpUtil.getClientIp();
         var uaInfo = UserAgentUtil.getCurrentUserAgentInfo();
+        loginProtectionApi.checkAllowed(LoginType.ADMIN, req.getUsername(), clientIp);
 
         // 显式查询密码字段（实体中 password 标记了 select=false，默认不返回）
         var user =
@@ -86,6 +90,7 @@ public class SysAuthServiceImpl implements SysAuthService {
                             .browser(uaInfo.getBrowser())
                             .os(uaInfo.getOs())
                             .build());
+            loginProtectionApi.recordFailure(LoginType.ADMIN, req.getUsername(), clientIp);
             throw new BizException(CommonErrorCode.AUTH_LOGIN_BAD_CREDENTIALS);
         }
 
@@ -100,6 +105,7 @@ public class SysAuthServiceImpl implements SysAuthService {
                             .browser(uaInfo.getBrowser())
                             .os(uaInfo.getOs())
                             .build());
+            loginProtectionApi.recordFailure(LoginType.ADMIN, req.getUsername(), clientIp);
             throw new BizException(CommonErrorCode.AUTH_LOGIN_BAD_CREDENTIALS);
         }
 
@@ -116,6 +122,8 @@ public class SysAuthServiceImpl implements SysAuthService {
                             .build());
             throw new BizException(CommonErrorCode.AUTH_LOGIN_USER_DISABLED);
         }
+
+        loginProtectionApi.recordSuccess(LoginType.ADMIN, req.getUsername());
 
         // 校验通过，通过 Sa-Token 执行登录
         var stpLogic = StpKit.of(LoginType.ADMIN);

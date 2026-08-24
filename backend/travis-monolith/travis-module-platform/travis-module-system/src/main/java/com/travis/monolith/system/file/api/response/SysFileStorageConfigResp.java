@@ -39,8 +39,8 @@ public class SysFileStorageConfigResp {
     /** 对象存储访问密钥 ID。 */
     private String accessKey;
 
-    /** 对象存储访问密钥。 */
-    private String secretKey;
+    /** 是否已配置对象存储访问密钥。 */
+    private Boolean secretConfigured;
 
     /** 存储提供商扩展配置，使用 JSON 对象格式。 */
     private String meta;

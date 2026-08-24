@@ -41,15 +41,13 @@ public class QuartzAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public ErrorQuartzJobListener errorQuartzJobListener(
-            ErrorReporter errorReporter) {
+    public ErrorQuartzJobListener errorQuartzJobListener(ErrorReporter errorReporter) {
         return new ErrorQuartzJobListener(errorReporter);
     }
 
     @Bean
     public SchedulerFactoryBeanCustomizer travisQuartzJobFactoryCustomizer(
-            AutowireCapableBeanFactory beanFactory,
-            ErrorQuartzJobListener systemErrorJobListener) {
+            AutowireCapableBeanFactory beanFactory, ErrorQuartzJobListener systemErrorJobListener) {
         return schedulerFactoryBean -> {
             schedulerFactoryBean.setJobFactory(new AutowireCapableQuartzJobFactory(beanFactory));
             schedulerFactoryBean.setGlobalJobListeners(systemErrorJobListener);

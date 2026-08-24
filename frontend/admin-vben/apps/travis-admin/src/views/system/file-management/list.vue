@@ -535,6 +535,9 @@ const [StorageForm, storageFormApi] = useVbenForm({
     },
     {
       component: 'InputPassword',
+      componentProps: {
+        placeholder: '请输入 Secret Key',
+      },
       fieldName: 'secretKey',
       hide: true,
       label: 'Secret Key',
@@ -592,9 +595,11 @@ const [StorageModal, storageModalApi] = useVbenModal({
     updateStorageTypeOptions();
     if (storageModalMode.value === 'edit' && editingStorageConfig.value) {
       await storageFormApi.setValues(editingStorageConfig.value);
+      updateSecretKeyPlaceholder(editingStorageConfig.value.secretConfigured);
       applyStorageTypeSchema(editingStorageConfig.value.storageType);
       return;
     }
+    updateSecretKeyPlaceholder(false);
     await resetStorageForm();
   },
   zIndex: 2200,
@@ -761,6 +766,19 @@ function updateStorageTypeOptions() {
         popupClassName: 'storage-type-select-dropdown',
       },
       fieldName: 'storageType',
+    },
+  ]);
+}
+
+function updateSecretKeyPlaceholder(secretConfigured?: boolean) {
+  storageFormApi.updateSchema([
+    {
+      componentProps: {
+        placeholder: secretConfigured
+          ? '已配置，留空则保留原密钥'
+          : '请输入 Secret Key',
+      },
+      fieldName: 'secretKey',
     },
   ]);
 }
@@ -1478,9 +1496,9 @@ onBeforeUnmount(() => {
       </div>
       <template #footer>
         <div class="storage-config-pagination">
-          <span class="storage-config-total"
-            >共 {{ storageConfigTotal }} 个配置</span
-          >
+          <span class="storage-config-total">
+            共 {{ storageConfigTotal }} 个配置
+          </span>
           <div class="storage-config-page-actions">
             <span>
               第 {{ storageConfigPageNum }} / {{ storageConfigTotalPages }} 页

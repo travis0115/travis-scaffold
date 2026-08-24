@@ -1,0 +1,134 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    services:
+      mysql:
+        image: mysql:8.4.11
+        env:
+          MYSQL_DATABASE: travis_monolith
+          MYSQL_USER: travis
+          MYSQL_PASSWORD: travis-ci-password
+          MYSQL_ROOT_PASSWORD: travis-ci-root-password
+        ports:
+          - '3306:3306'
+        options: >-
+          --health-cmd="mysqladmin ping --silent -h 127.0.0.1 -uroot -ptravis-ci-root-password"
+          --health-interval=10s --health-timeout=5s --health-retries=20
+      redis:
+        image: redis:7.2.15-bookworm
+        ports:
+          - '6379:6379'
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=5s --health-timeout=3s --health-retries=20
+    env:
+      JWT_SECRET_KEY: travis-ci-jwt-secret-key-at-least-32-characters
+      MYSQL_URL: jdbc:mysql://127.0.0.1:3306/travis_monolith?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+      MYSQL_USERNAME: travis
+      MYSQL_PASSWORD: travis-ci-password
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: '6379'
+      SPRING_FLYWAY_ENABLED: 'false'
+      SPRING_QUARTZ_JOB_STORE_TYPE: memory
+      TRAVIS_ROCKETMQ_AUTO_INITIALIZE_ENABLED: 'false'
+      TRAVIS_WEB_WEBSOCKET_REDIS_ENABLED: 'false'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+      - name: Install shared BOM
+        run: mvn -B -f backend/travis-dependencies/pom.xml clean install -DskipTests
+      - name: Verify infrastructure
+        run: mvn -B -f backend/travis-infrastructure/pom.xml spotless:check install -Dspotless.apply.skip=true
+      - name: Verify monolith
+        run: mvn -B -f backend/travis-monolith/pom.xml spotless:check test -Dspotless.apply.skip=true
+      - name: Verify Modulith boundaries explicitly
+        run: >-
+          mvn -B -f backend/travis-monolith/pom.xml
+          -pl travis-server -am
+          -Dtest=ModulithTest
+          -Dsurefire.failIfNoSpecifiedTests=false
+          -Dspotless.apply.skip=true test
+
+  frontend:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: frontend/admin-vben
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11.2.2
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.19.0
+          cache: pnpm
+          cache-dependency-path: frontend/admin-vben/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @travis/travis-admin typecheck
+      - name: Lint V1 changed frontend contracts
+        run: |
+          pnpm exec oxfmt --check apps/travis-admin/src/api/system/file-management.ts apps/travis-admin/src/views/system/file-management/list.vue
+          pnpm exec oxlint apps/travis-admin/src/api/system/file-management.ts apps/travis-admin/src/views/system/file-management/list.vue --deny-warnings
+          pnpm exec eslint apps/travis-admin/src/api/system/file-management.ts apps/travis-admin/src/views/system/file-management/list.vue
+      - run: pnpm test:unit
+      - run: pnpm build:travis-admin
+
+  release-assets:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install validators
+        run: sudo apt-get update && sudo apt-get install -y gettext-base nginx shellcheck
+      - name: Shell syntax and ShellCheck
+        run: |
+          bash -n deploy/production/scripts/*.sh
+          shellcheck -x -P deploy/production/scripts deploy/production/scripts/*.sh
+      - name: Compose rendering
+        run: |
+          chmod 600 deploy/production/.env.example
+          env -i PATH="$PATH" HOME="$HOME" docker compose --env-file deploy/production/.env.example -f deploy/production/compose.infra.yml config --quiet
+          env -i PATH="$PATH" HOME="$HOME" docker compose --env-file deploy/production/.env.example -f deploy/production/compose.app.yml config --quiet
+      - name: Nginx template validation
+        env:
+          PUBLIC_DOMAIN: example.com
+          TLS_CERTIFICATE: /tmp/travis-cert.pem
+          TLS_CERTIFICATE_KEY: /tmp/travis-key.pem
+          FRONTEND_ROOT: /tmp/travis-frontend
+          NGINX_UPSTREAM_FILE: /tmp/travis-upstreams.conf
+          ADMIN_LOGIN_RATE: '20'
+          ADMIN_LOGIN_BURST: '10'
+          APP_LOGIN_RATE: '300'
+          APP_LOGIN_BURST: '100'
+        run: |
+          mkdir -p "$FRONTEND_ROOT"
+          printf 'server 127.0.0.1:18080;\n' > "$NGINX_UPSTREAM_FILE"
+          openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj '/CN=example.com' -keyout "$TLS_CERTIFICATE_KEY" -out "$TLS_CERTIFICATE" >/dev/null 2>&1
+          substitutions='${PUBLIC_DOMAIN} ${TLS_CERTIFICATE} ${TLS_CERTIFICATE_KEY} ${FRONTEND_ROOT} ${NGINX_UPSTREAM_FILE} ${ADMIN_LOGIN_RATE} ${ADMIN_LOGIN_BURST} ${APP_LOGIN_RATE} ${APP_LOGIN_BURST}'
+          envsubst "$substitutions" < deploy/production/nginx/login-rate-limit.conf.template > /tmp/travis-rate.conf
+          envsubst "$substitutions" < deploy/production/nginx/travis.conf.template > /tmp/travis-site.conf
+          printf 'events {}\nhttp { include /etc/nginx/mime.types; include /tmp/travis-rate.conf; include /tmp/travis-site.conf; }\n' > /tmp/travis-nginx.conf
+          sudo nginx -t -c /tmp/travis-nginx.conf
+      - name: Documentation links
+        run: python3 scripts/ci/check-doc-links.py
+      - name: Secret scan
+        run: >-
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1
+          detect --source=/repo --no-git --redact --config=/repo/.gitleaks.toml

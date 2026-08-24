@@ -1,0 +1,52 @@
+services:
+  backend:
+    image: ${BACKEND_IMAGE:?BACKEND_IMAGE is required}
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      MYSQL_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+      MYSQL_USERNAME: ${MYSQL_USERNAME}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: '6379'
+      REDIS_DATABASE: ${REDIS_DATABASE:-0}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      ROCKETMQ_NAMESRV_ADDR: ${ROCKETMQ_NAMESRV_ADDR}
+      ROCKETMQ_CONSUMER_ENDPOINTS: ${ROCKETMQ_CONSUMER_ENDPOINTS}
+      ROCKETMQ_CONSUMER_ACCESS_KEY: ${ROCKETMQ_CONSUMER_ACCESS_KEY}
+      ROCKETMQ_CONSUMER_SECRET_KEY: ${ROCKETMQ_CONSUMER_SECRET_KEY}
+      ROCKETMQ_PRODUCER_ENDPOINTS: ${ROCKETMQ_PRODUCER_ENDPOINTS}
+      ROCKETMQ_PRODUCER_ACCESS_KEY: ${ROCKETMQ_PRODUCER_ACCESS_KEY}
+      ROCKETMQ_PRODUCER_SECRET_KEY: ${ROCKETMQ_PRODUCER_SECRET_KEY}
+    ports:
+      - target: 8080
+        host_ip: 127.0.0.1
+    volumes:
+      - ${DEPLOY_ROOT}/data/uploads:/home/travis/data/uploads
+      - ${DEPLOY_ROOT}/logs:/data/logs
+    networks: [travis-internal]
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'curl',
+          '--fail',
+          '--silent',
+          '--show-error',
+          'http://127.0.0.1:8080/actuator/health/readiness',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 45s
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+    security_opt: [no-new-privileges:true]
+    stop_grace_period: 30s
+
+networks:
+  travis-internal:
+    name: travis-internal
+    external: true
