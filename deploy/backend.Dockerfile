@@ -11,8 +11,6 @@ RUN mvn -f backend/travis-infrastructure/pom.xml install -DskipTests -Dspotless.
 COPY backend/travis-monolith ./backend/travis-monolith
 RUN mvn -f backend/travis-monolith/pom.xml package \
         -pl travis-server -am -DskipTests -Dspotless.apply.skip=true \
-    && mvn -f backend/travis-monolith/pom.xml spring-boot:repackage \
-        -pl travis-server -DskipTests -Dspotless.apply.skip=true \
     && jar tf backend/travis-monolith/travis-server/target/travis-server-*.jar \
         | grep -q '^BOOT-INF/' \
     && cp backend/travis-monolith/travis-server/target/travis-server-*.jar /workspace/app.jar

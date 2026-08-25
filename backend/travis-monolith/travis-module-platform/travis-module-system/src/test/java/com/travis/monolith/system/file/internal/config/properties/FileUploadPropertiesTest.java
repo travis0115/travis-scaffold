@@ -8,13 +8,14 @@ import org.junit.jupiter.api.Test;
 class FileUploadPropertiesTest {
 
     private static final Set<String> ACTIVE_CONTENT_EXTENSIONS =
-            Set.of("html", "css", "js", "ts", "vue", "svg", "xml");
+            Set.of("html", "css", "js", "ts", "vue", "xml");
 
     @Test
     void shouldRejectActiveContentByDefault() {
         FileUploadProperties properties = new FileUploadProperties();
 
         assertThat(properties.getNormalizedAllowedExtensions())
+                .contains("svg")
                 .doesNotContainAnyElementsOf(ACTIVE_CONTENT_EXTENSIONS);
     }
 }

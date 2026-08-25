@@ -40,8 +40,8 @@ CREATE TABLE `app_user` (
   `update_by` bigint DEFAULT NULL COMMENT '更新人ID',
   `is_deleted` tinyint NOT NULL DEFAULT '0' COMMENT '逻辑删除：0-未删除 1-已删除',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_app_user_username` (`username`),
-  UNIQUE KEY `uk_app_user_mobile` (`mobile`),
+  UNIQUE KEY `uk_app_user_username` (((case when (`is_deleted` = 0) then `username` else NULL end))),
+  UNIQUE KEY `uk_app_user_mobile` (((case when (`is_deleted` = 0) then `mobile` else NULL end))),
   KEY `idx_app_user_status` (`status`,`is_deleted`),
   KEY `idx_app_user_avatar_file_id` (`avatar_file_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='客户端用户';
@@ -452,7 +452,7 @@ CREATE TABLE `sys_config` (
   `is_deleted` tinyint(1) DEFAULT '0' COMMENT '逻辑删除（0=未删除 1=已删除）',
   `lock_version` int unsigned NOT NULL DEFAULT '0' COMMENT '乐观锁版本号',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_config_key` (`config_key`,`is_deleted`)
+  UNIQUE KEY `uk_config_key` (((case when (`is_deleted` = 0) then `config_key` else NULL end)))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='系统配置表';
 
 -- ----------------------------
@@ -505,7 +505,7 @@ CREATE TABLE `sys_dict` (
   `update_time` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `update_by` bigint DEFAULT NULL COMMENT '更新人ID',
   PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE KEY `uk_dict_type` (`dict_code`)
+  UNIQUE KEY `uk_dict_type` (((case when (`is_deleted` = 0) then `dict_code` else NULL end)))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='字典类型表';
 
 -- ----------------------------
@@ -575,7 +575,7 @@ INSERT INTO `sys_dict_item` (`id`, `dict_id`, `label`, `value`, `tag_style`, `so
 INSERT INTO `sys_dict_item` (`id`, `dict_id`, `label`, `value`, `tag_style`, `sort`, `status`, `remark`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (12, 5, '手动推送', '0', 'primary', 1, 1, NULL, 0, '2026-06-26 09:59:51', 1, '2026-07-03 10:03:52', NULL);
 INSERT INTO `sys_dict_item` (`id`, `dict_id`, `label`, `value`, `tag_style`, `sort`, `status`, `remark`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (13, 5, '定时推送', '1', 'danger', 2, 1, NULL, 0, '2026-06-26 09:59:51', 1, '2026-07-03 10:03:53', 1);
 INSERT INTO `sys_dict_item` (`id`, `dict_id`, `label`, `value`, `tag_style`, `sort`, `status`, `remark`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (14, 6, '后台手动创建', 'MANUAL', 'primary', 1, 1, NULL, 0, '2026-06-26 09:59:51', 1, '2026-07-03 10:03:54', 1);
-INSERT INTO `sys_dict_item` (`id`, `dict_id`, `label`, `value`, `tag_style`, `sort`, `status`, `remark`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (15, 7, '短信', 'SMS', 'info', 2, 1, NULL, 0, '2026-06-26 09:59:51', 1, '2026-07-04 17:44:00', 1);
+INSERT INTO `sys_dict_item` (`id`, `dict_id`, `label`, `value`, `tag_style`, `sort`, `status`, `remark`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (15, 7, '短信', 'SMS', 'info', 2, 0, NULL, 0, '2026-06-26 09:59:51', 1, '2026-07-04 17:44:00', 1);
 INSERT INTO `sys_dict_item` (`id`, `dict_id`, `label`, `value`, `tag_style`, `sort`, `status`, `remark`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (16, 7, '微信小程序', 'WECHAT_MP', 'lime', 4, 0, NULL, 0, '2026-06-26 09:59:51', 1, '2026-07-03 10:03:56', 1);
 INSERT INTO `sys_dict_item` (`id`, `dict_id`, `label`, `value`, `tag_style`, `sort`, `status`, `remark`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (17, 7, '站内信', 'IN_APP', 'primary', 1, 1, NULL, 0, '2026-06-26 09:59:51', 1, '2026-07-03 10:03:57', NULL);
 INSERT INTO `sys_dict_item` (`id`, `dict_id`, `label`, `value`, `tag_style`, `sort`, `status`, `remark`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`) VALUES (18, 7, '微信公众号', 'WECHAT_OA', 'success', 3, 0, NULL, 0, '2026-06-26 09:59:51', 1, '2026-07-04 17:44:00', 1);
@@ -816,7 +816,7 @@ CREATE TABLE `sys_file_storage_config` (
 -- Records of sys_file_storage_config
 -- ----------------------------
 BEGIN;
-INSERT INTO `sys_file_storage_config` (`id`, `config_name`, `storage_type`, `storage_path`, `domain`, `endpoint`, `region`, `bucket_id`, `bucket_name`, `access_key`, `secret_key`, `meta`, `is_default`, `status`, `remark`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`, `lock_version`) VALUES (1930000000001000, '本地存储', 'LOCAL', '${user.home}/data/uploads', 'http://127.0.0.1', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '', 0, '2026-06-11 16:38:41', 1, '2026-06-27 23:43:39', 1, 0);
+INSERT INTO `sys_file_storage_config` (`id`, `config_name`, `storage_type`, `storage_path`, `domain`, `endpoint`, `region`, `bucket_id`, `bucket_name`, `access_key`, `secret_key`, `meta`, `is_default`, `status`, `remark`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`, `lock_version`) VALUES (1930000000001000, '本地存储', 'LOCAL', CONCAT('$', '{user.home}/data/uploads'), 'http://127.0.0.1', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, '', 0, '2026-06-11 16:38:41', 1, '2026-06-27 23:43:39', 1, 0);
 COMMIT;
 
 -- ----------------------------
@@ -1102,7 +1102,7 @@ CREATE TABLE `sys_role` (
   `update_time` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `update_by` bigint DEFAULT NULL COMMENT '更新人ID',
   PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE KEY `uk_role_code` (`role_code`)
+  UNIQUE KEY `uk_role_code` (((case when (`is_deleted` = 0) then `role_code` else NULL end)))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='后台角色表';
 
 -- ----------------------------
@@ -1217,7 +1217,7 @@ CREATE TABLE `sys_user` (
   `update_by` bigint DEFAULT NULL COMMENT '更新人ID',
   `lock_version` int unsigned NOT NULL DEFAULT '0' COMMENT '乐观锁版本号',
   PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE KEY `uk_username` (`username`),
+  UNIQUE KEY `uk_username` (((case when (`is_deleted` = 0) then `username` else NULL end))),
   KEY `idx_dept_id` (`dept_id`),
   KEY `idx_create_time` (`create_time`),
   KEY `idx_sys_user_avatar_file_id` (`avatar_file_id`)

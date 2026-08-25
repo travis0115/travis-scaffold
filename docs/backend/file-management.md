@@ -45,11 +45,11 @@ FileUploadResp result =
 - Spring Multipart：`spring.servlet.multipart.max-file-size` 与 `max-request-size`；
 - 文件模块：`travis.web.file.allowed-extensions`。
 
-本地存储目录来自启用的文件存储配置的 `storagePath`，支持 Spring 占位符解析。`travis.web.file.resource-handler` 只定义对外静态资源路径，例如 `/files/**`，并不等于磁盘目录。
+本地存储目录来自启用的文件存储配置的 `storagePath`，支持 Spring 占位符解析。`travis.web.file.resource-handler` 只定义对外静态资源路径，例如 `/files/**`，并不等于磁盘目录。资源请求会根据当前启用配置动态解析目录，新增或切换本地存储配置后无需重启应用；多实例部署仍必须把对应目录挂载为所有实例可见的共享路径。
 
 本地策略会拒绝无扩展名、异常扩展名和白名单外扩展名。仅校验扩展名不能代替内容安全扫描；接入不可信上传场景时需按业务风险增加病毒扫描、内容嗅探或隔离存储。
 
-默认白名单明确禁止可被浏览器主动解析或执行的 `html`、`css`、`js`、`ts`、`vue`、`svg`、`xml` 等格式。业务项目不得仅为上传方便重新开放这些格式；确有业务需求时，应改用隔离域名、强制附件下载、正确的 `Content-Type`/`Content-Disposition` 和内容清洗，并完成专项安全评审。
+默认白名单禁止可被浏览器主动解析或执行的 `html`、`css`、`js`、`ts`、`vue`、`xml` 等格式。脚手架允许上传 SVG 图片；业务项目应根据来源可信度进行内容清洗，或使用隔离域名和正确的 `Content-Type`/`Content-Disposition`，避免未经清洗的主动内容在同源环境执行。
 
 ## 防止误删业务附件
 
