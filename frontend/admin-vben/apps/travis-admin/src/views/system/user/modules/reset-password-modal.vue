@@ -10,6 +10,7 @@ import { App, Button } from 'antdv-next';
 import { useVbenForm, z } from '#/adapter/form';
 import { resetUserPassword } from '#/api';
 import { $t } from '#/locales';
+import { generateRandomPassword } from '#/utils/password';
 
 const emit = defineEmits(['success']);
 
@@ -19,25 +20,6 @@ const { message } = App.useApp();
 const userId = ref<Id>();
 const nicknameVal = ref('');
 const passwordVisible = ref(true);
-
-function generateRandomPassword() {
-  const groups = [
-    'ABCDEFGHJKLMNPQRSTUVWXYZ',
-    'abcdefghjkmnpqrstuvwxyz',
-    '23456789',
-    '~!@#',
-  ];
-  const chars = groups.join('');
-  const password = groups.map((group) => pickChar(group));
-  for (let i = password.length; i < 8; i++) {
-    password.push(pickChar(chars));
-  }
-  return password.toSorted(() => Math.random() - 0.5).join('');
-}
-
-function pickChar(chars: string) {
-  return chars.charAt(Math.floor(Math.random() * chars.length));
-}
 
 function isValidPassword(value?: string) {
   const pwd = value?.trim();

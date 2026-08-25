@@ -47,7 +47,8 @@ validate_deploy_root() {
 }
 
 validate_release_id() {
-    [[ "$1" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]{0,63}$ ]] || die "发布标识格式错误: $1"
+    [[ "$1" =~ ^[a-z0-9][a-z0-9._-]{0,63}$ ]] \
+        || die "发布标识只能使用小写字母、数字、点、下划线和连字符: $1"
 }
 
 validate_replicas() {
@@ -78,7 +79,7 @@ infra_compose() {
 app_project() {
     local release="$1"
     validate_release_id "${release}"
-    printf 'travis-app-%s' "${release,,}"
+    printf 'travis-app-%s' "${release}"
 }
 
 app_compose() {

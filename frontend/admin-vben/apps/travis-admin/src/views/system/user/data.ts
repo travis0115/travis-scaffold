@@ -11,26 +11,8 @@ import { getRoleList } from '#/api';
 import { isDeptEnabled } from '#/features';
 import { $t } from '#/locales';
 import { enableStatusOptions } from '#/utils/business-options';
+import { generateRandomPassword } from '#/utils/password';
 import { filterAccessOptions, SYSTEM_PERMS } from '#/utils/permissions';
-
-function generateRandomPassword() {
-  const groups = [
-    'ABCDEFGHJKLMNPQRSTUVWXYZ',
-    'abcdefghjkmnpqrstuvwxyz',
-    '23456789',
-    '~!@#$%^&*',
-  ];
-  const chars = groups.join('');
-  const password = groups.map((group) => pickChar(group));
-  for (let i = password.length; i < 8; i++) {
-    password.push(pickChar(chars));
-  }
-  return password.toSorted(() => Math.random() - 0.5).join('');
-}
-
-function pickChar(chars: string) {
-  return chars.charAt(Math.floor(Math.random() * chars.length));
-}
 
 export function useFormSchema(deptTreeData?: any[]): VbenFormSchema[] {
   const schemas: VbenFormSchema[] = [

@@ -24,6 +24,8 @@ spring:
     baseline-on-migrate: false
 ```
 
+公共配置启用 Flyway，`application-dev.yml` 默认将其关闭，方便脚手架维护阶段合并尚未发布的 SQL；`prod` Profile 使用公共配置并在启动时执行迁移。开发环境需要验证迁移时显式设置 `SPRING_FLYWAY_ENABLED=true`。
+
 ## 版本迁移命名
 
 脚手架与业务系统共享一个全局版本空间，版本号由时间、来源和序号组成：

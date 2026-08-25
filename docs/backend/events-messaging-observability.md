@@ -34,6 +34,8 @@ transactionalEventPublisher.publishEvent(new OrderPaidEvent(orderId));
 
 ## RocketMQ 发布
 
+当前 `travis-server` 未引入 RocketMQ starter，本节说明的是基础设施模块已提供的可选接入方式。业务模块引入对应 starter 后，下述 Bean、扫描与配置才会生效。
+
 只有需要 MQ 语义时才定义实现 `Message` 的枚举：
 
 ```java
@@ -107,7 +109,7 @@ travis:
       namesrv-addr: 127.0.0.1:9876
 ```
 
-自动初始化会扫描 `*Message` 枚举和 `@RocketMQMessageListener` Bean，在消费者启动前检查 Topic 类型和消费者组。默认关闭；当前单体的 dev/prod 配置显式开启。连接或创建失败目前记录警告后继续启动，因此生产环境仍应由运维确认 Broker 资源和权限。
+自动初始化会扫描 `*Message` 枚举和 `@RocketMQMessageListener` Bean，在消费者启动前检查 Topic 类型和消费者组。starter 默认关闭自动初始化；脚手架预留的 dev/prod 配置为启用状态，因此业务接入 starter 后会生效。连接或创建失败目前记录警告后继续启动，生产环境仍应由运维确认 Broker 资源和权限。
 
 ## 操作日志、访问日志与事件日志
 

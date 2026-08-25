@@ -31,7 +31,8 @@ release_dir="${DEPLOY_ROOT}/frontend/releases/${version}"
 [[ ! -e "${release_dir}" ]] || die "前端发布目录已存在: ${release_dir}"
 sudo install -d -m 0755 "${release_dir}"
 sudo cp -R "${temporary}/." "${release_dir}/"
-if [[ ! -e "${DEPLOY_ROOT}/frontend/current" && ! -L "${DEPLOY_ROOT}/frontend/current" ]]; then
-    sudo ln -s "${release_dir}" "${DEPLOY_ROOT}/frontend/current"
+if [[ ! -e "${FRONTEND_ROOT}" && ! -L "${FRONTEND_ROOT}" ]]; then
+    sudo install -d -m 0755 "$(dirname -- "${FRONTEND_ROOT}")"
+    sudo ln -s "${release_dir}" "${FRONTEND_ROOT}"
 fi
 echo "构建完成: backend=${backend_image}, frontend=${release_dir}"

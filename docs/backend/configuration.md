@@ -7,8 +7,8 @@
 | 文件 | 用途 |
 | --- | --- |
 | `application.yml` | 所有环境共享的服务、Redis、数据库连接池、Quartz、Modulith、Web 和认证基础配置 |
-| `application-dev.yml` | 开发日志、Actuator、开发数据库和 RocketMQ |
-| `application-prod.yml` | 生产日志、受限 Actuator、生产数据库和 RocketMQ ACL |
+| `application-dev.yml` | 开发日志、Actuator、开发数据库和可选 RocketMQ 配置 |
+| `application-prod.yml` | 生产日志、受限 Actuator、生产数据库和可选 RocketMQ ACL |
 | starter 下的 `application-reference.yml` | 配置示例和可选项参考，不是业务模块自己的环境配置 |
 | `compose.yaml` | 本地 MySQL、Redis、RocketMQ 基础设施 |
 
@@ -47,9 +47,9 @@ starter 的 `application-reference.yml` 只存在于 Jackson、Redis、RocketMQ 
 | `REDIS_PASSWORD` | 可为空 | 必填 | Redis 密码 |
 | `DRUID_USERNAME` / `DRUID_PASSWORD` | 均有开发默认值 | 不使用 | Druid 管理页在生产关闭 |
 | `OPS_JOB_LOG_RETENTION_DAYS` | 默认 `30` | 默认 `30` | Ops 任务日志保留天数，最小 1 |
-| `ROCKETMQ_NAMESRV_ADDR` | 默认 `127.0.0.1:9876` | 必填 | 自动创建 Topic/消费者组时连接 NameServer |
-| `ROCKETMQ_PRODUCER_ENDPOINTS` / `ROCKETMQ_CONSUMER_ENDPOINTS` | 默认 `127.0.0.1:8081` | 必填 | RocketMQ v5 Proxy gRPC 地址 |
-| `ROCKETMQ_*_ACCESS_KEY` / `ROCKETMQ_*_SECRET_KEY` | 可为空 | 必填 | 生产者/消费者 ACL |
+| `ROCKETMQ_NAMESRV_ADDR` | 默认 `127.0.0.1:9876` | 引入 RocketMQ starter 后必填 | 自动创建 Topic/消费者组时连接 NameServer |
+| `ROCKETMQ_PRODUCER_ENDPOINTS` / `ROCKETMQ_CONSUMER_ENDPOINTS` | 默认 `127.0.0.1:8081` | 引入 RocketMQ starter 后必填 | RocketMQ v5 Proxy gRPC 地址 |
+| `ROCKETMQ_*_ACCESS_KEY` / `ROCKETMQ_*_SECRET_KEY` | 可为空 | 引入 RocketMQ starter 后按集群要求填写 | 生产者/消费者 ACL |
 | `HOSTNAME` | 不使用 | 默认 `local` | 生产日志实例目录，并可参与实例识别 |
 
 `${VAR:default}` 表示有默认值，`${VAR}` 表示缺失时无法正确绑定或启动。生产部署还会由 `validate.sh` 检查弱口令、密钥长度和必要变量。
@@ -82,14 +82,14 @@ starter 的 `application-reference.yml` 只存在于 Jackson、Redis、RocketMQ 
 | `spring.datasource.druid.web-stat-filter.*` | Web 统计范围及静态资源排除 |
 | `mybatis-plus.configuration.log-impl` | 使用 SLF4J 输出 SQL 日志 |
 | `mybatis-plus.mapper-locations` | `classpath*:mapper/*.xml` |
-| `spring.flyway.enabled` | 当前为 `false`，应用默认不会执行迁移 |
+| `spring.flyway.enabled` | 公共配置为 `true`；dev Profile 默认覆盖为 `false`，prod 使用公共配置 |
 | `spring.flyway.locations` | `classpath:db/migration` |
 | `spring.flyway.out-of-order` | `true`，允许补充较低版本迁移 |
 | `spring.flyway.validate-on-migrate` / `validate-migration-naming` | 均为 `true` |
 | `spring.flyway.clean-disabled` | `true`，禁止清库 |
 | `spring.flyway.baseline-on-migrate` | `false`，不会自动接管非空库 |
 
-迁移脚本规则见 [数据库迁移说明](../../backend/travis-monolith/travis-server/src/main/resources/db/README.md)。需要应用启动迁移时应明确启用 Flyway，并先确认目标库基线；不要把“脚本存在”当成“启动时自动执行”。
+迁移脚本规则见 [数据库迁移说明](../../backend/travis-monolith/travis-server/src/main/resources/db/README.md)。脚手架开发环境默认不执行迁移，便于维护者在首版发布前合并尚未提交的 SQL；生产 Profile 会自动执行迁移，启用前必须确认目标库基线并完成备份。
 
 ## Redis 与 Spring Cache
 
@@ -187,14 +187,16 @@ Quartz 表和 Modulith 事件表必须由数据库脚本提供。详细用法见
 
 ## RocketMQ
 
+当前 `travis-server` 没有引入 RocketMQ starter，以下配置只是脚手架预留，不会让 RocketMQ 成为启动依赖。业务模块实际接入 starter 后，才需要提供相应环境变量并部署 RocketMQ。
+
 | 配置项 | dev | prod | 说明 |
 | --- | --- | --- | --- |
-| `rocketmq.producer.endpoints` | 本地 Proxy | 环境变量必填 | v5 Producer gRPC 端点 |
-| `rocketmq.push-consumer.endpoints` | 本地 Proxy | 环境变量必填 | v5 Consumer gRPC 端点 |
-| `access-key/secret-key` | 可为空 | 环境变量必填 | ACL 凭证 |
+| `rocketmq.producer.endpoints` | 本地 Proxy | 接入 starter 后必填 | v5 Producer gRPC 端点 |
+| `rocketmq.push-consumer.endpoints` | 本地 Proxy | 接入 starter 后必填 | v5 Consumer gRPC 端点 |
+| `access-key/secret-key` | 可为空 | 接入 starter 后按集群要求填写 | ACL 凭证 |
 | `enable-msg-trace` | `false` | `true` | 消息轨迹 |
 | `travis.rocketmq.auto-initialize.enabled` | `true` | `true` | 启动时创建缺失 Topic/消费者组 |
-| `travis.rocketmq.auto-initialize.namesrv-addr` | `127.0.0.1:9876` | 环境变量必填 | 初始化使用 NameServer，不是 Proxy 端口 |
+| `travis.rocketmq.auto-initialize.namesrv-addr` | `127.0.0.1:9876` | 接入 starter 后必填 | 初始化使用 NameServer，不是 Proxy 端口 |
 | `travis.rocketmq.client.log-path` | `${user.home}/data/logs/rocketmq` | `/data/logs/rocketmq` | v5 客户端日志根目录 |
 
 starter 中的 `application-reference.yml` 还列出 Producer group、请求超时等 RocketMQ 官方属性；实际值以 server 的 profile 配置和官方 starter 绑定为准。

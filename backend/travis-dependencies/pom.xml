@@ -95,6 +95,13 @@
                 <scope>import</scope>
             </dependency>
 
+            <!-- WxJava BOM 管理了旧版 Redisson；项目显式声明的版本优先。 -->
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson</artifactId>
+                <version>${redisson.version}</version>
+            </dependency>
+
             <!-- travis-infrastructure -->
             <dependency>
                 <groupId>com.travis</groupId>

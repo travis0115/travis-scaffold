@@ -1,69 +1,37 @@
-<p style="text-align: center">
- <img src="https://img.shields.io/badge/Spring%20Boot-4.0.1-blue.svg" alt="Spring Boot">
- <img src="https://img.shields.io/badge/JDK-25-blue.svg" alt="JDK">
- <img src="https://img.shields.io/badge/Vue-3-blue.svg" alt="Vue">
- <img src="https://img.shields.io/github/license/YunaiV/ruoyi-vue-pro" alt="License"/>
-</p>
+# Travis Monolith
 
-## 💻 项目外包
+Travis Monolith 是 Travis Scaffold 的 Spring Boot 4.1.0 + JDK 25 模块化单体后端，使用 Spring Modulith 约束业务边界。
 
-独立开发者，前阿里工程师，APP/小程序/H5，「远程兼职」&「定制开发」接单中。
+## 模块
 
-如果你有项目想要外包，可以微信联系【<span style="color: #FF5733;">**travis0115_**</span>】
+```text
+travis-monolith/
+├── travis-module-dependencies/  # 业务模块 BOM
+├── travis-module-app/           # app 端适配模块
+├── travis-module-demo/          # 示例模块
+├── travis-module-platform/      # system、ops 等平台模块
+└── travis-server/               # 启动入口、环境配置和数据库迁移
+```
 
-## 🐣 项目简介
+跨模块调用应依赖公开 API、事件或 `@NamedInterface`，不要直接引用其他模块的 `internal` 实现。
 
-一款单体多模块架构脚手架，基于 Spring Boot 4，提供一套开箱即用的快速开发解决方案。
+## 本地启动
 
-* Java 后端：`master` 分支为 JDK 25 + Spring Boot 4.0.1
-* //TODO
+```bash
+docker compose up -d
+mvn spring-boot:run -pl travis-server
+```
 
-##  🐳 项目关系
+开发环境默认不执行 Flyway，便于脚手架首版维护期间合并尚未发布的 SQL。需要初始化全新数据库时，先审阅迁移内容，再显式设置 `SPRING_FLYWAY_ENABLED=true`。初始账号和密码均为 `admin718`，仅用于本地开发和演示。
 
-### 后端项目
+## 验证
 
-| 项目                                                                | Star                                                                                                                                                          | 简介                     |
-|-------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------|
-| [travis-monolith](https://github.com/travis0115/travis-scaffold)  | [![GitHub stars](https://img.shields.io/github/stars/travis0115/travis-scaffold.svg?style=social&label=Stars)](https://github.com/travis0115/travis-scaffold) | 基于 Spring Boot 多模块单体架构 |
-| [travis-cloud](https://github.com/travis0115/travis-scaffold) | //TODO                                                                                                                                                        | 基于 Spring Cloud 微服务架构  |
+```bash
+mvn clean compile -DskipTests
+mvn test
+mvn spotless:check
+```
 
-### 前端项目
-//TODO
+如果修改了 `backend/travis-dependencies` 或 `backend/travis-infrastructure`，先分别执行 `mvn clean install -DskipTests`，再验证本项目。
 
-### 系统功能
-//TODO
-
-## 🐨 技术栈
-
-### 模块
-
-| 项目                    | 说明              |
-|-----------------------|-----------------|
-| `travis-dependencies`  | Maven 依赖版本管理    |
-| `travis-framework`     | 框架整合扩展          |
-| `travis-server`        | 启动模块            |
-| `travis-module-system` | 系统功能的 Module 模块 |
-//TODO
-
-### 框架
-
-| 框架                                                                                          | 说明               | 版本      |
-|---------------------------------------------------------------------------------------------|------------------|---------|
-| [Spring Boot](https://spring.io/projects/spring-boot)                                       | 应用开发框架           | 4.0.1   |
-| [MySQL](https://www.mysql.com/cn/)                                                          | 数据库服务器           | 9.0+    |
-| [Druid](https://github.com/alibaba/druid)                                                   | JDBC 连接池、监控组件    | 1.2.9   |
-| [MyBatis Plus](https://mp.baomidou.com/)                                                    | MyBatis 增强工具包    | 3.5.15  |
-| [Redis](https://redis.io/)                                                                  | key-value 数据库    | 7.0     |
-| [Redisson](https://github.com/redisson/redisson)                                            | Redis 客户端        | 4.1.0   |
-| [Spring MVC](https://github.com/spring-projects/spring-framework/tree/master/spring-webmvc) | MVC 框架           | 4.0.1   |
-| [Spring Security](https://github.com/spring-projects/spring-security)                       | Spring 安全框架      | 4.0.1   |
-| [Hibernate Validator](https://github.com/hibernate/hibernate-validator)                     | 参数校验组件           | 9.0.1.Final   |
-| [Springdoc](https://springdoc.org/)                                                         | Swagger 文档       | 3.0.0   |
-| [Jackson](https://github.com/FasterXML/jackson)                                             | JSON 工具库         | 2.13.5  |
-| [MapStruct](https://mapstruct.org/)                                                         | Java Bean 转换     | 1.6.3   |
-| [JUnit](https://junit.org/junit5/)                                                          | Java 单元测试框架      | 5.8.2   |
-| [Mockito](https://github.com/mockito/mockito)                                               | Java Mock 框架     | 4.8.0   |
-//TODO
-
-## 🐷 演示图
-//TODO
+完整说明见仓库根目录的 [README](../../README.md) 与 [后端文档](../../docs/backend/README.md)。

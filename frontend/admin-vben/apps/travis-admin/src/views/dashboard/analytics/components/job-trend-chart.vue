@@ -37,7 +37,6 @@ function render() {
         barCategoryGap: '40%',
         barGap: '20%',
         barMaxWidth: 20,
-        barMinHeight: 2,
         data: props.data.map((item) => item.success),
         itemStyle: { borderRadius: [3, 3, 0, 0], color: '#10b981' },
         name: '成功',
@@ -45,7 +44,6 @@ function render() {
       },
       {
         barMaxWidth: 20,
-        barMinHeight: 2,
         data: props.data.map((item) => item.failed),
         itemStyle: { borderRadius: [3, 3, 0, 0], color: '#f43f5e' },
         name: '失败',

@@ -4,7 +4,7 @@
 
 ## 第一次使用
 
-1. [快速开始](getting-started.md)：准备环境，启动 MySQL、Redis、RocketMQ、后端和管理端；
+1. [快速开始](getting-started.md)：准备环境，启动 MySQL、Redis、后端和管理端；RocketMQ 按业务需要启用；
 2. [项目能力总览](project-overview.md)：了解脚手架已经具备什么、哪些公共入口应直接复用；
 3. 根据开发方向进入 [后端文档](backend/README.md) 或 [前端文档](frontend/README.md)。
 

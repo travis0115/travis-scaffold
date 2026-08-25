@@ -79,7 +79,7 @@ spring:
     compose:
       enabled: false
   flyway:
-    enabled: false
+    enabled: true
     locations: classpath:db/migration
     out-of-order: true # 允许补充执行后来拉取的低版本迁移
     validate-on-migrate: true # 检查已经执行过的 SQL 是否被修改
@@ -205,7 +205,7 @@ travis:
     # 文件配置
     file:
       resource-handler: /files/**  # 文件访问URL
-      allowed-extensions: [ jpg, jpeg, png, gif, webp, bmp, svg, ico, pdf, doc, docx, xls, xlsx, ppt, pptx, txt, csv, md, json, xml, html, css, js, ts, vue, zip, rar, 7z, tar, gz, mp3, wav, ogg, m4a, mp4, webm, mov, avi, mkv ]
+      allowed-extensions: [ jpg, jpeg, png, gif, webp, bmp, ico, pdf, doc, docx, xls, xlsx, ppt, pptx, txt, csv, md, json, zip, rar, 7z, tar, gz, mp3, wav, ogg, m4a, mp4, webm, mov, avi, mkv ]
     i18n:
       enabled: true #是否启用国际化
     locale: zh_CN #spring.web.locale和spring.jackson.locale配置

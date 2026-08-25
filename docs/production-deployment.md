@@ -46,6 +46,8 @@ chmod 600 .env
 
 逐项替换 `.env` 占位值。值按 shell 环境文件语法书写；包含空格或特殊字符时正确引用。生产必须使用不可变镜像 tag/digest、独立随机的 MySQL/Redis 密码和至少 32 字符的 JWT 密钥。
 
+当前单体应用未引入 RocketMQ starter，`.env` 中相关变量可保持为空。业务模块接入 RocketMQ 后，再填写外部或独立部署集群的地址与凭据，并把连通性加入发布验收。
+
 构建后端镜像和前端发布目录：
 
 ```bash
@@ -73,7 +75,7 @@ docker push registry.example.com/travis-scaffold:1.0.0
 4. 等待每个实例的 readiness；
 5. 写临时 upstream，执行 `nginx -t` 后平滑 reload。
 
-任何健康检查或 Nginx 校验失败都会拒绝切流。首次部署不自动执行 Flyway；是否执行迁移应纳入发布前数据库备份和迁移评审，本项目的 SQL 由维护者单独处理。
+任何健康检查或 Nginx 校验失败都会拒绝切流。prod Profile 使用公共配置并在应用启动时执行 Flyway；首次部署和升级前必须完成数据库备份、迁移评审，并确保变更与保留运行的上一版本兼容。开发环境默认关闭 Flyway，不影响生产行为。
 
 ## 4. 扩缩容
 
@@ -122,9 +124,10 @@ docker compose --env-file .env -f compose.app.yml -p travis-app-旧发布标识 
 
 ```bash
 ./scripts/backup.sh
+./scripts/verify-backup.sh /opt/travis/backups/<UTC时间戳>
 ```
 
-每次生成独立 UTC 时间目录，包含 MySQL 逻辑备份、Redis 数据目录、上传文件和 SHA-256 校验清单。脚本不会自动删除旧备份；先完成加密异机复制和恢复演练，再由运维策略清理。
+每次生成独立 UTC 时间目录，包含 MySQL 逻辑备份、Redis 独立 RDB 快照、上传文件和 SHA-256 校验清单。`verify-backup.sh` 校验文件完整性和压缩包可读性。脚本不会自动删除旧备份；先完成加密异机复制和恢复演练，再由运维策略清理。
 
 至少演练：创建临时 MySQL/Redis、校验 `SHA256SUMS`、恢复数据、启动同版本应用、检查登录/文件/消息/任务。未演练的备份不能视为可恢复。
 

@@ -17,10 +17,9 @@ public class FileUploadProperties {
 
     private List<String> allowedExtensions =
             List.of(
-                    "jpg", "jpeg", "png", "gif", "webp", "bmp", "svg", "ico", "pdf", "doc", "docx",
-                    "xls", "xlsx", "ppt", "pptx", "txt", "csv", "md", "json", "xml", "html", "css",
-                    "js", "ts", "vue", "zip", "rar", "7z", "tar", "gz", "mp3", "wav", "ogg", "m4a",
-                    "mp4", "webm", "mov", "avi", "mkv");
+                    "jpg", "jpeg", "png", "gif", "webp", "bmp", "ico", "pdf", "doc", "docx", "xls",
+                    "xlsx", "ppt", "pptx", "txt", "csv", "md", "json", "zip", "rar", "7z", "tar",
+                    "gz", "mp3", "wav", "ogg", "m4a", "mp4", "webm", "mov", "avi", "mkv");
 
     public Set<String> getNormalizedAllowedExtensions() {
         if (allowedExtensions == null) {

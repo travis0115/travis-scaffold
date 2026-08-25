@@ -21,7 +21,7 @@ Travis Scaffold 是一个面向业务系统快速开发的前后端脚手架。�
 - Sa-Token + JWT 多登录体系，支持 admin/app；
 - WebMVC API 前缀、CORS、防重复提交和富文本清洗；
 - WebSocket ticket、点对点推送、命名空间和 Redis 集群广播；
-- Spring Modulith 事件、事务提交后处理和 RocketMQ；
+- Spring Modulith 事件、事务提交后处理和可选 RocketMQ 集成；
 - Quartz JDBC 集群调度、后台动态任务和业务一次性任务；
 - 访问日志、操作日志、结构化日志和统一错误上报；
 - DTO、JSON、参数和日志数据脱敏。
@@ -65,11 +65,11 @@ travis-scaffold/
 | Maven | 3.9+ |
 | Node.js | `>=22.18.0` |
 | pnpm | `>=11.0.0`，项目指定 `pnpm@11.2.2` |
-| Docker / Compose | 用于本地 MySQL、Redis、RocketMQ |
+| Docker / Compose | 用于本地 MySQL、Redis，以及按需启用的 RocketMQ |
 
 ## 快速开始
 
-Compose 与 dev Profile 已对齐 MySQL、Redis、RocketMQ 和端口默认值。按照 [快速开始](docs/getting-started.md) 即可启动；本地示例凭据不得用于生产。
+Compose 与 dev Profile 已对齐 MySQL、Redis 和端口默认值，并预留 RocketMQ。按照 [快速开始](docs/getting-started.md) 即可启动；本地示例凭据不得用于生产。
 
 准备完成后，常用启动命令如下：
 
@@ -141,7 +141,7 @@ pnpm build:travis-admin
 | 数据访问 | MyBatis-Plus、Druid、MySQL、Flyway |
 | 认证与权限 | Sa-Token、JWT |
 | 缓存与并发 | Redis、Redisson、Spring Cache |
-| 消息与实时通信 | RocketMQ、WebSocket |
+| 消息与实时通信 | 可选 RocketMQ、WebSocket |
 | 调度与治理 | Quartz JDBC、Actuator、结构化日志 |
 | 管理端 | Vue 3、Vite、Vben Admin、Ant Design Vue、VXE Grid |
 | 工程化 | Maven、pnpm workspace、Turbo、Spotless、ESLint、Lefthook |
@@ -150,7 +150,7 @@ pnpm build:travis-admin
 
 - 新增封装前先搜索已有工具类、starter、公共 API 和相似调用点；
 - Controller 使用统一响应、校验、错误码和后端权限校验；
-- 数据库变更只新增迁移脚本，不修改已经发布或执行的历史脚本；
+- 首版发布前可合并尚未发布的 SQL；已经发布或执行的迁移只新增、不修改；
 - 前后端字段契约一起核对，前端隐藏不是安全边界；
 - 文档需要同步说明新增的公共类、配置项、starter 和业务接入方式。
 
