@@ -1,9 +1,6 @@
 import type { Ref } from 'vue';
 
-import type {
-  OnActionClickFn,
-  VxeTableGridColumns,
-} from '#/adapter/vxe-table';
+import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { SystemMenuApi } from '#/api';
 
 import { $t } from '#/locales';
@@ -26,7 +23,10 @@ function flattenTree(nodes: SystemMenuApi.SysMenu[]): SystemMenuApi.SysMenu[] {
 export function useColumns(
   onActionClick: OnActionClickFn<SystemMenuApi.SysMenu>,
   gridData: Ref<SystemMenuApi.SysMenu[]>,
-  onStatusChange?: (newStatus: number, row: SystemMenuApi.SysMenu) => Promise<boolean>,
+  onStatusChange?: (
+    newStatus: number,
+    row: SystemMenuApi.SysMenu,
+  ) => Promise<boolean>,
 ): VxeTableGridColumns<SystemMenuApi.SysMenu> {
   return [
     {
@@ -97,46 +97,54 @@ export function useColumns(
           onClick: onActionClick,
         },
         name: 'CellOperation',
-        options: filterAccessOptions([
-          {
-            code: 'moveUp',
-            disabled: (row: SystemMenuApi.SysMenu) => {
-              const siblings = flattenTree(gridData.value)
-                .filter((item) => (item.parentId || 0) === (row.parentId || 0))
-                .toSorted((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
-              return siblings.findIndex((item) => item.id === row.id) <= 0;
+        options: filterAccessOptions(
+          [
+            {
+              code: 'moveUp',
+              disabled: (row: SystemMenuApi.SysMenu) => {
+                const siblings = flattenTree(gridData.value)
+                  .filter(
+                    (item) => (item.parentId || 0) === (row.parentId || 0),
+                  )
+                  .toSorted((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
+                return siblings.findIndex((item) => item.id === row.id) <= 0;
+              },
+              text: $t('common.moveUp'),
             },
-            text: $t('common.moveUp'),
-          },
-          {
-            code: 'moveDown',
-            disabled: (row: SystemMenuApi.SysMenu) => {
-              const siblings = flattenTree(gridData.value)
-                .filter((item) => (item.parentId || 0) === (row.parentId || 0))
-                .toSorted((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
-              const index = siblings.findIndex((item) => item.id === row.id);
-              return index >= siblings.length - 1;
+            {
+              code: 'moveDown',
+              disabled: (row: SystemMenuApi.SysMenu) => {
+                const siblings = flattenTree(gridData.value)
+                  .filter(
+                    (item) => (item.parentId || 0) === (row.parentId || 0),
+                  )
+                  .toSorted((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
+                const index = siblings.findIndex((item) => item.id === row.id);
+                return index >= siblings.length - 1;
+              },
+              text: $t('common.moveDown'),
             },
-            text: $t('common.moveDown'),
-          },
-          'edit',
+            'edit',
+            {
+              code: 'delete',
+              show: (row: SystemMenuApi.SysMenu) => !row.children?.length,
+            },
+            {
+              code: 'remove',
+              danger: true,
+              show: (row: SystemMenuApi.SysMenu) =>
+                Boolean(row.children?.length),
+              text: $t('common.delete'),
+            },
+          ],
           {
-            code: 'delete',
-            show: (row: SystemMenuApi.SysMenu) => !row.children?.length,
+            delete: SYSTEM_PERMS.menuDelete,
+            edit: SYSTEM_PERMS.menuUpdate,
+            moveDown: SYSTEM_PERMS.menuUpdate,
+            moveUp: SYSTEM_PERMS.menuUpdate,
+            remove: SYSTEM_PERMS.menuDelete,
           },
-          {
-            code: 'remove',
-            danger: true,
-            show: (row: SystemMenuApi.SysMenu) => Boolean(row.children?.length),
-            text: $t('common.delete'),
-          },
-        ], {
-          delete: SYSTEM_PERMS.menuDelete,
-          edit: SYSTEM_PERMS.menuUpdate,
-          moveDown: SYSTEM_PERMS.menuUpdate,
-          moveUp: SYSTEM_PERMS.menuUpdate,
-          remove: SYSTEM_PERMS.menuDelete,
-        }),
+        ),
       },
       field: 'operation',
       fixed: 'right',

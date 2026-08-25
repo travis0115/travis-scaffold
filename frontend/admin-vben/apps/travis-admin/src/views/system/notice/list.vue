@@ -44,11 +44,7 @@ const pinnedTagStyle = {
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
     fieldMappingTime: [
-      [
-        'publishDateRange',
-        ['publishStartDate', 'publishEndDate'],
-        null,
-      ],
+      ['publishDateRange', ['publishStartDate', 'publishEndDate'], null],
     ],
     schema: useGridFormSchema(),
   },

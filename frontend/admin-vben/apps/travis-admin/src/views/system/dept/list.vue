@@ -5,7 +5,7 @@ import type {
 } from '#/adapter/vxe-table';
 import type { SystemDeptApi } from '#/api';
 
-import { confirm as vbenConfirm, Page, useVbenDrawer } from '@vben/common-ui';
+import { Page, useVbenDrawer, confirm as vbenConfirm } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
 
 import { Button, message } from 'antdv-next';

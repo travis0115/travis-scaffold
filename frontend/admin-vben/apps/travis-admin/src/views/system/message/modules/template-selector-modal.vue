@@ -154,9 +154,15 @@ async function selectTemplate(template?: SystemMessageApi.MessageTemplate) {
               {{ previewTemplate.title || previewTemplate.templateName }}
             </div>
           </div>
-          <RichTextPreview :content="previewTemplate.content" :min-height="420" />
+          <RichTextPreview
+            :content="previewTemplate.content"
+            :min-height="420"
+          />
         </template>
-        <div v-else class="flex h-full items-center justify-center text-gray-400">
+        <div
+          v-else
+          class="flex h-full items-center justify-center text-gray-400"
+        >
           暂无可预览模板
         </div>
       </div>

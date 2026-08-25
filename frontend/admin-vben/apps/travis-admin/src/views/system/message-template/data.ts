@@ -54,9 +54,7 @@ const statusOptions = [
   { label: '启用', value: 1 },
 ];
 
-export const useFormSchema = (
-  onContentBlur?: () => void,
-): VbenFormSchema[] => [
+export const useFormSchema = (onContentBlur?: () => void): VbenFormSchema[] => [
   {
     component: 'Input',
     fieldName: 'templateCode',

@@ -9,11 +9,11 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue';
 
 import {
   ColPage,
+  EllipsisText,
   Page,
   Tree,
   useVbenDrawer,
   useVbenModal,
-  EllipsisText,
 } from '@vben/common-ui';
 import { IconifyIcon, Plus } from '@vben/icons';
 import { formatDateTime } from '@vben/utils';
@@ -65,7 +65,9 @@ const showUnassignedDeptEntry = computed(() => matchDeptEntry('未归属'));
 const deptList = computed(() =>
   filterDeptTree(deptListSource.value, deptSearchValue.value.trim()),
 );
-const isDeptSearchActive = computed(() => Boolean(deptSearchValue.value.trim()));
+const isDeptSearchActive = computed(() =>
+  Boolean(deptSearchValue.value.trim()),
+);
 const deptTreeRenderKey = computed(() =>
   isDeptSearchActive.value ? 'dept-search' : 'dept-default',
 );
@@ -351,10 +353,7 @@ function onActionClick(e: OnActionClickParams<SystemUserApi.SysUser>) {
   }
 }
 
-async function onStatusChange(
-  newStatus: number,
-  row: SystemUserApi.SysUser,
-) {
+async function onStatusChange(newStatus: number, row: SystemUserApi.SysUser) {
   try {
     await updateUserStatus(row.id, newStatus as 0 | 1);
     return true;
@@ -472,9 +471,7 @@ onMounted(() => {
             v-if="showUnassignedDeptEntry"
             class="folder-row"
             :class="
-              selectedDeptId === 0
-                ? 'folder-row-selected'
-                : 'folder-row-normal'
+              selectedDeptId === 0 ? 'folder-row-selected' : 'folder-row-normal'
             "
             @click="onSelectUnassignedDept"
           >
@@ -525,10 +522,16 @@ onMounted(() => {
         <template #lastOnlineInfo="{ row }">
           <div class="table-cell-pre-line" :title="getLastOnlineTitle(row)">
             <template
-              v-if="row.lastOnlineTime || row.lastOnlineIp || row.lastOfflineTime"
+              v-if="
+                row.lastOnlineTime || row.lastOnlineIp || row.lastOfflineTime
+              "
             >
-              <div>{{ getLastOnlineLabel(row) }}：{{ getLastOnlineTime(row) }}</div>
-              <div>IP：{{ formatUserIp(row.lastOnlineIp, row.lastOnlineLocation) }}</div>
+              <div>
+                {{ getLastOnlineLabel(row) }}：{{ getLastOnlineTime(row) }}
+              </div>
+              <div>
+                IP：{{ formatUserIp(row.lastOnlineIp, row.lastOnlineLocation) }}
+              </div>
             </template>
             <div v-else>-</div>
           </div>
@@ -571,10 +574,16 @@ onMounted(() => {
         <template #lastOnlineInfo="{ row }">
           <div class="table-cell-pre-line" :title="getLastOnlineTitle(row)">
             <template
-              v-if="row.lastOnlineTime || row.lastOnlineIp || row.lastOfflineTime"
+              v-if="
+                row.lastOnlineTime || row.lastOnlineIp || row.lastOfflineTime
+              "
             >
-              <div>{{ getLastOnlineLabel(row) }}：{{ getLastOnlineTime(row) }}</div>
-              <div>IP：{{ formatUserIp(row.lastOnlineIp, row.lastOnlineLocation) }}</div>
+              <div>
+                {{ getLastOnlineLabel(row) }}：{{ getLastOnlineTime(row) }}
+              </div>
+              <div>
+                IP：{{ formatUserIp(row.lastOnlineIp, row.lastOnlineLocation) }}
+              </div>
             </template>
             <div v-else>-</div>
           </div>
@@ -623,28 +632,28 @@ onMounted(() => {
 }
 
 .folder-panel-title {
-  color: hsl(var(--foreground));
   font-size: 16px;
   font-weight: 600;
   line-height: 24px;
+  color: hsl(var(--foreground));
   white-space: nowrap;
 }
 
 .folder-create-btn {
   display: inline-flex;
-  align-items: center;
   gap: 2px;
+  align-items: center;
   height: 28px;
   padding: 0;
-  color: hsl(var(--primary));
   font-size: 14px;
+  color: hsl(var(--primary));
 }
 
 .folder-search {
   height: 32px;
+  font-size: 14px;
   border-color: hsl(var(--border));
   border-radius: 6px;
-  font-size: 14px;
 }
 
 .folder-search :deep(.ant-input) {
@@ -657,9 +666,9 @@ onMounted(() => {
   min-width: 0;
   height: 32px;
   padding-right: 8px;
-  color: hsl(var(--muted-foreground));
   font-size: 14px;
   line-height: 1;
+  color: hsl(var(--muted-foreground));
   cursor: pointer;
   transition:
     color 0.16s ease,
@@ -667,39 +676,39 @@ onMounted(() => {
 }
 
 .folder-row-normal:hover {
-  background-color: hsl(var(--accent) / 50%);
   color: hsl(var(--foreground));
+  background-color: hsl(var(--accent) / 50%);
 }
 
 .folder-row-selected {
-  background-color: hsl(var(--primary) / 12%);
   color: hsl(var(--foreground));
+  background-color: hsl(var(--primary) / 12%);
 }
 
 .folder-row-spacer {
+  flex: none;
   width: 18px;
   height: 22px;
-  flex: none;
 }
 
 .folder-icon {
+  flex: none;
   width: 18px;
   height: 18px;
-  flex: none;
   margin-right: 8px;
   color: hsl(var(--muted-foreground));
 }
 
 .folder-node {
   display: flex;
+  flex: 1;
   align-items: center;
   min-width: 0;
-  flex: 1;
 }
 
 .folder-name {
-  min-width: 0;
   flex: 1;
+  min-width: 0;
 }
 
 .folder-tree {
@@ -709,28 +718,28 @@ onMounted(() => {
 .side-tree :deep(.tree-node) {
   height: 32px;
   padding-right: 8px;
-  color: hsl(var(--muted-foreground));
   font-size: 14px;
   font-weight: 400;
   line-height: 1;
+  color: hsl(var(--muted-foreground));
   transition:
     color 0.16s ease,
     background-color 0.16s ease;
 }
 
 .side-tree :deep(.tree-node:hover) {
-  background-color: hsl(var(--accent) / 50%);
   color: hsl(var(--foreground));
+  background-color: hsl(var(--accent) / 50%);
 }
 
 .side-tree :deep(.tree-node[data-selected]) {
-  background-color: hsl(var(--primary) / 12%) !important;
   color: hsl(var(--foreground));
+  background-color: hsl(var(--primary) / 12%) !important;
 }
 
 .side-tree :deep(.tree-node > .item-checkbox) {
-  min-width: 0;
   flex: 1;
+  min-width: 0;
 }
 
 .side-tree :deep(.tree-node > .item-checkbox > .item-checkbox) {

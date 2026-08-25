@@ -16,9 +16,10 @@ let passwordObserver: MutationObserver | undefined;
 /** 在表单中查找密码输入框 */
 function findPasswordInput(): HTMLInputElement | null {
   // 优先通过 type="password" 查找
-  const pwdInputs =
-    document.querySelectorAll<HTMLInputElement>('input[type="password"]');
-  if (pwdInputs.length > 0) return pwdInputs[0]!;
+  const pwdInputs = document.querySelectorAll<HTMLInputElement>(
+    'input[type="password"]',
+  );
+  if (pwdInputs.length > 0) return pwdInputs.item(0);
   // 备用：查找所有 input[type=text] 中 autocomplete 包含 password 的
   const textInputs =
     document.querySelectorAll<HTMLInputElement>('input[type="text"]');
@@ -157,13 +158,16 @@ function onMouseMove(e: MouseEvent) {
 function setupBlink(target: { value: boolean }) {
   let timer: number;
   const go = () => {
-    timer = window.setTimeout(() => {
-      target.value = true;
-      window.setTimeout(() => {
-        target.value = false;
-        go();
-      }, 150);
-    }, Math.random() * 4000 + 3000);
+    timer = window.setTimeout(
+      () => {
+        target.value = true;
+        window.setTimeout(() => {
+          target.value = false;
+          go();
+        }, 150);
+      },
+      Math.random() * 4000 + 3000,
+    );
   };
   go();
   return () => clearTimeout(timer);
@@ -236,35 +240,32 @@ function startPeekLoop() {
 function scheduleNextPeek() {
   if (!secretVisible.value) return;
   // 缩短间隔：500~1500ms
-  peekInterval = window.setTimeout(() => {
-    isPurplePeeking.value = true;
-    peekT = window.setTimeout(() => {
-      isPurplePeeking.value = false;
-      scheduleNextPeek();
-    }, 600);
-  }, Math.random() * 1000 + 500);
+  peekInterval = window.setTimeout(
+    () => {
+      isPurplePeeking.value = true;
+      peekT = window.setTimeout(() => {
+        isPurplePeeking.value = false;
+        scheduleNextPeek();
+      }, 600);
+    },
+    Math.random() * 1000 + 500,
+  );
 }
 
-watch(
-  [secretVisible],
-  () => {
-    if (secretVisible.value) {
-      startPeekLoop();
-    } else {
-      clearTimeout(peekT);
-      clearTimeout(peekInterval);
-      isPurplePeeking.value = false;
-    }
-  },
-);
+watch([secretVisible], () => {
+  if (secretVisible.value) {
+    startPeekLoop();
+  } else {
+    clearTimeout(peekT);
+    clearTimeout(peekInterval);
+    isPurplePeeking.value = false;
+  }
+});
 
 // ── 计算样式 ──
 // 空闲状态（非输入、非隐藏）：强制 bodySkew 为 0 实现复位
 const idle = computed(
-  () =>
-    !leaning.value &&
-    !hiding.value &&
-    !isLookingAtEachOther.value,
+  () => !leaning.value && !hiding.value && !isLookingAtEachOther.value,
 );
 
 const purpleStyle = computed(() => {
@@ -468,43 +469,43 @@ const yellowMouthStyle = computed(() => ({
 .char {
   position: absolute;
   bottom: 0;
-  transition: all 0.7s ease-in-out;
   transform-origin: bottom center;
+  transition: all 0.7s ease-in-out;
 }
 
 .purple {
   left: 70px;
+  z-index: 1;
   width: 180px;
   background: #6c3ff5;
   border-radius: 10px 10px 0 0;
-  z-index: 1;
 }
 
 .black {
   left: 240px;
+  z-index: 2;
   width: 120px;
   height: 310px;
   background: #2d2d2d;
   border-radius: 8px 8px 0 0;
-  z-index: 2;
 }
 
 .orange {
   left: 0;
+  z-index: 3;
   width: 240px;
   height: 200px;
   background: #ff9b6b;
   border-radius: 120px 120px 0 0;
-  z-index: 3;
 }
 
 .yellow {
   left: 310px;
+  z-index: 4;
   width: 140px;
   height: 230px;
   background: #e8d754;
   border-radius: 70px 70px 0 0;
-  z-index: 4;
 }
 
 .eyes {

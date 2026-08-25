@@ -1598,28 +1598,28 @@ onBeforeUnmount(() => {
 }
 
 .folder-panel-title {
-  color: hsl(var(--foreground));
   font-size: 16px;
   font-weight: 600;
   line-height: 24px;
+  color: hsl(var(--foreground));
   white-space: nowrap;
 }
 
 .folder-create-btn {
   display: inline-flex;
-  align-items: center;
   gap: 2px;
+  align-items: center;
   height: 28px;
   padding: 0;
-  color: hsl(var(--primary));
   font-size: 14px;
+  color: hsl(var(--primary));
 }
 
 .folder-search {
   height: 32px;
+  font-size: 14px;
   border-color: hsl(var(--border));
   border-radius: 6px;
-  font-size: 14px;
 }
 
 .folder-search :deep(.ant-input) {
@@ -1632,9 +1632,9 @@ onBeforeUnmount(() => {
   min-width: 0;
   height: 32px;
   padding-right: 8px;
-  color: hsl(var(--muted-foreground));
   font-size: 14px;
   line-height: 1;
+  color: hsl(var(--muted-foreground));
   cursor: pointer;
   transition:
     color 0.16s ease,
@@ -1642,56 +1642,56 @@ onBeforeUnmount(() => {
 }
 
 .folder-row-normal:hover {
-  background-color: hsl(var(--accent) / 50%);
   color: hsl(var(--foreground));
+  background-color: hsl(var(--accent) / 50%);
 }
 
 .folder-row-selected {
-  background-color: hsl(var(--primary) / 12%);
   color: hsl(var(--foreground));
+  background-color: hsl(var(--primary) / 12%);
 }
 
 .folder-row-spacer {
+  flex: none;
   width: 18px;
   height: 22px;
-  flex: none;
 }
 
 .folder-icon {
+  flex: none;
   width: 18px;
   height: 18px;
-  flex: none;
   margin-right: 8px;
   color: hsl(var(--muted-foreground));
 }
 
 .folder-node {
   display: flex;
+  flex: 1;
   align-items: center;
   min-width: 0;
-  flex: 1;
 }
 
 .folder-name {
-  min-width: 0;
   flex: 1;
+  min-width: 0;
 }
 
 .folder-actions {
   display: inline-flex;
-  align-items: center;
   flex: none;
   gap: 8px;
+  align-items: center;
   margin-left: 8px;
-  opacity: 0;
   pointer-events: none;
+  opacity: 0;
   transition: opacity 0.16s ease;
 }
 
 .folder-row:hover .folder-actions,
 .folder-node:hover .folder-actions {
-  opacity: 1;
   pointer-events: auto;
+  opacity: 1;
 }
 
 .folder-action {
@@ -1700,9 +1700,9 @@ onBeforeUnmount(() => {
   justify-content: center;
   width: 20px;
   height: 20px;
-  border: 0;
   color: hsl(var(--primary));
   background: transparent;
+  border: 0;
 }
 
 .folder-action:hover {
@@ -1716,28 +1716,28 @@ onBeforeUnmount(() => {
 .side-tree :deep(.tree-node) {
   height: 32px;
   padding-right: 8px;
-  color: hsl(var(--muted-foreground));
   font-size: 14px;
   font-weight: 400;
   line-height: 1;
+  color: hsl(var(--muted-foreground));
   transition:
     color 0.16s ease,
     background-color 0.16s ease;
 }
 
 .side-tree :deep(.tree-node:hover) {
-  background-color: hsl(var(--accent) / 50%);
   color: hsl(var(--foreground));
+  background-color: hsl(var(--accent) / 50%);
 }
 
 .side-tree :deep(.tree-node[data-selected]) {
-  background-color: hsl(var(--primary) / 12%) !important;
   color: hsl(var(--foreground));
+  background-color: hsl(var(--primary) / 12%) !important;
 }
 
 .side-tree :deep(.tree-node > .item-checkbox) {
-  min-width: 0;
   flex: 1;
+  min-width: 0;
 }
 
 .side-tree :deep(.tree-node > .item-checkbox > .item-checkbox) {
@@ -1753,17 +1753,17 @@ onBeforeUnmount(() => {
 
 .upload-progress-list {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 14px;
   min-height: 0;
-  flex: 1;
   overflow-y: auto;
 }
 
 .upload-progress-actions {
   display: flex;
-  justify-content: flex-end;
   gap: 8px;
+  justify-content: flex-end;
   padding-top: 16px;
   padding-bottom: 4px;
 }
@@ -1776,23 +1776,23 @@ onBeforeUnmount(() => {
 
 .upload-progress-header {
   display: flex;
+  gap: 12px;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
   margin-bottom: 6px;
   font-size: 13px;
 }
 
 .upload-progress-name {
-  min-width: 0;
   flex: 1;
+  min-width: 0;
   color: hsl(var(--foreground));
 }
 
 .upload-progress-status {
   flex: none;
-  color: hsl(var(--primary));
   font-size: 12px;
+  color: hsl(var(--primary));
 }
 
 .upload-progress-status-success {
@@ -1805,9 +1805,9 @@ onBeforeUnmount(() => {
 
 .upload-progress-error {
   margin-top: 6px;
-  color: hsl(var(--destructive));
   font-size: 12px;
   line-height: 18px;
+  color: hsl(var(--destructive));
 }
 
 .upload-progress-item :deep(.ant-progress-bg) {
@@ -1826,8 +1826,8 @@ onBeforeUnmount(() => {
 }
 
 .storage-config-total {
-  color: hsl(var(--muted-foreground));
   font-size: 12px;
+  color: hsl(var(--muted-foreground));
 }
 
 .storage-config-list {
@@ -1842,11 +1842,11 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: minmax(170px, 0.75fr) minmax(0, 1fr) 168px;
   gap: 14px;
-  margin-top: 14px;
   padding: 0 14px;
-  color: hsl(var(--muted-foreground));
+  margin-top: 14px;
   font-size: 12px;
   line-height: 20px;
+  color: hsl(var(--muted-foreground));
 }
 
 .storage-config-list-header span:last-child {
@@ -1856,16 +1856,16 @@ onBeforeUnmount(() => {
 .storage-config-item {
   display: grid;
   grid-template-columns: minmax(170px, 0.75fr) minmax(0, 1fr) 168px;
-  align-items: center;
   gap: 14px;
+  align-items: center;
   padding: 12px 14px;
   border: 1px solid hsl(var(--border));
   border-radius: 8px;
 }
 
 .storage-config-item-current {
-  border-color: hsl(var(--primary) / 45%);
   background-color: hsl(var(--primary) / 8%);
+  border-color: hsl(var(--primary) / 45%);
 }
 
 .storage-config-item-disabled {
@@ -1878,24 +1878,24 @@ onBeforeUnmount(() => {
 
 .storage-config-name-row {
   display: flex;
-  align-items: center;
   gap: 6px;
+  align-items: center;
   min-width: 0;
 }
 
 .storage-config-name {
-  min-width: 0;
   flex: 1;
-  color: hsl(var(--foreground));
+  min-width: 0;
   font-size: 14px;
   font-weight: 600;
+  color: hsl(var(--foreground));
 }
 
 .storage-config-meta,
 .storage-config-detail {
-  color: hsl(var(--muted-foreground));
   font-size: 12px;
   line-height: 20px;
+  color: hsl(var(--muted-foreground));
 }
 
 .storage-config-meta {
@@ -1904,20 +1904,20 @@ onBeforeUnmount(() => {
 
 .storage-config-detail {
   display: flex;
-  min-width: 0;
   flex-direction: column;
+  min-width: 0;
 }
 
 .storage-config-actions {
   display: flex;
+  gap: 2px;
   align-items: center;
   justify-content: flex-start;
-  gap: 2px;
   white-space: nowrap;
 }
 
 .storage-config-default-action {
-  color: hsl(181 84% 32%);
+  color: hsl(181deg 84% 32%);
 }
 
 .storage-config-empty {
@@ -1925,26 +1925,26 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   height: 80px;
+  font-size: 13px;
+  color: hsl(var(--muted-foreground));
   border: 1px dashed hsl(var(--border));
   border-radius: 8px;
-  color: hsl(var(--muted-foreground));
-  font-size: 13px;
 }
 
 .storage-config-pagination {
   display: flex;
-  width: 100%;
+  gap: 8px;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  color: hsl(var(--muted-foreground));
+  width: 100%;
   font-size: 12px;
+  color: hsl(var(--muted-foreground));
 }
 
 .storage-config-page-actions {
   display: flex;
-  align-items: center;
   gap: 8px;
+  align-items: center;
 }
 
 .storage-config-form {
@@ -1966,9 +1966,9 @@ onBeforeUnmount(() => {
 }
 
 .storage-config-form :deep(.storage-config-radio-item > div) {
-  min-height: 32px;
   display: flex;
   align-items: center;
+  min-height: 32px;
 }
 
 :global(.storage-type-select-dropdown) {
@@ -1976,14 +1976,14 @@ onBeforeUnmount(() => {
 }
 
 .file-preview-cell {
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-sizing: border-box;
   width: 48px;
   height: 48px;
-  margin: 4px auto;
   padding: 8px;
+  margin: 4px auto;
 }
 
 .file-preview-media-button {
@@ -1994,10 +1994,10 @@ onBeforeUnmount(() => {
   width: 32px;
   height: 32px;
   padding: 0;
-  border: 0;
   overflow: hidden;
-  background: transparent;
   cursor: pointer;
+  background: transparent;
+  border: 0;
 }
 
 .file-preview-image-frame {

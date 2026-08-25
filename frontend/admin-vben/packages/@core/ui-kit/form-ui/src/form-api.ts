@@ -339,10 +339,7 @@ export class FormApi {
   ) {
     const form = await this.getForm();
     if (!filterFields) {
-      form.setValues(
-        this.handleDatePickerDisplayValue(fields),
-        shouldValidate,
-      );
+      form.setValues(this.handleDatePickerDisplayValue(fields), shouldValidate);
       return;
     }
 
@@ -513,6 +510,58 @@ export class FormApi {
     return this.form;
   }
 
+  private handleDatePickerDisplayValue = (
+    originValues: Record<string, any>,
+  ) => {
+    const values = { ...originValues };
+    const currentSchema = this.state?.schema ?? [];
+
+    currentSchema.forEach((schema) => {
+      if (schema.component !== 'DatePicker') {
+        return;
+      }
+      const fieldName = schema.fieldName;
+      const value = this.resolveValueByFieldName(values, fieldName);
+      if (value === undefined || value === null || value === '') {
+        return;
+      }
+      const format = this.resolveDatePickerFormat(schema);
+      if (format === 'YYYY-MM-DD') {
+        return;
+      }
+      this.setValueByFieldName(values, fieldName, formatDate(value, format));
+    });
+
+    return values;
+  };
+
+  private handleDatePickerSubmitValue = (originValues: Record<string, any>) => {
+    const values = { ...originValues };
+    const currentSchema = this.state?.schema ?? [];
+
+    currentSchema.forEach((schema) => {
+      if (schema.component !== 'DatePicker') {
+        return;
+      }
+      const fieldName = schema.fieldName;
+      const value = this.resolveValueByFieldName(values, fieldName);
+      if (value === undefined || value === null || value === '') {
+        return;
+      }
+      const format = this.resolveDatePickerFormat(schema);
+      if (format === 'YYYY-MM-DD') {
+        return;
+      }
+      this.setValueByFieldName(
+        values,
+        fieldName,
+        formatLocalDateToUtc(value, format),
+      );
+    });
+
+    return values;
+  };
+
   private handleMultiFields = (originValues: Record<string, any>) => {
     const arrayToStringFields = this.state?.arrayToStringFields;
     if (!arrayToStringFields || !Array.isArray(arrayToStringFields)) {
@@ -653,68 +702,6 @@ export class FormApi {
     return values;
   };
 
-  private handleDatePickerDisplayValue = (originValues: Record<string, any>) => {
-    const values = { ...originValues };
-    const currentSchema = this.state?.schema ?? [];
-
-    currentSchema.forEach((schema) => {
-      if (schema.component !== 'DatePicker') {
-        return;
-      }
-      const fieldName = schema.fieldName;
-      const value = this.resolveValueByFieldName(values, fieldName);
-      if (value === undefined || value === null || value === '') {
-        return;
-      }
-      const format = this.resolveDatePickerFormat(schema);
-      if (format === 'YYYY-MM-DD') {
-        return;
-      }
-      this.setValueByFieldName(
-        values,
-        fieldName,
-        formatDate(value, format),
-      );
-    });
-
-    return values;
-  };
-
-  private handleDatePickerSubmitValue = (originValues: Record<string, any>) => {
-    const values = { ...originValues };
-    const currentSchema = this.state?.schema ?? [];
-
-    currentSchema.forEach((schema) => {
-      if (schema.component !== 'DatePicker') {
-        return;
-      }
-      const fieldName = schema.fieldName;
-      const value = this.resolveValueByFieldName(values, fieldName);
-      if (value === undefined || value === null || value === '') {
-        return;
-      }
-      const format = this.resolveDatePickerFormat(schema);
-      if (format === 'YYYY-MM-DD') {
-        return;
-      }
-      this.setValueByFieldName(
-        values,
-        fieldName,
-        formatLocalDateToUtc(value, format),
-      );
-    });
-
-    return values;
-  };
-
-  private resolveDatePickerFormat(schema: FormSchema) {
-    const componentProps = schema.componentProps;
-    if (isFunction(componentProps)) {
-      return BACKEND_DATETIME_FORMAT;
-    }
-    return componentProps?.valueFormat ?? BACKEND_DATETIME_FORMAT;
-  }
-
   private processFields = (
     fields: string[],
     separator: string,
@@ -729,6 +716,14 @@ export class FormApi {
       originValues[field] = transformFn(value, separator);
     });
   };
+
+  private resolveDatePickerFormat(schema: FormSchema) {
+    const componentProps = schema.componentProps;
+    if (isFunction(componentProps)) {
+      return BACKEND_DATETIME_FORMAT;
+    }
+    return componentProps?.valueFormat ?? BACKEND_DATETIME_FORMAT;
+  }
 
   private resolveValueByFieldName(
     values: Record<string, any>,

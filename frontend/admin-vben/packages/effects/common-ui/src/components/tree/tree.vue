@@ -13,10 +13,7 @@ type CommonTreeProps = {
   showToolbar?: boolean;
 } & TreeProps;
 
-const props = withDefaults(
-  defineProps<CommonTreeProps>(),
-  treePropsDefaults(),
-);
+const props = withDefaults(defineProps<CommonTreeProps>(), treePropsDefaults());
 const treeRef = ref();
 
 defineExpose({

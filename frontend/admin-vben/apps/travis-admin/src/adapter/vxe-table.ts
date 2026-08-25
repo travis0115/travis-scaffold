@@ -287,9 +287,7 @@ setupVbenVxeTable({
           .map((opt) => {
             const operationClasses = [opt.class, 'transition-colors'];
             if (QUERY_OPERATION_CODES.has(opt.code)) {
-              operationClasses.push(
-                'enabled:hover:!text-[hsl(181_84%_42%)]',
-              );
+              operationClasses.push('enabled:hover:!text-[hsl(181_84%_42%)]');
             } else if (opt.danger) {
               operationClasses.push('enabled:hover:!text-destructive-400');
             }
@@ -406,7 +404,7 @@ setupVbenVxeTable({
               h(
                 'div',
                 { class: 'flex', style: { justifyContent: align } },
-                operationRow.map(renderOperation),
+                operationRow.map((operation) => renderOperation(operation)),
               ),
             ),
           );
@@ -417,7 +415,7 @@ setupVbenVxeTable({
             class: 'flex table-operations',
             style: { justifyContent: align },
           },
-          operations.map(renderOperation),
+          operations.map((operation) => renderOperation(operation)),
         );
       },
     });

@@ -39,8 +39,8 @@ async function getDictTree() {
  * 分页查询字典类型列表
  */
 async function getDictPage(params: {
-  dictName?: string;
   dictCode?: string;
+  dictName?: string;
   pageNum: number;
   pageSize: number;
   status?: number;

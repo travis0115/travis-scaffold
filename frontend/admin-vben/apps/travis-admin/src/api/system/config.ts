@@ -40,7 +40,7 @@ async function createConfig(data: Omit<SystemConfigApi.SystemConfig, 'id'>) {
  */
 async function updateConfig(
   id: Id,
-  data: Omit<SystemConfigApi.SystemConfig, 'id'>,
+  data: Omit<SystemConfigApi.SystemConfig, 'configKey' | 'id'>,
 ) {
   return requestClient.put(`/system/config/${id}`, data);
 }

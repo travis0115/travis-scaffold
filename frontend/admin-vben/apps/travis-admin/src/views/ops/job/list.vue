@@ -445,15 +445,15 @@ async function openStats(row: OpsJobApi.Job) {
 }
 
 :deep(.run-params-editor) {
+  padding: 0.875rem 1rem;
+  font-family:
+    ui-monospace, SFMono-Regular, menlo, monaco, consolas, 'Liberation Mono',
+    monospace;
+  line-height: 1.65;
+  resize: vertical;
   border: 0;
   border-radius: 0;
   box-shadow: none;
-  font-family:
-    ui-monospace, 'SFMono-Regular', menlo, monaco, consolas, 'Liberation Mono',
-    monospace;
-  line-height: 1.65;
-  padding: 0.875rem 1rem;
-  resize: vertical;
 }
 
 :deep(.run-params-editor:focus) {

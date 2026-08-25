@@ -1,4 +1,5 @@
 import type { AxiosProgressEvent } from '@vben/request';
+
 import type { Id } from '#/api/types';
 
 import { requestClient } from '#/api/request';
@@ -18,12 +19,15 @@ export const UPLOAD_FILE_MAX_SIZE_MB =
 
 export const UPLOAD_FILE_MAX_SIZE_BYTES = UPLOAD_FILE_MAX_SIZE_MB * 1024 * 1024;
 
-export const UPLOAD_FILE_MAX_SIZE_TEXT =
-  UPLOAD_FILE_MAX_SIZE_MB >= 1
-    ? String(Math.floor(UPLOAD_FILE_MAX_SIZE_MB))
-    : UPLOAD_FILE_MAX_SIZE_MB >= 0.01
-      ? UPLOAD_FILE_MAX_SIZE_MB.toFixed(2)
-      : '0.01';
+function formatUploadFileMaxSize(size: number) {
+  if (size >= 1) return String(Math.floor(size));
+  if (size >= 0.01) return size.toFixed(2);
+  return '0.01';
+}
+
+export const UPLOAD_FILE_MAX_SIZE_TEXT = formatUploadFileMaxSize(
+  UPLOAD_FILE_MAX_SIZE_MB,
+);
 
 /**
  * 上传文件

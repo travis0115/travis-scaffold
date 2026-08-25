@@ -1,8 +1,5 @@
 import type { VbenFormSchema } from '#/adapter/form';
-import type {
-  OnActionClickFn,
-  VxeTableGridColumns,
-} from '#/adapter/vxe-table';
+import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { SystemRoleApi } from '#/api';
 
 import { z } from '#/adapter/form';
@@ -19,7 +16,10 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: z
         .string()
         .min(1, $t('ui.formRules.required', [$t('system.role.roleName')]))
-        .max(50, $t('ui.formRules.maxLength', [$t('system.role.roleName'), 50])),
+        .max(
+          50,
+          $t('ui.formRules.maxLength', [$t('system.role.roleName'), 50]),
+        ),
     },
     {
       component: 'Input',
@@ -29,7 +29,10 @@ export function useFormSchema(): VbenFormSchema[] {
         .string()
         .min(1, $t('ui.formRules.required', [$t('system.role.roleCode')]))
         .max(50, $t('ui.formRules.maxLength', [$t('system.role.roleCode'), 50]))
-        .regex(/^[a-zA-Z][a-zA-Z0-9_]+$/, '角色编码必须以字母开头，只能包含字母、数字和下划线'),
+        .regex(
+          /^[a-zA-Z][a-zA-Z0-9_]+$/,
+          '角色编码必须以字母开头，只能包含字母、数字和下划线',
+        ),
     },
     {
       component: 'Textarea',
@@ -88,10 +91,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
 
 export function useColumns<T = SystemRoleApi.SysRole>(
   onActionClick: OnActionClickFn<T>,
-  onStatusChange?: (
-    newStatus: any,
-    row: T,
-  ) => PromiseLike<boolean | undefined>,
+  onStatusChange?: (newStatus: any, row: T) => PromiseLike<boolean | undefined>,
 ): VxeTableGridColumns {
   const isNotModifiable = (row: Pick<SystemRoleApi.SysRole, 'modifiable'>) =>
     row.modifiable === 0;

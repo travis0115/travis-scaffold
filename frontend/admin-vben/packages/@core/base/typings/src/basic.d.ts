@@ -17,21 +17,21 @@ interface BasicUserInfo {
    */
   email?: string;
   /**
-   * 用户昵称
-   */
-  nickname: string;
-  /**
    * 手机号
    */
   mobile?: string;
   /**
-   * 用户角色
+   * 用户昵称
    */
-  roles?: string[];
+  nickname: string;
   /**
    * 角色名称列表
    */
   roleNames?: string[];
+  /**
+   * 用户角色
+   */
+  roles?: string[];
   /**
    * 用户id
    */

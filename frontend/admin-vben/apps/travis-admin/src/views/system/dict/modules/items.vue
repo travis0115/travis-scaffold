@@ -17,7 +17,11 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteDictItem, getDictItems, updateDictItemStatus } from '#/api';
 import { $t } from '#/locales';
 import { reloadDictOptions } from '#/utils/dict';
-import { filterAccessOptions, hasAccessCode, SYSTEM_PERMS } from '#/utils/permissions';
+import {
+  filterAccessOptions,
+  hasAccessCode,
+  SYSTEM_PERMS,
+} from '#/utils/permissions';
 
 import ItemModalComponent from './item-modal.vue';
 import { tagStyleOptions } from './tag-style-options';
@@ -134,17 +138,19 @@ function onAddItem() {
 }
 
 function onEditItem(record: SystemDictApi.SysDictItem) {
-  itemDrawerApi.setData({
-    itemId: record.id,
-    dictId: props.dict?.id,
-    dictName: props.dict?.dictName,
-    label: record.label,
-    value: record.value,
-    sort: record.sort ?? 0,
-    status: record.status,
-    remark: record.remark,
-    tagStyle: record.tagStyle,
-  }).open();
+  itemDrawerApi
+    .setData({
+      itemId: record.id,
+      dictId: props.dict?.id,
+      dictName: props.dict?.dictName,
+      label: record.label,
+      value: record.value,
+      sort: record.sort ?? 0,
+      status: record.status,
+      remark: record.remark,
+      tagStyle: record.tagStyle,
+    })
+    .open();
 }
 
 async function onDeleteItem(record: SystemDictApi.SysDictItem) {
@@ -160,7 +166,10 @@ async function refreshItems() {
   await gridApi.query();
 }
 
-async function onStatusChange(newStatus: number, row: SystemDictApi.SysDictItem) {
+async function onStatusChange(
+  newStatus: number,
+  row: SystemDictApi.SysDictItem,
+) {
   await updateDictItemStatus(row.id, newStatus as 0 | 1);
   await reloadDictOptions();
   await refreshItems();

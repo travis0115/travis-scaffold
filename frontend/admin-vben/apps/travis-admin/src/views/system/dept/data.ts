@@ -1,8 +1,5 @@
 import type { VbenFormSchema } from '#/adapter/form';
-import type {
-  OnActionClickFn,
-  VxeTableGridColumns,
-} from '#/adapter/vxe-table';
+import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { SystemDeptApi } from '#/api';
 
 import { z } from '#/adapter/form';
@@ -85,7 +82,10 @@ export function useSchema(
 
 export function useColumns(
   onActionClick?: OnActionClickFn<SystemDeptApi.SysDept>,
-  onStatusChange?: (newStatus: number, row: SystemDeptApi.SysDept) => Promise<boolean>,
+  onStatusChange?: (
+    newStatus: number,
+    row: SystemDeptApi.SysDept,
+  ) => Promise<boolean>,
 ): VxeTableGridColumns<SystemDeptApi.SysDept> {
   return [
     {
@@ -136,28 +136,32 @@ export function useColumns(
           onClick: onActionClick,
         },
         name: 'CellOperation',
-        options: filterAccessOptions([
+        options: filterAccessOptions(
+          [
+            {
+              code: 'append',
+              text: $t('system.menu.appendChildren'),
+            },
+            'edit',
+            {
+              code: 'delete',
+              show: (row: SystemDeptApi.SysDept) => !row.children?.length,
+            },
+            {
+              code: 'remove',
+              danger: true,
+              show: (row: SystemDeptApi.SysDept) =>
+                Boolean(row.children?.length),
+              text: $t('common.delete'),
+            },
+          ],
           {
-            code: 'append',
-            text: $t('system.menu.appendChildren'),
+            append: SYSTEM_PERMS.deptCreate,
+            delete: SYSTEM_PERMS.deptDelete,
+            edit: SYSTEM_PERMS.deptUpdate,
+            remove: SYSTEM_PERMS.deptDelete,
           },
-          'edit',
-          {
-            code: 'delete',
-            show: (row: SystemDeptApi.SysDept) => !row.children?.length,
-          },
-          {
-            code: 'remove',
-            danger: true,
-            show: (row: SystemDeptApi.SysDept) => Boolean(row.children?.length),
-            text: $t('common.delete'),
-          },
-        ], {
-          append: SYSTEM_PERMS.deptCreate,
-          delete: SYSTEM_PERMS.deptDelete,
-          edit: SYSTEM_PERMS.deptUpdate,
-          remove: SYSTEM_PERMS.deptDelete,
-        }),
+        ),
       },
       field: 'operation',
       fixed: 'right',

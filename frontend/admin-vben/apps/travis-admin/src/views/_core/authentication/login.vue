@@ -34,7 +34,8 @@ const formSchema = computed((): VbenFormSchema[] => {
     .string()
     .min(1, { message: '密码不能为空' })
     .refine((value) => !value || (value.length >= 8 && value.length <= 32), {
-      message: '密码需为8-32位，并包含大写字母、小写字母、数字、特殊符号中的至少3种',
+      message:
+        '密码需为8-32位，并包含大写字母、小写字母、数字、特殊符号中的至少3种',
     })
     .refine(
       (value) => {
@@ -47,7 +48,8 @@ const formSchema = computed((): VbenFormSchema[] => {
         return types >= 3;
       },
       {
-        message: '密码需为8-32位，并包含大写字母、小写字母、数字、特殊符号中的至少3种',
+        message:
+          '密码需为8-32位，并包含大写字母、小写字母、数字、特殊符号中的至少3种',
       },
     );
 

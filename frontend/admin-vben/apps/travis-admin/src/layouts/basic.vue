@@ -262,13 +262,10 @@ function scheduleNotificationSocketReconnect() {
     return;
   }
   if (notificationSocketReconnectTimer) return;
-  notificationSocketReconnectTimer = setTimeout(
-    () => {
-      notificationSocketReconnectTimer = undefined;
-      void connectNotificationSocket();
-    },
-    notificationSocketReconnectDelay,
-  );
+  notificationSocketReconnectTimer = setTimeout(() => {
+    notificationSocketReconnectTimer = undefined;
+    void connectNotificationSocket();
+  }, notificationSocketReconnectDelay);
   notificationSocketReconnectDelay = Math.min(
     notificationSocketReconnectDelay * 2,
     30_000,

@@ -70,7 +70,12 @@ export function useColumns(
       title: '状态',
       width: 90,
     },
-    { field: 'publishTime', formatter: 'formatDateTime', title: '发布时间', width: 180 },
+    {
+      field: 'publishTime',
+      formatter: 'formatDateTime',
+      title: '发布时间',
+      width: 180,
+    },
     {
       cellRender: {
         attrs: {
@@ -81,7 +86,11 @@ export function useColumns(
         name: 'CellOperation',
         options: [
           { code: 'preview', text: '预览' },
-          { code: 'read', show: (row: SystemMessageApi.UserMessage) => row.readStatus === 0, text: '已读' },
+          {
+            code: 'read',
+            show: (row: SystemMessageApi.UserMessage) => row.readStatus === 0,
+            text: '已读',
+          },
           'delete',
         ],
       },

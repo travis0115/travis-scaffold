@@ -17,8 +17,7 @@ const profileBaseSettingRef = ref();
 
 const formSchema = computed((): VbenFormSchema[] => {
   // 从用户信息中构建角色选项
-  const roleNames: string[] =
-    (userStore.userInfo as any)?.roleNames || [];
+  const roleNames: string[] = (userStore.userInfo as any)?.roleNames || [];
   const roleOptions = roleNames.map((name) => ({
     label: name,
     value: name,
@@ -65,7 +64,11 @@ const formSchema = computed((): VbenFormSchema[] => {
       componentProps: {
         size: 'large',
       },
-      rules: z.string().email('请输入有效的邮箱地址').or(z.literal('')).optional(),
+      rules: z
+        .string()
+        .email('请输入有效的邮箱地址')
+        .or(z.literal(''))
+        .optional(),
     },
     {
       fieldName: 'mobile',
@@ -90,17 +93,14 @@ onMounted(async () => {
   });
 });
 
-
 /** 表单提交 */
 async function handleSubmit(values: Record<string, any>) {
   try {
-    await updateProfileApi(
-      {
-        nickname: values.nickname,
-        email: values.email,
-        mobile: values.mobile,
-      },
-    );
+    await updateProfileApi({
+      nickname: values.nickname,
+      email: values.email,
+      mobile: values.mobile,
+    });
     modal.success({
       title: '修改成功',
       content: '您的信息已成功修改',

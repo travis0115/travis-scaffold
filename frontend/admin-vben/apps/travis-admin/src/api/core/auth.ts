@@ -36,13 +36,9 @@ function normalizeToken(token: string) {
 export async function loginApi(data: AuthApi.LoginParams) {
   const response = await requestClient.post<
     RequestResponse<AuthApi.ApiResponse>
-  >(
-    '/system/auth/login',
-    data,
-    {
-      responseReturn: 'raw',
-    },
-  );
+  >('/system/auth/login', data, {
+    responseReturn: 'raw',
+  });
   const responseData = response.data;
   if (responseData?.code !== '200') {
     throw new Error(responseData?.msg || '登录失败');
@@ -65,9 +61,12 @@ export async function loginApi(data: AuthApi.LoginParams) {
  * 刷新accessToken
  */
 export async function refreshTokenApi() {
-  return baseRequestClient.post<AuthApi.RefreshTokenResult>('/system/auth/refresh', {
-    withCredentials: true,
-  });
+  return baseRequestClient.post<AuthApi.RefreshTokenResult>(
+    '/system/auth/refresh',
+    {
+      withCredentials: true,
+    },
+  );
 }
 
 /**

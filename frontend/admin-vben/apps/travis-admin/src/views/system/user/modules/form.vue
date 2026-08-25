@@ -32,7 +32,7 @@ const [Form, formApi] = useVbenForm({
 const id = ref<Id>();
 
 function isEmptyDeptId(value: unknown) {
-  return value === 0 || value === '0' || value == null;
+  return value === 0 || value === '0' || value === null || value === undefined;
 }
 
 const [Drawer, drawerApi] = useVbenDrawer({

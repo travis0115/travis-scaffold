@@ -1,6 +1,7 @@
 <script lang="ts" setup>
-import { computed, h, ref } from 'vue';
 import type { Id } from '#/api/types';
+
+import { computed, h, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 

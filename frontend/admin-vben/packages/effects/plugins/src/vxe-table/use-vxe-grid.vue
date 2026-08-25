@@ -442,7 +442,10 @@ onUnmounted(() => {
 <template>
   <div
     :class="
-      cn('vben-vxe-grid flex h-full min-h-0 flex-col rounded-md bg-card', className)
+      cn(
+        'vben-vxe-grid flex h-full min-h-0 flex-col rounded-md bg-card',
+        className,
+      )
     "
   >
     <VxeGrid

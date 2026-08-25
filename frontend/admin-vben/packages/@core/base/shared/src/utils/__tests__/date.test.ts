@@ -147,7 +147,7 @@ describe('dateUtils', () => {
   // ===============================
   // UTC字符串解析（后端统一UTC时间）
   // ===============================
-  describe('UTC string parsing', () => {
+  describe('uTC string parsing', () => {
     it('should treat string without timezone suffix as UTC and convert to target timezone', () => {
       // 后端 Jackson date-format: yyyy-MM-dd HH:mm:ss，无时区后缀
       setCurrentTimezone('Asia/Shanghai');
@@ -165,7 +165,10 @@ describe('dateUtils', () => {
 
     it('should still correctly parse ISO string with Z suffix', () => {
       setCurrentTimezone('Asia/Shanghai');
-      const result = formatDate('2024-10-30T04:34:56Z', BACKEND_DATETIME_FORMAT);
+      const result = formatDate(
+        '2024-10-30T04:34:56Z',
+        BACKEND_DATETIME_FORMAT,
+      );
       expect(result).toBe('2024-10-30 12:34:56');
     });
 
@@ -202,7 +205,7 @@ describe('dateUtils', () => {
     });
   });
 
-  describe('UTC datetime in text', () => {
+  describe('uTC datetime in text', () => {
     it('should convert datetime values and keep date-only values unchanged', () => {
       setCurrentTimezone('Asia/Shanghai');
       const result = formatUtcDateTimesInText(

@@ -6,12 +6,14 @@ const PASSWORD_GROUPS = [
 ];
 
 function randomIndex(length: number) {
-  const limit = Math.floor(0x1_0000_0000 / length) * length;
+  const limit = Math.floor(0x1_00_00_00_00 / length) * length;
   const values = new Uint32Array(1);
+  let value: number;
   do {
     crypto.getRandomValues(values);
-  } while (values[0]! >= limit);
-  return values[0]! % length;
+    value = values[0] ?? 0;
+  } while (value >= limit);
+  return value % length;
 }
 
 function pickChar(chars: string) {
@@ -26,7 +28,13 @@ export function generateRandomPassword() {
   }
   for (let index = password.length - 1; index > 0; index--) {
     const target = randomIndex(index + 1);
-    [password[index], password[target]] = [password[target]!, password[index]!];
+    const currentValue = password[index];
+    const targetValue = password[target];
+    if (currentValue === undefined || targetValue === undefined) {
+      throw new RangeError('密码字符索引越界');
+    }
+    password[index] = targetValue;
+    password[target] = currentValue;
   }
   return password.join('');
 }

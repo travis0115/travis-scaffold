@@ -202,11 +202,11 @@ const isRequestError = (error: unknown) => {
   };
   return Boolean(
     requestError?.isAxiosError ||
-      requestError?.config ||
-      requestError?.request ||
-      requestError?.response ||
-      requestError?.code === 'ERR_NETWORK' ||
-      requestError?.message === 'Network Error',
+    requestError?.config ||
+    requestError?.request ||
+    requestError?.response ||
+    requestError?.code === 'ERR_NETWORK' ||
+    requestError?.message === 'Network Error',
   );
 };
 
@@ -470,7 +470,10 @@ const selectRichEditorImage = () => {
 
           const confirm = () => {
             resolve(
-              selectedFiles.value.map((file) => ({ id: file.id, url: file.url })),
+              selectedFiles.value.map((file) => ({
+                id: file.id,
+                url: file.url,
+              })),
             );
             modal.destroy();
           };
@@ -580,7 +583,11 @@ const selectRichEditorImage = () => {
                     valueField: 'id',
                   },
                   {
-                    node: ({ value: folder }: { value: SystemFileApi.Folder }) =>
+                    node: ({
+                      value: folder,
+                    }: {
+                      value: SystemFileApi.Folder;
+                    }) =>
                       h('div', { class: 'folder-node' }, [
                         h(IconifyIcon, {
                           class: 'folder-icon',
@@ -626,9 +633,7 @@ const selectRichEditorImage = () => {
                   {
                     class: [
                       'group relative overflow-hidden rounded-md border bg-background text-left transition hover:border-primary hover:bg-muted/40',
-                      selected
-                        ? 'border-primary bg-muted/40'
-                        : 'border-border',
+                      selected ? 'border-primary bg-muted/40' : 'border-border',
                     ],
                     onClick: () => toggle(file),
                     type: 'button',
@@ -670,147 +675,174 @@ const selectRichEditorImage = () => {
           };
 
           const renderContent = () =>
-            h('div', { class: 'rich-editor-file-picker flex h-[640px] flex-col' }, [
-              h('div', { class: 'flex items-center justify-between' }, [
-                h('div', { class: 'text-base font-medium' }, '选择图片'),
-                h(
-                  'button',
-                  {
-                    class:
-                      'rounded p-1 text-muted-foreground transition hover:bg-muted hover:text-foreground',
-                    onClick: () => {
-                      resolve(undefined);
-                      modal.destroy();
+            h(
+              'div',
+              { class: 'rich-editor-file-picker flex h-[640px] flex-col' },
+              [
+                h('div', { class: 'flex items-center justify-between' }, [
+                  h('div', { class: 'text-base font-medium' }, '选择图片'),
+                  h(
+                    'button',
+                    {
+                      class:
+                        'rounded p-1 text-muted-foreground transition hover:bg-muted hover:text-foreground',
+                      onClick: () => {
+                        resolve(undefined);
+                        modal.destroy();
+                      },
+                      type: 'button',
                     },
-                    type: 'button',
-                  },
-                  [h(IconifyIcon, { class: 'size-5', icon: 'lucide:x' })],
-                ),
-              ]),
-              h('div', { class: 'mt-4 flex min-h-0 flex-1 gap-4' }, [
+                    [h(IconifyIcon, { class: 'size-5', icon: 'lucide:x' })],
+                  ),
+                ]),
+                h('div', { class: 'mt-4 flex min-h-0 flex-1 gap-4' }, [
+                  h(
+                    'aside',
+                    {
+                      class:
+                        'flex h-full w-60 shrink-0 flex-col border-r border-border pr-3',
+                    },
+                    [
+                      h(
+                        Input,
+                        {
+                          allowClear: true,
+                          class: 'folder-search mb-3',
+                          'onUpdate:value': (value: string) => {
+                            folderSearch.value = value;
+                          },
+                          placeholder: '请输入文件夹名称',
+                          value: folderSearch.value,
+                        },
+                        {
+                          prefix: () =>
+                            h(IconifyIcon, {
+                              class: 'size-4 text-muted-foreground',
+                              icon: 'lucide:search',
+                            }),
+                        },
+                      ),
+                      h('div', { class: 'min-h-0 flex-1 overflow-auto' }, [
+                        showAllEntry.value
+                          ? renderFolderRow('全部图片', 'all')
+                          : null,
+                        showUnclassifiedEntry.value
+                          ? renderFolderRow('未分类', 'unclassified')
+                          : null,
+                        renderFolderTree(),
+                      ]),
+                    ],
+                  ),
+                  h('section', { class: 'flex min-w-0 flex-1 flex-col' }, [
+                    h('div', { class: 'flex gap-2' }, [
+                      h('input', {
+                        class:
+                          'h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary',
+                        onInput: (event: Event) => {
+                          fileName.value = (
+                            event.target as HTMLInputElement
+                          ).value;
+                        },
+                        onKeydown: (event: KeyboardEvent) => {
+                          if (event.key === 'Enter') search();
+                        },
+                        placeholder: '搜索文件名',
+                        value: fileName.value,
+                      }),
+                      h(
+                        'button',
+                        {
+                          class:
+                            'h-9 rounded-md bg-primary px-3 text-sm text-primary-foreground',
+                          onClick: search,
+                          type: 'button',
+                        },
+                        '搜索',
+                      ),
+                    ]),
+                    h('div', { class: 'mt-3 min-h-0 flex-1' }, [
+                      renderImages(),
+                    ]),
+                    h(
+                      'div',
+                      {
+                        class:
+                          'flex h-9 shrink-0 items-center justify-between text-xs text-muted-foreground',
+                      },
+                      [
+                        h(
+                          'span',
+                          `共 ${total.value} 个文件，已选 ${selectedFileIds.value.length} 个`,
+                        ),
+                        h('div', { class: 'flex items-center gap-2' }, [
+                          h(
+                            'button',
+                            {
+                              class:
+                                'rounded border border-border px-3 py-1 transition enabled:hover:border-primary enabled:hover:text-primary disabled:opacity-50',
+                              disabled: pageNum.value <= 1,
+                              onClick: () => changePage(-1),
+                              type: 'button',
+                            },
+                            '上一页',
+                          ),
+                          h(
+                            'span',
+                            `第 ${pageNum.value} / ${totalPages.value} 页`,
+                          ),
+                          h(
+                            'button',
+                            {
+                              class:
+                                'rounded border border-border px-3 py-1 transition enabled:hover:border-primary enabled:hover:text-primary disabled:opacity-50',
+                              disabled: pageNum.value >= totalPages.value,
+                              onClick: () => changePage(1),
+                              type: 'button',
+                            },
+                            '下一页',
+                          ),
+                        ]),
+                      ],
+                    ),
+                  ]),
+                ]),
                 h(
-                  'aside',
+                  'div',
                   {
                     class:
-                      'flex h-full w-60 shrink-0 flex-col border-r border-border pr-3',
+                      'mt-3 flex shrink-0 justify-end gap-2 border-t border-border pt-3',
                   },
                   [
-                    h(
-                      Input,
-                      {
-                        allowClear: true,
-                        class: 'folder-search mb-3',
-                        'onUpdate:value': (value: string) => {
-                          folderSearch.value = value;
-                        },
-                        placeholder: '请输入文件夹名称',
-                        value: folderSearch.value,
-                      },
-                      {
-                        prefix: () =>
-                          h(IconifyIcon, {
-                            class: 'size-4 text-muted-foreground',
-                            icon: 'lucide:search',
-                          }),
-                      },
-                    ),
-                    h('div', { class: 'min-h-0 flex-1 overflow-auto' }, [
-                      showAllEntry.value
-                        ? renderFolderRow('全部图片', 'all')
-                        : null,
-                      showUnclassifiedEntry.value
-                        ? renderFolderRow('未分类', 'unclassified')
-                        : null,
-                      renderFolderTree(),
-                    ]),
-                  ],
-                ),
-                h('section', { class: 'flex min-w-0 flex-1 flex-col' }, [
-                  h('div', { class: 'flex gap-2' }, [
-                    h('input', {
-                      class:
-                        'h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary',
-                      onInput: (event: Event) => {
-                        fileName.value = (event.target as HTMLInputElement).value;
-                      },
-                      onKeydown: (event: KeyboardEvent) => {
-                        if (event.key === 'Enter') search();
-                      },
-                      placeholder: '搜索文件名',
-                      value: fileName.value,
-                    }),
                     h(
                       'button',
                       {
                         class:
-                          'h-9 rounded-md bg-primary px-3 text-sm text-primary-foreground',
-                        onClick: search,
+                          'h-9 rounded-md border border-border px-4 text-sm transition hover:border-primary hover:text-primary',
+                        onClick: () => {
+                          resolve(undefined);
+                          modal.destroy();
+                        },
                         type: 'button',
                       },
-                      '搜索',
+                      '取消',
                     ),
-                  ]),
-                  h('div', { class: 'mt-3 min-h-0 flex-1' }, [renderImages()]),
-                  h('div', { class: 'flex h-9 shrink-0 items-center justify-between text-xs text-muted-foreground' }, [
-                    h('span', `共 ${total.value} 个文件，已选 ${selectedFileIds.value.length} 个`),
-                    h('div', { class: 'flex items-center gap-2' }, [
-                      h(
-                        'button',
-                        {
-                          class:
-                            'rounded border border-border px-3 py-1 transition enabled:hover:border-primary enabled:hover:text-primary disabled:opacity-50',
-                          disabled: pageNum.value <= 1,
-                          onClick: () => changePage(-1),
-                          type: 'button',
-                        },
-                        '上一页',
-                      ),
-                      h('span', `第 ${pageNum.value} / ${totalPages.value} 页`),
-                      h(
-                        'button',
-                        {
-                          class:
-                            'rounded border border-border px-3 py-1 transition enabled:hover:border-primary enabled:hover:text-primary disabled:opacity-50',
-                          disabled: pageNum.value >= totalPages.value,
-                          onClick: () => changePage(1),
-                          type: 'button',
-                        },
-                        '下一页',
-                      ),
-                    ]),
-                  ]),
-                ]),
-              ]),
-              h('div', { class: 'mt-3 flex shrink-0 justify-end gap-2 border-t border-border pt-3' }, [
-                h(
-                  'button',
-                  {
-                    class:
-                      'h-9 rounded-md border border-border px-4 text-sm transition hover:border-primary hover:text-primary',
-                    onClick: () => {
-                      resolve(undefined);
-                      modal.destroy();
-                    },
-                    type: 'button',
-                  },
-                  '取消',
+                    h(
+                      'button',
+                      {
+                        class:
+                          'h-9 rounded-md bg-primary px-4 text-sm text-primary-foreground disabled:opacity-50',
+                        disabled: selectedFileIds.value.length === 0,
+                        onClick: confirm,
+                        type: 'button',
+                      },
+                      '确定',
+                    ),
+                  ],
                 ),
-                h(
-                  'button',
-                  {
-                    class:
-                      'h-9 rounded-md bg-primary px-4 text-sm text-primary-foreground disabled:opacity-50',
-                    disabled: selectedFileIds.value.length === 0,
-                    onClick: confirm,
-                    type: 'button',
-                  },
-                  '确定',
-                ),
-              ]),
-            ]);
+              ],
+            );
 
-          return () =>
-            h('div', { class: 'min-h-120' }, [renderContent()]);
+          return () => h('div', { class: 'min-h-120' }, [renderContent()]);
         },
       });
 
@@ -843,7 +875,7 @@ const createRichEditorImageUpload = (
     if (isRequestError(error)) {
       return false;
     }
-    return hasCustomHandler ? false : true;
+    return !hasCustomHandler;
   },
   upload:
     imageUpload?.upload ??

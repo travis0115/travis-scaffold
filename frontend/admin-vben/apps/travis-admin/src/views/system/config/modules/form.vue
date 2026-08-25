@@ -30,16 +30,21 @@ const [Drawer, drawerApi] = useVbenDrawer({
   async onConfirm() {
     const { valid } = await formApi.validate();
     if (!valid) return;
-    const values = await formApi.getValues();
+    const values = (await formApi.getValues()) as Omit<
+      SystemConfigApi.SystemConfig,
+      'id'
+    >;
     drawerApi.lock();
     try {
+      const { configKey, ...mutableValues } = values;
       if (formData.value?.id) {
-        const submitValues = { ...values };
-        submitValues.lockVersion = formData.value.lockVersion;
-        delete submitValues.configKey;
+        const submitValues = {
+          ...mutableValues,
+          lockVersion: formData.value.lockVersion,
+        };
         await updateConfig(formData.value.id, submitValues);
       } else {
-        await createConfig(values);
+        await createConfig({ ...mutableValues, configKey });
       }
       emit('success');
       drawerApi.close();

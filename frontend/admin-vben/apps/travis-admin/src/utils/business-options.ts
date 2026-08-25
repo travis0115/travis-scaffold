@@ -5,13 +5,10 @@ export const enableStatusOptions = getTranslatedOptions('enable_status', [
   { label: '启用', value: 1 },
 ]);
 
-export const operationStatusOptions = getTranslatedOptions(
-  'operation_status',
-  [
-    { label: '失败', value: 0 },
-    { label: '成功', value: 1 },
-  ],
-);
+export const operationStatusOptions = getTranslatedOptions('operation_status', [
+  { label: '失败', value: 0 },
+  { label: '成功', value: 1 },
+]);
 
 export const menuTypeOptions = getTranslatedOptions('sys_menu_type', [
   { label: '目录', value: 0 },
@@ -19,14 +16,11 @@ export const menuTypeOptions = getTranslatedOptions('sys_menu_type', [
   { label: '按钮', value: 2 },
 ]);
 
-export const messageStatusOptions = getTranslatedOptions(
-  'sys_message_status',
-  [
-    { label: '待推送', value: 0 },
-    { label: '已推送', value: 1 },
-    { label: '已撤回', value: 2 },
-  ],
-);
+export const messageStatusOptions = getTranslatedOptions('sys_message_status', [
+  { label: '待推送', value: 0 },
+  { label: '已推送', value: 1 },
+  { label: '已撤回', value: 2 },
+]);
 
 export const manualMessagePushTypeOptions = getTranslatedOptions(
   'sys_message_push_type',
@@ -55,14 +49,11 @@ export const messageReadStatusOptions = getTranslatedOptions(
   ],
 );
 
-export const publishStatusOptions = getTranslatedOptions(
-  'sys_publish_status',
-  [
-    { label: '草稿', value: 0 },
-    { label: '已发布', value: 1 },
-    { label: '已撤回', value: 2 },
-  ],
-);
+export const publishStatusOptions = getTranslatedOptions('sys_publish_status', [
+  { label: '草稿', value: 0 },
+  { label: '已发布', value: 1 },
+  { label: '已撤回', value: 2 },
+]);
 
 export const editablePublishStatusOptions = getTranslatedOptions(
   'sys_publish_status',

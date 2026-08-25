@@ -3,8 +3,8 @@
  */
 import type { RequestClientOptions } from '@vben/request';
 
+import { clearAllAlerts, alert as vbenAlert } from '@vben/common-ui';
 import { useAppConfig } from '@vben/hooks';
-import { alert as vbenAlert, clearAllAlerts } from '@vben/common-ui';
 import { preferences } from '@vben/preferences';
 import {
   authenticateResponseInterceptor,

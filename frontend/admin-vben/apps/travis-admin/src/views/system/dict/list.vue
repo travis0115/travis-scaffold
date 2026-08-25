@@ -60,7 +60,8 @@ const [Grid, gridApi] = useVbenVxeGrid({
           );
           selectedDict.value = current ?? result.records[0];
           nextTick(() => {
-            if (selectedDict.value) gridApi.grid.setCurrentRow(selectedDict.value);
+            if (selectedDict.value)
+              gridApi.grid.setCurrentRow(selectedDict.value);
           });
           return result;
         },

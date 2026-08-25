@@ -8,7 +8,7 @@ import type { SystemMenuApi } from '#/api';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
-import { confirm as vbenConfirm, Page, useVbenDrawer } from '@vben/common-ui';
+import { Page, useVbenDrawer, confirm as vbenConfirm } from '@vben/common-ui';
 import { IconifyIcon, Plus } from '@vben/icons';
 import { useAccessStore, useUserStore } from '@vben/stores';
 

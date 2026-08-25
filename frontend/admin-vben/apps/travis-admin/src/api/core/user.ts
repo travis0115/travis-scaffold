@@ -1,10 +1,9 @@
-import type { RequestClientConfig } from '@vben/request';
-import type { AxiosProgressEvent } from '@vben/request';
+import type { AxiosProgressEvent, RequestClientConfig } from '@vben/request';
 import type { UserInfo } from '@vben/types';
 
-import { requestClient } from '#/api/request';
-
 import type { FileUploadResult } from '../system/file';
+
+import { requestClient } from '#/api/request';
 
 /**
  * 获取用户信息

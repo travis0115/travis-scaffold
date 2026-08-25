@@ -1,6 +1,7 @@
 <script lang="ts" setup>
-import { h, ref } from 'vue';
 import type { Id } from '#/api/types';
+
+import { h, ref } from 'vue';
 
 import { useVbenModal, alert as vbenAlert } from '@vben/common-ui';
 

@@ -12,7 +12,10 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getAppUserPage, getUserPage } from '#/api';
 
 type UserId = number | string;
-type UserRow = SystemUserApi.UserOption & { _checked?: boolean; email?: string };
+type UserRow = SystemUserApi.UserOption & {
+  _checked?: boolean;
+  email?: string;
+};
 
 const emit = defineEmits<{
   success: [options: SystemUserApi.UserOption[], ids: string[]];
@@ -26,16 +29,12 @@ const currentPageRows = ref<UserRow[]>([]);
 const currentPageAllChecked = computed(
   () =>
     currentPageRows.value.length > 0 &&
-    currentPageRows.value.every((row) =>
-      selectedIds.value.has(String(row.id)),
-    ),
+    currentPageRows.value.every((row) => selectedIds.value.has(String(row.id))),
 );
 const currentPageSomeChecked = computed(
   () =>
     !currentPageAllChecked.value &&
-    currentPageRows.value.some((row) =>
-      selectedIds.value.has(String(row.id)),
-    ),
+    currentPageRows.value.some((row) => selectedIds.value.has(String(row.id))),
 );
 
 const emptyValueFormatter = ({ cellValue }: { cellValue: unknown }) =>
@@ -51,11 +50,36 @@ const adminColumns = [
     slots: { default: 'selection', header: 'selection_header' },
     width: 48,
   },
-  { field: 'username', formatter: emptyValueFormatter, minWidth: 120, title: '用户名' },
-  { field: 'nickname', formatter: emptyValueFormatter, minWidth: 120, title: '昵称' },
-  { field: 'mobile', formatter: emptyValueFormatter, minWidth: 130, title: '手机号' },
-  { field: 'email', formatter: emptyValueFormatter, minWidth: 180, title: '邮箱' },
-  { field: 'deptName', formatter: emptyValueFormatter, minWidth: 130, title: '部门' },
+  {
+    field: 'username',
+    formatter: emptyValueFormatter,
+    minWidth: 120,
+    title: '用户名',
+  },
+  {
+    field: 'nickname',
+    formatter: emptyValueFormatter,
+    minWidth: 120,
+    title: '昵称',
+  },
+  {
+    field: 'mobile',
+    formatter: emptyValueFormatter,
+    minWidth: 130,
+    title: '手机号',
+  },
+  {
+    field: 'email',
+    formatter: emptyValueFormatter,
+    minWidth: 180,
+    title: '邮箱',
+  },
+  {
+    field: 'deptName',
+    formatter: emptyValueFormatter,
+    minWidth: 130,
+    title: '部门',
+  },
 ];
 const appColumns = [
   {
@@ -65,8 +89,18 @@ const appColumns = [
     slots: { default: 'selection', header: 'selection_header' },
     width: 48,
   },
-  { field: 'nickname', formatter: emptyValueFormatter, minWidth: 160, title: '昵称' },
-  { field: 'mobile', formatter: emptyValueFormatter, minWidth: 160, title: '手机号' },
+  {
+    field: 'nickname',
+    formatter: emptyValueFormatter,
+    minWidth: 160,
+    title: '昵称',
+  },
+  {
+    field: 'mobile',
+    formatter: emptyValueFormatter,
+    minWidth: 160,
+    title: '手机号',
+  },
 ];
 const adminSearchSchema = [
   { component: 'Input' as const, fieldName: 'username', label: '用户名' },
@@ -131,11 +165,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 const [Modal, modalApi] = useVbenModal({
   async onConfirm() {
-    emit(
-      'success',
-      [...selectedRows.value.values()],
-      [...selectedIds.value],
-    );
+    emit('success', [...selectedRows.value.values()], [...selectedIds.value]);
     modalApi.close();
   },
   async onOpened() {

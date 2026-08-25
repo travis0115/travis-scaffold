@@ -75,10 +75,7 @@ function onActionClick(e: OnActionClickParams<SystemRoleApi.SysRole>) {
   }
 }
 
-async function onStatusChange(
-  newStatus: number,
-  row: SystemRoleApi.SysRole,
-) {
+async function onStatusChange(newStatus: number, row: SystemRoleApi.SysRole) {
   try {
     await updateRoleStatus(row.id, newStatus as 0 | 1);
     await authStore.fetchAccessCodes();

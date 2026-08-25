@@ -8,8 +8,8 @@ declare module 'vue-router' {
 }
 
 export interface VbenAdminProAppConfigRaw {
-    VITE_GLOB_API_URL: string;
-    VITE_GLOB_WS_URL: string;
+  VITE_GLOB_API_URL: string;
+  VITE_GLOB_WS_URL: string;
   VITE_GLOB_AUTH_DINGDING_CLIENT_ID: string;
   VITE_GLOB_AUTH_DINGDING_CORP_ID: string;
 }

@@ -3,7 +3,7 @@ import type { VbenFormSchema } from '#/adapter/form';
 
 import { computed } from 'vue';
 
-import { alert as vbenAlert, ProfilePasswordSetting, z } from '@vben/common-ui';
+import { ProfilePasswordSetting, alert as vbenAlert, z } from '@vben/common-ui';
 
 import { changePasswordApi } from '#/api';
 import { useAuthStore } from '#/store/auth';

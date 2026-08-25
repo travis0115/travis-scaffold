@@ -100,9 +100,9 @@
 }
 
 .vben-vxe-grid-toolbar-tools {
-  min-width: 0;
   flex-wrap: wrap;
   justify-content: flex-end;
+  min-width: 0;
 }
 
 .vxe-table-custom--checkbox-option:hover {
@@ -133,17 +133,17 @@
 
 @container (max-width: 420px) {
   .vben-vxe-grid .vxe-toolbar {
-    height: auto !important;
-    min-height: 48px;
     flex-wrap: wrap;
     align-items: flex-start;
+    height: auto !important;
+    min-height: 48px;
   }
 
   .vben-vxe-grid .vxe-buttons--wrapper {
-    width: 100% !important;
-    max-width: 100%;
     flex: 1 0 100%;
+    width: 100% !important;
     min-width: 0;
+    max-width: 100%;
     padding-bottom: 0.2em;
   }
 

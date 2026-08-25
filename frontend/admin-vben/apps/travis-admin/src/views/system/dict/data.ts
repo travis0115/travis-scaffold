@@ -1,8 +1,5 @@
 import type { VbenFormSchema } from '#/adapter/form';
-import type {
-  OnActionClickFn,
-  VxeTableGridColumns,
-} from '#/adapter/vxe-table';
+import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { SystemDictApi } from '#/api';
 
 import { z } from '#/adapter/form';
@@ -30,7 +27,10 @@ export function useFormSchema(): VbenFormSchema[] {
         .string()
         .min(1, $t('ui.formRules.required', [$t('system.dict.dictCode')]))
         .max(100, '字典编码长度不能超过100个字符')
-        .regex(/^[a-zA-Z][a-zA-Z0-9_]+$/, '字典编码必须以字母开头，只能包含字母、数字和下划线'),
+        .regex(
+          /^[a-zA-Z][a-zA-Z0-9_]+$/,
+          '字典编码必须以字母开头，只能包含字母、数字和下划线',
+        ),
     },
     {
       component: 'InputNumber',
@@ -89,7 +89,10 @@ export function useGridFormSchema(): VbenFormSchema[] {
 
 export function useColumns(
   onActionClick?: OnActionClickFn<SystemDictApi.SysDict>,
-  onStatusChange?: (newStatus: number, row: SystemDictApi.SysDict) => Promise<boolean>,
+  onStatusChange?: (
+    newStatus: number,
+    row: SystemDictApi.SysDict,
+  ) => Promise<boolean>,
 ): VxeTableGridColumns<SystemDictApi.SysDict> {
   return [
     {

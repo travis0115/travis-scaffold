@@ -45,7 +45,7 @@ FileUploadResp result =
 - Spring Multipart：`spring.servlet.multipart.max-file-size` 与 `max-request-size`；
 - 文件模块：`travis.web.file.allowed-extensions`。
 
-本地存储目录来自启用的文件存储配置的 `storagePath`，支持 Spring 占位符解析。`travis.web.file.resource-handler` 只定义对外静态资源路径，例如 `/files/**`，并不等于磁盘目录。资源请求会根据当前启用配置动态解析目录，新增或切换本地存储配置后无需重启应用；多实例部署仍必须把对应目录挂载为所有实例可见的共享路径。
+本地存储目录来自启用的文件存储配置的 `storagePath`，支持 Spring 占位符解析。`travis.web.file.resource-handler` 只定义对外静态资源路径，例如 `/files/**`，并不等于磁盘目录。资源请求会根据当前启用配置动态解析目录，并在应用内保留 5 秒配置快照，避免每个文件请求都访问 Redis；快照刷新失败时会继续使用上一份有效配置。新增或切换本地存储配置后无需重启应用，最多 5 秒后生效；多实例部署仍必须把对应目录挂载为所有实例可见的共享路径。
 
 本地策略会拒绝无扩展名、异常扩展名和白名单外扩展名。仅校验扩展名不能代替内容安全扫描；接入不可信上传场景时需按业务风险增加病毒扫描、内容嗅探或隔离存储。
 

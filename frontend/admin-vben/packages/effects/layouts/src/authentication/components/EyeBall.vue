@@ -74,13 +74,14 @@ const pos = computed(() => {
 
 <style scoped>
 .eyeball {
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s;
   overflow: hidden;
+  border-radius: 50%;
+  transition: all 0.15s;
 }
+
 .pupil-inner {
   border-radius: 50%;
   transition: transform 0.1s ease-out;

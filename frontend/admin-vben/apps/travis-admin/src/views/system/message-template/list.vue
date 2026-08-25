@@ -1,5 +1,8 @@
 <script lang="ts" setup>
-import type { OnActionClickParams, VxeTableGridOptions } from '#/adapter/vxe-table';
+import type {
+  OnActionClickParams,
+  VxeTableGridOptions,
+} from '#/adapter/vxe-table';
 import type { SystemMessageApi } from '#/api';
 
 import { Page, useVbenDrawer } from '@vben/common-ui';
@@ -14,7 +17,10 @@ import { SYSTEM_PERMS } from '#/utils/permissions';
 import { useColumns, useGridFormSchema } from './data';
 import Form from './form.vue';
 
-const [FormDrawer, formDrawerApi] = useVbenDrawer({ connectedComponent: Form, destroyOnClose: true });
+const [FormDrawer, formDrawerApi] = useVbenDrawer({
+  connectedComponent: Form,
+  destroyOnClose: true,
+});
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: { schema: useGridFormSchema() },
   gridOptions: {
@@ -35,9 +41,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
   } as VxeTableGridOptions<SystemMessageApi.MessageTemplate>,
 });
 
-function onActionClick({ code, row }: OnActionClickParams<SystemMessageApi.MessageTemplate>) {
+function onActionClick({
+  code,
+  row,
+}: OnActionClickParams<SystemMessageApi.MessageTemplate>) {
   if (code === 'edit') formDrawerApi.setData(row).open();
-  if (code === 'delete') deleteMessageTemplate(row.id).then(() => gridApi.query());
+  if (code === 'delete')
+    deleteMessageTemplate(row.id).then(() => gridApi.query());
 }
 </script>
 

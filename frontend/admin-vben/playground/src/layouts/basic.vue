@@ -219,7 +219,7 @@ watch(
         },
         content:
           content ||
-          `${userStore.userInfo?.username} - ${userStore.userInfo?.realName}`,
+          `${userStore.userInfo?.username} - ${userStore.userInfo?.nickname}`,
       });
     } else {
       destroyWatermark();
@@ -246,7 +246,7 @@ onBeforeMount(() => {
       <UserDropdown
         :avatar
         :menus
-        :text="userStore.userInfo?.realName"
+        :text="userStore.userInfo?.nickname"
         description="ann.vben@gmail.com"
         tag-text="Pro"
         trigger="both"

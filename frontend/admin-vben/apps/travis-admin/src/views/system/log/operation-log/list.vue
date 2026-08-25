@@ -1,7 +1,8 @@
 <script lang="ts" setup>
+import type { CSSProperties } from 'vue';
+
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { SystemOperationLogApi } from '#/api';
-import type { CSSProperties } from 'vue';
 
 import { EllipsisText, Page } from '@vben/common-ui';
 
@@ -45,7 +46,6 @@ const [Grid] = useVbenVxeGrid({
     },
   } as VxeTableGridOptions<SystemOperationLogApi.OperationLog>,
 });
-
 </script>
 
 <template>

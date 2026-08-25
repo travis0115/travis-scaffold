@@ -133,7 +133,7 @@ function onActionClick({
   if (code === 'delete') onDelete(row);
 }
 
-async function openDetail(row: OpsErrorLogApi.ErrorLog | number | string) {
+async function openDetail(row: number | OpsErrorLogApi.ErrorLog | string) {
   detail.value = await getErrorLogDetail(
     typeof row === 'object' ? row.id : row,
   );

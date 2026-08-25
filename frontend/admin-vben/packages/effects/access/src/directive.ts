@@ -13,9 +13,7 @@ import { useAccess } from './use-access';
 const accessDirectiveStops = new WeakMap<Element, () => void>();
 const originalDisplays = new WeakMap<HTMLElement, string>();
 
-function isAccessible(
-  binding: DirectiveBinding<string | string[]>,
-) {
+function isAccessible(binding: DirectiveBinding<string | string[]>) {
   const { accessMode, hasAccessByCodes, hasAccessByRoles } = useAccess();
 
   const value = binding.value;
@@ -36,7 +34,9 @@ function setVisible(el: Element, visible: boolean) {
   if (!originalDisplays.has(htmlEl)) {
     originalDisplays.set(htmlEl, htmlEl.style.display);
   }
-  htmlEl.style.display = visible ? (originalDisplays.get(htmlEl) ?? '') : 'none';
+  htmlEl.style.display = visible
+    ? (originalDisplays.get(htmlEl) ?? '')
+    : 'none';
 }
 
 function bindAccessWatcher(
