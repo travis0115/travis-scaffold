@@ -1,6 +1,5 @@
 package com.travis.monolith.system.user.internal.service.impl;
 
-import cn.hutool.core.util.RandomUtil;
 import cn.hutool.crypto.digest.BCrypt;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.travis.infrastructure.common.mapstruct.PageConverter;
@@ -31,6 +30,7 @@ import com.travis.monolith.system.user.internal.converter.SysUserConverter;
 import com.travis.monolith.system.user.internal.entity.SysUser;
 import com.travis.monolith.system.user.internal.mapper.SysUserMapper;
 import com.travis.monolith.system.user.internal.service.SysUserService;
+import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -56,6 +56,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
         implements SysUserService {
+
+    private static final String PASSWORD_CHARACTERS =
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+    private static final String ADMIN_ROLE_CODE = "admin";
 
     private static final Map<String, SFunction<SysUser, ?>> SORT_COLUMNS =
             Map.ofEntries(
@@ -160,6 +167,7 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     @Caching(evict = {@CacheEvict(key = "'detail:'+#id")})
     public void update(Long id, SysUserUpdateReq req) {
         var user = getByIdOrThrow(id);
+        checkCanOperate(user.getId());
         validateDeptId(req.getDeptId());
         var oldUsername = user.getUsername();
         var oldDeptId = user.getDeptId();
@@ -191,9 +199,16 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     /** 修改用户状态 */
     @Override
     @Transactional
+    @DistributedLock(namespace = "system-super-admin", key = "'mutation'", waitTime = 5000)
     @Caching(evict = {@CacheEvict(key = "'detail:'+#id")})
     public void updateStatus(Long id, Integer status) {
         var user = getByIdOrThrow(id);
+        checkCanOperate(user.getId());
+        if (Status.ENABLED.getValue().equals(user.getStatus())
+                && Status.DISABLED.getValue().equals(status)
+                && isSuperAdmin(user.getId())) {
+            checkAnotherEnabledSuperAdmin(user.getId());
+        }
         user.setStatus(status);
         updateUserOrThrow(user);
         if (Status.DISABLED.getValue().equals(status)) {
@@ -204,10 +219,14 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     /** 删除用户，同时清除用户-角色关联并使其会话失效 */
     @Override
     @Transactional
-    @DistributedLock(namespace = "system-user-role", key = "#id", waitTime = 5000)
+    @DistributedLock(namespace = "system-super-admin", key = "'mutation'", waitTime = 5000)
     @Caching(evict = {@CacheEvict(key = "'username:'+#id"), @CacheEvict(key = "'detail:'+#id")})
     public void deleteById(Long id) {
         var user = getByIdOrThrow(id);
+        checkCanOperate(user.getId());
+        if (Status.ENABLED.getValue().equals(user.getStatus()) && isSuperAdmin(user.getId())) {
+            checkAnotherEnabledSuperAdmin(user.getId());
+        }
         removeById(id);
         RedisUtil.deleteCacheKey("system:user", "list:id:dept:" + user.getDeptId());
         // 通过角色服务删除用户-角色关联
@@ -287,10 +306,23 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     /** 分配用户角色：委托给角色服务 */
     @Override
     @Transactional
-    @DistributedLock(namespace = "system-user-role", key = "#req.userId", waitTime = 5000)
+    @DistributedLock(namespace = "system-super-admin", key = "'mutation'", waitTime = 5000)
     public void assignRoles(SysUserRoleReq req) {
-        if (getById(req.getUserId()) == null) {
+        var user = getById(req.getUserId());
+        if (user == null) {
             throw new BizException(CommonErrorCode.DATABASE_RECORD_NOT_FOUND);
+        }
+        var wasSuperAdmin = isSuperAdmin(user.getId());
+        checkCanOperate(user.getId());
+        var willBeSuperAdmin =
+                roleApi.getRoleCodesByRoleIds(req.getRoleIds()).contains(ADMIN_ROLE_CODE);
+        if (willBeSuperAdmin && !isCurrentSuperAdmin()) {
+            throw new BizException(SystemErrorCode.USER_SUPER_ADMIN_REQUIRED);
+        }
+        if (wasSuperAdmin
+                && !willBeSuperAdmin
+                && Status.ENABLED.getValue().equals(user.getStatus())) {
+            checkAnotherEnabledSuperAdmin(user.getId());
         }
         roleApi.assignUserRoles(req.getUserId(), req.getRoleIds());
     }
@@ -395,14 +427,67 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
     @Transactional
     public String resetPassword(Long id, String newPassword) {
         var user = getByIdOrThrow(id);
+        checkCanOperate(user.getId());
         if (newPassword == null || newPassword.isBlank()) {
-            newPassword = RandomUtil.randomString(8);
+            newPassword = generatePassword();
         }
         user.setPassword(BCrypt.hashpw(newPassword));
         updateUserOrThrow(user);
         // 重置密码后踢出该用户，需重新登录
         StpKit.of(LoginType.ADMIN).logout(id);
         return newPassword;
+    }
+
+    /** 生成满足密码复杂度要求的随机密码。 */
+    private String generatePassword() {
+        var password = new char[12];
+        password[0] = randomCharacter("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        password[1] = randomCharacter("abcdefghijklmnopqrstuvwxyz");
+        password[2] = randomCharacter("0123456789");
+        password[3] = randomCharacter("!@#$%^&*");
+        for (var i = 4; i < password.length; i++) {
+            password[i] = randomCharacter(PASSWORD_CHARACTERS);
+        }
+        for (var i = password.length - 1; i > 0; i--) {
+            var target = SECURE_RANDOM.nextInt(i + 1);
+            var current = password[i];
+            password[i] = password[target];
+            password[target] = current;
+        }
+        return new String(password);
+    }
+
+    private char randomCharacter(String characters) {
+        return characters.charAt(SECURE_RANDOM.nextInt(characters.length()));
+    }
+
+    /** 普通管理员不能修改超级管理员账号。 */
+    private void checkCanOperate(Long userId) {
+        if (isSuperAdmin(userId) && !isCurrentSuperAdmin()) {
+            throw new BizException(SystemErrorCode.USER_SUPER_ADMIN_REQUIRED);
+        }
+    }
+
+    private boolean isCurrentSuperAdmin() {
+        return StpKit.of(LoginType.ADMIN).hasRole(ADMIN_ROLE_CODE);
+    }
+
+    private boolean isSuperAdmin(Long userId) {
+        return roleApi.getRoleCodesByUserId(userId).contains(ADMIN_ROLE_CODE);
+    }
+
+    /** 禁止禁用、删除或移除最后一个启用超级管理员的角色。 */
+    private void checkAnotherEnabledSuperAdmin(Long excludedUserId) {
+        var adminUserIds = roleApi.getUserIdsByRoleCode(ADMIN_ROLE_CODE);
+        if (adminUserIds.isEmpty()
+                || count(
+                                new LambdaQueryWrapperX<SysUser>()
+                                        .in(SysUser::getId, adminUserIds)
+                                        .ne(SysUser::getId, excludedUserId)
+                                        .eq(SysUser::getStatus, Status.ENABLED.getValue()))
+                        == 0) {
+            throw new BizException(SystemErrorCode.USER_LAST_ENABLED_SUPER_ADMIN);
+        }
     }
 
     /** 校验用户所属部门存在，0 表示未分配部门。 */

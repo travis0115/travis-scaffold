@@ -128,7 +128,7 @@ starter 的 `application-reference.yml` 只存在于 Jackson、Redis、RocketMQ 
 | `spring.servlet.multipart.max-file-size` | `50MB` | 单文件上限 |
 | `spring.servlet.multipart.max-request-size` | `100MB` | 整个 multipart 请求上限 |
 | `travis.web.file.resource-handler` | `/files/**` | 本地文件对外访问匹配路径 |
-| `travis.web.file.allowed-extensions` | yml 中列出的图片、文档、压缩包、音视频等 | 扩展名白名单，可使用带点或不带点写法 |
+| `travis.web.file.allowed-extensions` | yml 中列出的图片、文档、压缩包、音视频等 | 扩展名白名单，可使用带点或不带点写法；默认禁止 SVG 等主动内容 |
 
 API、安全清洗和防重复提交见 [Web、认证与 WebSocket](web-auth-websocket.md)，文件业务接入见 [文件管理与业务附件接入](file-management.md)。
 

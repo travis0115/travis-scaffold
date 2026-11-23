@@ -10,7 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class ImageFileValidator implements ConstraintValidator<ImageFile, MultipartFile> {
 
     private static final Set<String> IMAGE_EXTENSIONS =
-            Set.of("jpg", "jpeg", "png", "gif", "webp", "bmp", "svg", "ico");
+            Set.of("jpg", "jpeg", "png", "gif", "webp", "bmp", "ico");
 
     @Override
     public boolean isValid(MultipartFile file, ConstraintValidatorContext context) {

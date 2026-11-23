@@ -4,18 +4,24 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import cn.dev33.satoken.stp.StpLogic;
 import com.baomidou.mybatisplus.annotation.Version;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.travis.infrastructure.common.validation.validator.PasswordValidator;
+import com.travis.infrastructure.common.web.constant.LoginType;
 import com.travis.infrastructure.framework.event.core.TransactionalApplicationEventPublisher;
+import com.travis.infrastructure.framework.satoken.core.StpKit;
 import com.travis.monolith.system.dept.api.SysDeptApi;
 import com.travis.monolith.system.file.api.SysFileApi;
 import com.travis.monolith.system.role.api.SysRoleApi;
 import com.travis.monolith.system.user.api.request.SysUserCreateReq;
 import com.travis.monolith.system.user.api.request.SysUserPageReq;
+import com.travis.monolith.system.user.api.request.SysUserRoleReq;
 import com.travis.monolith.system.user.api.response.SysUserResp;
 import com.travis.monolith.system.user.internal.converter.SysUserConverter;
 import com.travis.monolith.system.user.internal.entity.SysUser;
@@ -123,7 +129,105 @@ class SysUserServiceImplTest {
         assertThat(result.onlineUsers()).isZero();
     }
 
+    @Test
+    void shouldGenerateCompliantPasswordWhenResetPasswordIsEmpty() {
+        var mapper = mock(SysUserMapper.class);
+        var user = new SysUser();
+        user.setId(1L);
+        when(mapper.selectById(1L)).thenReturn(user);
+        when(mapper.updateById(user)).thenReturn(1);
+        var service = service(mapper, mock(SysDeptApi.class));
+        var logic = mock(StpLogic.class);
+
+        String password;
+        try (var stpKit = mockStatic(StpKit.class)) {
+            stpKit.when(() -> StpKit.of(LoginType.ADMIN)).thenReturn(logic);
+            password = service.resetPassword(1L, null);
+        }
+
+        assertThat(password).hasSize(12);
+        assertThat(new PasswordValidator().isValid(password, null)).isTrue();
+    }
+
+    @Test
+    void shouldRejectNonSuperAdminOperatingSuperAdmin() {
+        var mapper = mock(SysUserMapper.class);
+        var roleApi = mock(SysRoleApi.class);
+        var user = new SysUser();
+        user.setId(1L);
+        when(mapper.selectById(1L)).thenReturn(user);
+        when(roleApi.getRoleCodesByUserId(1L)).thenReturn(List.of("admin"));
+        var service = service(mapper, mock(SysDeptApi.class), roleApi);
+        var logic = mock(StpLogic.class);
+        when(logic.hasRole("admin")).thenReturn(false);
+
+        try (var stpKit = mockStatic(StpKit.class)) {
+            stpKit.when(() -> StpKit.of(LoginType.ADMIN)).thenReturn(logic);
+
+            assertThatThrownBy(() -> service.resetPassword(1L, "NewPassword1"))
+                    .hasMessageContaining("仅超级管理员");
+        }
+        verify(mapper, never()).updateById(any(SysUser.class));
+    }
+
+    @Test
+    void shouldRejectNonSuperAdminGrantingSuperAdminRole() {
+        var mapper = mock(SysUserMapper.class);
+        var roleApi = mock(SysRoleApi.class);
+        var user = new SysUser();
+        user.setId(2L);
+        when(mapper.selectById(2L)).thenReturn(user);
+        when(roleApi.getRoleCodesByUserId(2L)).thenReturn(List.of());
+        when(roleApi.getRoleCodesByRoleIds(List.of(1L))).thenReturn(List.of("admin"));
+        var service = service(mapper, mock(SysDeptApi.class), roleApi);
+        var logic = mock(StpLogic.class);
+        when(logic.hasRole("admin")).thenReturn(false);
+        var request = new SysUserRoleReq();
+        request.setUserId(2L);
+        request.setRoleIds(List.of(1L));
+
+        try (var stpKit = mockStatic(StpKit.class)) {
+            stpKit.when(() -> StpKit.of(LoginType.ADMIN)).thenReturn(logic);
+
+            assertThatThrownBy(() -> service.assignRoles(request)).hasMessageContaining("仅超级管理员");
+        }
+        verify(roleApi, never()).assignUserRoles(any(), any());
+    }
+
+    @Test
+    void shouldRejectRemovingRoleFromLastEnabledSuperAdmin() {
+        var mapper = mock(SysUserMapper.class);
+        var roleApi = mock(SysRoleApi.class);
+        var user = new SysUser();
+        user.setId(1L);
+        user.setStatus(1);
+        when(mapper.selectById(1L)).thenReturn(user);
+        when(mapper.selectCount(any())).thenReturn(0L);
+        when(roleApi.getRoleCodesByUserId(1L)).thenReturn(List.of("admin"));
+        when(roleApi.getRoleCodesByRoleIds(List.of())).thenReturn(List.of());
+        when(roleApi.getUserIdsByRoleCode("admin")).thenReturn(List.of(1L));
+        var service = service(mapper, mock(SysDeptApi.class), roleApi);
+        var logic = mock(StpLogic.class);
+        when(logic.hasRole("admin")).thenReturn(true);
+        var request = new SysUserRoleReq();
+        request.setUserId(1L);
+        request.setRoleIds(List.of());
+
+        try (var stpKit = mockStatic(StpKit.class)) {
+            stpKit.when(() -> StpKit.of(LoginType.ADMIN)).thenReturn(logic);
+
+            assertThatThrownBy(() -> service.assignRoles(request))
+                    .hasMessageContaining("至少一个启用的超级管理员");
+        }
+        verify(roleApi, never()).assignUserRoles(any(), any());
+    }
+
     private SysUserServiceImpl service(SysUserMapper mapper, SysDeptApi deptApi) {
+        return service(mapper, deptApi, mock(SysRoleApi.class));
+    }
+
+    private SysUserServiceImpl service(
+            SysUserMapper mapper, SysDeptApi deptApi, SysRoleApi roleApi) {
         @SuppressWarnings("unchecked")
         ObjectProvider<
                         com.travis.infrastructure.framework.websocket.core.session
@@ -132,7 +236,7 @@ class SysUserServiceImplTest {
         var service =
                 new SysUserServiceImpl(
                         deptApi,
-                        mock(SysRoleApi.class),
+                        roleApi,
                         mock(SysFileApi.class),
                         mock(TransactionalApplicationEventPublisher.class),
                         sessionManagers,

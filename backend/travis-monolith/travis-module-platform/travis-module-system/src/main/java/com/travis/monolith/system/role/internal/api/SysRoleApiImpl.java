@@ -56,6 +56,11 @@ public class SysRoleApiImpl implements SysRoleApi {
     }
 
     @Override
+    public List<Long> getUserIdsByRoleCode(String roleCode) {
+        return roleService.getUserIdsByRoleCode(roleCode);
+    }
+
+    @Override
     public List<String> getRoleNamesByRoleIds(List<Long> roleIds) {
         if (roleIds == null || roleIds.isEmpty()) {
             return List.of();

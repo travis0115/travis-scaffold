@@ -97,7 +97,6 @@ const defaultAllowedUploadExtensions = [
   'gif',
   'webp',
   'bmp',
-  'svg',
   'ico',
   'pdf',
   'doc',

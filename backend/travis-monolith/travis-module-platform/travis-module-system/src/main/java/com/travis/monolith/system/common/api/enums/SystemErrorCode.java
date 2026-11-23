@@ -16,6 +16,8 @@ public enum SystemErrorCode implements ErrorCode {
     USER_USERNAME_EXISTS("SYS_001", "用户名已存在"),
     USER_CONCURRENT_UPDATE("SYS_002", "用户信息已被其他请求修改，请刷新后重试"),
     USER_DEPT_INVALID("SYS_003", "所属部门不存在"),
+    USER_SUPER_ADMIN_REQUIRED("SYS_004", "仅超级管理员可以操作超级管理员账号或授予超级管理员角色"),
+    USER_LAST_ENABLED_SUPER_ADMIN("SYS_005", "系统必须保留至少一个启用的超级管理员账号"),
 
     /* role模块 100-199 */
     ROLE_BUILTIN_NOT_DELETABLE("SYS_100", "系统内置角色不允许删除"),

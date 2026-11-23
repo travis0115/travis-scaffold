@@ -227,7 +227,8 @@ public class SysUserController {
     @PutMapping("/{id}/reset-password")
     @SaCheckPermission(value = SystemPermission.USER_UPDATE, type = LoginType.ADMIN)
     public ApiResponse<String> resetPassword(
-            @PathVariable Long id, @RequestBody(required = false) SysUserResetPasswordReq req) {
+            @PathVariable Long id,
+            @RequestBody(required = false) @Valid SysUserResetPasswordReq req) {
         var newPassword =
                 (req != null && req.getNewPassword() != null && !req.getNewPassword().isBlank())
                         ? req.getNewPassword()

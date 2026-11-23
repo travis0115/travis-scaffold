@@ -125,6 +125,9 @@ public interface SysRoleService extends IService<SysRole> {
     /** 根据用户ID查询其启用角色ID列表。 */
     List<Long> getEnabledRoleIdsByUserId(Long userId);
 
+    /** 根据角色编码查询关联用户 ID 列表。 */
+    List<Long> getUserIdsByRoleCode(String roleCode);
+
     /** 批量查询用户与角色名称列表。 */
     Map<Long, List<String>> getRoleNameMapByUserIds(List<Long> userIds);
 

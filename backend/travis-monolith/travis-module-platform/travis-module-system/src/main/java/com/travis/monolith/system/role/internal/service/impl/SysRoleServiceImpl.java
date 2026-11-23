@@ -375,6 +375,27 @@ public class SysRoleServiceImpl extends ServiceImplX<SysRoleMapper, SysRole>
     }
 
     @Override
+    public List<Long> getUserIdsByRoleCode(String roleCode) {
+        var role =
+                getOne(
+                        new LambdaQueryWrapperX<SysRole>()
+                                .select(SysRole::getId)
+                                .eq(SysRole::getRoleCode, roleCode));
+        if (role == null) {
+            return List.of();
+        }
+        return userRoleMapper
+                .selectList(
+                        new LambdaQueryWrapperX<SysUserRole>()
+                                .select(SysUserRole::getUserId)
+                                .eq(SysUserRole::getRoleId, role.getId()))
+                .stream()
+                .map(SysUserRole::getUserId)
+                .distinct()
+                .toList();
+    }
+
+    @Override
     public Map<Long, List<String>> getRoleNameMapByUserIds(List<Long> userIds) {
         List<Long> normalizedUserIds = normalizeIds(userIds);
         if (normalizedUserIds.isEmpty()) {

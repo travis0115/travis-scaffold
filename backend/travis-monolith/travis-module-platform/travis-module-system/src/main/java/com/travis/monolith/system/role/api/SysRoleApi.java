@@ -56,6 +56,9 @@ public interface SysRoleApi {
      */
     List<String> getRoleCodesByRoleIds(List<Long> roleIds);
 
+    /** 根据角色编码查询关联用户 ID 列表。 */
+    List<Long> getUserIdsByRoleCode(String roleCode);
+
     /**
      * 根据角色ID列表获取角色名称列表
      *

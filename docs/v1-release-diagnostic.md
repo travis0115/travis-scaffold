@@ -18,7 +18,7 @@
 
 ## 安全
 
-- [ ] 上传白名单不包含 HTML、CSS、JavaScript、TypeScript、Vue、XML 等主动内容；SVG 按业务要求允许，并已评估内容清洗或隔离域名方案。
+- [ ] 普通文件和图片上传均拒绝 HTML、CSS、JavaScript、TypeScript、Vue、XML、SVG 等主动内容，前端允许类型与后端白名单一致。
 - [ ] 管理端生成密码使用 Web Crypto，不使用 `Math.random()`。
 - [ ] 生产 MySQL、Redis 和 JWT 使用独立强密钥，`.env` 权限为 `0600`。
 - [ ] Actuator、Druid、登录限流和 Nginx 公网路径符合生产文档。

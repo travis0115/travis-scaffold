@@ -1036,7 +1036,6 @@ const withPreviewUpload = () => {
       'jpeg',
       'jpg',
       'png',
-      'svg',
       'webp',
     ]);
     if (file.url) {
@@ -1053,7 +1052,7 @@ const withPreviewUpload = () => {
       const ext = file.name?.split('.').pop()?.toLowerCase();
       return ext ? imageExtensions.has(ext) : false;
     }
-    return file.type.startsWith('image/');
+    return file.type !== 'image/svg+xml' && file.type.startsWith('image/');
   };
   // 创建默认的上传按钮插槽
   const createDefaultSlotsWithUpload = (
