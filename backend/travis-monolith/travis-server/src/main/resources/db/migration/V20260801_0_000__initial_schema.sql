@@ -1227,7 +1227,7 @@ CREATE TABLE `sys_user` (
 -- Records of sys_user
 -- ----------------------------
 BEGIN;
-INSERT INTO `sys_user` (`id`, `username`, `password`, `nickname`, `avatar_file_id`, `email`, `mobile`, `dept_id`, `status`, `last_online_time`, `last_online_ip`, `last_online_location`, `last_offline_time`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`, `lock_version`) VALUES (1, 'admin718', '$2a$10$ZF6jptfCIC54xN6dF9kuc.OLiKJKSHzEJ7F4pL/e6AyNhkZSv3pL2', '管理员', NULL, NULL, NULL, 0, 1, NULL, NULL, NULL, NULL, 0, '2026-05-01 00:00:00', 1, NULL, NULL, 0);
+INSERT INTO `sys_user` (`id`, `username`, `password`, `nickname`, `avatar_file_id`, `email`, `mobile`, `dept_id`, `status`, `last_online_time`, `last_online_ip`, `last_online_location`, `last_offline_time`, `is_deleted`, `create_time`, `create_by`, `update_time`, `update_by`, `lock_version`) VALUES (1, 'admin718', '$2a$10$ACMCCdyI4dVIcH62YSTICOg9wNQENkQkVWgsISCIkO5.qy7ztGjw6', '管理员', NULL, NULL, NULL, 0, 1, NULL, NULL, NULL, NULL, 0, '2026-05-01 00:00:00', 1, NULL, NULL, 0);
 COMMIT;
 
 -- ----------------------------

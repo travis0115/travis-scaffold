@@ -542,9 +542,11 @@ public class SysUserServiceImpl extends ServiceImplX<SysUserMapper, SysUser>
                     if (user == null) {
                         return;
                     }
-                    record.setDeptName(deptNames.get(user.getDeptId()));
+                    var deptId = user.getDeptId();
+                    var avatarFileId = user.getAvatarFileId();
+                    record.setDeptName(deptId == null || deptId == 0 ? null : deptNames.get(deptId));
                     record.setRoleNames(roleNames.getOrDefault(user.getId(), List.of()));
-                    record.setAvatar(avatarUrls.get(user.getAvatarFileId()));
+                    record.setAvatar(avatarFileId == null ? null : avatarUrls.get(avatarFileId));
                 });
     }
 

@@ -31,6 +31,8 @@ import com.travis.monolith.system.user.internal.service.impl.SysUserServiceImpl;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -67,8 +69,10 @@ class SysUserServiceImplTest {
         assertThatThrownBy(() -> service.updateStatus(1L, 0)).hasMessageContaining("已被其他请求修改");
     }
 
-    @Test
-    void shouldBatchLoadPageAssociations() {
+    @ParameterizedTest
+    @CsvSource({"2, 3, 研发部, /files/avatar.png", "0, , ,", ", , ,"})
+    void shouldBatchLoadPageAssociations(
+            Long deptId, Long avatarFileId, String deptName, String avatarUrl) {
         var mapper = mock(SysUserMapper.class);
         var deptApi = mock(SysDeptApi.class);
         var roleApi = mock(SysRoleApi.class);
@@ -90,8 +94,8 @@ class SysUserServiceImplTest {
         ReflectionTestUtils.setField(service, "baseMapper", mapper);
         var user = new SysUser();
         user.setId(1L);
-        user.setDeptId(2L);
-        user.setAvatarFileId(3L);
+        user.setDeptId(deptId);
+        user.setAvatarFileId(avatarFileId);
         var response = new SysUserResp();
         response.setId(1L);
         var page = new Page<SysUser>(1, 10);
@@ -99,18 +103,20 @@ class SysUserServiceImplTest {
         page.setTotal(1);
         when(mapper.page(any(Integer.class), any(Integer.class), any())).thenReturn(page);
         when(converter.toResp(user)).thenReturn(response);
-        when(deptApi.getDeptNameMapByIds(any())).thenReturn(Map.of(2L, "研发部"));
+        when(deptApi.getDeptNameMapByIds(any()))
+                .thenReturn(deptName == null ? Map.of() : Map.of(deptId, deptName));
         when(roleApi.getRoleNameMapByUserIds(List.of(1L))).thenReturn(Map.of(1L, List.of("管理员")));
-        when(fileApi.getFileUrlMapByIds(any())).thenReturn(Map.of(3L, "/files/avatar.png"));
+        when(fileApi.getFileUrlMapByIds(any()))
+                .thenReturn(avatarUrl == null ? Map.of() : Map.of(avatarFileId, avatarUrl));
         var request = new SysUserPageReq();
         request.setPageNum(1);
         request.setPageSize(10);
 
         var result = service.page(request);
 
-        assertThat(result.getRecords().getFirst().getDeptName()).isEqualTo("研发部");
+        assertThat(result.getRecords().getFirst().getDeptName()).isEqualTo(deptName);
         assertThat(result.getRecords().getFirst().getRoleNames()).containsExactly("管理员");
-        assertThat(result.getRecords().getFirst().getAvatar()).isEqualTo("/files/avatar.png");
+        assertThat(result.getRecords().getFirst().getAvatar()).isEqualTo(avatarUrl);
         verify(deptApi, never()).getDeptNameById(any());
         verify(roleApi, never()).getRoleNamesByUserId(any());
         verify(fileApi, never()).getFileUrlById(any());

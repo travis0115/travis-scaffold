@@ -3,6 +3,16 @@ package com.travis.monolith.system.file.internal.config;
 import com.travis.monolith.system.file.internal.entity.SysFileStorageConfig;
 import com.travis.monolith.system.file.internal.service.SysFileStorageConfigService;
 import jakarta.servlet.http.HttpServletRequest;
+import org.jspecify.annotations.Nullable;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
+import org.springframework.web.servlet.resource.AbstractResourceResolver;
+import org.springframework.web.servlet.resource.ResourceResolverChain;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
@@ -11,14 +21,6 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.LongSupplier;
-import org.jspecify.annotations.Nullable;
-import org.springframework.core.env.Environment;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
-import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
-import org.springframework.web.servlet.resource.AbstractResourceResolver;
-import org.springframework.web.servlet.resource.ResourceResolverChain;
 
 /** 根据当前启用的本地存储配置动态解析文件资源。 */
 @Component
@@ -31,6 +33,8 @@ public class LocalFileResourceResolver extends AbstractResourceResolver {
     private final LongSupplier nanoTime;
     private volatile StorageConfigSnapshot storageConfigSnapshot = StorageConfigSnapshot.empty();
 
+    /** Spring 自动装配入口。类中存在多个构造函数，需显式标记。 */
+    @Autowired
     public LocalFileResourceResolver(
             SysFileStorageConfigService storageConfigService, Environment environment) {
         this(storageConfigService, environment, System::nanoTime);

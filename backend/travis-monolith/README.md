@@ -22,7 +22,7 @@ docker compose up -d
 mvn spring-boot:run -pl travis-server
 ```
 
-开发环境默认不执行 Flyway，便于脚手架首版维护期间合并尚未发布的 SQL。需要初始化全新数据库时，先审阅迁移内容，再显式设置 `SPRING_FLYWAY_ENABLED=true`。初始账号和密码均为 `admin718`，仅用于本地开发和演示。
+开发环境默认不执行 Flyway，便于脚手架首版维护期间合并尚未发布的 SQL。需要初始化全新数据库时，先审阅迁移内容，再显式设置 `SPRING_FLYWAY_ENABLED=true`。迁移完成后，初始管理员账号为 `admin718`，密码为 `Admin718.`，仅用于本地开发和演示。
 
 ## 验证
 
